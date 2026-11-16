@@ -90,7 +90,9 @@ empty ledger.
 Official DPM Sandbox is the lighter single-participant option. It is useful for
 focused contract/API tests and does not supply LocalNet's wallet ecosystem. The
 installed DPM is outside the shell PATH on this machine; it can be invoked at
-`~/.dpm/bin/dpm`. The cached SDK is 3.7.1, while the pinned Quickstart declares
+`~/.dpm/bin/dpm`. Its installed `sandbox --help` uses
+`--ledger-api-port` (not the older documented `--port` spelling); check installed
+help before copying Sandbox commands. The cached SDK is 3.7.1, while the pinned Quickstart declares
 Daml runtime 3.5.2. Do not assume those versions or compiled DARs are interchangeable.
 
 Network-only LocalNet does **not** start the Quickstart's optional PQS module.
