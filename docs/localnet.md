@@ -29,7 +29,9 @@ revision `8b898ed3ccb15e243b22ee8d0ed3573fb91ee6b9`, whose `.env` selects Splice
 Retry the probe after initialization. A failed probe exits nonzero.
 
 Our helper resolves upstream Compose configuration, then isolates container names,
-network, volumes and host bindings under `cantongrid-localnet`. The generated
+network, volumes and host bindings under `cantongrid-localnet`. An explicit
+`PARTY_HINT=cantongrid-localparty-1` prevents the hyphenated network name from
+producing an invalid upstream default party hint. The generated
 configuration stays in ignored `.local/` with owner-only file permissions.
 Upstream services provision their own demo network state as part of startup;
 these helpers submit no custom ledger commands or Outcomia fixtures.
