@@ -50,7 +50,7 @@ def render():
                DOCKER_NETWORK=PROJECT, DB_PORT='5440', DB_SERVER='postgres',
                DB_USER='cnadmin', DB_PASSWORD='supersafe',
                APP_USER_PROFILE='on', APP_PROVIDER_PROFILE='on', SV_PROFILE='on',
-               APP_USER_UI_PORT='2000', APP_PROVIDER_UI_PORT='3000', SV_UI_PORT='4000',
+               APP_USER_UI_PORT='12000', APP_PROVIDER_UI_PORT='13000', SV_UI_PORT='14000',
                AUTH_APP_PROVIDER_AUDIENCE='https://canton.network.global',
                AUTH_APP_USER_AUDIENCE='https://canton.network.global')
     base = ['docker', 'compose', '--progress', 'plain', '-p', PROJECT,
@@ -63,8 +63,6 @@ def render():
         service['container_name'] = f'{PROJECT}-{name}'
         for port in service.get('ports', []):
             port['host_ip'] = '127.0.0.1'
-            if name == 'nginx':
-                port['published'] = str(int(port['target']) + 10000)
     CONFIG.write_text(json.dumps(config, indent=2) + '\n')
     CONFIG.chmod(0o600)
     return ['docker', 'compose', '--progress', 'plain', '-p', PROJECT, '-f', str(CONFIG), *PROFILES]
