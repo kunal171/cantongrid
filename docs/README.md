@@ -7,6 +7,9 @@ be added only after compatibility verification.
 | Document | Purpose |
 | --- | --- |
 | [Product](product.md) | Developer promise, release scope and responsibility boundaries. |
+| [Architecture](architecture.md) | Components, ingestion, generated storage and recovery. |
+| [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |
+| [Security](security.md) | Party-scoped access, derived data and revocation requirements. |
 | [Decisions](decisions.md) | Accepted choices and changes from the original brief. |
 
 When documents disagree, follow current user decisions, then the accepted decision
