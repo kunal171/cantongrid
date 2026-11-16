@@ -1,0 +1,8 @@
+/target/
+/.local/
+/.cantongrid/
+/secrets/
+.env*
+!.env.example
+cantongrid.local.yaml
+*.log
