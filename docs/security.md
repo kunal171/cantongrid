@@ -69,3 +69,26 @@ Verification must cover A, B and AB principals; individual and derived records;
 counts, filters, pagination, joins and streams; cursor tampering/reuse; token and
 source authorization expiry; revocation during replay and connected delivery;
 and errors/logs that could expose private information.
+
+## Revocation, cursors and operations
+
+Bind internal checkpoints, caches and public opaque cursors to the appropriate
+source, schema and authorization context. Never expose internal scope fingerprints
+as permission-bearing public identifiers. Cursors must not be transferable across
+principals or scope epochs. Recheck access when returning pages and delivering
+stream events, including after reconnect.
+
+A local grant change must immediately deny newly forbidden reads and invalidate
+affected cursors, streams and caches. Source authorization failures fail closed.
+Use a bounded revalidation lease; unknown or expired authorization cannot continue
+serving private data. Instant upstream revocation detection during a disconnected
+source cannot be promised. The exact lease and historical-retention/erasure
+semantics must be settled before copying live private payloads.
+
+Retained history and outbox entries are subject to current authorization, not
+only the permissions at ingestion time. Never equate upstream pruning, loss of
+visibility or a missing page with a verified contract archive.
+
+Enforce query cost/page limits and protect metadata and error paths as well as
+payloads. Secrets and private payloads must not appear in logs, metrics labels,
+committed fixtures or diagnostic output. Public access defaults to denied.
