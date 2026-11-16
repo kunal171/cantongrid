@@ -37,7 +37,11 @@ def render():
     module = quickstart / 'docker/modules/localnet'
     pins = dict(line.split('=', 1) for line in (quickstart / '.env').read_text().splitlines()
                 if line and not line.startswith('#') and '=' in line)
-    env = os.environ.copy()
+    host_keys = {'PATH', 'HOME', 'USER', 'LANG', 'TMPDIR', 'XDG_RUNTIME_DIR',
+                 'SSL_CERT_FILE', 'SSL_CERT_DIR'}
+    env = {key: value for key, value in os.environ.items()
+           if key in host_keys or key.startswith('DOCKER_')
+           or key.lower() in {'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy'}}
     # Explicit disposable LocalNet settings, independent of shell deployment variables.
     env.pop('TEST_PORT', None)
     env.update(LOCALNET_DIR=str(module), LOCALNET_ENV_DIR=str(module / 'env'),
