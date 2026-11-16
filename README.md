@@ -4,9 +4,10 @@
 Daml contracts into queryable PostgreSQL databases, GraphQL APIs, and real-time
 data streams.**
 
-Status: documentation foundation. There is no executable, live connector,
-database migration, or API server implemented yet. Commands and interfaces in
-these documents describe the intended product, not available functionality.
+Status: documentation foundation complete; LocalNet compatibility work is in
+progress. Development helpers are available in the [LocalNet guide](docs/localnet.md).
+There is no CantonGrid executable, live connector, database migration or API
+server yet. Product commands and interfaces below remain planned.
 
 Developers describe **what data to process** and **how to process it**.
 CantonGrid handles the supported ingestion, lifecycle tracking, projections,

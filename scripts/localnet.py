@@ -49,7 +49,7 @@ def render():
                APP_USER_UI_PORT='2000', APP_PROVIDER_UI_PORT='3000', SV_UI_PORT='4000',
                AUTH_APP_PROVIDER_AUDIENCE='https://canton.network.global',
                AUTH_APP_USER_AUDIENCE='https://canton.network.global')
-    base = ['docker', 'compose', '-p', PROJECT,
+    base = ['docker', 'compose', '--progress', 'plain', '-p', PROJECT,
             '--env-file', str(module / 'compose.env'),
             '--env-file', str(module / 'env/common.env'),
             '-f', str(module / 'compose.yaml'),
@@ -63,7 +63,7 @@ def render():
                 port['published'] = str(int(port['target']) + 10000)
     CONFIG.write_text(json.dumps(config, indent=2) + '\n')
     CONFIG.chmod(0o600)
-    return ['docker', 'compose', '-p', PROJECT, '-f', str(CONFIG), *PROFILES]
+    return ['docker', 'compose', '--progress', 'plain', '-p', PROJECT, '-f', str(CONFIG), *PROFILES]
 
 
 def main():

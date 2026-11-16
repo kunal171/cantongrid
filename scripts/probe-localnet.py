@@ -21,19 +21,19 @@ def token():
     return f'{header}.{claims}.{signature}'
 
 
-def get(base, path, bearer=None):
+def get(base, path, bearer=None, read_json=True):
     headers = {'Authorization': f'Bearer {bearer}'} if bearer else {}
     with urlopen(Request(base + path, headers=headers), timeout=10) as response:
         body = response.read()
-        return json.loads(body) if body else None
+        return json.loads(body) if read_json and body else None
 
 
 def main():
     bearer = token()  # Public upstream dev credential, never a shared-network token.
     for name, prefix in [('app-user', 2), ('app-provider', 3), ('sv', 4)]:
         base = f'http://127.0.0.1:{prefix}975'
-        get(f'http://127.0.0.1:{prefix}903', '/api/validator/readyz')
-        get(base, '/readyz')
+        get(f'http://127.0.0.1:{prefix}903', '/api/validator/readyz', read_json=False)
+        get(base, '/readyz', read_json=False)
         try:
             get(base, '/v2/parties')
         except HTTPError as exc:
@@ -44,6 +44,8 @@ def main():
         version = get(base, '/v2/version', bearer)
         end = get(base, '/v2/state/ledger-end', bearer)
         parties = get(base, '/v2/parties', bearer)
+        if not version.get('version') or 'offset' not in end:
+            raise ValueError(f'{name}: unexpected version/ledger-end response shape')
         if not isinstance(parties.get('partyDetails'), list):
             raise ValueError(f'{name}: unexpected party-list response shape')
         print(f'{name}: ready; unauthenticated request rejected; '
