@@ -1,8 +1,9 @@
 # Research and unresolved decisions
 
-Status: all upstream compatibility items below are pending verification. This
-phase has not verified official interfaces or contacted a live Canton source.
-The original supplied brief is product input, not compatibility evidence.
+Status: LocalNet startup and baseline authenticated Ledger API reads have been
+[verified locally](localnet-evidence.md). The remaining connector, schema and
+authorization gates below are still open. The original supplied brief is product
+input, not compatibility evidence.
 
 Before implementing a live adapter, consult current official Canton/Daml/PQS
 primary documentation and the actual installed environment. Record exact versions,
@@ -11,7 +12,7 @@ Do not infer current endpoints, SQL functions or payload shapes from this plan.
 
 | Question | Required evidence / decision | Must resolve before |
 | --- | --- | --- |
-| LocalNet availability | Installed versions, startup procedure, authorized source and nonsecret connection settings. | Live connector implementation. |
+| LocalNet availability | Bootstrap and baseline reads verified; installed versions, endpoints and limits recorded in the LocalNet evidence. Application contract scope remains unverified. | Live connector implementation. |
 | First source | Verify PQS capabilities and deployment requirements; compare Ledger API only if needed; select one supported adapter. | Source-specific code. |
 | Snapshot handoff | Stable boundary, pagination, concurrent changes and resume behavior; demonstrate no lost creates/archives. | Bootstrap/checkpoint implementation. |
 | Event identity and ordering | Stable dedup keys, source positions, lifecycle kinds and time semantics. | Canonical persistence. |

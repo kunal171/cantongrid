@@ -51,8 +51,9 @@ caller-supplied party name. Processing definitions cannot override access policy
 ## First release
 
 - Daml contracts only; Outcomia first, plus a second unrelated fixture model.
-- LocalNet is the intended first real environment. Its availability and compatible
-  PQS/SDK versions still need verification. Devnet infrastructure has been requested.
+- LocalNet is the first real environment; its Docker startup and authenticated
+  baseline reads are [verified](localnet-evidence.md). PQS and Outcomia SDK/DAR
+  compatibility remain open. Devnet infrastructure has been requested.
 - PQS is the preferred initial source candidate. Its read-only interfaces must be
   verified before implementation; direct Ledger API support is conditional on
   verified need, not an automatic second connector commitment.

@@ -1,6 +1,7 @@
 # LocalNet verification evidence
 
-Date: 2026-11-16. Work in progress; this records only observed evidence.
+Date: 2026-11-16. This records observed local infrastructure evidence, not
+CantonGrid ingestion or Outcomia deployment acceptance.
 
 ## Host and pinned inputs
 
@@ -14,10 +15,60 @@ Date: 2026-11-16. Work in progress; this records only observed evidence.
 
 ## Initial checks
 
-Docker communication and Compose rendering succeeded. The resolved configuration
-contains loopback-only published ports and isolated names. Images are being
-obtained for the first start; runtime readiness and authenticated requests are
-not yet claimed. Results will be updated after the probe completes.
+Docker communication and Compose rendering succeeded. All resolved published
+ports use loopback, and container/network/volume names are isolated. Conflicting
+shell values for image version, database port, network and test port did not
+change the generated configuration. UI listener ports and wallet redirect
+configuration agree.
+
+The initial startup exposed an invalid default party hint derived from the
+hyphenated Docker network name. An explicit `cantongrid-localparty-1` fixes this;
+the helper now sets it independently. No source checkout modification or volume
+deletion was required.
+
+After that fix, all three validators and JSON Ledger API readiness checks passed.
+The APIs report Canton **3.5.7**. Each rejected an unauthenticated party-list
+request with HTTP 401, then accepted the helper's short-lived development JWT for
+version, ledger end and party listing. One observed sample was:
+
+| Participant | Version | Ledger offset | Party-list page count |
+| --- | --- | --- | --- |
+| App User | 3.5.7 | 30 | 6 |
+| App Provider | 3.5.7 | 32 | 6 |
+| Super Validator | 3.5.7 | 67 | 6 |
+
+Offsets and counts are observations, not expected constants or history coverage
+claims.
+
+## Restart and running endpoints
+
+The healthy stack was stopped using `localnet.py stop` and started again using
+`localnet.py up`. All three participant IDs matched the private local baseline;
+all baseline parties remained known; and ledger offsets did not regress. The
+PostgreSQL volume retained its original creation timestamp. This verifies local
+network persistence, not a CantonGrid checkpoint or contract-history replay.
+The authenticated probe passed again after restart.
+
+Wallet pages for all three validators, Scan and the SV UI returned HTTP 200 with
+HTML on the documented hostnames/ports. This is HTTP availability evidence, not
+browser login, wallet transfer or full UI interaction testing. Inspection of all
+11 running containers confirmed that every published host port binds only to
+`127.0.0.1`.
+
+The stack is left running for subsequent integration work. The existing host
+PostgreSQL on 5432 and the Outcomia repositories were not modified.
 
 No Outcomia DAR has been uploaded, no custom parties or transactions have been
 submitted, and no PQS or CantonGrid API/indexer is running as part of this check.
+
+
+## Remaining integration gates
+
+The cached `dpm pqs --version` reports PQS 3.7.0, Daml SDK 3.7.0 and document
+schema 043; its help command works, but no PQS pipeline was launched. The pinned
+Quickstart optional PQS module selects Scribe 3.5.4. Do not treat the cached newer
+PQS or Outcomia SDK 3.7.1 as verified compatible with Canton 3.5.7.
+
+Active-contract visibility, snapshot/update handoff, lifecycle ingestion, exact
+schema mapping, scoped non-admin users and generated CantonGrid APIs remain
+unverified. Admin read-only health checks do not establish these guarantees.

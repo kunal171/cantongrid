@@ -57,3 +57,13 @@ Completed documentation checks:
 
 This is documentation evidence only. No executable, LocalNet, database or API
 verification has been performed for CantonGrid.
+
+
+## Local infrastructure handoff — 2026-11-16
+
+LocalNet startup, read-only authenticated API checks, stop/start persistence and
+HTTP UI availability are recorded in [LocalNet evidence](localnet-evidence.md).
+Python parsing, local Markdown links, generated configuration isolation and Git
+whitespace checks pass. These development helpers do not implement the planned
+CantonGrid CLI, connector or API server. Runtime acceptance matrix items above
+remain future work unless explicitly covered by that evidence.
