@@ -6,6 +6,8 @@ be added only after compatibility verification.
 
 | Document | Purpose |
 | --- | --- |
+| [Local development](localnet.md) | Reproducible LocalNet setup, endpoints and read-only usage. |
+| [LocalNet evidence](localnet-evidence.md) | Observed environment and verification limits. |
 | [Product](product.md) | Developer promise, release scope and responsibility boundaries. |
 | [Architecture](architecture.md) | Components, ingestion, generated storage and recovery. |
 | [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |

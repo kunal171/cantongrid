@@ -1,6 +1,8 @@
 # Phased delivery
 
-Only Phase 0 is being delivered now. Each later phase starts when requested.
+Phase 0 is complete. Phase 1 has started with user-authorized LocalNet research
+and infrastructure; see [LocalNet evidence](localnet-evidence.md). Each later phase
+starts when requested.
 Acceptance below is required evidence, not a statement that checks have passed.
 
 ## Phase 0 — Documentation foundation
