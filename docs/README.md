@@ -12,6 +12,8 @@ be added only after compatibility verification.
 | [Security](security.md) | Party-scoped access, derived data and revocation requirements. |
 | [CLI](cli.md) | Planned commands and operator/developer workflow. |
 | [Roadmap](roadmap.md) | Phases, acceptance gates and small-commit workflow. |
+| [Research decisions](research-decisions.md) | Unverified interfaces and implementation gates. |
+| [Verification](verification.md) | Required evidence and planned runtime checks. |
 | [Decisions](decisions.md) | Accepted choices and changes from the original brief. |
 
 When documents disagree, follow current user decisions, then the accepted decision

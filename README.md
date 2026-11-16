@@ -33,7 +33,8 @@ cantongrid serve   # Serve generated queries and resumable change streams
 
 Read the [documentation index](docs/README.md),
 [product contract](docs/product.md), and
-[accepted decisions](docs/decisions.md).
+[accepted decisions](docs/decisions.md). Start implementation planning with the
+[architecture](docs/architecture.md) and [phased roadmap](docs/roadmap.md).
 
 This is a separate repository. Neither Outcomia repository is a platform
 dependency or a write target. The working name is provisional; the license target
