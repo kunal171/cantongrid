@@ -55,7 +55,8 @@ COMMIT;
     env = {**os.environ, 'PQS_UID': str(os.getuid()), 'PQS_GID': str(os.getgid())}
     result = subprocess.run([
         'docker', 'compose', '-p', 'cantongrid-pqs', '-f', str(ROOT / 'dev/pqs.compose.yaml'),
-        'exec', '-T', 'pqs-postgres', 'psql', '-X', '-qAt', '-U', 'pqs_owner', '-d', 'pqs',
+        'exec', '-T', '-e', 'PGPASSWORD=local-pqs-reader', 'pqs-postgres',
+        'psql', '-X', '-qAt', '-h', '127.0.0.1', '-U', 'cantongrid_pqs_reader', '-d', 'pqs',
         '-v', 'ON_ERROR_STOP=1'], input=sql, text=True, capture_output=True, check=True, env=env)
     data = json.loads(result.stdout)
     if (data['create_rows'] < 1 or data['active_rows'] < 1

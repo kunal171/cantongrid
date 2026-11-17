@@ -60,13 +60,18 @@ def prepare():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['up', 'stop', 'status'])
+    parser.add_argument('command', choices=['up', 'stop', 'status', 'reader'])
     args = parser.parse_args()
     if args.command == 'up':
         prepare()
         subprocess.run([*COMPOSE, 'up', '-d', '--wait', 'pqs-postgres'], check=True, env=ENV)
         # Recreate the process so it loads the freshly signed credential.
         subprocess.run([*COMPOSE, 'up', '-d', '--force-recreate', '--no-deps', 'pqs'], check=True, env=ENV)
+    elif args.command == 'reader':
+        subprocess.run([*COMPOSE, 'exec', '-T', 'pqs-postgres', 'psql', '-X', '-q',
+                        '-U', 'pqs_owner', '-d', 'pqs', '-v', 'ON_ERROR_STOP=1'],
+                       input=(ROOT / 'dev/pqs-reader.sql').read_text(), text=True, check=True, env=ENV)
+        print('Prepared development SQL reader; source ownership remains with PQS')
     else:
         command = ['down'] if args.command == 'stop' else ['ps', '-a']
         subprocess.run([*COMPOSE, *command], check=True, env=ENV)

@@ -39,6 +39,31 @@ not proof of complete network history. The source contains existing Splice demo
 contracts, not uploaded Outcomia contracts. Readiness is available at `/readyz`;
 container creation alone is not readiness.
 
+## Prepare the database reader
+
+Once `/readyz` succeeds, prepare a separate SQL login:
+
+```bash
+python3 scripts/localnet-pqs.py reader
+python3 scripts/check-localnet-pqs-reader.py
+```
+
+This operator command only changes the isolated fixture database. It creates
+`cantongrid_pqs_reader` with the public development password `local-pqs-reader`,
+SELECT access to existing public tables and default SELECT grants for future
+PQS-owner tables. It removes public schema-create and database temporary-table
+privileges. It rejects privileged role membership, ownership and unreviewed
+security-definer functions. Re-run and review this setup after schema changes;
+permission errors must fail queries rather than silently omit data.
+
+The setup distinguishes existing-object grants from future-object defaults; see
+[PostgreSQL privileges](https://www.postgresql.org/docs/14/ddl-priv.html) and
+[default privileges](https://www.postgresql.org/docs/14/sql-alterdefaultprivileges.html).
+These are operator grants, not migrations performed by the future Rust connector.
+The reader can read the source store's configured party scope, including underlying
+tables required by invoker functions. It does not enforce per-API-caller privacy.
+The consumer must still use public PQS query functions and apply caller policy.
+
 ## Verify SQL and source health
 
 ```bash
@@ -83,9 +108,12 @@ volumes; do not use global Docker cleanup to solve initialization problems.
 
 ## Source and verification boundaries
 
-The fixture owns PQS schema writes in its own database. Research SQL runs under
-its local owner inside a read-only transaction; this is not a production database
-reader-role configuration or per-caller API authorization implementation.
+The fixture owns PQS schema writes in its own database. The SQL probe uses the separately
+authenticated reader inside a read-only transaction. Its permission checks also
+disable that transaction default and verify that PQS table writes, public schema
+writes, temporary tables and owner-role escalation remain denied. This verifies
+the tested fixture profile, not production credential management or caller-level
+authorization.
 
 See the [official PQS guide](https://docs.canton.network/sdks-tools/development-tools/pqs)
 and [SQL reference](https://docs.canton.network/appdev/reference/pqs-sql-reference).

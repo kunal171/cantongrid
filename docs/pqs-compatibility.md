@@ -53,6 +53,21 @@ complete history. Source offsets are participant-local and may have gaps.
 These tests verify the upstream PQS fixture's recovery, not a future Rust
 indexer's destination checkpoints or outbox atomicity.
 
+## SQL reader boundary
+
+A follow-up reader setup separates source migration ownership from consumer
+queries. The probe authenticates over PostgreSQL TCP as
+`cantongrid_pqs_reader`, with SELECT grants and no owner membership. On this
+profile, public PQS functions contain no security-definer functions. Source
+schema migrations remain owned by PQS; the Rust consumer will not run them.
+
+Checks verified active and offset-80 reads under this role. With the default
+read-only transaction setting explicitly disabled, zero-row table deletion,
+public table creation, temporary table creation and owner-role escalation all
+failed with SQLSTATE 42501. Denial tests are rolled back and do not alter records.
+The reader can read the configured source scope, not arbitrary party subsets;
+application authorization and production role provisioning remain separate gates.
+
 ## Remaining gates
 
 - Verify authorized Outcomia contract creation/lifecycle reads and an unrelated
@@ -61,8 +76,9 @@ indexer's destination checkpoints or outbox atomicity.
   access policy and removal of materialized private data.
 - Verify exact numeric round trips, full schema extraction, exercises,
   reassignment/incomplete events, pruning gaps and concurrent snapshot handoff.
-- Design a least-privilege SQL reader role and a separately owned CantonGrid
-  destination. The fixture's local SQL owner is not an application authorization model.
+- Review reader grants for production, credential rotation and schema upgrades,
+  and provision a separately owned CantonGrid destination. Fixture SQL permissions
+  are not an application authorization model.
 - Build and test the Rust normalization, processing, checkpoint and API boundaries.
 
 PQS/Scribe 3.5.4 is therefore a verified local source candidate for active and

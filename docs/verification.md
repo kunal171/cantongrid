@@ -78,3 +78,13 @@ source despite retained database rows. Recreating it preserved an explicitly
 pinned historical snapshot, caught up to newer source updates and did not
 produce duplicate create identities. These are upstream fixture checks, not
 CantonGrid runtime, authorization-isolation or outbox acceptance.
+
+
+## SQL reader follow-up — 2026-11-17
+
+The fixture now has a separately authenticated database reader. Active and
+historical PQS queries pass under it. Table writes, public schema writes,
+temporary tables and assuming the owner role fail with insufficient-privilege
+SQLSTATE 42501 even after disabling the default read-only transaction setting.
+The reader setup is operator-side configuration of the owned development
+fixture; the future Rust source adapter remains read-only.

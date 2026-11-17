@@ -14,7 +14,7 @@ Do not infer current endpoints, SQL functions or payload shapes from this plan.
 | Question | Required evidence / decision | Must resolve before |
 | --- | --- | --- |
 | LocalNet availability | Bootstrap and baseline reads verified; installed versions, endpoints and limits recorded in the LocalNet evidence. Application contract scope remains unverified. | Live connector implementation. |
-| First source | Scribe 3.5.4/schema 041 is verified for scoped LocalNet active/create/archive queries. Rust adapter design, production role and broader authorization/history guarantees remain open. | Source-specific code. |
+| First source | Scribe 3.5.4/schema 041 is verified for scoped LocalNet active/create/archive queries. A fixture SQL reader and version-specific authorization/history limits are recorded. Production grants and the Rust adapter remain open. | Source-specific code. |
 | Snapshot handoff | Stable boundary, pagination, concurrent changes and resume behavior; demonstrate no lost creates/archives. | Bootstrap/checkpoint implementation. |
 | Event identity and ordering | Stable dedup keys, source positions, lifecycle kinds and time semantics. | Canonical persistence. |
 | Private visibility | Exact available authorization evidence and its interpretation; source grant changes and visibility loss. | Live private data copying. |
@@ -26,7 +26,7 @@ Do not infer current endpoints, SQL functions or payload shapes from this plan.
 | Genericity fixture | Unrelated template set and representative lifecycle/derived model. | Processing interface acceptance. |
 | API identity | Token issuer/format, grant mapping, expiry, rotation and administrator roles. | Authenticated serving. |
 | Model language | Bounded grammar, keys, expression semantics, capability errors and diagnostics. | Public configuration contract. |
-| Database ownership | Namespace, roles, concurrency fencing, transaction/rebuild/migration strategy. | Persistence implementation. |
+| Database ownership | Fixture SQL reader can query without table/schema writes or owner escalation. Production grants, destination namespace, worker fencing and migration/rebuild strategy remain open. | Persistence implementation. |
 | Stream contract | Cursor protection, scope binding, retention, gaps and replay authorization. | Durable stream serving. |
 | Distribution | Rust/dependency versions, license compatibility and packaging. | Executable release/publication. |
 
