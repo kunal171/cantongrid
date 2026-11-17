@@ -4,3 +4,6 @@ mod definition;
 mod error;
 pub use definition::{Catalog, Expression, FieldType, Filter, Model};
 pub use error::ModelError;
+
+mod arithmetic;
+mod evaluate;
