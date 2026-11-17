@@ -303,3 +303,72 @@ reduced; unrelated project files and caches were not deleted.
 Remaining live gates and runtime dependency proposals are explicit in the source
 contract. No Outcomia deployment, new parties, source database migration or ledger
 transaction was performed. Phase 3 is not marked complete by this alpha candidate.
+
+### Local disk recovery (2026-11-17)
+
+Follow-up inspection identified the main disk consumer: Canton and Splice had
+about 176 GiB of unrotated Docker JSON logs. Both pinned entrypoints defaulted to
+DEBUG. PostgreSQL's recovery log confirmed `No space left on device`; the SDK
+build above was an additional allocation, not the main space consumer.
+
+Applied INFO defaults and 10m x 3-file rotation, then recreated owned development
+containers without deleting volumes. Root usage fell from 86% to 27%, with about
+220 GiB available. All 15 containers were running with verified rotation settings;
+all configured Docker healthchecks were healthy and both PQS readiness probes
+passed. Named volume identities were retained.
+
+Authenticated read-only Ledger API checks passed for all three participants.
+PQS at offset 80 retained 11 active contracts, 17 creates and 6 archives, with
+zero duplicate creates and correct witnesses. Visibility checks retained all three
+records and restored their test grant after the existing revocation regression.
+The SQL reader's write/DDL/escalation denial checks passed. Destination counts
+remained 1 stream, 2 batches, 2 contracts, 3 events and 3 outbox records.
+
+All 13 Python regressions, the Compose configuration guard, Python compilation,
+actionlint, release metadata and whitespace checks passed. The Rust suite was not
+rerun for this development configuration change. CI now checks tracked Compose
+rotation; unit tests cover rotation and INFO defaults in the LocalNet renderer.
+
+### Current source-grant checks (2026-11-17)
+
+Added `cantongrid-ledger` with the maintainer-approved reqwest/jsonwebtoken/tokio
+subset and a separate `source verify-grants` command. The existing LocalNet
+Canton 3.5.7 one-party CanReadAs user passed all three authenticated GETs. A token
+with unchanged subject/expiry and a forged signature was rejected by the actual
+participant. The CLI regression is opt-in through `CANTONGRID_GRANTS_CONFIG` and
+the credential variable named in that ignored owner-only configuration. Neither
+credentials nor party IDs were printed; no parties, grants or ledger transactions
+were created or changed.
+
+Verification: 45 credential-free Rust tests plus all 13 environment-dependent
+Rust tests passed (58 total), including 8 owned-destination tests, the existing
+source/window checks and the new LocalNet CLI acceptance/forged-token control.
+All 13 Python tests, workspace formatting/Clippy, release metadata, Compose
+retention, RustSec audit, dependency license/source checks and secret scanning
+passed. Dependency policy reports base64/syn/WASI version duplicates as warnings;
+no ignores or policy relaxations were added. Builds reused the existing private
+`/tmp` target; root still had about 220 GiB free afterward.
+
+Current-grant HTTP tests cover denied/unavailable/oversized responses, malformed
+and privileged grants, deactivated/substituted users, generation/expiry isolation,
+invalid credentials/configuration and dropping cached authorization before failed
+renewal. These probes do not prove atomic or instantaneous revocation; permission
+staleness remains bounded by the core 15-second lease. SQL-source association,
+filter validation, active-snapshot/update paging, archive provenance, private
+copying and authenticated REST/GraphQL remain open. No complete Phase 3 claim is
+made by this source-alpha update.
+
+### Phase 3 LocalNet acceptance — 0.2.0-alpha.1
+
+The [Phase 3 acceptance report](phase3-verification.md) supersedes the earlier
+open-gate inventory for the supported LocalNet profile. Actual Outcomia and
+Visibility now pass through the same authorized read-only Rust PQS reader,
+SQL-native owned destination and authenticated REST/GraphQL. Source boundaries,
+exact values, permissions, partial coverage, migration/transaction recovery,
+source outage, cursor isolation and local caller revocation have recorded controls.
+
+Final local baseline: 47 credential-free plus 14 explicitly executed environment-
+dependent Rust tests (61 total), 13 Python tests, formatting/Clippy, security,
+release metadata and container-retention checks passed. Outcomia local writes
+were separately approved; no sibling repository changes, devnet deployment or
+funded asset/trading test was performed. Remote release CI/publication is separate.

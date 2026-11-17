@@ -4,7 +4,7 @@ CantonGrid is a general-purpose, authorization-aware Daml contract indexer writt
 in Rust. Outcomia is its first example. Read [AGENTS.md](AGENTS.md), the
 [decisions](docs/decisions.md), [roadmap](docs/roadmap.md) and
 [security model](docs/security.md) before changing runtime behavior. The
-[Phase 3 handoff](docs/specifications/phase3-v0.3.md) defines the remaining live
+[Phase 3 handoff](docs/specifications/phase3-v0.3.md) defines the live
 source/API acceptance; read it alongside current verification, not as an up-to-date
 implementation inventory.
 
@@ -34,7 +34,8 @@ creates a separate local test destination, not a Canton participant or PQS sourc
 python3 scripts/dev.py storage up
 export CANTONGRID_DESTINATION_URL='host=127.0.0.1 port=5442 user=cantongrid_owner password=local-cantongrid-only dbname=cantongrid'
 cargo +1.100.0 test -p cantongrid-storage --locked -- --ignored
-cargo +1.100.0 test -p cantongrid-cli --locked -- --ignored
+cargo +1.100.0 test -p cantongrid-cli --test workflow durable_cli --locked -- --ignored
+cargo +1.100.0 test -p cantongrid-cli --test runtime --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-pqs destination_owner_cannot_be_used_as_a_source_reader --locked -- --ignored
 python3 scripts/dev.py storage stop
 ```
@@ -50,6 +51,10 @@ separates setup commands from probes that temporarily change fixture grants.
 - `crates/postgres`: shared connection restrictions and redacted errors.
 - `crates/storage`: destination migrations, atomic writes, replay and outbox.
 - `crates/pqs`: verified read-only source interfaces and capabilities.
+- `crates/ledger`: current source authorization, separate from API identity.
+- `crates/runtime`: live configuration/worker and authenticated REST/GraphQL.
+- `crates/ledger`: bounded current-source user/grant checks, separate from callers.
+- `crates/runtime`: live worker, strict configuration and independent authenticated REST/GraphQL.
 - `crates/cli`: command dispatch; keep source and destination commands separate.
 - `examples`: public configurations and synthetic fixture data, with no engine special cases.
 - `scripts/devtools`: local development/research helpers, never the product runtime.
@@ -128,3 +133,11 @@ CantonGrid is licensed under [Apache-2.0](LICENSE). Contributions are submitted
 under the same license. Include provenance/required notices for any externally
 sourced code; do not copy code with incompatible or unknown licensing. Binary
 release packaging must preserve dependency license/notice obligations.
+
+
+Read [LocalNet runtime](docs/live-runtime.md) for source-dependent probes. They
+are separate from credential-free CI; `check pipeline` uses existing authorized
+data, while `check outcomia-pipeline --allow-ledger-writes` requires explicit
+permission to upload the DAR and submit its isolated LocalNet lifecycle. Never
+run source-dependent ignored tests with missing source credentials and call that
+a regression pass. Before larger builds check `df -h /` and reuse one Cargo target.

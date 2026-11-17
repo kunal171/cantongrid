@@ -8,10 +8,37 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from devtools import common, pqs
+from devtools import common, localnet, pqs
+from devtools.checks.resources import validate
 
 
 class DevelopmentToolsTests(unittest.TestCase):
+    def test_localnet_logs_are_bounded_without_changing_persistence(self):
+        config = {'services': {
+            name: {'volumes': ['existing-data:/data'], 'mem_limit': 512,
+                   'environment': {'KEEP': 'value'},
+                   'ports': [{'target': 5432, 'published': '5440'}]}
+            for name in ('canton', 'splice', 'postgres', 'future-service')
+        }}
+        localnet.apply_local_defaults(config)
+        localnet.apply_local_defaults(config)  # Rendering is repeatable.
+        validate(config)
+        for name, service in config['services'].items():
+            self.assertEqual(service['volumes'], ['existing-data:/data'])
+            self.assertEqual(service['mem_limit'], 512)
+            self.assertEqual(service['environment']['KEEP'], 'value')
+            self.assertEqual(service['ports'][0]['host_ip'], '127.0.0.1')
+            if name in ('canton', 'splice'):
+                self.assertEqual(service['environment']['LOG_LEVEL_STDOUT'], 'INFO')
+                self.assertEqual(service['environment']['LOG_LEVEL_CANTON'], 'INFO')
+
+    def test_resource_guard_rejects_missing_and_unbounded_rotation(self):
+        for logging in ({}, {'driver': 'json-file', 'options': {'max-file': '3'}},
+                        {'driver': 'json-file', 'options': {'max-size': '10m'}},
+                        {'driver': 'json-file', 'options': {'max-size': '-1', 'max-file': '3'}}):
+            with self.subTest(logging=logging), self.assertRaises(ValueError):
+                validate({'services': {'example': {'logging': logging}}})
+
     def test_root_and_database_profiles_stay_isolated(self):
         self.assertTrue((common.ROOT / 'Cargo.toml').is_file())
         owner = common.pg_command('cantongrid_visibility')
@@ -81,11 +108,14 @@ class DevelopmentToolsTests(unittest.TestCase):
         self.assertNotIn('--volumes', run.call_args.args[0])
 
     @patch.object(pqs.subprocess, 'run')
-    def test_visibility_reader_is_rejected_before_database_access(self, run):
-        with self.assertRaises(SystemExit) as error:
-            pqs.main(['reader', '--visibility'])
-        self.assertEqual(error.exception.code, 2)
-        run.assert_not_called()
+    def test_visibility_reader_uses_a_separate_database_and_role(self, run):
+        pqs.main(['reader', '--visibility'])
+        self.assertIn('cantongrid_visibility', run.call_args.args[0])
+        sql = run.call_args.kwargs['input']
+        self.assertIn('cantongrid_visibility_reader', sql)
+        self.assertNotIn('cantongrid_pqs_reader', sql)
+        self.assertIn("current_database() <> 'cantongrid_visibility'", sql)
+
 
 
 if __name__ == '__main__':

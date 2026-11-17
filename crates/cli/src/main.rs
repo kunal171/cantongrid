@@ -13,6 +13,8 @@ use std::{
 const HELP: &str = "CantonGrid — local ingestion and storage reference
 
 Usage:
+  cantongrid index <runtime.json> [--once]
+  cantongrid serve <runtime.json>
   cantongrid init <new-directory>
   cantongrid validate <project.json>
   cantongrid fixture run <project.json> [--party <synthetic-party>]...
@@ -21,11 +23,12 @@ Usage:
   cantongrid fixture status <project.json> --database-env <CANTONGRID_VARIABLE>
   cantongrid fixture query <project.json> --database-env <CANTONGRID_VARIABLE> [--party <synthetic-party>]...
   cantongrid source inspect-pqs --database-env <CANTONGRID_VARIABLE>
+  cantongrid source verify-grants <source-grants.json>
   cantongrid source verify-window --database-env <CANTONGRID_VARIABLE> --after <offset>
 
 Fixture run uses process memory; index/status/query use an explicitly initialized local PostgreSQL destination.
 Fixture caller grants are simulated. Source inspection is read-only metadata, not live ingestion.
-No parties means no visible records. index, serve and dev remain planned.";
+No fixture parties means no visible records. Live index/serve require explicit runtime policy and credentials; dev remains planned.";
 const MAX_DOCUMENT_BYTES: u64 = 8 * 1024 * 1024;
 
 fn main() -> ExitCode {
@@ -52,6 +55,22 @@ fn run(args: Vec<String>) -> Result<(), String> {
             println!("{HELP}");
             Ok(())
         }
+        [command, path, rest @ ..] if command == "index" || command == "serve" => {
+            let once = rest == ["--once"];
+            if !rest.is_empty() && !(command == "index" && once) {
+                return Err("unsupported runtime arguments".into());
+            }
+            let runtime = tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(2)
+                .enable_all()
+                .build()
+                .map_err(|_| "cannot initialize runtime")?;
+            if command == "index" {
+                runtime.block_on(cantongrid_runtime::index(Path::new(path), once))
+            } else {
+                runtime.block_on(cantongrid_runtime::serve(Path::new(path)))
+            }
+        }
         [command, directory] if command == "init" => init(Path::new(directory)),
         [command, path] if command == "validate" => {
             let plan = load_plan(Path::new(path))?;
@@ -66,6 +85,9 @@ fn run(args: Vec<String>) -> Result<(), String> {
             if command == "storage" && action == "init" && flag == "--database-env" =>
         {
             commands::storage::initialize(variable)
+        }
+        [command, action, path] if command == "source" && action == "verify-grants" => {
+            commands::source::verify_grants(path)
         }
         [command, action, flag, variable, after_flag, after]
             if command == "source"

@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 mod error;
 mod journal;
+mod live;
 mod query;
 pub use query::{PageKind, ReadPage};
 mod migration;

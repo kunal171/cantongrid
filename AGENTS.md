@@ -1,10 +1,11 @@
 # Working on CantonGrid
 
-- Current phase: Phase 3 has started with bounded owned PostgreSQL fixture ingestion,
-  recovery/outbox atomicity and a read-only PQS schema inspector. Live contract
-  ingestion, current source/caller verification and APIs remain gated. Fixture
-  query party flags simulate grants and must never be used as production identity.
-  Advance implementation when the user asks; user instructions take precedence.
+- Current phase: Phase 3 LocalNet contracts profile is implemented; consult
+  docs/live-runtime.md and docs/phase3-verification.md for verified scope and limits.
+  Release candidate: 0.2.0-alpha.1. Keep raw payloads, partial-history disclosure,
+  source/caller separation, physical-source bindings and guarded commits intact.
+  Generated business models and streams remain separate Phase 4/5 work. Fixture
+  party flags simulate grants and must never authenticate production requests.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python
   scripts are local development/verification helpers, not the product runtime.
 - Product: general-purpose, Daml-first Canton indexing infrastructure. Outcomia
@@ -16,6 +17,12 @@
   changes and distinguish planned, fixture-tested, LocalNet-tested and live-tested.
 - Keep changes inside this repository unless the user explicitly authorizes
   another repository. Preserve existing work and never expose credentials.
+- Keep development container logs rotated (10m per file, 3 files) and default
+  application logging to INFO or quieter. Apply this to new services too; run
+  `python3 scripts/dev.py check resources` when changing Compose files. Check
+  free disk space before large builds and avoid duplicate Cargo target trees.
+  Recover space through owned build tools or container recreation, preserving
+  database volumes; never delete Docker-managed log files or globally prune data.
 - Source connectors are read-only. Do not acquire paid infrastructure, publish,
   deploy, provision parties, upload DARs or submit ledger transactions outside
   the user's authorized scope. Source connection permissions are not API-user

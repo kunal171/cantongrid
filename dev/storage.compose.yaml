@@ -3,6 +3,12 @@ name: cantongrid-storage
 services:
   postgres:
     image: postgres@sha256:c0e9c0e9bac7e4c1834b698217a03ee5c708de30d313c84a506972de0e24b059
+    # Bound retained container output to about 30 MB per service.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: local-cantongrid-admin

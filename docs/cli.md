@@ -1,7 +1,6 @@
 # CLI
 
-Status: a Rust executable implements the fixture workflow below. Live indexing,
-serving and orchestration commands in the planned table are not implemented.
+Status: fixture workflows and the [LocalNet index/serve profile](live-runtime.md) are implemented. Orchestration, generated models and streams remain planned.
 
 ## Implemented fixture workflow
 
@@ -129,3 +128,29 @@ historical interval is not a concurrent publication/pagination proof; the result
 explicitly reports `concurrent_handoff_verified=false`. Invalid, unavailable or
 pruned bounds fail instead of advancing a checkpoint. No source or destination
 writes occur. See the [source contract](phase3-source-contract.md).
+
+## Verify current source grants
+
+```bash
+cantongrid source verify-grants .local/source-grants.json
+```
+
+The [grant-check configuration and constraints](source-authorization.md) are
+separate from fixture projects. The command uses a configured credential environment
+variable, makes read-only authenticated Ledger requests, and prints no party IDs
+or token values. Failure clears the renewal state; success is a bounded current
+scope check, not a private ingestion or complete-history claim.
+
+
+## Live contracts
+
+```bash
+cantongrid index .local/runtime.json --once
+cantongrid index .local/runtime.json
+cantongrid serve .local/runtime.json
+```
+
+Use the separate [runtime configuration](live-runtime.md), exact read-only source
+access and initialized owned destination. `--once` processes one bounded page;
+continuous indexing retries without dropping filters or uncommitted checkpoints.
+The API uses independently authenticated caller tokens, not fixture party flags.

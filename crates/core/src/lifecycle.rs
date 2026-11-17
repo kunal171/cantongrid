@@ -15,6 +15,8 @@ use std::{
 pub enum Action {
     Create(Value),
     Archive,
+    /// Source archive has no witnesses; access depends on the previously observed creation.
+    ArchiveByPriorContract,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -25,7 +27,16 @@ pub struct Event {
     pub witnesses: BTreeSet<PartyId>,
     pub observed_at_micros: i64,
     pub ledger_at_micros: Option<i64>,
+    pub origin: Option<Origin>,
     pub action: Action,
+}
+
+/// Verified source-local event origin, independent of the delivery page/checkpoint position.
+#[derive(Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Origin {
+    pub offset: i64,
+    pub snapshot_observation: bool,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -114,10 +125,15 @@ impl Engine {
             || event.template.validate().is_err()
             || event.observed_at_micros < 0
             || event.ledger_at_micros.is_some_and(|time| time < 0)
+            || event.origin.as_ref().is_some_and(|o| o.offset < 0)
         {
             return Err(IngestError::InvalidEvent);
         }
-        if event.witnesses.is_empty() || event.witnesses.is_disjoint(&self.plan.parties) {
+        let inherited = matches!(event.action, Action::ArchiveByPriorContract);
+        if (inherited && (!self.plan.is_live() || !event.witnesses.is_empty()))
+            || (!inherited
+                && (event.witnesses.is_empty() || event.witnesses.is_disjoint(&self.plan.parties)))
+        {
             return Err(IngestError::Visibility);
         }
         if let Action::Create(value) = &event.action {
@@ -135,11 +151,19 @@ impl Engine {
         if !self.plan.templates.contains(&event.template) {
             return Ok(());
         }
-        let policy = VisibilityPolicy::from_witnesses(
-            self.plan.context.binding(),
-            event.witnesses.iter().cloned(),
-        )
-        .map_err(|_| IngestError::Visibility)?;
+        let policy = if inherited {
+            self.contracts
+                .get(&event.contract)
+                .ok_or(IngestError::Lifecycle)?
+                .policy
+                .clone()
+        } else {
+            VisibilityPolicy::from_witnesses(
+                self.plan.context.binding(),
+                event.witnesses.iter().cloned(),
+            )
+            .map_err(|_| IngestError::Visibility)?
+        };
         let policy = match &event.action {
             Action::Create(payload) => {
                 if self.contracts.contains_key(&event.contract) {
@@ -159,7 +183,7 @@ impl Engine {
                 );
                 policy
             }
-            Action::Archive => {
+            Action::Archive | Action::ArchiveByPriorContract => {
                 let contract = self
                     .contracts
                     .get_mut(&event.contract)
@@ -254,6 +278,7 @@ mod tests {
             witnesses: parties.iter().map(|p| PartyId::new(*p).unwrap()).collect(),
             observed_at_micros: 1,
             ledger_at_micros: Some(1),
+            origin: None,
             action,
         }
     }
@@ -422,5 +447,85 @@ mod tests {
         assert_eq!(engine.contracts.len(), 1);
         assert!(engine.contracts["a"].active);
         assert_eq!(engine.history.len(), 1);
+    }
+}
+
+#[cfg(test)]
+mod live_policy_tests {
+    use super::*;
+    #[test]
+    fn empty_archive_evidence_requires_prior_create_and_live_profile() {
+        let context =
+            SourceContext::new("scope-policy-test".into(), "synthetic".into(), 1).unwrap();
+        let party = PartyId::new("A").unwrap();
+        let template = TemplateId {
+            package_id: "0".repeat(64),
+            module: "Demo".into(),
+            entity: "Record".into(),
+        };
+        let plan = Plan::pqs(
+            context.clone(),
+            BTreeSet::from([party.clone()]),
+            BTreeSet::from([template.clone()]),
+        )
+        .unwrap();
+        let create = Event {
+            id: "create".into(),
+            contract: "contract".into(),
+            template,
+            witnesses: BTreeSet::from([party.clone()]),
+            observed_at_micros: 1,
+            ledger_at_micros: None,
+            origin: None,
+            action: Action::Create(Value::RawJson(
+                r#"{"amount":"12345678901234567890.1234567891","sequence":"9223372036854775807"}"#
+                    .into(),
+            )),
+        };
+        let archive = Event {
+            id: "archive".into(),
+            witnesses: BTreeSet::new(),
+            action: Action::ArchiveByPriorContract,
+            ..create.clone()
+        };
+        let mut engine = Engine::new(plan.clone());
+        assert!(
+            engine
+                .apply(Batch {
+                    context: context.clone(),
+                    position: "orphan".into(),
+                    events: vec![archive.clone()]
+                })
+                .is_err()
+        );
+        engine
+            .apply(Batch {
+                context: context.clone(),
+                position: "1".into(),
+                events: vec![create],
+            })
+            .unwrap();
+        let batch = Batch {
+            context: context.clone(),
+            position: "2".into(),
+            events: vec![archive],
+        };
+        let decoded = Batch::decode(&batch.encode().unwrap(), &plan).unwrap();
+        assert!(decoded.events[0].witnesses.is_empty());
+        engine.apply(decoded).unwrap();
+        let now = Instant::now();
+        let lease = SourceLease::from_verified(
+            context.binding(),
+            [party.clone()],
+            now,
+            crate::authorization::MAX_SOURCE_LEASE,
+            now + std::time::Duration::from_secs(60),
+        )
+        .unwrap();
+        let a = CallerGrants::from_verified(context.binding(), [party]);
+        let b = CallerGrants::from_verified(context.binding(), [PartyId::new("B").unwrap()]);
+        assert!(engine.active(&a, &lease, now).is_empty());
+        assert_eq!(engine.history(&a, &lease, now).len(), 2);
+        assert!(engine.history(&b, &lease, now).is_empty());
     }
 }

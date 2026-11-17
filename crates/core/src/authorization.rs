@@ -49,6 +49,12 @@ impl SourceLease {
         })
     }
 
+    /// Connector-only current source scope; this does not authenticate an API caller.
+    pub fn source_parties(&self, scope: &ScopeBinding, now: Instant) -> Option<&BTreeSet<PartyId>> {
+        (self.valid && now >= self.checked_at && now < self.valid_until && &self.scope == scope)
+            .then_some(&self.parties)
+    }
+
     /// Effective parties for a backend SQL read. This is not an identity or token verifier.
     /// Call again after the read so a result cannot outlive the source lease.
     pub fn read_parties(

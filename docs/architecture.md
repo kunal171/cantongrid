@@ -1,112 +1,122 @@
-# Architecture
+# Outcomia compatibility check
 
-Status: Rust configuration, exact fixture values, scoped lifecycle state and local
-CLI workflows are implemented. The [bounded reference store](storage.md) adds owned
-PostgreSQL state, journal/checkpoint/outbox atomicity and recovery for synthetic
-fixtures. PQS inspection is read-only; live ingestion, generated models/APIs and
-durable stream delivery remain planned. Verified source authorization, archival
-evidence, history coverage and handoff remain live-connector gates.
+Verified locally on 2026-11-17 against the App Provider participant, Canton 3.5.7.
+The initial check below was package validation only. After separate maintainer authorization, a local-only Protocol/Draft/Open/Closed lifecycle also passed the full Rust/PQS/PostgreSQL/REST/GraphQL path. See [Phase 3 acceptance](phase3-verification.md). No funded assets, trades, devnet or production deployment was performed.
 
-## System boundary
+## Artifact evidence
 
-```mermaid
-flowchart LR
-    S[Authorized Canton contract source] --> C[Read-only connector]
-    C --> N[Canonical normalization and visibility evidence]
-    M[Developer selections and processing definitions] --> P[Validated processing plan]
-    N --> P
-    P --> D[(Owned PostgreSQL: state, history, projections, checkpoints, outbox)]
-    D --> A[Authenticated REST and GraphQL]
-    D --> E[Durable change delivery]
-    A --> U[Applications]
-    E --> U
+The existing sibling Outcomia DAR passed `POST /v2/dars/validate`:
+
+- File: `contracts/main/.daml/dist/outcomia-markets-0.1.0.dar` in outcomia-canton.
+- SHA-256: `eef7340eba83f4f2af4865258c66c6461876bacb05b8e4dbc6c7ca74459f6f0e`.
+- Main package ID: `73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a`.
+- The source project declares SDK 3.7.1 and LF target 2.1. The validated DAR was
+  already built; this check does not establish that it matches every current source file.
+
+Reproduce from CantonGrid after LocalNet is ready:
+
+```bash
+python3 scripts/dev.py validate-dar \
+  ../outcomia-canton/contracts/main/.daml/dist/outcomia-markets-0.1.0.dar
 ```
 
-Source access is bounded by the operator's credentials and selection. API access
-is independently bounded by each caller's grants. PostgreSQL is CantonGrid-owned;
-any upstream PQS database is a read-only source, never a migration target.
+The helper reports the exact artifact hash and fails on rejection. It only calls
+validation; it does not upload, vet packages, allocate parties or submit commands.
+The main package remained absent from the participant's package inventory after
+validation. Changing the DAR requires a new validation result and hash.
 
-## Module responsibilities
+The [official JSON API specification](https://docs.canton.network/openapi/json-ledger-api/openapi.yaml)
+describes this validation endpoint as having no persistent ledger or package effect.
+The successful call verifies that endpoint on this particular LocalNet version.
 
-These are conceptual boundaries, not a committed crate layout.
+## Initial source review for the example
 
-| Module | Owns |
-| --- | --- |
-| CLI/configuration | Project scaffold, validation, command lifecycle and diagnostics. |
-| Connectors | Verified source protocol, snapshots, update acquisition and capabilities. |
-| Schema | Verified package metadata, Daml type mapping and schema versions. |
-| Core | Canonical identities, lifecycle records, provenance and authorization context. |
-| Processing | Declarative plan validation and deterministic projection execution. |
-| Storage | Owned migrations, atomic writes, checkpoints, rebuilds and durable outbox. |
-| API | Generated REST/GraphQL queries, authorization, pagination and stream delivery. |
-| Examples | Outcomia and an unrelated Daml application using public configuration interfaces. |
+The actual Canton source defines `Outcomia.Binary:Protocol` and
+`Outcomia.Binary:BinaryMarket`. Protocol revisions carry the operator, protocol
+name, admin list, market counter and fee settings. BinaryMarket includes its
+operator, creator, protocol name, market ID, terms, timestamps and lifecycle state.
+Changes such as opening a market consume a revision and create a successor.
 
-Core modules must not depend on example packages. Connector-specific payloads
-must not leak into the processing interface. Shared authorization rules belong in
-the core policy boundary and must apply to every query and delivery path.
+Example models must preserve contract IDs and explicitly define revision/domain
+identity. Operator/name alone must not be assumed globally unique across protocol
+roots. `Closed` stops trading; it does not prove final resolution or settlement.
+Custody, orders, positions and resolution use separate templates. A market record
+must not be interpreted as proof of collateral or a user's balance.
 
-## Ingestion and recovery
+This is a source review, not a verified metadata extraction pipeline. Do not copy
+these domain rules into the generic Rust engine. Typed bindings, actual authorized
+contract reads, complete lifecycle fixtures and an unrelated Daml example are
+still required. No Outcomia contracts have been indexed in the PQS fixture yet.
 
-1. Validate source identity, authorized scope, configuration and schema versions.
-2. Acquire an active-contract snapshot and supported history through a verified
-   snapshot/update handoff. The connector must document its actual guarantees.
-3. Normalize records with source identity, stable contract/event identity,
-   upstream position, observed time, ledger time when available, schema version,
-   visibility evidence and ingestion provenance.
-4. Apply lifecycle changes and configured processing. Commit canonical records,
-   projections, checkpoint and outbox entries in one PostgreSQL transaction.
-5. Resume from the committed position after interruption. Duplicate source
-   deliveries must have no duplicate state effect.
 
-Positions are opaque and scoped to a source, network and authorization epoch.
-There is no universal block height or total ordering across independent sources.
-A successful empty or truncated page does not prove archival. Failed parsing or
-unsupported events must stop progress or enter an explicitly configured,
-observable quarantine policy; they must never silently advance past lost data.
-History coverage and pruning gaps are queryable metadata, not invented history.
+## Authorized LocalNet lifecycle update
 
-## Generated storage and APIs
+The same DAR hash/main package above was uploaded after explicit approval. The
+controlled test reused owned parties and writer, captured a paged snapshot, then
+submitted Protocol_CreateBinary, Binary_Open and Binary_Close. Eight expected
+create/archive contract identities matched the index through single-event pages
+and worker restarts. Price tick `0.0000000001` and quantity lot
+`9223372036854775807` remained exact strings. Both REST and GraphQL succeeded.
+No Outcomia-specific Rust branches or sibling repository changes were required.
+The helper and explicit opt-in command are documented in [the runtime guide](live-runtime.md).
 
-Canonical active contracts and supported lifecycle records provide a useful
-baseline without a custom model. Verified Daml metadata enables typed fields;
-otherwise expose validated generic payloads with explicit schema limitations.
-Developer models declare typed outputs and processing rules. The planner derives
-managed projection storage, indexes, query fields and change records.
 
-Version migrations and processing definitions. Compatible additions may be
-applied automatically under operator policy. Breaking changes need a versioned
-rebuild and controlled promotion; never silently drop columns, reinterpret
-historical values or run model changes against the upstream database. Rebuilds
-must preserve privacy boundaries and expose their coverage/readiness.
+## Live profile added in 0.2.0-alpha.1
 
-Daml numeric and integer values require exact mappings. JSON, SQL and GraphQL
-representations must preserve precision end to end, including aggregations.
+The fixture reference retains its bounded full-journal replay. Live indexing uses
+SQL-native row lifecycle checks and a guarded expected checkpoint, so continuous
+operation does not hit the fixture's 256-batch/16-MiB journal replay cap. Deliveries
+are bounded; state, events, source cursor and outbox still share one transaction.
+A stale concurrent worker cannot rewind progress, failed writes roll back the
+whole page, and ambiguous commit acknowledgement is resolved by reopening the
+acknowledged tail. Journal/history disk usage grows with retained data; automatic
+retention/erasure is not implemented.
 
-## Queries and real-time changes
+New immutable owned migration 002 adds observation timestamps and its own checksum
+record. Run explicit initialization to migrate an existing owned destination;
+opening alone never migrates. No upstream source schema is modified. Read pages
+expose observation age and first/complete source boundaries to the authenticated
+transports. See [runtime configuration and limits](live-runtime.md).
 
-`serve` reads the indexed store. It must expose lag, coverage and readiness so
-clients can distinguish empty results from incomplete ingestion. It does not
-silently query a broader source when indexed data is unavailable.
 
-Start durable delivery with authenticated SSE. Persist changes in the same
-transaction as their state effects; notifications only wake consumers. Resume
-using opaque scoped cursors, with at-least-once delivery and stable event IDs for
-consumer deduplication. An expired retention window yields an explicit resync
-response. PostgreSQL outbox order is delivery order, not a global Canton order.
-GraphQL subscriptions can reuse this durable log in a later phase.
+## Delivered LocalNet subset
 
-Policy changes, disconnections and replay are detailed in [security](security.md).
-The developer interface is described in [processing model](processing-model.md).
+The live partial-history policy, current source/caller checks, forward paging and
+both API transports are now integrated. Controlled Outcomia publication during a
+paged snapshot matched all eight expected lifecycle contract identities, including
+same-offset events and restart. Original event offsets are retained separately
+from delivery cursors; raw operator witness sets/PKs are not public API fields.
+Actual Outcomia and unrelated Visibility both passed the same engine. Earlier
+probe-only caveats describe their historical scope; current acceptance and limits
+are authoritative in [Phase 3 verification](phase3-verification.md) and
+[the runtime guide](live-runtime.md). Full historical completeness, interface/
+reassignment support, generated type normalization and remote source integration
+remain unsupported; schema041 availability is never a complete global ledger.
 
-## Current Rust module layout
+The [live runtime](live-runtime.md) now integrates this checker into worker writes
+and both query transports; [acceptance evidence](phase3-verification.md) records
+its tested scope separately from this standalone probe.
 
-| Crate | Implemented responsibility |
-| --- | --- |
-| `crates/core` | Configuration, exact values, source identity, envelopes, visibility/leases and reference lifecycle processing. |
-| `crates/postgres` | Shared local connection validation and redacted database errors; no migrations. |
-| `crates/storage` | Owned destination migration, journal recovery, atomic materialization/checkpoints/outbox and writer exclusion. |
-| `crates/pqs` | Restricted read-only source metadata inspection; no destination migration or live copying. |
-| `crates/cli` | Command dispatch, separate source/storage operations and synthetic fixture workflows. |
 
-GraphQL/API modules will be separate when their authenticated implementation
-starts. Python `scripts/devtools` remains local provisioning/verification only.
+## Phase 3 LocalNet resolution
+
+The earlier gate inventory records the investigation baseline. The supported
+schema041 template-only/raw-payload profile is now delivered: explicit prior-create
+archive dependencies, current source grants, physical source bindings, bounded
+same-offset paging, SQL-native owned state/checkpoint/outbox, independent caller
+JWT/grants, scoped cursors and REST/GraphQL. Controlled actual Outcomia and unrelated
+Visibility demonstrations passed without production application branches.
+See [the acceptance report](phase3-verification.md) for evidence and exact limits.
+Interface/reassignment handling, complete history, generated typed metadata and
+remote source integration remain open rather than inferred from these results.
+
+
+## Delivered Phase 3 path
+
+The [LocalNet runtime](live-runtime.md) now wires these components through
+`index` and `serve`: current source rights/readiness → restricted read-only PQS
+snapshot/update pages → guarded owned SQL transaction → independent caller
+identity/current grants → shared authorized SQL pages → REST/GraphQL. Public
+lifecycle serialization removes operator-only witnesses, storage envelopes and
+page PKs while retaining record-local origin and explicit coverage. Generated
+business schemas/resolvers and outbox delivery remain later phases.

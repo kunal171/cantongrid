@@ -21,6 +21,33 @@ pub fn connect_env(name: &str) -> Result<Client, DatabaseError> {
     connect_local(&value)
 }
 
+/// Nonsecret target identity binds source-local offsets to a fixed participant database.
+/// Password rotation does not change this identity; host/port/database/role changes do.
+pub fn identity_env(name: &str) -> Result<String, DatabaseError> {
+    if !name.starts_with("CANTONGRID_")
+        || !name
+            .bytes()
+            .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
+    {
+        return Err(DatabaseError::Configuration);
+    }
+    identity_local(&std::env::var(name).map_err(|_| DatabaseError::Configuration)?)
+}
+
+pub fn identity_local(value: &str) -> Result<String, DatabaseError> {
+    let config = local_config(value)?;
+    let host = match &config.get_hosts()[0] {
+        Host::Tcp(h) => h,
+        _ => return Err(DatabaseError::Configuration),
+    };
+    Ok(format!(
+        "{host}:{}:{:?}:{:?}",
+        config.get_ports().first().unwrap_or(&5432),
+        config.get_dbname(),
+        config.get_user()
+    ))
+}
+
 /// Local-only plaintext transport. Remote/TLS support needs its own verified configuration.
 pub fn connect_local(value: &str) -> Result<Client, DatabaseError> {
     let config = local_config(value)?;
@@ -89,6 +116,20 @@ mod tests {
         assert!(local_config("host=127.0.0.1 user=x dbname=x password=synthetic").is_ok());
         assert!(local_config("host=::1 user=x dbname=x").is_ok());
         assert!(connect_env("HOME").is_err());
+        let first =
+            identity_local("host=127.0.0.1 port=5441 user=reader dbname=source password=first")
+                .unwrap();
+        assert_eq!(
+            first,
+            identity_local("host=127.0.0.1 port=5441 user=reader dbname=source password=rotated")
+                .unwrap()
+        );
+        assert_ne!(
+            first,
+            identity_local("host=127.0.0.1 port=5442 user=reader dbname=source password=first")
+                .unwrap()
+        );
+        assert!(!first.contains("password") && !first.contains("first"));
         assert!(!DatabaseError::Connection.to_string().contains("synthetic"));
     }
 }

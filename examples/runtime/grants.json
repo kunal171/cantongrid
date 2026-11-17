@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "epoch": 1,
+  "principals": {
+    "alice": {
+      "enabled": true,
+      "parties": ["replace-with-authorized-party"]
+    }
+  }
+}

@@ -4,13 +4,13 @@
 Daml contracts into queryable PostgreSQL databases, GraphQL APIs, and real-time
 data streams.**
 
-Status: Rust configuration and fixture lifecycle processing are implemented. The
-[CLI](docs/cli.md) can persist synthetic input to an owned local PostgreSQL store,
-recover state and query simulated party scopes. [Durable ingestion evidence and
-limits](docs/storage.md) distinguish this bounded reference implementation from
-live source ingestion. A read-only PQS inspector reports source capabilities and
-open gates. Live contract copying, authenticated REST/GraphQL and streams remain
-planned. [LocalNet development helpers](docs/localnet.md) support compatibility research.
+Status: the [LocalNet contracts runtime](docs/live-runtime.md) ingests authorized
+PQS snapshots and forward lifecycle events into owned PostgreSQL and serves
+caller-scoped REST/GraphQL. Actual Outcomia and unrelated Visibility examples
+passed through the same Rust engine. [Phase 3 evidence](docs/phase3-verification.md)
+records the tested limits: snapshot-forward partial history, raw exact JSON,
+loopback-only transport and no production claim. Generated business models and
+real-time streams remain Phase 4/5.
 
 The indexer runtime is **Rust**. Python scripts are development helpers for
 LocalNet and compatibility checks, not the ingestion or API implementation.

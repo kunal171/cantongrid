@@ -8,6 +8,7 @@ use sha2::{Digest, Sha256};
 
 const MIGRATION: &str = include_str!("../migrations/001_initial.sql");
 // One database-local migration lock, separate from per-stream writer locks.
+const PROGRESS: &str = include_str!("../migrations/002_progress.sql");
 const MIGRATION_LOCK: i64 = 0x43475249444d4947;
 
 /// Initialize only a separately owned destination; repeat calls verify the immutable migration.
@@ -25,7 +26,7 @@ fn initialize(client: &mut Client) -> Result<(), StoreError> {
         .query_one("SELECT to_regnamespace('cantongrid') IS NOT NULL", &[])?
         .get(0);
     if exists {
-        check_schema(&mut tx)?;
+        check_base(&mut tx)?;
     } else {
         tx.batch_execute(MIGRATION)?;
         tx.execute(
@@ -33,6 +34,20 @@ fn initialize(client: &mut Client) -> Result<(), StoreError> {
             &[&checksum()],
         )?;
     }
+    let progress: bool = tx
+        .query_one(
+            "SELECT to_regclass('cantongrid.runtime_migrations') IS NOT NULL",
+            &[],
+        )?
+        .get(0);
+    if !progress {
+        tx.batch_execute(PROGRESS)?;
+        tx.execute(
+            "INSERT INTO cantongrid.runtime_migrations VALUES(2,$1)",
+            &[&progress_checksum()],
+        )?;
+    }
+    check_schema(&mut tx)?;
     tx.commit().map_err(|_| StoreError::CommitUnknown)
 }
 
@@ -47,6 +62,37 @@ pub(crate) fn check_destination(client: &mut impl GenericClient) -> Result<(), S
 
 /// Never silently adopt a preexisting schema or rewrite an applied migration checksum.
 pub(crate) fn check_schema(client: &mut impl GenericClient) -> Result<(), StoreError> {
+    check_base(client)?;
+    let exists: bool = client
+        .query_one(
+            "SELECT to_regclass('cantongrid.runtime_migrations') IS NOT NULL",
+            &[],
+        )?
+        .get(0);
+    if !exists {
+        return Err(StoreError::Schema);
+    }
+    let rows = client.query(
+        "SELECT version,migration_sha256 FROM cantongrid.runtime_migrations",
+        &[],
+    )?;
+    if rows.len() != 1
+        || rows[0].get::<_, i32>(0) != 2
+        || rows[0].get::<_, String>(1) != progress_checksum()
+    {
+        return Err(StoreError::Schema);
+    }
+    Ok(())
+}
+
+fn progress_checksum() -> String {
+    Sha256::digest(PROGRESS.as_bytes())
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
+}
+
+fn check_base(client: &mut impl GenericClient) -> Result<(), StoreError> {
     let owned: bool = client.query_one("SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='cantongrid' AND nspowner=(SELECT oid FROM pg_roles WHERE rolname=current_user)) AND to_regclass('cantongrid.schema_version') IS NOT NULL", &[])?.get(0);
     if !owned {
         return Err(StoreError::Schema);
@@ -82,6 +128,14 @@ mod tests {
         let mut tx = client.transaction().unwrap();
         tx.execute(
             "UPDATE cantongrid.schema_version SET migration_sha256='synthetic-drift'",
+            &[],
+        )
+        .unwrap();
+        assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
+        tx.rollback().unwrap();
+        let mut tx = client.transaction().unwrap();
+        tx.execute(
+            "UPDATE cantongrid.runtime_migrations SET migration_sha256='synthetic-progress-drift'",
             &[],
         )
         .unwrap();

@@ -18,7 +18,9 @@ Source APIs and schema mappings require compatibility verification.
 | [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |
 | [Security](security.md) | Party-scoped access, derived data and revocation requirements. |
 | [Phase 3 handoff](specifications/phase3-v0.3.md) | Supplied v0.3 scope, acceptance matrix and historical baseline. |
-| [CLI](cli.md) | Implemented fixture commands and planned live commands. |
+| [CLI](cli.md) | Fixture, source, live index and authenticated serving commands. |
+| [LocalNet runtime](live-runtime.md) | Supported source, configuration, authentication, queries and operational limits. |
+| [Phase 3 acceptance](phase3-verification.md) | Actual LocalNet/owned-Postgres evidence and deferred scope. |
 | [Durable reference ingestion](storage.md) | Owned PostgreSQL transactions, replay, source inspection and limits. |
 | [Fixture pipeline](fixtures.md) | Strict configuration, exact values, lifecycle replay and limits. |
 | [Development tools](../scripts/README.md) | Consolidated LocalNet commands and script review. |
