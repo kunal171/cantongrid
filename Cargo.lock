@@ -265,6 +265,7 @@ version = "0.2.0-alpha.1"
 dependencies = [
  "cantongrid-core",
  "cantongrid-ledger",
+ "cantongrid-models",
  "cantongrid-postgres",
  "cantongrid-pqs",
  "cantongrid-runtime",

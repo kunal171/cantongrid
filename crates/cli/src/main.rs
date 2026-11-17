@@ -15,6 +15,9 @@ const HELP: &str = "CantonGrid — local ingestion and storage reference
 Usage:
   cantongrid index <runtime.json> [--once]
   cantongrid serve <runtime.json>
+  cantongrid models validate <models.json>
+  cantongrid models plan <models.json>
+  cantongrid models preview <models.json> <model-name> <payload.json>
   cantongrid init <new-directory>
   cantongrid validate <project.json>
   cantongrid fixture run <project.json> [--party <synthetic-party>]...
@@ -54,6 +57,9 @@ fn run(args: Vec<String>) -> Result<(), String> {
         [flag] if flag == "--help" || flag == "-h" => {
             println!("{HELP}");
             Ok(())
+        }
+        [command, action, path, rest @ ..] if command == "models" => {
+            commands::models::run(action, Path::new(path), rest)
         }
         [command, path, rest @ ..] if command == "index" || command == "serve" => {
             let once = rest == ["--once"];
