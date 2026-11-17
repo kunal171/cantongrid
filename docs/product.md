@@ -80,6 +80,21 @@ of universal Canton history or causal ordering across independent sources.
 Future source extensions may use the same provenance and policy boundaries.
 They must not displace the Daml-first product or complicate its first release.
 
+## Existing ecosystem and positioning
+
+The [competitive landscape and implementation snapshot](competitive-landscape.md)
+compares the available PQS, Canton Index, Zpoken, Noves, Canton Lens and other
+products/proposals. The core PQS-to-projection pipeline, Rust implementation,
+GraphQL and party-aware reads are not unique claims. Differentiation must be
+**demonstrated** through validated developer-defined processing, derived-record
+privacy dependencies, source completeness/provenance, reproducible examples and
+honest release evidence. Reuse supported upstream interfaces instead of silently
+reimplementing their storage and ingestion responsibilities.
+
+The comparison is research, not a new commitment to Scan or other sources in the
+first release; accepted [decisions](decisions.md) and the [roadmap](roadmap.md)
+continue to govern phase scope.
+
 ## Release claims
 
 Every capability must be labelled planned, fixture-tested, LocalNet-tested or
