@@ -61,6 +61,16 @@ fn fingerprints_and_ddl_are_deterministic_and_names_cannot_inject_sql() {
     assert!(plan.create_sql.contains("\"sequence\" bigint NOT NULL"));
     assert!(plan.create_sql.contains("\"note\" text,"));
     assert!(plan.create_sql.contains("REFERENCES cantongrid.contracts"));
+    let mut fields = first.models()[0]
+        .evaluate(&payload().to_string())
+        .unwrap()
+        .unwrap();
+    fields.insert("state".into(), Value::Text("Archived".into()));
+    assert!(
+        first.models()[0]
+            .row_json("synthetic-stream", "synthetic-contract", &fields)
+            .is_err()
+    );
     assert_eq!(
         plan.create_sql,
         second.models()[0].sql_plan().unwrap().create_sql
@@ -223,6 +233,12 @@ fn generated_schema_round_trips_exact_values_and_keeps_nullable_fields() {
     let contract = "synthetic-contract";
     let row = model.row_json(&stream, contract, &projected).unwrap();
     let mut client = cantongrid_postgres::connect_env("CANTONGRID_DESTINATION_URL").unwrap();
+    // This integration test may write only to the named disposable owned fixture.
+    let owned:bool=client.query_one("SELECT current_database()='cantongrid' AND current_user='cantongrid_owner' AND to_regclass('cantongrid.contracts') IS NOT NULL",&[]).unwrap().get(0);
+    assert!(
+        owned,
+        "model schema test requires the disposable owned destination"
+    );
     let mut tx = client.transaction().unwrap();
     tx.batch_execute("CREATE SCHEMA IF NOT EXISTS cantongrid_models")
         .unwrap();

@@ -77,6 +77,13 @@ impl Model {
         {
             return Err(ModelError::Definition);
         }
+        if self
+            .filter
+            .as_ref()
+            .is_some_and(|filter| fields.get(&filter.field) != Some(&filter.equals))
+        {
+            return Err(ModelError::Type);
+        }
         let mut row = serde_json::Map::new();
         row.insert("_cg_stream_key".into(), stream.into());
         row.insert("_cg_contract_id".into(), contract.into());
