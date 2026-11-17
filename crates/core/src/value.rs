@@ -11,6 +11,7 @@ use std::{collections::BTreeMap, fmt};
 )]
 pub enum Value {
     Text(String),
+    Party(String),
     Bool(bool),
     Int64(String),
     Numeric(Decimal),
@@ -50,6 +51,11 @@ impl Value {
             return Err(ValueError);
         }
         match self {
+            Self::Party(value) => {
+                if !crate::config::identifier(value) {
+                    return Err(ValueError);
+                }
+            }
             Self::Int64(value) => {
                 let parsed = value.parse::<i64>().map_err(|_| ValueError)?;
                 if parsed.to_string() != *value {
