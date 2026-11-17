@@ -236,6 +236,11 @@ impl Plan {
         })
     }
 
+    /// Declared source parties are configuration, never proof of current source/caller permissions.
+    pub fn source_parties(&self) -> impl Iterator<Item = &PartyId> {
+        self.parties.iter()
+    }
+
     /// Test exact template membership without exposing a mutable selection.
     pub fn selects(&self, template: &TemplateId) -> bool {
         self.templates.contains(template)

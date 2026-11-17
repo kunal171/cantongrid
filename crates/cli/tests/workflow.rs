@@ -132,3 +132,119 @@ fn input_size_and_file_kind_limits_are_enforced() {
         assert!(result.stdout.is_empty());
     }
 }
+
+/// Delete only this test's synthetic source context after the CLI process exits.
+struct DatabaseScope(String);
+impl Drop for DatabaseScope {
+    fn drop(&mut self) {
+        if let Ok(mut client) = cantongrid_postgres::connect_env("CANTONGRID_DESTINATION_URL")
+            && let Ok(mut tx) = client.transaction()
+        {
+            for table in ["outbox", "events", "contracts", "batches", "streams"] {
+                let sql = format!(
+                    "DELETE FROM cantongrid.{table} WHERE stream_key IN (SELECT stream_key FROM cantongrid.streams WHERE definition->>'source'=$1)"
+                );
+                if tx.execute(&sql, &[&self.0]).is_err() {
+                    return;
+                }
+            }
+            let _ = tx.commit();
+        }
+    }
+}
+
+#[test]
+#[ignore = "requires owned PostgreSQL fixture and CANTONGRID_DESTINATION_URL"]
+fn durable_cli_restarts_without_duplicating_state_and_queries_scoped_counts() {
+    let root = Scratch::new();
+    assert!(cli(&root.0, &["init", "demo"]).status.success());
+    let project = root.0.join("demo/cantongrid.json");
+    let events = root.0.join("demo/events.json");
+    let mut definition: serde_json::Value =
+        serde_json::from_slice(&fs::read(&project).unwrap()).unwrap();
+    let source = format!(
+        "cli-postgres-test-{}-{}",
+        std::process::id(),
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    );
+    definition["source"]["id"] = source.clone().into();
+    fs::write(&project, definition.to_string()).unwrap();
+    let mut input: serde_json::Value = serde_json::from_slice(&fs::read(&events).unwrap()).unwrap();
+    input["source"]["id"] = source.clone().into();
+    fs::write(&events, input.to_string()).unwrap();
+    let variable = "CANTONGRID_DESTINATION_URL";
+    let initialized = cli(&root.0, &["storage", "init", "--database-env", variable]);
+    assert!(
+        initialized.status.success(),
+        "{}",
+        String::from_utf8_lossy(&initialized.stderr)
+    );
+    let _cleanup = DatabaseScope(source);
+    for expected in [2, 0] {
+        let output = cli(
+            &root.0,
+            &[
+                "fixture",
+                "index",
+                "demo/cantongrid.json",
+                "--database-env",
+                variable,
+            ],
+        );
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let data: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(data["applied_batches"], expected);
+        assert_eq!(data["result"]["outbox"], 5);
+    }
+    // Queries recover from PostgreSQL; they do not reopen or depend on the original fixture file.
+    fs::remove_file(events).unwrap();
+    for (parties, active, history) in [
+        (vec!["A"], 2, 4),
+        (vec!["B"], 2, 2),
+        (vec!["A", "B"], 3, 5),
+        (vec![], 0, 0),
+    ] {
+        let mut args = vec![
+            "fixture",
+            "query",
+            "demo/cantongrid.json",
+            "--database-env",
+            variable,
+        ];
+        for party in parties {
+            args.extend(["--party", party]);
+        }
+        let output = cli(&root.0, &args);
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let data: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(data["visible_active"], active);
+        assert_eq!(data["visible_history"], history);
+        let text = String::from_utf8_lossy(&output.stdout);
+        assert!(!text.contains("123456789"));
+        assert!(!text.contains("local-cantongrid-only"));
+    }
+    assert!(
+        !cli(
+            &root.0,
+            &[
+                "fixture",
+                "query",
+                "demo/cantongrid.json",
+                "--database-env",
+                variable,
+                "--party",
+                "C"
+            ]
+        )
+        .status
+        .success()
+    );
+}

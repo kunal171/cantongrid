@@ -57,6 +57,9 @@ name = "cantongrid-cli"
 version = "0.1.0"
 dependencies = [
  "cantongrid-core",
+ "cantongrid-postgres",
+ "cantongrid-pqs",
+ "cantongrid-storage",
  "serde_json",
 ]
 
