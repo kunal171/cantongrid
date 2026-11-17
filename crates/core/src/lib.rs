@@ -1,14 +1,10 @@
-//! Source-neutral core primitives. No connector, authentication provider or server exists yet.
+//! Source-neutral, fixture-tested primitives. No live connector, authentication provider or server.
 #![forbid(unsafe_code)]
-
-pub mod visibility;
 
 pub mod authorization;
 pub mod config;
-
-pub mod value;
-
-pub mod lifecycle;
-
 mod document;
 pub mod fixture;
+pub mod lifecycle;
+pub mod value;
+pub mod visibility;

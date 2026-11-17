@@ -85,6 +85,13 @@ fn load_plan(path: &Path) -> Result<Plan, String> {
 }
 
 fn read_document(path: &Path) -> Result<String, String> {
+    // Reject directories/devices/FIFOs before opening (a FIFO open could otherwise block).
+    if !fs::metadata(path)
+        .map_err(|_| "cannot inspect input document")?
+        .is_file()
+    {
+        return Err("input document must be a regular file".into());
+    }
     let file = File::open(path).map_err(|_| "cannot open input document")?;
     if !file
         .metadata()

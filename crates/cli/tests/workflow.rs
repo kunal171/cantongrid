@@ -120,3 +120,15 @@ fn invalid_inputs_fail_without_credentials_paths_or_partial_success_output() {
     assert!(result.stdout.is_empty());
     assert!(!String::from_utf8_lossy(&result.stderr).contains("PRIVATE"));
 }
+
+#[test]
+fn input_size_and_file_kind_limits_are_enforced() {
+    let root = Scratch::new();
+    let large = std::fs::File::create(root.0.join("large.json")).unwrap();
+    large.set_len(8 * 1024 * 1024 + 1).unwrap();
+    for input in [".", "large.json"] {
+        let result = cli(&root.0, &["validate", input]);
+        assert!(!result.status.success());
+        assert!(result.stdout.is_empty());
+    }
+}
