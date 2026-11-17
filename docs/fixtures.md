@@ -23,3 +23,14 @@ configuration rejects unknown fields. Diagnostics deliberately suppress parser
 messages that could include field names, credentials or payload values. Runtime
 and API authorization still require trusted grant providers; fixture party names
 are test inputs only.
+
+## Exact fixture values
+
+The Rust `value` module accepts explicit tagged Text, Bool, Int64, Numeric,
+Optional, Enum, List and Record values. Int64 and decimals use canonical strings;
+Numeric declares its scale (0–37) and enforces precision 38, following the
+[Daml Numeric definition](https://archived.docs.digitalasset.com/build/3.5/reference/daml/stdlib/Prelude.html).
+No arithmetic or inferred Daml schema validation is implemented here. Unsupported
+kinds, out-of-range values and excessive nesting fail validation. Debug output
+redacts payloads. Live encodings must be normalized by a verified adapter;
+fixture encodings are not a claim about the Ledger API's wire format.
