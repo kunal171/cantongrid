@@ -9,6 +9,7 @@ be added only after compatibility verification.
 | [Local development](localnet.md) | Reproducible LocalNet setup, endpoints and read-only usage. |
 | [LocalNet evidence](localnet-evidence.md) | Observed environment and verification limits. |
 | [Outcomia compatibility](outcomia-compatibility.md) | Exact DAR validation evidence and example boundaries. |
+| [PQS development fixture](pqs-local.md) | Scoped local source setup and operational limits. |
 | [Product](product.md) | Developer promise, release scope and responsibility boundaries. |
 | [Architecture](architecture.md) | Components, ingestion, generated storage and recovery. |
 | [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |

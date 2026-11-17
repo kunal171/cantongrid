@@ -1,0 +1,41 @@
+# Local compatibility fixture only; not the CantonGrid destination database.
+name: cantongrid-pqs
+services:
+  pqs-postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: pqs_owner
+      POSTGRES_PASSWORD: local-pqs-only
+      POSTGRES_DB: pqs
+    ports:
+      - 127.0.0.1:5441:5432
+    volumes:
+      - pqs-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U pqs_owner -d pqs]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+  pqs:
+    image: europe-docker.pkg.dev/da-images/public/docker/scribe@sha256:072faffbee3640448b282fc973b04ec99f5ba2bf92d2b43d01a00c89626c3a67
+    user: "${PQS_UID:-1000}:${PQS_GID:-1000}"
+    command: [pipeline, ledger, postgres-document]
+    environment:
+      SCRIBE_CONFIG: /config/source.conf
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx640m -XX:ActiveProcessorCount=2
+    volumes:
+      - ../.local/pqs/source.conf:/config/source.conf:ro
+    ports:
+      - 127.0.0.1:18080:8080
+    networks: [default, localnet]
+    depends_on:
+      pqs-postgres:
+        condition: service_healthy
+    mem_limit: 1g
+volumes:
+  pqs-data:
+networks:
+  localnet:
+    external: true
+    name: cantongrid-localnet
