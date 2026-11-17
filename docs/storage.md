@@ -1,13 +1,15 @@
 # Durable ingestion milestone
 
-Status: in development on `feat/pqs-ingestion-storage`. The first increment adds
-versioned batch envelopes and canonical plan definitions. They preserve original
-source evidence; trusted policies/grants are never deserialized from a journal.
+Status: implemented and tested as a **bounded local reference feature** on
+`feat/pqs-ingestion-storage`: owned PostgreSQL state/history/checkpoint/outbox,
+restart/replay and writer exclusion; durable fixture CLI commands; and a read-only
+PQS inspector. [Commands](cli.md) and [verification](verification.md) record the
+actual environment tested. This does not complete Phase 3's live connector/APIs.
 
-Next: a separate owned PostgreSQL destination, atomic state/history/checkpoint/
-outbox commits, restart replay, writer exclusion and fixture CLI integration.
-The initial implementation remains a bounded reference engine, not a throughput
-claim. Simulated fixture grants do not authenticate application callers.
+The store preserves original evidence in versioned envelopes and binds a generation
+to its exact canonical plan definition. Trusted visibility policies/grants are
+recomputed, never deserialized from a journal. Fixture caller grants remain
+simulated, so these commands must only be used with synthetic fixture input.
 
 ## Live source gate discovered
 
@@ -19,7 +21,7 @@ and current functions. It is documented source behavior, not a newly demonstrate
 upstream bug. Missing archival evidence must not be substituted with invented
 parties, signatories, create witnesses or an unfiltered fallback.
 
-A Rust source inspector will report this restriction without copying private
+The Rust source inspector reports this restriction without copying private
 payloads or claiming source readiness/authorization. Live archive ingestion,
 current source-grant retrieval, historical retention policy, snapshot/update
 handoff and actual Daml metadata normalization remain implementation gates.
@@ -51,7 +53,8 @@ by default and must be run against the owned fixture.
 The Rust store commits a source batch's canonical contracts, lifecycle observations,
 original evidence envelope, outbox references, checkpoint and revision together.
 A transaction-level advisory lock excludes another writer for that source context.
-Locks are database-local and released on transaction/connection termination; no
+[Transaction advisory locks](https://www.postgresql.org/docs/14/explicit-locking.html#ADVISORY-LOCKS)
+are database-local and released on transaction/connection termination; no
 application process lease needs to be guessed. Locks coordinate cooperating engine
 workers; the trusted database owner can still modify SQL directly.
 

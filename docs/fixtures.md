@@ -1,8 +1,9 @@
 # Rust configuration and fixture pipeline
 
 Status: implemented and fixture-tested. See the [CLI workflow](cli.md) and
-[synthetic examples](../examples/fixtures/README.md). No live connector or database
-persistence is included in this milestone.
+[synthetic examples](../examples/fixtures/README.md). This original in-memory milestone has no live connector. The later
+[durable reference feature](storage.md) provides PostgreSQL persistence for these
+same synthetic fixtures.
 
 ## Project configuration
 

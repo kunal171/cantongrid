@@ -43,7 +43,13 @@ examples through one runner. Fixture caller grants are simulated and state is
 in memory. Models, live adapters and other planned CLI commands fail explicitly.
 Advanced Daml types/schema discovery remain restricted pending verification.
 
-## Phase 3 — Authorized LocalNet ingestion and baseline queries
+## Phase 3 — Authorized LocalNet ingestion and baseline queries (in progress)
+
+First storage feature delivered: bounded PostgreSQL materialization, versioned
+journal recovery, atomic checkpoint/outbox, writer exclusion and durable synthetic
+fixture commands. The source inspector verifies schema 041 read-only and reports
+missing archive witnesses. Live copying, handoff/current grants, actual Daml type
+normalization and authenticated query APIs below remain open. See [storage](storage.md).
 
 Implement the verified read-only connector, owned PostgreSQL canonical storage,
 atomic checkpoints/outbox, snapshot/update handoff and restart recovery. Add

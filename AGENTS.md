@@ -1,10 +1,10 @@
 # Working on CantonGrid
 
-- Current phase: Rust core/configuration/fixture milestone complete. Only `init`,
-  `validate` and `fixture run` are implemented CLI commands; state is in memory and
-  caller grants are simulated. Live connectors and generated APIs remain gated
-  by compatibility and authorization research. Advance implementation when the
-  user asks to advance the phase; user instructions take precedence over docs.
+- Current phase: Phase 3 has started with bounded owned PostgreSQL fixture ingestion,
+  recovery/outbox atomicity and a read-only PQS schema inspector. Live contract
+  ingestion, current source/caller verification and APIs remain gated. Fixture
+  query party flags simulate grants and must never be used as production identity.
+  Advance implementation when the user asks; user instructions take precedence.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python
   scripts are local development/verification helpers, not the product runtime.
 - Product: general-purpose, Daml-first Canton indexing infrastructure. Outcomia
