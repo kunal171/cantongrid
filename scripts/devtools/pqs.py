@@ -85,10 +85,15 @@ def main(argv=None):
     if args.command == 'up':
         up(visibility=args.visibility)
     elif args.command == 'reader':
+        sql = (ROOT / 'dev/pqs-reader.sql').read_text()
         if args.visibility:
-            parser.error('reader applies only to the provider source')
-        subprocess.run(pg_command(tuples=False),
-                       input=(ROOT / 'dev/pqs-reader.sql').read_text(), text=True, check=True, env=ENV)
+            # Separate role/database: never widen the provider reader's party scope.
+            sql = sql.replace("current_database() <> 'pqs'", "current_database() <> 'cantongrid_visibility'")
+            sql = sql.replace('DATABASE pqs ', 'DATABASE cantongrid_visibility ')
+            sql = sql.replace('cantongrid_pqs_reader', 'cantongrid_visibility_reader')
+            sql = sql.replace('local-pqs-reader', 'local-visibility-reader')
+        subprocess.run(pg_command('cantongrid_visibility' if args.visibility else 'pqs', tuples=False),
+                       input=sql, text=True, check=True, env=ENV)
         print('Prepared development SQL reader; source ownership remains with PQS')
     else:
         command = ['down'] if args.command == 'stop' else ['ps', '-a']

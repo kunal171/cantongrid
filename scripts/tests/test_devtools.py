@@ -108,11 +108,14 @@ class DevelopmentToolsTests(unittest.TestCase):
         self.assertNotIn('--volumes', run.call_args.args[0])
 
     @patch.object(pqs.subprocess, 'run')
-    def test_visibility_reader_is_rejected_before_database_access(self, run):
-        with self.assertRaises(SystemExit) as error:
-            pqs.main(['reader', '--visibility'])
-        self.assertEqual(error.exception.code, 2)
-        run.assert_not_called()
+    def test_visibility_reader_uses_a_separate_database_and_role(self, run):
+        pqs.main(['reader', '--visibility'])
+        self.assertIn('cantongrid_visibility', run.call_args.args[0])
+        sql = run.call_args.kwargs['input']
+        self.assertIn('cantongrid_visibility_reader', sql)
+        self.assertNotIn('cantongrid_pqs_reader', sql)
+        self.assertIn("current_database() <> 'cantongrid_visibility'", sql)
+
 
 
 if __name__ == '__main__':
