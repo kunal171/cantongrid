@@ -132,6 +132,15 @@ mod tests {
         assert_eq!(report.archives_with_witnesses, 0);
     }
     #[test]
+    #[ignore = "requires owned PostgreSQL fixture and CANTONGRID_DESTINATION_URL"]
+    fn destination_owner_cannot_be_used_as_a_source_reader() {
+        assert_eq!(
+            inspect_env("CANTONGRID_DESTINATION_URL").unwrap_err(),
+            InspectError::Reader
+        );
+    }
+
+    #[test]
     fn source_settings_do_not_fall_back_to_unrelated_environment() {
         assert_eq!(
             inspect_env("HOME").unwrap_err(),
