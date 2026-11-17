@@ -1,8 +1,9 @@
 # Research and unresolved decisions
 
 Status: LocalNet startup and baseline authenticated Ledger API reads have been
-[verified locally](localnet-evidence.md). The remaining connector, schema and
-authorization gates below are still open. The original supplied brief is product
+[verified locally](localnet-evidence.md). Scoped [PQS SQL compatibility](pqs-compatibility.md) and one
+[Outcomia DAR validation](outcomia-compatibility.md) have also passed. Remaining
+connector, schema and authorization guarantees below are still open. The original supplied brief is product
 input, not compatibility evidence.
 
 Before implementing a live adapter, consult current official Canton/Daml/PQS
@@ -13,7 +14,7 @@ Do not infer current endpoints, SQL functions or payload shapes from this plan.
 | Question | Required evidence / decision | Must resolve before |
 | --- | --- | --- |
 | LocalNet availability | Bootstrap and baseline reads verified; installed versions, endpoints and limits recorded in the LocalNet evidence. Application contract scope remains unverified. | Live connector implementation. |
-| First source | Verify PQS capabilities and deployment requirements; compare Ledger API only if needed; select one supported adapter. | Source-specific code. |
+| First source | Scribe 3.5.4/schema 041 is verified for scoped LocalNet active/create/archive queries. Rust adapter design, production role and broader authorization/history guarantees remain open. | Source-specific code. |
 | Snapshot handoff | Stable boundary, pagination, concurrent changes and resume behavior; demonstrate no lost creates/archives. | Bootstrap/checkpoint implementation. |
 | Event identity and ordering | Stable dedup keys, source positions, lifecycle kinds and time semantics. | Canonical persistence. |
 | Private visibility | Exact available authorization evidence and its interpretation; source grant changes and visibility loss. | Live private data copying. |
@@ -21,7 +22,7 @@ Do not infer current endpoints, SQL functions or payload shapes from this plan.
 | History coverage | Pruning, unavailable ranges, filters, reassignments and other lifecycle limitations. | History completeness claims. |
 | Daml schema discovery | Verified package metadata access and type representation, including upgrades and template identity. | Typed schema generation. |
 | Exact values | Numeric scale/precision, Int64, optionals, variants, timestamps and transport serialization. | Typed storage/operators. |
-| Outcomia mappings | Actual Daml templates and required model definitions, checked against the Canton codebase/packages. | Outcomia demo. |
+| Outcomia mappings | Existing DAR validated without upload and initial source templates reviewed. Typed metadata extraction and authorized lifecycle/model demonstrations remain open. | Outcomia demo. |
 | Genericity fixture | Unrelated template set and representative lifecycle/derived model. | Processing interface acceptance. |
 | API identity | Token issuer/format, grant mapping, expiry, rotation and administrator roles. | Authenticated serving. |
 | Model language | Bounded grammar, keys, expression semantics, capability errors and diagnostics. | Public configuration contract. |

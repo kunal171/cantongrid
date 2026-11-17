@@ -72,3 +72,21 @@ PQS or Outcomia SDK 3.7.1 as verified compatible with Canton 3.5.7.
 Active-contract visibility, snapshot/update handoff, lifecycle ingestion, exact
 schema mapping, scoped non-admin users and generated CantonGrid APIs remain
 unverified. Admin read-only health checks do not establish these guarantees.
+
+
+## Follow-up — 2026-11-17
+
+After the interrupted host boot, the existing stack required an orderly
+stop/start with its named volumes retained. All three authenticated probes
+passed again. No user funds or source repositories were changed.
+
+The [PQS fixture and SQL checks](pqs-compatibility.md) now verify Scribe 3.5.4 /
+schema 041 against this participant, using a separate database and one-party
+read-only ledger user. The [Outcomia artifact](outcomia-compatibility.md) passed
+non-persisting DAR validation. The earlier remaining-gates section describes the
+initial handoff; these linked results supersede its unverified baseline items.
+
+No Outcomia DAR has been uploaded and no custom contract transactions were
+submitted. PQS is running for the local test with a one-hour credential;
+`localnet-pqs.py up` renews it. Broader source authorization and the Rust indexer
+remain unimplemented/unverified as described in the compatibility results.

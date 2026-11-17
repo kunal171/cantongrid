@@ -67,3 +67,14 @@ Python parsing, local Markdown links, generated configuration isolation and Git
 whitespace checks pass. These development helpers do not implement the planned
 CantonGrid CLI, connector or API server. Runtime acceptance matrix items above
 remain future work unless explicitly covered by that evidence.
+
+
+## Compatibility handoff — 2026-11-17
+
+[Outcomia DAR validation](outcomia-compatibility.md) and
+[PQS SQL/source/recovery checks](pqs-compatibility.md) passed on the recorded
+LocalNet profile. An invalid DAR was rejected. The PQS probe rejected a stopped
+source despite retained database rows. Recreating it preserved an explicitly
+pinned historical snapshot, caught up to newer source updates and did not
+produce duplicate create identities. These are upstream fixture checks, not
+CantonGrid runtime, authorization-isolation or outbox acceptance.
