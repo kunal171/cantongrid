@@ -1,3 +1,26 @@
+# Rust configuration and fixture pipeline
+
+Status: implemented and fixture-tested. See the [CLI workflow](cli.md) and
+[synthetic examples](../examples/fixtures/README.md). No live connector or database
+persistence is included in this milestone.
+
+## Project configuration
+
+The committed format is JSON version 1, demonstrated by both example projects.
+Project, model and payload schema versions are explicit and currently must be 1.
+The only supported adapter is `fixture`; source identity, network, positive scope
+generation, unique source parties and fixture path are required. Exact package
+IDs must be 64 lowercase hexadecimal characters; module/entity names are explicit.
+Selections require both create/archive and complete history. Empty/wildcard or
+duplicate selections are rejected. Models/operators, credential settings and live
+adapters are rejected until their implementation phases rather than silently
+ignored. Source capability validation is a plan gate, not a claim that a live
+source has those guarantees.
+
+Errors omit raw input, identifiers and credentials. Unknown fields fail closed
+using [Serde strict containers](https://serde.rs/container-attrs.html). JSON is
+parsed through a duplicate-key/float-rejecting boundary before typed decoding.
+
 # Rust fixture milestone
 
 Work in progress: strict project configuration is implemented in `core::config`.
@@ -26,7 +49,7 @@ are test inputs only.
 
 ## Exact fixture values
 
-The Rust `value` module accepts explicit tagged Text, Bool, Int64, Numeric,
+The Rust `value` module accepts explicit tagged Text, Party, Bool, Int64, Numeric,
 Optional, Enum, List and Record values. Int64 and decimals use canonical strings;
 Numeric declares its scale (0–37) and enforces precision 38, following the
 [Daml Numeric definition](https://archived.docs.digitalasset.com/build/3.5/reference/daml/stdlib/Prelude.html).

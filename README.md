@@ -4,11 +4,12 @@
 Daml contracts into queryable PostgreSQL databases, GraphQL APIs, and real-time
 data streams.**
 
-Status: documentation foundation complete; LocalNet compatibility work is in
-progress. Development helpers are available in the [LocalNet guide](docs/localnet.md).
-The first [Rust core library](crates/core/README.md) implements visibility policies
-and bounded source-grant lease decisions. There is no CantonGrid executable, live connector, destination migration
-or API server yet. Product commands and interfaces below remain planned.
+Status: the Rust core/configuration/fixture milestone is implemented. The
+[CLI fixture workflow](docs/cli.md) validates projects and reproduces scoped
+create/archive state without credentials. Both [examples](examples/fixtures/README.md)
+use the same engine. [LocalNet development helpers](docs/localnet.md) support
+compatibility research. Live connectors, destination PostgreSQL migrations,
+REST/GraphQL and streams remain planned.
 
 The indexer runtime will be **Rust**. Python scripts are development helpers for
 LocalNet and compatibility checks, not the ingestion or API implementation.
