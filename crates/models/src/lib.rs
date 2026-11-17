@@ -7,3 +7,6 @@ pub use error::ModelError;
 
 mod arithmetic;
 mod evaluate;
+
+mod sql;
+pub use sql::SqlPlan;
