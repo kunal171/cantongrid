@@ -26,3 +26,9 @@
 - Record unresolved details and their decision gates instead of inventing an
   implementation contract. The original supplied build prompt is historical
   input, not a standing instruction to execute every phase.
+
+- Classify encountered failures as our configuration/processing, documented source
+  behavior or a reproducible upstream defect. Before proposing a contribution,
+  capture exact versions and minimal nonsecret controls, inspect current upstream
+  code and search related issues. Prepare local evidence; do not publish without
+  a user instruction authorizing that action.
