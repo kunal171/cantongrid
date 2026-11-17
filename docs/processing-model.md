@@ -1,7 +1,9 @@
 # Developer processing model
 
-Status: intended contract. Configuration syntax, expression grammar and generated
-API names will be finalized with validated examples during implementation.
+Status: the first [typed model compiler/evaluator/planner](phase4-models.md) is
+implemented with two example definitions and offline CLI commands. Managed live
+materialization, generated APIs and the broader processing vocabulary below remain
+in progress; this document distinguishes the product contract from delivered scope.
 
 ## What developers supply
 

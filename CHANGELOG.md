@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.0-alpha.1 — unreleased
+
+### Added
+
+- Bounded declarative typed model definitions, filters and checked exact arithmetic.
+- Deterministic generated SQL table plans and exact typed row encoding.
+- Offline model validation, planning and preview CLI commands.
+- Outcomia and unrelated Visibility model definitions plus owned-Postgres schema round-trip tests.
+- GitBook-ready developer guide covering setup, persistence, LocalNet, authentication,
+  REST/GraphQL, model examples and operations, with synthetic preview payloads.
+
+### In progress
+
+- Phase 4 live model materialization, lifecycle retractions, model registry/backfill/promotion and generated typed APIs remain incomplete.
+- These model commands do not install schemas, ingest contracts or authenticate API callers.
+
+### Fixed
+
+- Reject PostgreSQL-incompatible NUL text in model fields, optional values, literals and filters.
+- Apply the projection-size limit to directly supplied typed rows before SQL encoding.
+
 ## 0.2.0-alpha.1 — unreleased
 
 ### Added

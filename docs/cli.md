@@ -154,3 +154,17 @@ Use the separate [runtime configuration](live-runtime.md), exact read-only sourc
 access and initialized owned destination. `--once` processes one bounded page;
 continuous indexing retries without dropping filters or uncommitted checkpoints.
 The API uses independently authenticated caller tokens, not fixture party flags.
+
+
+## Declarative model tools (Phase 4 in progress)
+
+```bash
+cantongrid models validate examples/models/outcomia.json
+cantongrid models plan examples/models/visibility.json
+cantongrid models preview examples/models/visibility.json records /path/to/payload.json
+```
+
+See [the model contract](phase4-models.md). These bounded offline tools validate,
+evaluate or generate a reviewable SQL plan; they do not install schemas or change
+the live worker/API. Preview uses an explicitly supplied local payload, not source
+or caller authentication. Model materialization and generated queries are next.

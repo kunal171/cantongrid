@@ -11,18 +11,20 @@ name = "cantongrid"
 path = "src/main.rs"
 
 [dependencies]
-cantongrid-core = { path = "../core", version = "=0.2.0-alpha.1" }
+cantongrid-core = { path = "../core", version = "=0.3.0-alpha.1" }
 serde_json = "1.0"
-cantongrid-storage = { path = "../storage", version = "=0.2.0-alpha.1" }
-cantongrid-pqs = { path = "../pqs", version = "=0.2.0-alpha.1" }
+cantongrid-storage = { path = "../storage", version = "=0.3.0-alpha.1" }
+cantongrid-pqs = { path = "../pqs", version = "=0.3.0-alpha.1" }
 
-cantongrid-ledger = { path = "../ledger", version = "=0.2.0-alpha.1" }
+cantongrid-ledger = { path = "../ledger", version = "=0.3.0-alpha.1" }
 tokio = { version = "1", features = ["rt", "time"] }
 
-cantongrid-runtime = { path = "../runtime", version = "=0.2.0-alpha.1" }
+cantongrid-runtime = { path = "../runtime", version = "=0.3.0-alpha.1" }
+
+cantongrid-models = { path = "../models", version = "=0.3.0-alpha.1" }
 
 [dev-dependencies]
-cantongrid-postgres = { path = "../postgres", version = "=0.2.0-alpha.1" }
+cantongrid-postgres = { path = "../postgres", version = "=0.3.0-alpha.1" }
 
 jsonwebtoken = { version = "12.0.0", default-features = false }
 reqwest = { version = "0.13.5", default-features = false }

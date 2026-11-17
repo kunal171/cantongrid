@@ -4,6 +4,10 @@ These documents distinguish the current product agreement, implemented Rust
 fixture workflow, LocalNet research evidence and planned live capabilities.
 Source APIs and schema mappings require compatibility verification.
 
+New developers: start with the [step-by-step developer guide](guide/README.md).
+Its [book navigation](SUMMARY.md) covers fixtures, PostgreSQL, live configuration,
+authentication, REST/GraphQL, models and operations.
+
 | Document | Purpose |
 | --- | --- |
 | [Local development](localnet.md) | Reproducible LocalNet setup, endpoints and read-only usage. |
@@ -15,6 +19,7 @@ Source APIs and schema mappings require compatibility verification.
 | [Upstream triage](upstream-triage.md) | Failure ownership, independent reproductions and contribution candidates. |
 | [Product](product.md) | Developer promise, release scope and responsibility boundaries. |
 | [Architecture](architecture.md) | Components, ingestion, generated storage and recovery. |
+| [Phase 4 model contract](phase4-models.md) | Implemented compiler/preview/SQL planner and remaining live model integration. |
 | [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |
 | [Security](security.md) | Party-scoped access, derived data and revocation requirements. |
 | [Phase 3 handoff](specifications/phase3-v0.3.md) | Supplied v0.3 scope, acceptance matrix and historical baseline. |

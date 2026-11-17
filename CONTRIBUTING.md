@@ -34,6 +34,7 @@ creates a separate local test destination, not a Canton participant or PQS sourc
 python3 scripts/dev.py storage up
 export CANTONGRID_DESTINATION_URL='host=127.0.0.1 port=5442 user=cantongrid_owner password=local-cantongrid-only dbname=cantongrid'
 cargo +1.100.0 test -p cantongrid-storage --locked -- --ignored
+cargo +1.100.0 test -p cantongrid-models --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-cli --test workflow durable_cli --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-cli --test runtime --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-pqs destination_owner_cannot_be_used_as_a_source_reader --locked -- --ignored
@@ -52,6 +53,7 @@ separates setup commands from probes that temporarily change fixture grants.
 - `crates/storage`: destination migrations, atomic writes, replay and outbox.
 - `crates/pqs`: verified read-only source interfaces and capabilities.
 - `crates/ledger`: current source authorization, separate from API identity.
+- `crates/models`: pure declarative definitions, exact evaluation and schema planning.
 - `crates/runtime`: live configuration/worker and authenticated REST/GraphQL.
 - `crates/ledger`: bounded current-source user/grant checks, separate from callers.
 - `crates/runtime`: live worker, strict configuration and independent authenticated REST/GraphQL.

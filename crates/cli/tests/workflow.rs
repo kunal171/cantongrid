@@ -294,3 +294,54 @@ fn existing_localnet_grants_are_verified_and_forged_bearer_is_denied() {
     assert!(result.stdout.is_empty());
     assert!(String::from_utf8_lossy(&result.stderr).contains("denied"));
 }
+
+#[test]
+fn declarative_models_validate_plan_and_preview_without_source_credentials() {
+    let root = Scratch::new();
+    fs::write(
+        root.0.join("models.json"),
+        include_str!("../../../examples/models/visibility.json"),
+    )
+    .unwrap();
+    fs::write(root.0.join("payload.json"),r#"{"label":"test","owner":"A","amount":"12345678901234567890.1234567891","sequence":"9223372036854775807","note":null,"state":"Ready"}"#).unwrap();
+    for action in ["validate", "plan"] {
+        let result = cli(&root.0, &["models", action, "models.json"]);
+        assert!(result.status.success(), "model workflow failed");
+        let value: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+        if action == "plan" {
+            assert_eq!(value["applied"], false);
+            assert!(
+                value["plans"][0]["create_sql"]
+                    .as_str()
+                    .unwrap()
+                    .contains("numeric(38,10)")
+            );
+        }
+    }
+    let result = cli(
+        &root.0,
+        &[
+            "models",
+            "preview",
+            "models.json",
+            "records",
+            "payload.json",
+        ],
+    );
+    assert!(result.status.success());
+    let value: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(
+        value["values"]["amount"]["value"]["decimal"],
+        "12345678901234567890.1234567891"
+    );
+    assert_eq!(value["values"]["sequence"]["value"], "9223372036854775807");
+    fs::write(
+        root.0.join("invalid.json"),
+        r#"{"credential":"PRIVATE_SENTINEL"}"#,
+    )
+    .unwrap();
+    let result = cli(&root.0, &["models", "validate", "invalid.json"]);
+    assert!(!result.status.success());
+    assert!(result.stdout.is_empty());
+    assert!(!String::from_utf8_lossy(&result.stderr).contains("PRIVATE_SENTINEL"));
+}

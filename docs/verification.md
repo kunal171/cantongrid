@@ -372,3 +372,58 @@ dependent Rust tests (61 total), 13 Python tests, formatting/Clippy, security,
 release metadata and container-retention checks passed. Outcomia local writes
 were separately approved; no sibling repository changes, devnet deployment or
 funded asset/trading test was performed. Remote release CI/publication is separate.
+
+### Phase 4 model compiler/planner — 0.3.0-alpha.1 in progress
+
+Added a separate Rust `models` crate for bounded declarative definitions, exact
+field conversion/arithmetic, filters and deterministic SQL proposals. Outcomia
+and unrelated Visibility use the same evaluator. CLI validation/planning/preview
+work offline without source/API credentials. No model registry, live projection
+installation, lifecycle maintenance or generated API is claimed from these tools.
+
+Local checks passed: 54 credential-free plus all 15 explicitly executed environment-
+dependent Rust tests (69 total), 13 Python tests, formatting/Clippy, release guard,
+RustSec, dependency/source/license policy, secret scanning and workflow linting.
+The new owned-Postgres test executes generated DDL and row encoding in a rollback-
+only transaction and verifies large Numeric/maximum Int64 plus nullable fields.
+It checks the disposable destination identity before writes. Model tests also
+cover filtering, invalid types/paths/definitions, normalization and overflow.
+No external runtime dependency, source write or persistent model table was added.
+
+The documentation audit caught an edit-script buffer reuse and inherited pages
+containing another document's text. Architecture, storage, source-contract and
+research baselines were restored from the earlier source release, retaining their
+current Phase 3 resolution notes. The CLI page was restored before adding model
+commands. Expected page titles and local links were checked. Model materialization,
+versioned rebuild/promotion and typed query generation remain the next Phase 4
+integration work; joins/aggregates need their own transitive policy acceptance.
+
+### Phase 4 compiler review follow-up
+
+Manual review found two storage-boundary gaps: NUL-containing text could pass
+projection validation even though PostgreSQL cannot store it, and directly
+supplied typed rows could bypass the evaluator's serialized-size limit. Both now
+fail before SQL encoding. Regression controls cover ordinary/optional text,
+literals, filters, oversized direct rows and valid Unicode/whitespace.
+
+After the fixes, all 55 credential-free workspace Rust tests passed (15 integration
+tests remained ignored in that run). The generated-schema owned-PostgreSQL test
+was separately executed and passed; the other 14 integration tests were not rerun
+for these model-only changes. Workspace formatting/Clippy and diff checks passed.
+This review does not complete live model materialization or generated API acceptance.
+
+### Developer guide examples
+
+The GitBook-ready guide was checked against the current CLI/runtime source.
+Executed the credential-free Visibility A/B/AB/no-grant fixtures and Outcomia
+fixture, scaffold/validate/run in a temporary directory, both checked-in model
+payload previews/plans, and the guide's complete custom model example (`1.20`
+and `2.40` exact outputs). All passed. Parsed all eight JSON snippets, checked
+all 23 shell examples with `bash -n`, verified local links/code fences and complete
+unique book navigation. The cached Rust CLI build and diff checks passed.
+
+The live source/authentication/API chapters were cross-checked against the code
+and earlier LocalNet evidence; their environment-dependent commands were not
+rerun for this documentation change. Corrected the older runtime reference's
+page-size statement to the implemented 1–25 range, default 20. No infrastructure,
+ledger writes, hosted GitBook space or publication was performed.
