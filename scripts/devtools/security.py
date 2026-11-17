@@ -74,12 +74,20 @@ def install():
 
 
 def secrets():
-    command = [binary('gitleaks'), '--redact', '--no-banner', '--ignore-gitleaks-allow']
-    subprocess.run([*command, 'git', '--log-opts=--all'], cwd=ROOT, check=True)
-    # Also cover eligible uncommitted files locally, without scanning ignored credentials/build caches.
-    files = subprocess.check_output(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], cwd=ROOT)
+    # Explicit defaults prevent local GITLEAKS_CONFIG or committed ignore files from silently
+    # changing CI's coverage. Scoped exceptions require a reviewed policy change here.
     with tempfile.TemporaryDirectory(prefix='cantongrid-secret-check-') as directory:
-        destination = Path(directory)
+        root = Path(directory)
+        config = root / 'default.toml'
+        config.write_text('[extend]\nuseDefault = true\n')
+        ignore = root / 'empty.ignore'
+        ignore.write_text('')
+        command = [binary('gitleaks'), '--redact', '--no-banner', '--ignore-gitleaks-allow',
+                   '--config', str(config), '--gitleaks-ignore-path', str(ignore)]
+        subprocess.run([*command, 'git', '--log-opts=--all'], cwd=ROOT, check=True)
+        files = subprocess.check_output(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], cwd=ROOT)
+        destination = root / 'eligible-tree'
+        destination.mkdir()
         for filename in set(files.decode().split('\0')) - {''}:
             source = ROOT / filename
             if source.is_symlink():
@@ -88,7 +96,7 @@ def secrets():
                 target = destination / filename
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(source.read_bytes())
-        subprocess.run([*command, 'dir', directory], cwd=ROOT, check=True)
+        subprocess.run([*command, 'dir', str(destination)], cwd=ROOT, check=True)
 
 
 def main(argv=None):
