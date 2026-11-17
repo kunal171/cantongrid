@@ -20,7 +20,13 @@ class ReleaseMetadataTests(unittest.TestCase):
             root = Path(directory)
             (root / 'crates/example').mkdir(parents=True)
             (root / 'Cargo.toml').write_text('[workspace.package]\nversion="0.1.0-alpha.1"\nlicense="Apache-2.0"\npublish=false\n')
-            (root / 'crates/example/Cargo.toml').write_text('[package]\nname="example"\nversion.workspace=true\nlicense.workspace=true\n')
+            (root / 'crates/example/Cargo.toml').write_text('[package]\nname="example"\nversion.workspace=true\nlicense.workspace=true\npublish.workspace=true\n')
             (root / 'Cargo.lock').write_text('version=4\n[[package]]\nname="example"\nversion="0.1.0-wrong"\n')
             with self.assertRaises(ValueError):
                 release.check(root)
+            (root / 'Cargo.lock').write_text('version=4\n[[package]]\nname="example"\nversion="0.1.0-alpha.1"\n')
+            (root / 'CHANGELOG.md').write_text('## 0.1.0-alpha.1 — unreleased\n')
+            (root / 'NOTICE').write_text('Synthetic test notice')
+            with self.assertRaises(FileNotFoundError):
+                release.check(root)  # LICENSE is deliberately absent after all other metadata matches.
+

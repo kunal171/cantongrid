@@ -16,8 +16,9 @@ def check(root=ROOT, tag=None):
     packages = {}
     for manifest in (root / 'crates').glob('*/Cargo.toml'):
         package = tomllib.loads(manifest.read_text())['package']
-        if package.get('version') != {'workspace': True} or package.get('license') != {'workspace': True}:
-            raise ValueError('A workspace package does not inherit release version/license')
+        if (package.get('version') != {'workspace': True} or package.get('license') != {'workspace': True}
+                or package.get('publish') != {'workspace': True}):
+            raise ValueError('A workspace package does not inherit release version/license/publication policy')
         packages[package['name']] = version
     locked = tomllib.loads((root / 'Cargo.lock').read_text())['package']
     resolved = {p['name']: p['version'] for p in locked if p['name'] in packages and 'source' not in p}
