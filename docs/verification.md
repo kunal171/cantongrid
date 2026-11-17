@@ -303,3 +303,28 @@ reduced; unrelated project files and caches were not deleted.
 Remaining live gates and runtime dependency proposals are explicit in the source
 contract. No Outcomia deployment, new parties, source database migration or ledger
 transaction was performed. Phase 3 is not marked complete by this alpha candidate.
+
+### Local disk recovery (2026-11-17)
+
+Follow-up inspection identified the main disk consumer: Canton and Splice had
+about 176 GiB of unrotated Docker JSON logs. Both pinned entrypoints defaulted to
+DEBUG. PostgreSQL's recovery log confirmed `No space left on device`; the SDK
+build above was an additional allocation, not the main space consumer.
+
+Applied INFO defaults and 10m x 3-file rotation, then recreated owned development
+containers without deleting volumes. Root usage fell from 86% to 27%, with about
+220 GiB available. All 15 containers were running with verified rotation settings;
+all configured Docker healthchecks were healthy and both PQS readiness probes
+passed. Named volume identities were retained.
+
+Authenticated read-only Ledger API checks passed for all three participants.
+PQS at offset 80 retained 11 active contracts, 17 creates and 6 archives, with
+zero duplicate creates and correct witnesses. Visibility checks retained all three
+records and restored their test grant after the existing revocation regression.
+The SQL reader's write/DDL/escalation denial checks passed. Destination counts
+remained 1 stream, 2 batches, 2 contracts, 3 events and 3 outbox records.
+
+All 13 Python regressions, the Compose configuration guard, Python compilation,
+actionlint, release metadata and whitespace checks passed. The Rust suite was not
+rerun for this development configuration change. CI now checks tracked Compose
+rotation; unit tests cover rotation and INFO defaults in the LocalNet renderer.

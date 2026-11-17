@@ -17,6 +17,7 @@ ROUTES = {
     'check': None,
 }
 CHECKS = {name.replace('_', '-'): name for name in ('ledger', 'pqs', 'reader', 'visibility', 'visibility_pqs')}
+CHECKS['resources'] = 'resources'
 
 
 def main():

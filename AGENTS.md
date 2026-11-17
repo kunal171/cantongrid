@@ -16,6 +16,12 @@
   changes and distinguish planned, fixture-tested, LocalNet-tested and live-tested.
 - Keep changes inside this repository unless the user explicitly authorizes
   another repository. Preserve existing work and never expose credentials.
+- Keep development container logs rotated (10m per file, 3 files) and default
+  application logging to INFO or quieter. Apply this to new services too; run
+  `python3 scripts/dev.py check resources` when changing Compose files. Check
+  free disk space before large builds and avoid duplicate Cargo target trees.
+  Recover space through owned build tools or container recreation, preserving
+  database volumes; never delete Docker-managed log files or globally prune data.
 - Source connectors are read-only. Do not acquire paid infrastructure, publish,
   deploy, provision parties, upload DARs or submit ledger transactions outside
   the user's authorized scope. Source connection permissions are not API-user
