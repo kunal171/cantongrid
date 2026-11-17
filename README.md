@@ -46,3 +46,7 @@ Read the [documentation index](docs/README.md),
 This is a separate repository. Neither Outcomia repository is a platform
 dependency or a write target. The working name is provisional; the license target
 is Apache-2.0, pending license and dependency review before publication.
+
+Development follows [versioned milestones](docs/releases.md). See
+[CONTRIBUTING.md](CONTRIBUTING.md) for setup, tests and contribution boundaries,
+and [SECURITY.md](SECURITY.md) for private vulnerability reporting.
