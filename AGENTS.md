@@ -1,8 +1,9 @@
 # Working on CantonGrid
 
 - Current phase: Phase 3 has started with bounded owned PostgreSQL fixture ingestion,
-  recovery/outbox atomicity and a read-only PQS schema inspector. Live contract
-  ingestion, current source/caller verification and APIs remain gated. Fixture
+  recovery/outbox atomicity, a read-only PQS schema inspector and verified LocalNet
+  source-grant probes. Live contract ingestion, caller verification and APIs remain
+  gated; source grant leases must be integrated before private SQL copying. Fixture
   query party flags simulate grants and must never be used as production identity.
   Advance implementation when the user asks; user instructions take precedence.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python

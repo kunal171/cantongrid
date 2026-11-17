@@ -1,4 +1,4 @@
-//! SQL inspection is deliberately separate from source ingestion and destination migrations.
+//! Read-only source inspection and current grants, separate from ingestion and migrations.
 
 /// Print only operator metadata; the result never enables private lifecycle ingestion.
 pub fn inspect(variable: &str) -> Result<(), String> {
