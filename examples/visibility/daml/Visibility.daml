@@ -1,0 +1,20 @@
+-- An unrelated Daml example for source visibility and exact-value checks.
+-- This fixture does not hold assets, move funds or implement prediction markets.
+module Visibility where
+
+data ProbeState = Ready | Paused
+  deriving (Eq, Show)
+
+template Record
+  with
+    owner : Party
+    readers : [Party]
+    label : Text
+    amount : Numeric 10
+    sequence : Int
+    note : Optional Text
+    state : ProbeState
+  where
+    signatory owner
+    observer readers
+    ensure label /= ""

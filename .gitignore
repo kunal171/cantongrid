@@ -7,3 +7,4 @@
 cantongrid.local.yaml
 *.log
 __pycache__/
+.daml/
