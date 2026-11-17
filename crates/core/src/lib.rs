@@ -4,3 +4,4 @@
 pub mod visibility;
 
 pub mod authorization;
+pub mod config;
