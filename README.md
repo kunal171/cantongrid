@@ -42,6 +42,10 @@ cantongrid index   # Bootstrap and continuously maintain indexed data
 cantongrid serve   # Serve generated queries and resumable change streams
 ```
 
+Start with the [developer guide](docs/guide/README.md) for executable examples,
+LocalNet setup, authentication, REST/GraphQL and offline model tools. The book is
+ready for GitBook Git Sync using `.gitbook.yaml` and `docs/SUMMARY.md`.
+
 Read the [documentation index](docs/README.md),
 [product contract](docs/product.md), and
 [accepted decisions](docs/decisions.md). Start implementation planning with the

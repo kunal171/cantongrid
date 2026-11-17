@@ -411,3 +411,19 @@ tests remained ignored in that run). The generated-schema owned-PostgreSQL test
 was separately executed and passed; the other 14 integration tests were not rerun
 for these model-only changes. Workspace formatting/Clippy and diff checks passed.
 This review does not complete live model materialization or generated API acceptance.
+
+### Developer guide examples
+
+The GitBook-ready guide was checked against the current CLI/runtime source.
+Executed the credential-free Visibility A/B/AB/no-grant fixtures and Outcomia
+fixture, scaffold/validate/run in a temporary directory, both checked-in model
+payload previews/plans, and the guide's complete custom model example (`1.20`
+and `2.40` exact outputs). All passed. Parsed all eight JSON snippets, checked
+all 23 shell examples with `bash -n`, verified local links/code fences and complete
+unique book navigation. The cached Rust CLI build and diff checks passed.
+
+The live source/authentication/API chapters were cross-checked against the code
+and earlier LocalNet evidence; their environment-dependent commands were not
+rerun for this documentation change. Corrected the older runtime reference's
+page-size statement to the implemented 1–25 range, default 20. No infrastructure,
+ledger writes, hosted GitBook space or publication was performed.

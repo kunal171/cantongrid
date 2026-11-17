@@ -4,6 +4,10 @@ These documents distinguish the current product agreement, implemented Rust
 fixture workflow, LocalNet research evidence and planned live capabilities.
 Source APIs and schema mappings require compatibility verification.
 
+New developers: start with the [step-by-step developer guide](guide/README.md).
+Its [book navigation](SUMMARY.md) covers fixtures, PostgreSQL, live configuration,
+authentication, REST/GraphQL, models and operations.
+
 | Document | Purpose |
 | --- | --- |
 | [Local development](localnet.md) | Reproducible LocalNet setup, endpoints and read-only usage. |

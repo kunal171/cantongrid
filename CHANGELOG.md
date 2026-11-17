@@ -8,6 +8,8 @@
 - Deterministic generated SQL table plans and exact typed row encoding.
 - Offline model validation, planning and preview CLI commands.
 - Outcomia and unrelated Visibility model definitions plus owned-Postgres schema round-trip tests.
+- GitBook-ready developer guide covering setup, persistence, LocalNet, authentication,
+  REST/GraphQL, model examples and operations, with synthetic preview payloads.
 
 ### In progress
 
