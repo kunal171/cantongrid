@@ -69,10 +69,12 @@ name = "cantongrid-cli"
 version = "0.1.0-alpha.1"
 dependencies = [
  "cantongrid-core",
+ "cantongrid-ledger",
  "cantongrid-postgres",
  "cantongrid-pqs",
  "cantongrid-storage",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

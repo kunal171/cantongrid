@@ -21,6 +21,7 @@ Usage:
   cantongrid fixture status <project.json> --database-env <CANTONGRID_VARIABLE>
   cantongrid fixture query <project.json> --database-env <CANTONGRID_VARIABLE> [--party <synthetic-party>]...
   cantongrid source inspect-pqs --database-env <CANTONGRID_VARIABLE>
+  cantongrid source verify-grants <source-grants.json>
   cantongrid source verify-window --database-env <CANTONGRID_VARIABLE> --after <offset>
 
 Fixture run uses process memory; index/status/query use an explicitly initialized local PostgreSQL destination.
@@ -66,6 +67,9 @@ fn run(args: Vec<String>) -> Result<(), String> {
             if command == "storage" && action == "init" && flag == "--database-env" =>
         {
             commands::storage::initialize(variable)
+        }
+        [command, action, path] if command == "source" && action == "verify-grants" => {
+            commands::source::verify_grants(path)
         }
         [command, action, flag, variable, after_flag, after]
             if command == "source"

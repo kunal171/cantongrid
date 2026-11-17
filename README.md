@@ -9,7 +9,9 @@ Status: Rust configuration and fixture lifecycle processing are implemented. The
 recover state and query simulated party scopes. [Durable ingestion evidence and
 limits](docs/storage.md) distinguish this bounded reference implementation from
 live source ingestion. A read-only PQS inspector reports source capabilities and
-open gates. Live contract copying, authenticated REST/GraphQL and streams remain
+open gates. A separate [source authorization probe](docs/source-authorization.md)
+checks current LocalNet read-only grants without copying contracts.
+Live contract copying, authenticated REST/GraphQL and streams remain
 planned. [LocalNet development helpers](docs/localnet.md) support compatibility research.
 
 The indexer runtime is **Rust**. Python scripts are development helpers for

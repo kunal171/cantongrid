@@ -101,7 +101,9 @@ A concrete serving plan would use axum 0.8.9 (HTTP), async-graphql 7.2.1 (generi
 GraphQL), reqwest 0.13.5 (bounded current-grant probes), jsonwebtoken 12 (validated
 application bearer tokens), and direct tokio (already transitive). Use minimum
 features and audit the resolved lockfile. Source tokens and API signing keys stay
-separate. These are proposed, not adopted runtime dependencies. The v0.3 spec
+separate. These dependencies were subsequently approved by the maintainer.
+Reqwest, jsonwebtoken and tokio are adopted for the LocalNet grant-check subset
+below; axum and async-graphql remain unadopted. The v0.3 spec
 requires maintainer approval before new third-party hard dependencies.
 
 ## Machine-readable coverage

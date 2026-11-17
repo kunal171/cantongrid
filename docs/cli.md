@@ -129,3 +129,15 @@ historical interval is not a concurrent publication/pagination proof; the result
 explicitly reports `concurrent_handoff_verified=false`. Invalid, unavailable or
 pruned bounds fail instead of advancing a checkpoint. No source or destination
 writes occur. See the [source contract](phase3-source-contract.md).
+
+## Verify current source grants
+
+```bash
+cantongrid source verify-grants .local/source-grants.json
+```
+
+The [grant-check configuration and constraints](source-authorization.md) are
+separate from fixture projects. The command uses a configured credential environment
+variable, makes read-only authenticated Ledger requests, and prints no party IDs
+or token values. Failure clears the renewal state; success is a bounded current
+scope check, not a private ingestion or complete-history claim.

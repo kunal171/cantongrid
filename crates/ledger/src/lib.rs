@@ -18,6 +18,18 @@ const MAX_BODY: usize = 64 * 1024;
 const MAX_PARTIES: usize = 128;
 const CHECK_TIMEOUT: Duration = Duration::from_secs(5);
 
+pub mod config;
+
+/// Reserve a dedicated namespace; never read an unrelated variable such as HOME as a token.
+fn credential_variable(variable: &str) -> bool {
+    variable.starts_with("CANTONGRID_")
+        && variable.len() > "CANTONGRID_".len()
+        && variable.len() <= 128
+        && variable
+            .bytes()
+            .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
+}
+
 /// Configured endpoint and exact read-only scope; this contains no source credential.
 /// A party change requires an explicit scope-generation change, never silent widening.
 pub struct GrantChecker {
@@ -180,11 +192,7 @@ impl GrantChecker {
     /// Re-read the credential on every renewal. Errors yield no new lease; callers must discard
     /// an existing lease before attempting renewal, rather than serving on stale success.
     pub async fn check_env(&self, variable: &str) -> Result<SourceLease, GrantError> {
-        if !variable.starts_with("CANTONGRID_")
-            || !variable
-                .bytes()
-                .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
-        {
+        if !credential_variable(variable) {
             return Err(GrantError::Configuration);
         }
         let token = std::env::var(variable).map_err(|_| GrantError::Credential)?;

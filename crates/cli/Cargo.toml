@@ -16,5 +16,8 @@ serde_json = "1.0"
 cantongrid-storage = { path = "../storage", version = "=0.1.0-alpha.1" }
 cantongrid-pqs = { path = "../pqs", version = "=0.1.0-alpha.1" }
 
+cantongrid-ledger = { path = "../ledger", version = "=0.1.0-alpha.1" }
+tokio = { version = "1", features = ["rt", "time"] }
+
 [dev-dependencies]
 cantongrid-postgres = { path = "../postgres", version = "=0.1.0-alpha.1" }

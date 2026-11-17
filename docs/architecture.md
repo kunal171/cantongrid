@@ -106,6 +106,7 @@ The developer interface is described in [processing model](processing-model.md).
 | `crates/postgres` | Shared local connection validation and redacted database errors; no migrations. |
 | `crates/storage` | Owned destination migration, journal recovery, atomic materialization/checkpoints/outbox and writer exclusion. |
 | `crates/pqs` | Restricted read-only source metadata inspection; no destination migration or live copying. |
+| `crates/ledger` | Bounded current-source grant checks and short-lived leases; separate from API caller authentication. |
 | `crates/cli` | Command dispatch, separate source/storage operations and synthetic fixture workflows. |
 
 GraphQL/API modules will be separate when their authenticated implementation

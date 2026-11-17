@@ -248,3 +248,49 @@ fn durable_cli_restarts_without_duplicating_state_and_queries_scoped_counts() {
         .success()
     );
 }
+
+#[test]
+fn source_grant_probe_rejects_bad_config_without_secret_or_partial_output() {
+    let root = Scratch::new();
+    fs::write(
+        root.0.join("secret.json"),
+        r#"{"token":"PRIVATE_SENTINEL"}"#,
+    )
+    .unwrap();
+    fs::write(root.0.join("large.json"), vec![b' '; 65537]).unwrap();
+    for path in ["secret.json", "large.json", ".", "PRIVATE_SENTINEL"] {
+        let result = cli(&root.0, &["source", "verify-grants", path]);
+        assert!(!result.status.success());
+        assert!(result.stdout.is_empty());
+        assert!(!String::from_utf8_lossy(&result.stderr).contains("PRIVATE_SENTINEL"));
+    }
+}
+
+#[test]
+#[ignore = "requires existing LocalNet source-grants config and current source token"]
+fn existing_localnet_grants_are_verified_and_forged_bearer_is_denied() {
+    let config_path = std::env::var("CANTONGRID_GRANTS_CONFIG").unwrap();
+    let directory = std::env::current_dir().unwrap();
+    let result = cli(&directory, &["source", "verify-grants", &config_path]);
+    assert!(result.status.success(), "source grant verification failed");
+    let report: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(report["verified"], true);
+    assert_eq!(report["private_lifecycle_ingestion_enabled"], false);
+    assert_eq!(report["history_coverage"], "unknown");
+    let config: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&config_path).unwrap()).unwrap();
+    let variable = config["credential_env"].as_str().unwrap();
+    let token = std::env::var(variable).unwrap();
+    let mut parts: Vec<_> = token.split('.').map(str::to_owned).collect();
+    assert_eq!(parts.len(), 3);
+    // Preserve readable subject/expiry but replace the signature. Real Ledger auth must reject it.
+    parts[2] = "A".repeat(parts[2].len());
+    let result = Command::new(env!("CARGO_BIN_EXE_cantongrid"))
+        .args(["source", "verify-grants", &config_path])
+        .env(variable, parts.join("."))
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    assert!(result.stdout.is_empty());
+    assert!(String::from_utf8_lossy(&result.stderr).contains("denied"));
+}

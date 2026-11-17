@@ -207,3 +207,25 @@ fn failed_renewal_discards_previously_verified_authorization() {
     );
     assert!(state.lease().is_none());
 }
+
+#[test]
+fn strict_configuration_rejects_secret_values_unknown_fields_and_duplicate_parties() {
+    let valid = serde_json::json!({
+        "endpoint":"http://127.0.0.1:3975", "user":"source-reader",
+        "source":"local-provider", "network":"localnet", "generation":1,
+        "parties":["A"], "credential_env":"CANTONGRID_SOURCE_TOKEN"
+    });
+    assert!(config::GrantCheckConfig::parse(&serde_json::to_vec(&valid).unwrap()).is_ok());
+    for (key, value) in [
+        ("token", serde_json::json!("never accept inline secrets")),
+        ("credential_env", serde_json::json!("HOME")),
+        ("credential_env", serde_json::json!("CANTONGRID_")),
+        ("parties", serde_json::json!(["A", "A"])),
+        ("parties", serde_json::json!([])),
+        ("generation", serde_json::json!(0)),
+    ] {
+        let mut invalid = valid.clone();
+        invalid[key] = value;
+        assert!(config::GrantCheckConfig::parse(&serde_json::to_vec(&invalid).unwrap()).is_err());
+    }
+}
