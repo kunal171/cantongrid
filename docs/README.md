@@ -11,6 +11,7 @@ be added only after compatibility verification.
 | [Outcomia compatibility](outcomia-compatibility.md) | Exact DAR validation evidence and example boundaries. |
 | [PQS development fixture](pqs-local.md) | Scoped local source setup and operational limits. |
 | [PQS compatibility](pqs-compatibility.md) | SQL behavior, source health and recovery evidence. |
+| [Visibility scenario](visibility.md) | Owned A/B/AB fixture, exact values and reversible revocation. |
 | [Product](product.md) | Developer promise, release scope and responsibility boundaries. |
 | [Architecture](architecture.md) | Components, ingestion, generated storage and recovery. |
 | [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |
