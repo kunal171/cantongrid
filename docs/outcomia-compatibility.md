@@ -1,7 +1,7 @@
 # Outcomia compatibility check
 
 Verified locally on 2026-11-17 against the App Provider participant, Canton 3.5.7.
-This is a package validation check, not an Outcomia deployment or trading test.
+The initial check below was package validation only. After separate maintainer authorization, a local-only Protocol/Draft/Open/Closed lifecycle also passed the full Rust/PQS/PostgreSQL/REST/GraphQL path. See [Phase 3 acceptance](phase3-verification.md). No funded assets, trades, devnet or production deployment was performed.
 
 ## Artifact evidence
 
@@ -47,3 +47,15 @@ This is a source review, not a verified metadata extraction pipeline. Do not cop
 these domain rules into the generic Rust engine. Typed bindings, actual authorized
 contract reads, complete lifecycle fixtures and an unrelated Daml example are
 still required. No Outcomia contracts have been indexed in the PQS fixture yet.
+
+
+## Authorized LocalNet lifecycle update
+
+The same DAR hash/main package above was uploaded after explicit approval. The
+controlled test reused owned parties and writer, captured a paged snapshot, then
+submitted Protocol_CreateBinary, Binary_Open and Binary_Close. Eight expected
+create/archive contract identities matched the index through single-event pages
+and worker restarts. Price tick `0.0000000001` and quantity lot
+`9223372036854775807` remained exact strings. Both REST and GraphQL succeeded.
+No Outcomia-specific Rust branches or sibling repository changes were required.
+The helper and explicit opt-in command are documented in [the runtime guide](live-runtime.md).
