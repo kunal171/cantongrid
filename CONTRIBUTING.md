@@ -94,3 +94,28 @@ notes. New runtime dependencies need a stated purpose, compatibility/license rev
 and maintainer approval. Generated models, SSE and additional source tracks retain
 their separate roadmap acceptance gates. See the [ecosystem review](docs/competitive-landscape.md)
 before claiming novelty or replacing an existing component.
+
+## Security checks
+
+On Linux x86_64 (the CI profile):
+
+```bash
+python3 scripts/dev.py security install
+python3 scripts/dev.py security check all
+```
+
+The helper pins upstream versions plus archive and executable SHA-256 values.
+It runs cargo-audit 0.23.0, cargo-deny 0.21.0, Gitleaks 8.30.1 and actionlint 1.7.12.
+On other platforms install the same upstream tool versions for your host and run
+`cargo audit --deny warnings`, `cargo deny check licenses bans sources`,
+`gitleaks git --redact --no-banner --ignore-gitleaks-allow --log-opts=--all`, and
+`actionlint`. Also scan an export of Git-eligible files for uncommitted changes;
+do not scan/upload ignored private credentials. History scanning needs full Git
+history (`git fetch --unshallow` when working from a shallow checkout).
+
+Security CI runs on PRs/pushes, manually, and weekly to catch newly published
+advisories. It uses read-only permissions and no private service credentials.
+Default development passwords are not production secrets; do not introduce broad
+scanner allowlists to make a check green. The license policy checks third-party
+packages, including development dependencies. Non-publishable workspace packages
+remain excluded only from the license check while project licensing is finalized.

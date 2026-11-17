@@ -10,6 +10,7 @@ ROUTES = {
     'localnet': 'localnet',
     'pqs': 'pqs',
     'storage': 'storage',
+    'security': 'security',
     'validate-dar': 'validate_dar',
     'visibility': 'setup_visibility',
     'check': None,

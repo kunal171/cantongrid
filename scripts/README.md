@@ -48,3 +48,12 @@ operator bootstrap SQL in `dev/storage-init.sql`. It does not share the source's
 role, database or network. Stop retains its volume. Rust `storage init` owns the
 CantonGrid schema; the Python helper does not implement ingestion or migrations.
 See [durable fixture commands](../docs/cli.md).
+
+## Security tools
+
+`dev.py security install` verifies pinned upstream archive/executable hashes into
+ignored `.local/security-tools` on Linux x86_64. `dev.py security check` runs all
+checks; append `audit`, `dependencies`, `secrets` or `workflows` for one area.
+Secret scans cover complete Git history plus eligible working-tree files and
+redact output. Ignored credentials/build caches are not exported to the scanner.
+See [contributing](../CONTRIBUTING.md) for versions and other-host instructions.

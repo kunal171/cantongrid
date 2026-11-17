@@ -1,0 +1,35 @@
+name: Security checks
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '23 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install tested Rust toolchain
+        run: rustup toolchain install 1.100.0 --profile minimal
+      - name: Fetch locked dependencies
+        run: cargo +1.100.0 fetch --locked
+      - name: Verify pinned security tools
+        run: python3 scripts/dev.py security install
+      - name: RustSec vulnerability and maintenance advisories
+        run: python3 scripts/dev.py security check audit
+      - name: Dependency licenses registry sources and version constraints
+        run: python3 scripts/dev.py security check dependencies
+      - name: Full-history and eligible-tree secret scan (redacted)
+        run: python3 scripts/dev.py security check secrets
+      - name: GitHub Actions static analysis
+        run: python3 scripts/dev.py security check workflows
