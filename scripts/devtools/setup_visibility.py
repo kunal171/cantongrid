@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
 """Deploy only the owned visibility test package/parties/records to LocalNet."""
+from .common import write_private
 import json
-import sys
 from urllib.error import HTTPError
-from localnet_api import get, request, token
-from localnet_visibility import (
+from .ledger import get, request, token
+from .visibility import (
     AMOUNT, BASE, DAR, DIRECTORY, SEQUENCE, TEMPLATE, USERS, WRITER,
-    acs, ensure_user, package_id, right, rights_equal, write_private,
+    acs, ensure_user, package_id, right,
 )
 
 
@@ -56,11 +55,3 @@ def main():
         raise ValueError('Fixture records differ from the three controlled labels; no replacement was attempted')
     write_private(saved, {'packageId': pid, 'parties': parties})
     print('PASS: owned fixture package, two test parties, writer and three read-only scopes are ready')
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (OSError, ValueError, KeyError) as exc:
-        print(f'Visibility setup failed: {exc}', file=sys.stderr)
-        sys.exit(1)

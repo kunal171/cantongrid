@@ -30,4 +30,10 @@ full current-executable test or Scala suite was run. Do not present the small
 in-memory correction as a merge-ready migration edit: deployed Flyway checksums
 and the upstream immutable-migration policy need a reviewed solution.
 
-No issue, PR, comment, fork or upstream commit was published by this work.
+The initial investigation kept its report local. On explicit user instruction,
+[upstream issue #240](https://github.com/digital-asset/participant-query-store/issues/240),
+[draft fix PR #241](https://github.com/digital-asset/participant-query-store/pull/241)
+and [CantonGrid tracking issue #1](https://github.com/kunal171/cantongrid/issues/1)
+were opened and cross-linked. The fix uses the callback rather than editing V001;
+all versioned migration checksums remain unchanged. Full Mill verification remains
+pending; no CantonGrid PR or merge was performed.

@@ -1,21 +1,16 @@
-#!/usr/bin/env python3
 """Observe AB source cache and a bounded live-stream revocation window."""
+from ..common import write_private
 import json
-import os
-from pathlib import Path
 import subprocess
-import sys
 import time
 from urllib.error import HTTPError
-from urllib.request import urlopen
-from localnet_api import get, request, token
-from localnet_visibility import AMOUNT, BASE, SEQUENCE, USERS, acs, context, right, rights_equal, write_private, DIRECTORY
+from ..ledger import get, request, token
+from ..visibility import AMOUNT, BASE, SEQUENCE, USERS, acs, context, right, rights_equal, DIRECTORY
 
-ROOT = Path(__file__).resolve().parents[1]
-ENV = {**os.environ, 'PQS_UID': str(os.getuid()), 'PQS_GID': str(os.getgid())}
-DATABASE = ['docker', 'compose', '-p', 'cantongrid-pqs', '-f', str(ROOT / 'dev/pqs.compose.yaml'),
-            'exec', '-T', 'pqs-postgres', 'psql', '-X', '-qAt', '-U', 'pqs_owner',
-            '-d', 'cantongrid_visibility', '-v', 'ON_ERROR_STOP=1']
+from ..common import ENV, pg_command, source_ready
+from ..pqs import up
+
+DATABASE = pg_command('cantongrid_visibility')
 
 
 def cached():
@@ -28,13 +23,7 @@ COMMIT;'''
 
 
 def ready():
-    try:
-        with urlopen('http://127.0.0.1:18081/readyz', timeout=3) as response:
-            data = json.load(response)
-        return data.get('status') == 'ok' and all(data.get(k) is True for k in
-                                                ('grpc_up', 'jdbc_connection_pool_up', 'stream_up'))
-    except (OSError, ValueError):
-        return False
+    return source_ready(visibility=True)
 
 
 def main():
@@ -50,11 +39,8 @@ def main():
         if (set(row['witnesses']) != expected[value['label']] or value['amount'] != AMOUNT
                 or value['sequence'] != SEQUENCE or value['note'] is not None or value['state'] != 'Ready'):
             raise ValueError('PQS witness evidence or exact payload values differ from the source')
-    isolation = subprocess.run([
-        'docker', 'compose', '-p', 'cantongrid-pqs', '-f', str(ROOT / 'dev/pqs.compose.yaml'),
-        'exec', '-T', '-e', 'PGPASSWORD=local-pqs-reader', 'pqs-postgres',
-        'psql', '-X', '-h', '127.0.0.1', '-U', 'cantongrid_pqs_reader', '-d', 'cantongrid_visibility',
-        '-c', 'SELECT 1;'], capture_output=True, text=True, env=ENV)
+    isolation = subprocess.run(pg_command('cantongrid_visibility', reader=True),
+                               input='SELECT 1;', capture_output=True, text=True, env=ENV)
     if isolation.returncode == 0 or 'permission denied for database' not in isolation.stderr:
         raise ValueError('Original source reader was not denied the separate AB database')
     print('PASS: exact AB payloads and witness sets; original SQL reader cannot connect to the AB store', flush=True)
@@ -89,16 +75,7 @@ def main():
                       preissued_self_rights_narrowed=True, new_b_snapshot_denied_with_preissued_token=True)
     finally:
         request(BASE, path, token(), body=change)
-        subprocess.run([sys.executable, str(ROOT / 'scripts/localnet-visibility-pqs.py'), 'up'],
-                       check=True, env=ENV, stdout=subprocess.DEVNULL)
+        up(visibility=True, quiet=True)
     write_private(DIRECTORY / 'revocation-observation.json', result)
     print(json.dumps(result, indent=2))
     print('PASS: fixture grant restored; AB source recreated with a renewed token')
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as exc:
-        print(f'Visibility source check failed: {exc}', file=sys.stderr)
-        sys.exit(1)

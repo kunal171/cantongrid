@@ -1,10 +1,7 @@
-#!/usr/bin/env python3
 """Exercise A/B/AB reads and reversible revocation on the owned test users only."""
-import json
-import sys
 from urllib.error import HTTPError
-from localnet_api import get, request, token
-from localnet_visibility import (
+from ..ledger import get, request, token
+from ..visibility import (
     AMOUNT, BASE, SEQUENCE, USERS, acs, context, ensure_user, right, rights_equal,
 )
 
@@ -65,11 +62,3 @@ def main():
     check_rows(acs(USERS['ab'], list(parties.values())), expected['ab'])
     print('PASS: AB permissions restored and original visibility recovered')
     print('No Outcomia contracts or wallet balances were modified')
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (OSError, ValueError, KeyError) as exc:
-        print(f'Visibility check failed: {exc}', file=sys.stderr)
-        sys.exit(1)

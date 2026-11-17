@@ -1,8 +1,10 @@
 # Architecture
 
-Status: accepted design direction. The initial Rust visibility-policy and source-lease decision primitives
-are implemented in crates/core; the other runtime components below remain planned. Source
-protocols, dependency versions and exact database schemas remain research gates.
+Status: Rust configuration, exact fixture values, scoped lifecycle state and a
+credential-free CLI are implemented and fixture-tested. Live connectors,
+destination PostgreSQL, generated models/APIs and durable streams below remain
+planned. [Fixture contracts](fixtures.md) define the implemented boundary.
+Source protocols and destination database schemas still have research gates.
 
 ## System boundary
 

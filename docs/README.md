@@ -1,8 +1,8 @@
 # Documentation
 
-These documents capture the current product agreement. They are design contracts,
-not evidence that a runtime exists. Specific source APIs and schema mappings will
-be added only after compatibility verification.
+These documents distinguish the current product agreement, implemented Rust
+fixture workflow, LocalNet research evidence and planned live capabilities.
+Source APIs and schema mappings require compatibility verification.
 
 | Document | Purpose |
 | --- | --- |
@@ -17,7 +17,9 @@ be added only after compatibility verification.
 | [Architecture](architecture.md) | Components, ingestion, generated storage and recovery. |
 | [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |
 | [Security](security.md) | Party-scoped access, derived data and revocation requirements. |
-| [CLI](cli.md) | Planned commands and operator/developer workflow. |
+| [CLI](cli.md) | Implemented fixture commands and planned live commands. |
+| [Fixture pipeline](fixtures.md) | Strict configuration, exact values, lifecycle replay and limits. |
+| [Development tools](../scripts/README.md) | Consolidated LocalNet commands and script review. |
 | [Roadmap](roadmap.md) | Phases, acceptance gates and small-commit workflow. |
 | [Research decisions](research-decisions.md) | Unverified interfaces and implementation gates. |
 | [Verification](verification.md) | Required evidence and planned runtime checks. |

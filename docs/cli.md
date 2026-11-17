@@ -1,7 +1,34 @@
-# Planned CLI
+# CLI
 
-Status: command design only. No command in this document is implemented or
-installable yet. Flags, file names and configuration syntax remain provisional.
+Status: a Rust executable implements the fixture workflow below. Live indexing,
+serving and orchestration commands in the planned table are not implemented.
+
+## Implemented fixture workflow
+
+Run from the repository with Rust/Cargo 1.100:
+
+```bash
+cargo run -p cantongrid-cli -- init /tmp/my-cantongrid-demo
+cargo run -p cantongrid-cli -- validate /tmp/my-cantongrid-demo/cantongrid.json
+cargo run -p cantongrid-cli -- fixture run /tmp/my-cantongrid-demo/cantongrid.json --party A
+cargo run -p cantongrid-cli -- fixture run examples/fixtures/outcomia/cantongrid.json --party A
+```
+
+`init` requires a new directory and writes only the synthetic visibility project.
+It never overwrites existing files. `validate` checks the strict versioned project
+without opening a fixture or connecting to a source. `fixture run` resolves the
+fixture relative to the project file, applies it in memory, replays it again, and
+prints counts filtered by explicitly simulated caller grants. Repeat `--party`
+for A + B; omit it to see zero records. Unsupported/out-of-scope parties fail.
+These flags are for synthetic fixtures and do not authenticate real callers.
+
+Documents must be regular UTF-8 files at most 8 MiB. Unknown commands, fields,
+adapters/operators, duplicate keys and unsupported versions fail without printing
+input values. Only exact package/module/entity selections and full create/archive
+history are supported. See [fixture contracts](fixtures.md). `cargo build
+--release -p cantongrid-cli` produces `target/release/cantongrid`.
+
+## Planned live commands
 
 | Command | Intended behavior |
 | --- | --- |

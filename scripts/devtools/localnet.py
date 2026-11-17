@@ -1,13 +1,10 @@
-#!/usr/bin/env python3
 """Run the pinned upstream LocalNet; this is a dev helper, not the CantonGrid CLI."""
 import argparse
 import json
 import os
-from pathlib import Path
 import subprocess
-import sys
 
-ROOT = Path(__file__).resolve().parents[1]
+from .common import ROOT
 CHECKOUT = ROOT / '.local/cn-quickstart'
 REVISION = '8b898ed3ccb15e243b22ee8d0ed3573fb91ee6b9'
 PROJECT = 'cantongrid-localnet'
@@ -69,10 +66,10 @@ def render():
     return ['docker', 'compose', '--progress', 'plain', '-p', PROJECT, '-f', str(CONFIG), *PROFILES]
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['prepare', 'up', 'status', 'stop', 'logs', 'images'])
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.command == 'prepare':
         prepare()
         print(f'Prepared upstream revision {REVISION}')
@@ -86,11 +83,3 @@ def main():
         'images': ['images'],
     }
     run([*compose, *commands[args.command]])
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (subprocess.CalledProcessError, OSError, ValueError) as exc:
-        print(f'LocalNet helper failed: {exc}', file=sys.stderr)
-        sys.exit(1)

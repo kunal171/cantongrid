@@ -113,3 +113,72 @@ and explicit revocation. All run without source credentials or network access.
 `cargo test --workspace --offline`, Clippy with warnings denied, and formatting
 checks passed using Rust/Cargo 1.100. No external crate dependencies were added.
 These are pure decision-model tests; live connector/serving integration remains open.
+
+## Phase 2 handoff — 2026-11-17
+
+Completed the Rust configuration and fixture pipeline milestone on
+`feat/core-config-fixtures`, in focused configuration, values, lifecycle, examples,
+fixture decoding, CLI, helper consolidation and CI commits.
+
+Implemented and checked:
+
+- Strict project/fixture/model/payload versions, explicit source/network/scope
+  generation, exact template selections and declared create/archive/history
+  capabilities. Unknown fields, adapters, event kinds, unsupported processing,
+  duplicate keys and numeric float tokens are rejected without raw diagnostics.
+- Tagged exact values including Numeric 10 and Int64 boundaries, optional/enum
+  values and nested records/lists. Validation rejects range/scale/precision and
+  unsupported-type errors. Full metadata/type checking and arithmetic are deferred.
+- Atomic in-memory batch publication, deterministic replay, conflict detection,
+  stable source-local identities and opaque positions. Invalid batches leave
+  canonical state/history and checkpoint unchanged. Archive-without-create,
+  repeated archive and contract reuse fail; missing rows never imply archival.
+- Active/history reads enforce caller/source grant intersection, visibility
+  dependencies and lease validity. Tests cover A/B/AB, no grants, revocation,
+  expiry, source/network/generation mismatch and archive dependency retention.
+- Executable `init`, `validate`, and `fixture run` workflows pass from a separate
+  working directory, including refusing scaffold overwrites, relative fixture
+  resolution, redacted failures, bad inputs, regular-file and size checks.
+- Both unrelated Visibility and Outcomia Protocol fixtures use one generic engine.
+  Each replay applies two batches initially and zero on repeated delivery.
+  Expected scoped counts are documented with the examples.
+
+Validation: **29 Rust tests** (26 core + 3 executable workflow tests), **6 isolated
+Python helper regressions**, formatting, Clippy with warnings denied, Python syntax,
+Markdown links and Git whitespace checks passed. Rust checks use the committed
+lockfile and run offline on Rust/Cargo 1.100. A GitHub Actions workflow was added
+for these credential-free checks; it has not been run remotely in this handoff.
+
+Development helper review replaced ten standalone executable scripts with one
+`dev.py` entry point and grouped modules, merged the PQS lifecycle implementations
+and shared Compose/SQL/health/private-file helpers. Purposeful independent checks
+and the standalone upstream reproduction were retained. No new upstream defect
+was found in this work. The test harness signature error encountered during
+refactoring was ours and corrected before this handoff.
+
+The refactored helpers were also exercised against the existing LocalNet:
+
+- All three validators/authenticated Ledger APIs passed; unauthenticated access
+  was rejected. The SQL reader still queries while DML, DDL, temporary-table and
+  owner-role probes fail with SQLSTATE 42501.
+- Both sources initially failed readiness. Recreating them with renewed one-hour
+  credentials for the existing scoped users restored readiness, consistent with
+  credential expiry. Source startup now waits for readiness, avoiding the observed
+  connection reset while the recreated process starts. No source processing
+  defect was demonstrated.
+- Historical offset 80 remains active 11/create 17/archive 6, with no duplicate
+  creates and all create witnesses in scope. Exercise coverage remains zero.
+- A/B/AB Ledger checks passed with exact values and restored grants. AB PQS cache
+  checked exact witnesses/payloads and denied the unrelated SQL reader. Source
+  readiness loss was observed after 2.02 seconds during this revocation run;
+  three cached records, including B-only, remained. Grants were restored and the
+  AB source recreated/ready. This measurement is not a revocation SLA.
+- The previously recorded Outcomia DAR digest was validated again without upload.
+  No Outcomia ledger transactions or wallet changes were performed.
+
+Limits: the Rust workflow is fixture-only, with synthetic input and simulated
+caller grants. State/checkpoints are process memory; it does not provide durable
+restart, PostgreSQL, a live connector, authenticated APIs, generated processing
+models or streams. Phase 3 must resolve source handoff, production permissions,
+current grant retrieval and live lifecycle/identity/coverage gates before copying
+private data. Do not infer those guarantees from the fixture or helper checks.

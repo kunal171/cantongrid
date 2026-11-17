@@ -1,10 +1,11 @@
 # Phased delivery
 
-Phase 0 is complete. The Phase 1 LocalNet/PQS baseline and visibility experiments
-are recorded in [LocalNet evidence](localnet-evidence.md). Rust core/fixture work
-in Phase 2 has started with visibility-policy primitives. Remaining live connector
-gates continue to apply; this does not mark every Phase 1 capability verified.
-Acceptance below is required evidence, not a statement that checks have passed.
+Phases 0 and 2 are complete at their documented scope. The Phase 1 LocalNet/PQS
+baseline and visibility experiments are recorded in [LocalNet evidence](localnet-evidence.md);
+remaining live connector gates continue to apply. Phase 2 acceptance is recorded in
+[verification](verification.md) and the [fixture workflow](fixtures.md). This does
+not mark every Phase 1 capability verified. Later acceptance items below are
+requirements, not statements that their checks have passed.
 
 ## Phase 0 — Documentation foundation
 
@@ -24,7 +25,7 @@ Define exact type mappings and access/revocation behavior. Acceptance is a
 reproducible, credential-free compatibility report and an implementation plan
 with resolved gates from [research decisions](research-decisions.md).
 
-## Phase 2 — Core configuration and fixture pipeline
+## Phase 2 — Core configuration and fixture pipeline (complete)
 
 Build the Rust workspace, CLI validation, source-neutral identities, capability
 contracts, policy handling and deterministic fixture ingestion. Use explicit
@@ -34,6 +35,13 @@ unit and integration checks, including replay and A/B/AB isolation.
 Acceptance: documented fixture commands reproduce lifecycle state without source
 credentials. The engine contains no Outcomia-specific branches. Fixture success
 is labelled fixture success and does not imply LocalNet compatibility.
+
+Delivered: `init`, `validate` and `fixture run`; strict JSON v1; source/network/scope
+identities; declared capabilities; exact tagged values; atomic in-memory batch
+application; conflict/dedup detection; scoped reads with bounded leases; and two
+examples through one runner. Fixture caller grants are simulated and state is
+in memory. Models, live adapters and other planned CLI commands fail explicitly.
+Advanced Daml types/schema discovery remain restricted pending verification.
 
 ## Phase 3 — Authorized LocalNet ingestion and baseline queries
 

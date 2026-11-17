@@ -1,8 +1,9 @@
 # Working on CantonGrid
 
-- Current phase: Rust core/fixture foundations, with live connector capabilities
-  still gated by compatibility and authorization research. Do not present the CLI, live
-  connectors or generated APIs as implemented. Advance implementation when the
+- Current phase: Rust core/configuration/fixture milestone complete. Only `init`,
+  `validate` and `fixture run` are implemented CLI commands; state is in memory and
+  caller grants are simulated. Live connectors and generated APIs remain gated
+  by compatibility and authorization research. Advance implementation when the
   user asks to advance the phase; user instructions take precedence over docs.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python
   scripts are local development/verification helpers, not the product runtime.

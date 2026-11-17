@@ -10,9 +10,9 @@ No CantonGrid ingestion engine, API server or application model is implemented.
 After LocalNet is ready, run from CantonGrid:
 
 ```bash
-python3 scripts/localnet-pqs.py up
-python3 scripts/localnet-pqs.py status
-python3 scripts/localnet-pqs.py stop
+python3 scripts/dev.py pqs up
+python3 scripts/dev.py pqs status
+python3 scripts/dev.py pqs stop
 ```
 
 `up` creates or verifies the dedicated local ledger user
@@ -44,8 +44,8 @@ container creation alone is not readiness.
 Once `/readyz` succeeds, prepare a separate SQL login:
 
 ```bash
-python3 scripts/localnet-pqs.py reader
-python3 scripts/check-localnet-pqs-reader.py
+python3 scripts/dev.py pqs reader
+python3 scripts/dev.py check reader
 ```
 
 This operator command only changes the isolated fixture database. It creates
@@ -67,9 +67,9 @@ The consumer must still use public PQS query functions and apply caller policy.
 ## Verify SQL and source health
 
 ```bash
-python3 scripts/probe-localnet-pqs.py
+python3 scripts/dev.py check pqs
 # Optional: compare an observed retained checkpoint, such as this run's offset 80.
-python3 scripts/probe-localnet-pqs.py --at-offset 80
+python3 scripts/dev.py check pqs --at-offset 80
 ```
 
 Run the probe after initialization; it exits nonzero until the source is ready.
@@ -98,9 +98,9 @@ If the [AB visibility experiment](visibility.md) is running, stop it first.
 Stop PQS **before** stopping LocalNet because it attaches to the LocalNet network:
 
 ```bash
-python3 scripts/localnet-visibility-pqs.py stop  # If that experiment was started
-python3 scripts/localnet-pqs.py stop
-python3 scripts/localnet.py stop
+python3 scripts/dev.py pqs stop --visibility  # If that experiment was started
+python3 scripts/dev.py pqs stop
+python3 scripts/dev.py localnet stop
 ```
 
 After an interrupted host boot, some upstream services may start before their

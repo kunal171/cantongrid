@@ -1,17 +1,10 @@
-#!/usr/bin/env python3
 """Verify the fixture SQL reader can query PQS but cannot mutate or become owner."""
 import json
-import os
-from pathlib import Path
 import subprocess
-import sys
 
-ROOT = Path(__file__).resolve().parents[1]
-ENV = {**os.environ, 'PQS_UID': str(os.getuid()), 'PQS_GID': str(os.getgid())}
-COMMAND = ['docker', 'compose', '-p', 'cantongrid-pqs', '-f', str(ROOT / 'dev/pqs.compose.yaml'),
-           'exec', '-T', '-e', 'PGPASSWORD=local-pqs-reader', 'pqs-postgres',
-           'psql', '-X', '-qAt', '-h', '127.0.0.1', '-U', 'cantongrid_pqs_reader', '-d', 'pqs',
-           '-v', 'ON_ERROR_STOP=1', '-v', 'VERBOSITY=sqlstate']
+from ..common import ENV, pg_command
+
+COMMAND = pg_command(reader=True, sqlstate=True)
 
 
 def main():
@@ -46,11 +39,3 @@ def main():
             raise ValueError(f'Expected insufficient-privilege rejection for {label}')
         print(f'PASS: {label} denied by database permissions')
     print('PASS: authenticated SQL reader can query active data without source ownership or write privileges')
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as exc:
-        print(f'Local SQL reader check failed: {exc}', file=sys.stderr)
-        sys.exit(1)
