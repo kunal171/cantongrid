@@ -46,6 +46,7 @@ struct WireEvent {
 enum WireAction {
     Create { payload: Value },
     Archive,
+    ArchiveByPriorContract,
 }
 
 impl Batch {
@@ -71,6 +72,7 @@ impl Batch {
                         payload: payload.clone(),
                     },
                     Action::Archive => WireAction::Archive,
+                    Action::ArchiveByPriorContract => WireAction::ArchiveByPriorContract,
                 },
             })
             .collect();
@@ -126,6 +128,7 @@ impl Batch {
                     action: match event.action {
                         WireAction::Create { payload } => Action::Create(payload),
                         WireAction::Archive => Action::Archive,
+                        WireAction::ArchiveByPriorContract => Action::ArchiveByPriorContract,
                     },
                 })
             })

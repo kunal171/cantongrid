@@ -150,6 +150,7 @@ pub struct Plan {
     pub(crate) parties: BTreeSet<PartyId>,
     pub(crate) templates: BTreeSet<TemplateId>,
     fixture: PathBuf,
+    live: bool,
 }
 
 impl fmt::Debug for Plan {
@@ -214,7 +215,39 @@ impl Plan {
             parties,
             templates,
             fixture: source.fixture,
+            live: false,
         })
+    }
+
+    /// Build the supported partial-history PQS profile from validated source configuration.
+    /// It uses exact template projections and an explicit prior-create archive policy.
+    pub fn pqs(
+        context: SourceContext,
+        parties: BTreeSet<PartyId>,
+        templates: BTreeSet<TemplateId>,
+    ) -> Result<Self, ConfigError> {
+        if parties.is_empty() || parties.len() > 128 || templates.is_empty() || templates.len() > 64
+        {
+            return Err(ConfigError::InvalidSource);
+        }
+        for template in &templates {
+            template.validate()?;
+        }
+        Ok(Self {
+            context,
+            parties,
+            templates,
+            fixture: PathBuf::new(),
+            live: true,
+        })
+    }
+
+    pub fn is_live(&self) -> bool {
+        self.live
+    }
+
+    pub fn templates(&self) -> impl Iterator<Item = &TemplateId> {
+        self.templates.iter()
     }
 
     pub fn selected_template_count(&self) -> usize {
@@ -228,12 +261,16 @@ impl Plan {
     /// Fixture file location is excluded: relocating an identical input must not reset progress.
     pub fn definition(&self) -> serde_json::Value {
         let (source, network, generation) = self.context.identity();
-        serde_json::json!({
+        let mut definition = serde_json::json!({
             "format_version": 1, "model_version": 1, "payload_schema_version": 1,
             "source": source, "network": network, "generation": generation,
             "parties": self.parties.iter().map(PartyId::as_str).collect::<Vec<_>>(),
             "templates": self.templates,
-        })
+        });
+        if self.live {
+            definition["profile"] = serde_json::json!("pqs041_partial_raw_prior_create_v1");
+        }
+        definition
     }
 
     /// Declared source parties are configuration, never proof of current source/caller permissions.

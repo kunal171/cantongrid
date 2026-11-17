@@ -96,11 +96,16 @@ impl Store {
                         &[&key,&event.contract,&template,&payload,&event.id,&witnesses])?;
                     ("create", serde_json::json!([witnesses]))
                 }
-                Action::Archive => {
+                Action::Archive | Action::ArchiveByPriorContract => {
                     let original: Vec<String> = tx.query_one("SELECT witnesses FROM cantongrid.contracts WHERE stream_key=$1 AND contract_id=$2 AND active", &[&key,&event.contract])?.get(0);
                     tx.execute("UPDATE cantongrid.contracts SET active=false,archive_event_id=$3 WHERE stream_key=$1 AND contract_id=$2", &[&key,&event.contract,&event.id])?;
                     // AND across clauses, OR inside each clause: never flatten independent evidence.
-                    ("archive", serde_json::json!([original, witnesses]))
+                    let clauses = if matches!(event.action, Action::ArchiveByPriorContract) {
+                        serde_json::json!([original])
+                    } else {
+                        serde_json::json!([original, witnesses])
+                    };
+                    ("archive", clauses)
                 }
             };
             let single = Batch {

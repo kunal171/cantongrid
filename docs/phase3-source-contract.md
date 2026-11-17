@@ -146,3 +146,18 @@ Synthetic HTTP tests cover exact grants, missing/changed/privileged/ambiguous
 rights, substituted/deactivated users, invalid tokens, denied/unavailable/oversize
 responses and cached-lease removal. This is authorization groundwork, not live
 SQL ingestion, source freshness, filter verification or complete history evidence.
+
+## Partial-history lifecycle profile
+
+The supported live profile now explicitly permits an archive whose access policy
+is inherited from a previously observed matching creation under current source
+and caller grants. Its canonical action is `archive_by_prior_contract`; its raw
+witness set remains empty. A matching prior contract is mandatory, and this action
+is rejected by fixture plans. This is a CantonGrid access policy dependency, not
+an upstream archive witness claim. Unknown/orphan archives stop ingestion.
+
+Live payloads are explicitly tagged `raw_json`, preserving source JSON text without
+Daml type inference or floating-point interpretation. Numeric/Int64 strings remain
+strings. Typed projections remain Phase 4. The live plan fingerprint records this
+profile; it cannot reuse a fixture stream definition. History starts at a declared
+active-snapshot boundary and is partial; no pre-snapshot lifecycle is invented.

@@ -11,6 +11,8 @@ use std::{collections::BTreeMap, fmt};
 )]
 pub enum Value {
     Text(String),
+    /// Exact source JSON text; no Daml type inference or numeric operations are permitted.
+    RawJson(String),
     Party(String),
     Bool(bool),
     Int64(String),
@@ -51,6 +53,10 @@ impl Value {
             return Err(ValueError);
         }
         match self {
+            Self::RawJson(text) => {
+                serde_json::from_str::<Box<serde_json::value::RawValue>>(text)
+                    .map_err(|_| ValueError)?;
+            }
             Self::Party(value) => {
                 if !crate::config::identifier(value) {
                     return Err(ValueError);
