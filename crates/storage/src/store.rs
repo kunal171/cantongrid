@@ -36,6 +36,16 @@ impl Store {
         self.apply_inner(plan, batch, false)
     }
 
+    /// Live writes require a current matching source lease before staging and before COMMIT.
+    pub fn apply_authorized(
+        &mut self,
+        plan: &Plan,
+        batch: &Batch,
+        lease: &cantongrid_core::authorization::SourceLease,
+    ) -> Result<bool, StoreError> {
+        self.apply_guarded(plan, batch, false, Some(lease))
+    }
+
     /// Stage all writes before one commit; the test-only fault exercises a real SQL transaction abort.
     pub(crate) fn apply_inner(
         &mut self,
@@ -43,6 +53,26 @@ impl Store {
         batch: &Batch,
         inject_failure: bool,
     ) -> Result<bool, StoreError> {
+        self.apply_guarded(plan, batch, inject_failure, None)
+    }
+
+    fn apply_guarded(
+        &mut self,
+        plan: &Plan,
+        batch: &Batch,
+        inject_failure: bool,
+        lease: Option<&cantongrid_core::authorization::SourceLease>,
+    ) -> Result<bool, StoreError> {
+        let authorized = || {
+            lease.is_none_or(|lease| {
+                lease
+                    .source_parties(&plan.context().binding(), std::time::Instant::now())
+                    .is_some()
+            })
+        };
+        if !authorized() {
+            return Err(StoreError::Authorization);
+        }
         let encoded = batch.encode().map_err(|_| StoreError::InvalidBatch)?;
         if encoded.len() > MAX_BATCH_BYTES || batch.events.len() > MAX_EVENTS {
             return Err(StoreError::Limit);
@@ -126,10 +156,13 @@ impl Store {
         let next_revision = revision.checked_add(1).ok_or(StoreError::Limit)?;
         tx.execute("INSERT INTO cantongrid.batches(stream_key,revision,position,envelope) VALUES($1,$2,$3,$4)", &[&key,&next_revision,&batch.position,&document])?;
         tx.execute(
-            "UPDATE cantongrid.streams SET revision=$2,checkpoint=$3 WHERE stream_key=$1",
+            "UPDATE cantongrid.streams SET revision=$2,checkpoint=$3,observed_at=now() WHERE stream_key=$1",
             &[&key, &next_revision, &batch.position],
         )?;
         test_fault(&mut tx, inject_failure)?;
+        if !authorized() {
+            return Err(StoreError::Authorization);
+        }
         // Failure to receive COMMIT's reply is ambiguous. A caller must reconnect and replay this batch.
         tx.commit().map_err(|_| StoreError::CommitUnknown)?;
         Ok(true)

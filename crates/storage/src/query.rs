@@ -17,6 +17,8 @@ pub struct ReadPage {
     pub items: Vec<serde_json::Value>,
     pub visible_total: i64,
     pub next_after: Option<String>,
+    pub checkpoint: Option<String>,
+    pub observed_age_seconds: Option<i64>,
 }
 
 impl std::fmt::Debug for ReadPage {
@@ -57,9 +59,13 @@ impl Store {
             .start()?;
         let key = stream_key(plan).0;
         let definition = tx.query_opt(
-            "SELECT definition FROM cantongrid.streams WHERE stream_key=$1",
+            "SELECT definition,checkpoint,GREATEST(0,extract(epoch FROM now()-observed_at)::bigint) FROM cantongrid.streams WHERE stream_key=$1",
             &[&key],
         )?;
+        let checkpoint = definition
+            .as_ref()
+            .and_then(|r| r.get::<_, Option<String>>(1));
+        let observed_age_seconds = definition.as_ref().map(|r| r.get::<_, i64>(2));
         if let Some(row) = definition
             && row.get::<_, serde_json::Value>(0) != plan.definition()
         {
@@ -108,6 +114,8 @@ impl Store {
             items,
             visible_total,
             next_after,
+            checkpoint,
+            observed_age_seconds,
         })
     }
 }
