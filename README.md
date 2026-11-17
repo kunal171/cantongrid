@@ -11,7 +11,7 @@ use the same engine. [LocalNet development helpers](docs/localnet.md) support
 compatibility research. Live connectors, destination PostgreSQL migrations,
 REST/GraphQL and streams remain planned.
 
-The indexer runtime will be **Rust**. Python scripts are development helpers for
+The indexer runtime is **Rust**. Python scripts are development helpers for
 LocalNet and compatibility checks, not the ingestion or API implementation.
 
 Developers describe **what data to process** and **how to process it**.
@@ -21,7 +21,7 @@ Deployment still requires an operator to supply authorized source access,
 storage, credentials and access policy. The engine cannot manufacture permissions
 or infer application accounting rules.
 
-Outcomia is the first working example to build. It must be expressed through
+Outcomia is the first live application example to build. It must be expressed through
 configuration and verified package metadata, without Outcomia-specific engine
 code. A second unrelated Daml example must work without changing Rust code.
 
