@@ -9,3 +9,6 @@ pub mod config;
 pub mod value;
 
 pub mod lifecycle;
+
+mod document;
+pub mod fixture;

@@ -56,3 +56,11 @@ an archive with no selected create rather than inventing missing history. Snapsh
 partial/pruned history, exercises and reassignments are not supported in this
 slice. State/checkpoints are process memory; owned PostgreSQL transactions,
 checkpoint recovery and outbox delivery remain Phase 3 work.
+
+The `fixture` module decodes strict versioned JSON and replays batches through the
+same lifecycle engine. Duplicate JSON keys and numeric floating-point tokens are
+rejected before normalization; raw parser diagnostics are never logged. Fixture
+versions and source/network/generation must match the validated project. Only
+complete-from-origin input is accepted. A second pass over an existing engine must
+apply zero batches. [Both examples](../examples/fixtures/README.md) exercise the
+same runner; fixture parties simulate callers and are not an authentication API.

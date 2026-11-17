@@ -139,7 +139,7 @@ struct Selection {
 }
 
 /// Constructed only through validation, not directly deserializable as a trusted plan.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Plan {
     pub(crate) context: SourceContext,
     pub(crate) parties: BTreeSet<PartyId>,
@@ -147,11 +147,17 @@ pub struct Plan {
     fixture: PathBuf,
 }
 
+impl fmt::Debug for Plan {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("Plan([redacted])")
+    }
+}
+
 impl Plan {
     pub fn parse(input: &str) -> Result<Self, ConfigError> {
         // Never forward Serde's value-containing diagnostics into logs.
         let document: Document =
-            serde_json::from_str(input).map_err(|_| ConfigError::InvalidDocument)?;
+            crate::document::parse(input).map_err(|_| ConfigError::InvalidDocument)?;
         if document.version != FORMAT_VERSION
             || document.model_version != 1
             || document.payload_schema_version != 1
