@@ -296,6 +296,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cantongrid-models"
+version = "0.2.0-alpha.1"
+dependencies = [
+ "cantongrid-core",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "cantongrid-postgres"
 version = "0.2.0-alpha.1"
 dependencies = [
