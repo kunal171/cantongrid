@@ -22,6 +22,7 @@ Source APIs and schema mappings require compatibility verification.
 | [Fixture pipeline](fixtures.md) | Strict configuration, exact values, lifecycle replay and limits. |
 | [Development tools](../scripts/README.md) | Consolidated LocalNet commands and script review. |
 | [Roadmap](roadmap.md) | Phases, acceptance gates and small-commit workflow. |
+| [Phase 3 source contract](phase3-source-contract.md) | Installed interfaces, SDK evaluation, retained-window evidence and live gates. |
 | [Research decisions](research-decisions.md) | Unverified interfaces and implementation gates. |
 | [Ecosystem comparison](competitive-landscape.md) | Active indexers, grant proposal stages, differentiated hypotheses and CantonGrid implementation snapshot. |
 | [Verification](verification.md) | Required evidence and planned runtime checks. |
