@@ -180,6 +180,11 @@ impl FieldType {
     pub fn accepts(&self, value: &Value) -> Result<(), ModelError> {
         self.validate()?;
         value.validate().map_err(|_| ModelError::Type)?;
+        // PostgreSQL text/jsonb cannot represent NUL. Reject it before planning a
+        // literal/filter or accepting a projected row; never strip source data.
+        if matches!(value, Value::Text(text) if text.contains('\0')) {
+            return Err(ModelError::Type);
+        }
         let valid = match (self, value) {
             (Self::Text, Value::Text(_))
             | (Self::Party, Value::Party(_))

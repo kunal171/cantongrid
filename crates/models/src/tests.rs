@@ -124,6 +124,54 @@ fn filters_optional_paths_and_type_errors_do_not_become_zero_or_empty_success() 
 }
 
 #[test]
+fn postgres_incompatible_text_and_oversized_direct_rows_fail_before_storage() {
+    let catalog = visibility();
+    let model = &catalog.models()[0];
+    // Both ordinary and optional text must survive the same storage boundary.
+    for field in ["label", "note"] {
+        let mut input = payload();
+        input[field] = "private\0value".into();
+        assert_eq!(model.evaluate(&input.to_string()), Err(ModelError::Type));
+        let mut row = model.evaluate(&payload().to_string()).unwrap().unwrap();
+        let text = Value::Text("private\0value".into());
+        row.insert(
+            field.into(),
+            if field == "note" {
+                Value::Optional(Some(Box::new(text)))
+            } else {
+                text
+            },
+        );
+        assert_eq!(
+            model.row_json("stream", "contract", &row),
+            Err(ModelError::Type)
+        );
+    }
+    let mut document = definition();
+    document["models"][0]["fields"]["label"] =
+        json!({"op":"literal","value":{"type":"text","value":"bad\0literal"}});
+    assert!(Catalog::parse(&document.to_string()).is_err());
+    document = definition();
+    document["models"][0]["filter"]["equals"]["value"] = "bad\0filter".into();
+    assert!(Catalog::parse(&document.to_string()).is_err());
+
+    let mut row = model.evaluate(&payload().to_string()).unwrap().unwrap();
+    row.insert("label".into(), Value::Text("x".repeat(1024 * 1024)));
+    assert_eq!(
+        model.row_json("stream", "contract", &row),
+        Err(ModelError::Limit)
+    );
+    // PostgreSQL permits other Unicode and whitespace; don't reject valid text.
+    let mut input = payload();
+    input["label"] = "行情\n\tready".into();
+    let row = model.evaluate(&input.to_string()).unwrap().unwrap();
+    assert_eq!(
+        model.row_json("stream", "contract", &row).unwrap()["label"],
+        input["label"]
+    );
+}
+
+#[test]
 fn decimal_normalization_is_exact_and_never_rounds() {
     assert_eq!(
         crate::arithmetic::decimal("1.2", 3).unwrap().decimal,

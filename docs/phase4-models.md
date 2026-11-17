@@ -99,6 +99,10 @@ operators/types and excessive expression depth are rejected. Filters run after
 projection/validation; invalid values do not disappear because a filter is false.
 Outputs use the core's explicit typed-value encoding. Numeric source normalization
 may add trailing zeros to the declared scale but never drops digits or rounds.
+Projected text, including optional text, literals and filter values, cannot contain
+NUL because PostgreSQL text/jsonb cannot represent it. Such values fail validation;
+they are never stripped. Both evaluation and direct typed-row encoding enforce the
+1-MiB serialized projection limit.
 
 Generated SQL targets `cantongrid_models`, quotes validated names, derives table
 names from definition fingerprints, uses exact bigint/numeric columns and links

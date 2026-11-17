@@ -84,6 +84,15 @@ impl Model {
         {
             return Err(ModelError::Type);
         }
+        // Callers can provide typed rows directly, bypassing evaluate(). Keep its
+        // projection-size bound here too, before cloning values into SQL JSON.
+        if serde_json::to_vec(fields)
+            .map_err(|_| ModelError::Type)?
+            .len()
+            > 1024 * 1024
+        {
+            return Err(ModelError::Limit);
+        }
         let mut row = serde_json::Map::new();
         row.insert("_cg_stream_key".into(), stream.into());
         row.insert("_cg_contract_id".into(), contract.into());

@@ -397,3 +397,17 @@ current Phase 3 resolution notes. The CLI page was restored before adding model
 commands. Expected page titles and local links were checked. Model materialization,
 versioned rebuild/promotion and typed query generation remain the next Phase 4
 integration work; joins/aggregates need their own transitive policy acceptance.
+
+### Phase 4 compiler review follow-up
+
+Manual review found two storage-boundary gaps: NUL-containing text could pass
+projection validation even though PostgreSQL cannot store it, and directly
+supplied typed rows could bypass the evaluator's serialized-size limit. Both now
+fail before SQL encoding. Regression controls cover ordinary/optional text,
+literals, filters, oversized direct rows and valid Unicode/whitespace.
+
+After the fixes, all 55 credential-free workspace Rust tests passed (15 integration
+tests remained ignored in that run). The generated-schema owned-PostgreSQL test
+was separately executed and passed; the other 14 integration tests were not rerun
+for these model-only changes. Workspace formatting/Clippy and diff checks passed.
+This review does not complete live model materialization or generated API acceptance.
