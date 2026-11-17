@@ -39,6 +39,25 @@ not proof of complete network history. The source contains existing Splice demo
 contracts, not uploaded Outcomia contracts. Readiness is available at `/readyz`;
 container creation alone is not readiness.
 
+## Verify SQL and source health
+
+```bash
+python3 scripts/probe-localnet-pqs.py
+# Optional: compare an observed retained checkpoint, such as this run's offset 80.
+python3 scripts/probe-localnet-pqs.py --at-offset 80
+```
+
+Run the probe after initialization; it exits nonzero until the source is ready.
+It checks the exact ledger grant, active user, `/readyz` connection/stream flags,
+and a repeatable-read, read-only SQL snapshot. It pins explicit oldest/latest
+bounds and checks active, create, archive and exercise functions. Create rows
+must have matching party witness evidence and unique event/template/payload-type
+identities. Only counts and offsets are printed. A retained historical offset
+must belong to this particular source/database; 80 is not a universal constant.
+
+The probe deliberately expects nonempty data in this seeded fixture. It is not a
+general health endpoint for applications that may legitimately have no contracts.
+
 ## Credential and lifecycle limits
 
 `up` renews the token and recreates the source process while retaining the
