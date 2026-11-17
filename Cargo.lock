@@ -76,6 +76,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cantongrid-pqs"
+version = "0.1.0"
+dependencies = [
+ "cantongrid-postgres",
+ "serde",
+]
+
+[[package]]
 name = "cantongrid-storage"
 version = "0.1.0"
 dependencies = [

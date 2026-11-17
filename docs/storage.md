@@ -79,3 +79,18 @@ lease invalidation, writer exclusion, source-definition drift, invalid/conflicti
 batches, size rejection and corrupted checkpoint denial. A test-injected division
 by zero after all staged writes exercised an actual SQL transaction abort: canonical
 state, history, outbox and progress were all unchanged after reconnect.
+
+## PQS read-only inspector
+
+`cantongrid-pqs` now inspects schema 041 using a restricted nonowner reader and a
+repeatable-read/read-only transaction. It checks role/schema/table privileges and
+rejects security-definer functions and unexpected schema versions. It resolves
+and passes explicit temporal bounds to public PQS functions, reports row counts
+and coverage limits, and copies no payloads or party identifiers to the destination.
+Its live LocalNet check passed under the existing SELECT-only provider reader.
+
+The report always leaves private lifecycle ingestion disabled. No rows or zero
+archive rows cannot prove a missing capability exists. The SQL inspector does not
+check source credential expiry, source readiness, or current ledger/user grants;
+its result cannot authorize ingestion or application access. No second connector,
+upstream mutation or unfiltered fallback was introduced.
