@@ -50,6 +50,18 @@ impl GrantCheckConfig {
         GrantChecker::localnet(&self.endpoint, &self.user, context.binding(), parties)
     }
 
+    /// Configured identity and parties are selection inputs, not verified grants.
+    pub fn context(&self) -> Result<SourceContext, GrantError> {
+        SourceContext::new(self.source.clone(), self.network.clone(), self.generation)
+            .map_err(|_| GrantError::Configuration)
+    }
+    pub fn parties(&self) -> Result<BTreeSet<PartyId>, GrantError> {
+        self.parties
+            .iter()
+            .map(|p| PartyId::new(p.clone()).map_err(|_| GrantError::Configuration))
+            .collect()
+    }
+
     pub fn credential_env(&self) -> &str {
         &self.credential_env
     }
