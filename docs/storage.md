@@ -45,3 +45,37 @@ migration lock. Repeat initialization verifies them; it does not adopt or rewrit
 an unrelated/incompatible schema. PostgreSQL tests confirmed repeat initialization
 and checksum-drift rejection. PostgreSQL-dependent tests are explicitly ignored
 by default and must be run against the owned fixture.
+
+## Durable reference engine
+
+The Rust store commits a source batch's canonical contracts, lifecycle observations,
+original evidence envelope, outbox references, checkpoint and revision together.
+A transaction-level advisory lock excludes another writer for that source context.
+Locks are database-local and released on transaction/connection termination; no
+application process lease needs to be guessed. Locks coordinate cooperating engine
+workers; the trusted database owner can still modify SQL directly.
+
+Recovery replays committed, versioned envelopes in contiguous destination revision
+order. Source positions remain opaque (for example `fixture-z` can precede
+`fixture-a`). The checkpoint must equal the last committed position. Exact JSONB
+payloads retain decimal/Int64 strings. Archive visibility stores both the original
+create and archive witness clauses; callers require each clause, not their union.
+A changed source selection/party set/model schema in the same generation is rejected.
+A different generation starts a separate stream and requires rebuilding.
+
+A duplicate committed delivery performs no additional state/outbox writes and does
+not regress the checkpoint. Unknown commit outcomes require reconnecting and
+replaying the same batch. Outbox identity sequences can contain rollback gaps;
+they are not ledger positions or public authorization-bearing stream cursors.
+
+This slice replays a bounded journal rather than claiming a scalable storage
+implementation: maximum 256 batches, 1000 events/1 MiB per batch and 16 MiB of
+journal JSONB text per source generation. Limits fail without advancing progress.
+No retention/deletion of an active stream is automatic. Recovery detects envelope,
+revision and checkpoint inconsistencies; it does not repair operator SQL changes.
+
+Real PostgreSQL checks passed for reopen/replay, exact values, A/B/AB read policies,
+lease invalidation, writer exclusion, source-definition drift, invalid/conflicting
+batches, size rejection and corrupted checkpoint denial. A test-injected division
+by zero after all staged writes exercised an actual SQL transaction abort: canonical
+state, history, outbox and progress were all unchanged after reconnect.

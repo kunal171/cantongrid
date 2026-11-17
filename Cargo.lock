@@ -79,7 +79,9 @@ dependencies = [
 name = "cantongrid-storage"
 version = "0.1.0"
 dependencies = [
+ "cantongrid-core",
  "cantongrid-postgres",
+ "serde",
  "serde_json",
  "sha2",
 ]
