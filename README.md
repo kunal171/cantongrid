@@ -6,8 +6,9 @@ data streams.**
 
 Status: documentation foundation complete; LocalNet compatibility work is in
 progress. Development helpers are available in the [LocalNet guide](docs/localnet.md).
-There is no CantonGrid executable, live connector, database migration or API
-server yet. Product commands and interfaces below remain planned.
+The first [Rust core library](crates/core/README.md) implements visibility-policy
+primitives. There is no CantonGrid executable, live connector, destination migration
+or API server yet. Product commands and interfaces below remain planned.
 
 The indexer runtime will be **Rust**. Python scripts are development helpers for
 LocalNet and compatibility checks, not the ingestion or API implementation.

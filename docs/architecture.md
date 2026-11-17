@@ -1,6 +1,7 @@
 # Architecture
 
-Status: accepted design direction; components below are not implemented. Source
+Status: accepted design direction. The initial Rust visibility-policy primitives
+are implemented in crates/core; the other runtime components below remain planned. Source
 protocols, dependency versions and exact database schemas remain research gates.
 
 ## System boundary

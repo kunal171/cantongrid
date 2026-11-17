@@ -1,6 +1,7 @@
 # Working on CantonGrid
 
-- Current phase: compatibility research and local development infrastructure. Do not present the CLI, live
+- Current phase: Rust core/fixture foundations, with live connector capabilities
+  still gated by compatibility and authorization research. Do not present the CLI, live
   connectors or generated APIs as implemented. Advance implementation when the
   user asks to advance the phase; user instructions take precedence over docs.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python

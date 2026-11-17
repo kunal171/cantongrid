@@ -1,8 +1,9 @@
 # Phased delivery
 
-Phase 0 is complete. Phase 1 has started with user-authorized LocalNet research
-and infrastructure; see [LocalNet evidence](localnet-evidence.md). Each later phase
-starts when requested.
+Phase 0 is complete. The Phase 1 LocalNet/PQS baseline and visibility experiments
+are recorded in [LocalNet evidence](localnet-evidence.md). Rust core/fixture work
+in Phase 2 has started with visibility-policy primitives. Remaining live connector
+gates continue to apply; this does not mark every Phase 1 capability verified.
 Acceptance below is required evidence, not a statement that checks have passed.
 
 ## Phase 0 — Documentation foundation
