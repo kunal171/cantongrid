@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0-alpha.1 — unreleased
+
+### Added
+
+- Bounded declarative typed model definitions, filters and checked exact arithmetic.
+- Deterministic generated SQL table plans and exact typed row encoding.
+- Offline model validation, planning and preview CLI commands.
+- Outcomia and unrelated Visibility model definitions plus owned-Postgres schema round-trip tests.
+
+### In progress
+
+- Phase 4 live model materialization, lifecycle retractions, model registry/backfill/promotion and generated typed APIs remain incomplete.
+- These model commands do not install schemas, ingest contracts or authenticate API callers.
+
 ## 0.2.0-alpha.1 — unreleased
 
 ### Added

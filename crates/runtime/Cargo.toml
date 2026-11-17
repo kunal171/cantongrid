@@ -7,11 +7,11 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
-cantongrid-postgres = { path = "../postgres", version = "=0.2.0-alpha.1" }
-cantongrid-core = { path = "../core", version = "=0.2.0-alpha.1" }
-cantongrid-ledger = { path = "../ledger", version = "=0.2.0-alpha.1" }
-cantongrid-pqs = { path = "../pqs", version = "=0.2.0-alpha.1" }
-cantongrid-storage = { path = "../storage", version = "=0.2.0-alpha.1" }
+cantongrid-postgres = { path = "../postgres", version = "=0.3.0-alpha.1" }
+cantongrid-core = { path = "../core", version = "=0.3.0-alpha.1" }
+cantongrid-ledger = { path = "../ledger", version = "=0.3.0-alpha.1" }
+cantongrid-pqs = { path = "../pqs", version = "=0.3.0-alpha.1" }
+cantongrid-storage = { path = "../storage", version = "=0.3.0-alpha.1" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "signal"] }
