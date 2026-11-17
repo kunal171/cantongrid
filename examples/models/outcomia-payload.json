@@ -1,0 +1,10 @@
+{
+  "marketId": "7",
+  "protocolName": "example-protocol",
+  "status": "Closed",
+  "terms": {
+    "question": "Will the example event happen?",
+    "priceTick": "0.0000000001",
+    "quantityLot": "9223372036854775807"
+  }
+}
