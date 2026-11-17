@@ -9,6 +9,9 @@ progress. Development helpers are available in the [LocalNet guide](docs/localne
 There is no CantonGrid executable, live connector, database migration or API
 server yet. Product commands and interfaces below remain planned.
 
+The indexer runtime will be **Rust**. Python scripts are development helpers for
+LocalNet and compatibility checks, not the ingestion or API implementation.
+
 Developers describe **what data to process** and **how to process it**.
 CantonGrid handles the supported ingestion, lifecycle tracking, projections,
 schema management, APIs, change delivery, and recovery infrastructure.

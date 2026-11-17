@@ -3,6 +3,8 @@
 - Current phase: compatibility research and local development infrastructure. Do not present the CLI, live
   connectors or generated APIs as implemented. Advance implementation when the
   user asks to advance the phase; user instructions take precedence over docs.
+- Implement the indexer runtime, processing, storage and APIs in Rust. Python
+  scripts are local development/verification helpers, not the product runtime.
 - Product: general-purpose, Daml-first Canton indexing infrastructure. Outcomia
   is the first configuration/example, never an engine special case.
 - Developers define selections and processing rules; supported infrastructure

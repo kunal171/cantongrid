@@ -17,6 +17,7 @@ conflicting wording in the supplied technical brief, version 0.2.
 | D-010 | Create a separate local cantongrid repository beside Outcomia. | Do not modify either Outcomia repository. No remote creation or publication is part of the documentation phase. |
 | D-011 | Work in small commits and phases. | Documentation is first; implementation details are added as verified, rather than invented now. |
 | D-012 | Keep init/index/serve as clear primary commands. | init scaffolds; index owns ingestion/projections; serve owns queries/stream delivery; dev supervises both locally. |
+| D-013 | The indexer runtime and APIs are Rust; Python is for development helpers only. | Do not grow compatibility scripts into a Python indexing engine. Confirmed 2026-11-17. |
 
 ## Interpretation of the original brief
 
