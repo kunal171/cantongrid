@@ -147,6 +147,10 @@ pub fn page_env(
             witnesses,
             observed_at_micros: observed,
             ledger_at_micros: row.get(9),
+            origin: Some(cantongrid_core::lifecycle::Origin {
+                offset: row.get(10),
+                snapshot_observation: cursor.snapshot,
+            }),
             action,
         });
         cursor.offset = offset;

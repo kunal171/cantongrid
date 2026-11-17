@@ -20,12 +20,12 @@ WITH selected AS (
            c.create_event_pk AS pk,false AS archive,c.create_event_id::text AS event_id,
            c.contract_id,c.template_fqn,c.creation_package_id,c.witnesses,
            CASE WHEN octet_length(c.payload::text)<=65536 THEN c.payload::text END AS payload,
-           (extract(epoch FROM c.created_effective_at)*1000000)::bigint AS ledger_time
+           (extract(epoch FROM c.created_effective_at)*1000000)::bigint AS ledger_time,c.created_at_offset AS origin_offset
     FROM (SELECT * FROM baseline WHERE $1 UNION ALL SELECT * FROM added) c
     UNION ALL
     SELECT a.archived_at_offset,a.archive_event_pk,true,a.archive_event_id::text,
            a.contract_id,a.template_fqn,a.creation_package_id,a.witnesses,NULL::text,
-           (extract(epoch FROM a.archived_effective_at)*1000000)::bigint
+           (extract(epoch FROM a.archived_effective_at)*1000000)::bigint,a.archived_at_offset
     FROM public.archives(NULL,$2,$3) a JOIN visible_ids v USING(contract_id,creation_package_id,template_fqn)
     WHERE NOT $1 AND a.archived_at_offset>$2 AND a.payload_type::text='template' AND NOT a.divulged_only
 )

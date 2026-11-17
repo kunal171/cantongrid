@@ -199,7 +199,7 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
         time + Duration::from_secs(60),
     )
     .unwrap();
-    let events=[("a1",vec![party("A")]),("a2",vec![party("A")]),("b1",vec![party("B")]),("joint",vec![party("A"),party("B")])].into_iter().map(|(id,witnesses)|Event{id:format!("create-{id}"),contract:id.into(),template:template.clone(),witnesses:witnesses.into_iter().collect(),observed_at_micros:1,ledger_at_micros:Some(1),action:Action::Create(Value::RawJson(json!({"label":id,"amount":"12345678901234567890.1234567891","sequence":"9223372036854775807"}).to_string()))}).collect();
+    let events=[("a1",vec![party("A")]),("a2",vec![party("A")]),("b1",vec![party("B")]),("joint",vec![party("A"),party("B")])].into_iter().map(|(id,witnesses)|Event{id:format!("create-{id}"),contract:id.into(),template:template.clone(),witnesses:witnesses.into_iter().collect(),observed_at_micros:1,ledger_at_micros:Some(1),origin:None,action:Action::Create(Value::RawJson(json!({"label":id,"amount":"12345678901234567890.1234567891","sequence":"9223372036854775807"}).to_string()))}).collect();
     let position = |n: i64| {
         json!({"snapshot":false,"boundary":n,"through":n,"offset":n,"pk":i64::MAX}).to_string()
     };
@@ -220,6 +220,7 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
             witnesses: BTreeSet::new(),
             observed_at_micros: 2,
             ledger_at_micros: Some(2),
+            origin: None,
             action: Action::ArchiveByPriorContract,
         }],
     };
@@ -361,6 +362,11 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
         let (status, result) = request(&rt, &format!("{base}/v1/events"), Some(token), None);
         assert_eq!(status, 200);
         assert_eq!(result["visibleTotal"], history);
+        for item in result["items"].as_array().unwrap() {
+            assert!(item.get("envelope").is_none());
+            assert!(item.get("position").is_none());
+            assert!(item.get("witnesses").is_none());
+        }
         let (status, result) = request(
             &rt,
             &base,

@@ -37,6 +37,8 @@ struct WireEvent {
     witnesses: Vec<String>,
     observed_at_micros: i64,
     ledger_at_micros: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    origin: Option<crate::lifecycle::Origin>,
     action: WireAction,
 }
 
@@ -67,6 +69,7 @@ impl Batch {
                     .collect(),
                 observed_at_micros: event.observed_at_micros,
                 ledger_at_micros: event.ledger_at_micros,
+                origin: event.origin.clone(),
                 action: match &event.action {
                     Action::Create(payload) => WireAction::Create {
                         payload: payload.clone(),
@@ -125,6 +128,7 @@ impl Batch {
                     witnesses,
                     observed_at_micros: event.observed_at_micros,
                     ledger_at_micros: event.ledger_at_micros,
+                    origin: event.origin.clone(),
                     action: match event.action {
                         WireAction::Create { payload } => Action::Create(payload),
                         WireAction::Archive => Action::Archive,

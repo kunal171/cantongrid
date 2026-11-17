@@ -27,7 +27,16 @@ pub struct Event {
     pub witnesses: BTreeSet<PartyId>,
     pub observed_at_micros: i64,
     pub ledger_at_micros: Option<i64>,
+    pub origin: Option<Origin>,
     pub action: Action,
+}
+
+/// Verified source-local event origin, independent of the delivery page/checkpoint position.
+#[derive(Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Origin {
+    pub offset: i64,
+    pub snapshot_observation: bool,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -116,6 +125,7 @@ impl Engine {
             || event.template.validate().is_err()
             || event.observed_at_micros < 0
             || event.ledger_at_micros.is_some_and(|time| time < 0)
+            || event.origin.as_ref().is_some_and(|o| o.offset < 0)
         {
             return Err(IngestError::InvalidEvent);
         }
@@ -268,6 +278,7 @@ mod tests {
             witnesses: parties.iter().map(|p| PartyId::new(*p).unwrap()).collect(),
             observed_at_micros: 1,
             ledger_at_micros: Some(1),
+            origin: None,
             action,
         }
     }
@@ -465,6 +476,7 @@ mod live_policy_tests {
             witnesses: BTreeSet::from([party.clone()]),
             observed_at_micros: 1,
             ledger_at_micros: None,
+            origin: None,
             action: Action::Create(Value::RawJson(
                 r#"{"amount":"12345678901234567890.1234567891","sequence":"9223372036854775807"}"#
                     .into(),

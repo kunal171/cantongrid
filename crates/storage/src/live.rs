@@ -164,6 +164,7 @@ impl Store {
                 || event.template.validate().is_err()
                 || event.observed_at_micros < 0
                 || event.ledger_at_micros.is_some_and(|t| t < 0)
+                || event.origin.as_ref().is_some_and(|o| o.offset < 0)
                 || event.id.chars().any(char::is_control)
                 || event.contract.chars().any(char::is_control)
             {

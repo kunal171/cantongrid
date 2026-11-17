@@ -96,6 +96,7 @@ impl Fixture {
                     witnesses,
                     observed_at_micros: raw.observed_at_micros,
                     ledger_at_micros: raw.ledger_at_micros,
+                    origin: None,
                     action: match raw.action {
                         RawAction::Create { payload } => Action::Create(payload),
                         RawAction::Archive => Action::Archive,

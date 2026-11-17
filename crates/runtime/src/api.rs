@@ -111,7 +111,18 @@ impl Service {
             None => "unknown",
         };
         let result = Page {
-            items: page.items.into_iter().map(async_graphql::Json).collect(),
+            items: page
+                .items
+                .into_iter()
+                .map(|item| {
+                    if matches!(kind, PageKind::History) {
+                        public_event(item)
+                    } else {
+                        item
+                    }
+                })
+                .map(async_graphql::Json)
+                .collect(),
             visible_total: page.visible_total.to_string(),
             next_cursor,
             provenance: async_graphql::Json(serde_json::json!({
@@ -132,6 +143,21 @@ impl Service {
         }
         Ok(result)
     }
+}
+
+/// Source witness sets and internal page PKs belong to the operator, not narrower API
+/// principals. Expose record-local provenance without the raw persistence envelope.
+fn public_event(item: serde_json::Value) -> serde_json::Value {
+    let event = &item["envelope"]["events"][0];
+    serde_json::json!({
+        "eventId":item["eventId"],"contractId":item["contractId"],"kind":item["kind"],
+        "template":event["template"],"payload":event["action"].get("payload"),
+        "observedAtMicros":event["observed_at_micros"].as_i64().map(|v|v.to_string()),
+        "ledgerAtMicros":event["ledger_at_micros"].as_i64().map(|v|v.to_string()),
+        "sourceOffset":event["origin"]["offset"].as_i64().map(|v|v.to_string()),
+        "snapshotObservation":event["origin"]["snapshot_observation"],
+        "visibilityEvidence":if event["action"]["kind"]=="archive_by_prior_contract" {"prior_create_policy"}else{"source_witness_policy"}
+    })
 }
 
 struct QueryRoot;
