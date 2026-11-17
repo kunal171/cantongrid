@@ -97,3 +97,23 @@ archive rows cannot prove a missing capability exists. The SQL inspector does no
 check source credential expiry, source readiness, or current ledger/user grants;
 its result cannot authorize ingestion or application access. No second connector,
 upstream mutation or unfiltered fallback was introduced.
+
+## Authorized SQL query foundation
+
+`Store::read_page` now provides one backend read path for active contracts and
+lifecycle history. It checks a trusted caller/source lease intersection before
+SQL and again before returning data. Scope/generation or plan-definition mismatch
+fails closed. It does not deserialize caller grants from request filters.
+
+Visibility predicates run **before** total counts and keyset pagination in a
+read-only repeatable-read transaction. History requires every stored dependency
+clause; empty/malformed evidence cannot become public. Page size is 1–100. Reads
+use canonical SQL state rather than replaying the entire journal for each page.
+Original identity sort order is a paging contract, not ledger chronological order.
+
+PostgreSQL tests cover A/B/AB/no-party totals, one-row pages, duplicate-free paging,
+revocation, conjunctive archive dependencies and empty-evidence denial. Debug output
+redacts page data. The raw backend `next_after` key is **not** a public API cursor:
+REST/GraphQL must wrap it with principal/source/generation/expiry integrity checks.
+Real caller authentication and current source-grant retrieval still need the
+separate provider/transport implementation. These tests use synthetic fixture grants.

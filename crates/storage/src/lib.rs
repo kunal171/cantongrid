@@ -2,6 +2,8 @@
 #![forbid(unsafe_code)]
 mod error;
 mod journal;
+mod query;
+pub use query::{PageKind, ReadPage};
 mod migration;
 mod store;
 pub use error::StoreError;

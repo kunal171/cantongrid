@@ -49,6 +49,20 @@ impl SourceLease {
         })
     }
 
+    /// Effective parties for a backend SQL read. This is not an identity or token verifier.
+    /// Call again after the read so a result cannot outlive the source lease.
+    pub fn read_parties(
+        &self,
+        scope: &ScopeBinding,
+        caller: &CallerGrants,
+        now: Instant,
+    ) -> Option<Vec<PartyId>> {
+        if !self.valid || now < self.checked_at || now >= self.valid_until || &self.scope != scope {
+            return None;
+        }
+        caller.within(scope, &self.parties)
+    }
+
     pub fn invalidate(&mut self) {
         self.valid = false;
     }
@@ -119,6 +133,46 @@ mod tests {
             now + Duration::from_secs(60),
         )
         .unwrap()
+    }
+
+    #[test]
+    fn backend_read_parties_require_current_scope_and_grant_intersection() {
+        let now = Instant::now();
+        let mut source = lease(&["A"], now);
+        assert_eq!(
+            source.read_parties(&scope(), &caller(&["A", "B"]), now),
+            Some(parties(&["A"]))
+        );
+        assert_eq!(
+            source.read_parties(&scope(), &caller(&["B"]), now),
+            Some(vec![])
+        );
+        let changed = ScopeBinding::new("synthetic-source", 2).unwrap();
+        assert!(
+            source
+                .read_parties(&changed, &caller(&["A"]), now)
+                .is_none()
+        );
+        assert!(
+            source
+                .read_parties(
+                    &scope(),
+                    &CallerGrants::from_verified(changed, parties(&["A"])),
+                    now
+                )
+                .is_none()
+        );
+        assert!(
+            source
+                .read_parties(&scope(), &caller(&["A"]), now + MAX_SOURCE_LEASE)
+                .is_none()
+        );
+        source.invalidate();
+        assert!(
+            source
+                .read_parties(&scope(), &caller(&["A"]), now)
+                .is_none()
+        );
     }
 
     #[test]

@@ -56,6 +56,18 @@ pub struct CallerGrants {
 }
 
 impl CallerGrants {
+    /// Internal intersection for backend reads; authentication and source checks precede construction.
+    pub(crate) fn within(
+        &self,
+        scope: &ScopeBinding,
+        source: &BTreeSet<PartyId>,
+    ) -> Option<Vec<PartyId>> {
+        if &self.scope != scope {
+            return None;
+        }
+        Some(self.parties.intersection(source).cloned().collect())
+    }
+
     pub fn from_verified(scope: ScopeBinding, parties: impl IntoIterator<Item = PartyId>) -> Self {
         Self {
             scope,
