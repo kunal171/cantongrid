@@ -94,9 +94,11 @@ alone do not prove a healthy authenticated source connection.
 The local ledger user and ignored config remain. There is no automatic destructive
 reset, party allocation, DAR upload or transaction submission.
 
+If the [AB visibility experiment](visibility.md) is running, stop it first.
 Stop PQS **before** stopping LocalNet because it attaches to the LocalNet network:
 
 ```bash
+python3 scripts/localnet-visibility-pqs.py stop  # If that experiment was started
 python3 scripts/localnet-pqs.py stop
 python3 scripts/localnet.py stop
 ```

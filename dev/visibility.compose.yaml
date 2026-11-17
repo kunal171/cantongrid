@@ -1,0 +1,23 @@
+# Additional owned source fixture; uses a separate database on the local PQS server.
+name: cantongrid-visibility
+services:
+  pqs-ab:
+    image: europe-docker.pkg.dev/da-images/public/docker/scribe@sha256:072faffbee3640448b282fc973b04ec99f5ba2bf92d2b43d01a00c89626c3a67
+    user: "${PQS_UID:-1000}:${PQS_GID:-1000}"
+    command: [pipeline, ledger, postgres-document]
+    environment:
+      SCRIBE_CONFIG: /config/source.conf
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx640m -XX:ActiveProcessorCount=2
+    volumes:
+      - ../.local/visibility/source.conf:/config/source.conf:ro
+    ports:
+      - 127.0.0.1:18081:8080
+    networks: [source-db, localnet]
+    mem_limit: 1g
+networks:
+  source-db:
+    external: true
+    name: cantongrid-pqs_default
+  localnet:
+    external: true
+    name: cantongrid-localnet

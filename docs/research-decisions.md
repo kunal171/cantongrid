@@ -17,13 +17,13 @@ Do not infer current endpoints, SQL functions or payload shapes from this plan.
 | First source | Scribe 3.5.4/schema 041 is verified for scoped LocalNet active/create/archive queries. A fixture SQL reader and version-specific authorization/history limits are recorded. Production grants and the Rust adapter remain open. | Source-specific code. |
 | Snapshot handoff | Stable boundary, pagination, concurrent changes and resume behavior; demonstrate no lost creates/archives. | Bootstrap/checkpoint implementation. |
 | Event identity and ordering | Stable dedup keys, source positions, lifecycle kinds and time semantics. | Canonical persistence. |
-| Private visibility | Exact available authorization evidence and its interpretation; source grant changes and visibility loss. | Live private data copying. |
-| Revocation and retention | Revalidation lease, fail-closed behavior, historical access, erasure and rebuild implications. | Live private data copying. |
+| Private visibility | Owned A/B/AB fresh-request matrix, exact fixture witnesses and revocation verified. Derived joins, full historical visibility and application caller isolation remain open. | Live private data copying. |
+| Revocation and retention | Self-rights revalidation verified; cached B-only data remains after source revocation and readiness loss. Rust lease/invalidation, historical access, erasure and rebuild policy remain open. | Live private data copying. |
 | History coverage | Pruning, unavailable ranges, filters, reassignments and other lifecycle limitations. | History completeness claims. |
 | Daml schema discovery | Verified package metadata access and type representation, including upgrades and template identity. | Typed schema generation. |
-| Exact values | Numeric scale/precision, Int64, optionals, variants, timestamps and transport serialization. | Typed storage/operators. |
+| Exact values | Numeric 10 and maximum Int64 string round trips, null optional and Ready enum verified through Ledger API and PQS. Other scales, variants, timestamps and generated mappings remain open. | Typed storage/operators. |
 | Outcomia mappings | Existing DAR validated without upload and initial source templates reviewed. Typed metadata extraction and authorized lifecycle/model demonstrations remain open. | Outcomia demo. |
-| Genericity fixture | Unrelated template set and representative lifecycle/derived model. | Processing interface acceptance. |
+| Genericity fixture | Unrelated Visibility:Record package built/deployed and queried without Outcomia code. Rust processing-interface acceptance and derived models remain open. | Processing interface acceptance. |
 | API identity | Token issuer/format, grant mapping, expiry, rotation and administrator roles. | Authenticated serving. |
 | Model language | Bounded grammar, keys, expression semantics, capability errors and diagnostics. | Public configuration contract. |
 | Database ownership | Fixture SQL reader can query without table/schema writes or owner escalation. Production grants, destination namespace, worker fencing and migration/rebuild strategy remain open. | Persistence implementation. |

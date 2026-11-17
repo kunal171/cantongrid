@@ -92,3 +92,20 @@ visibility or a missing page with a verified contract archive.
 Enforce query cost/page limits and protect metadata and error paths as well as
 payloads. Secrets and private payloads must not appear in logs, metrics labels,
 committed fixtures or diagnostic output. Public access defaults to denied.
+
+
+## Observed source revocation — 2026-11-17
+
+The [owned A/B/AB experiment](visibility.md) verified that fresh Ledger API reads
+respect revoked grants even with a preissued token. The read-only source principal
+can query its own current rights; user metadata resourceVersion must not be used
+as a grant revision because grant/revoke operations do not change it in the tested
+API. Compare the normalized grant content instead.
+
+PQS readiness became false after a delay while its cached B-only record remained.
+Therefore the first Rust serving path must require current caller grants and a
+bounded source-authorization lease before using SQL results. The PQS data reader
+and the read-only Ledger API authorization probe have separate credentials; this
+probe is not a second ledger-data ingestion connector. Failure to renew the lease
+must deny private serving. These requirements still need implementation and tests;
+connection readiness alone is insufficient, and cached retention is not an archive.

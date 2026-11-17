@@ -88,3 +88,17 @@ temporary tables and assuming the owner role fail with insufficient-privilege
 SQLSTATE 42501 even after disabling the default read-only transaction setting.
 The reader setup is operator-side configuration of the owned development
 fixture; the future Rust source adapter remains read-only.
+
+
+## Visibility and upstream triage — 2026-11-17
+
+The owned Ledger API fixture passed A/B/AB visibility, forbidden cross-scope
+filters, preissued/fresh-token revocation, exact scalar and grant-restoration
+checks. The dedicated AB PQS source preserved exact payloads/witnesses and denied
+its database to the original reader. Stream readiness loss and retained B-only
+cache rows were measured, not interpreted as a complete authorization mechanism.
+
+The schema-collision reproduction ran without Canton/application code against
+both the packaged and current-upstream V001 SQL: clean controls passed, unrelated
+type collision failed as expected, and a namespace-scoped in-memory correction
+passed both controls. No full current executable/Scala suite was claimed.

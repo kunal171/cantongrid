@@ -90,3 +90,17 @@ No Outcomia DAR has been uploaded and no custom contract transactions were
 submitted. PQS is running for the local test with a one-hour credential;
 `localnet-pqs.py up` renews it. Broader source authorization and the Rust indexer
 remain unimplemented/unverified as described in the compatibility results.
+
+
+## Visibility fixture follow-up — 2026-11-17
+
+Subsequent [visibility tests](visibility.md) uploaded only the unrelated
+cantongrid-visibility-fixture package, allocated two owned development parties,
+and created exactly three test records. The earlier no-custom-transactions
+statement describes the preceding compatibility checkpoint. Outcomia remains
+undeployed and wallet balances were not used.
+
+A separate AB source/database verified witness sets, exact payload values and
+revocation/cache behavior. The migration failure was [triaged independently](upstream-triage.md)
+and a standalone reproduction plus local issue draft were committed. No upstream
+publication or production migration patch was performed.
