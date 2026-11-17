@@ -29,6 +29,23 @@ def prepare():
     return CHECKOUT / 'quickstart'
 
 
+def apply_local_defaults(config):
+    """Bound log retention without changing upstream storage or resource limits."""
+    for name, service in config['services'].items():
+        service['container_name'] = f'{PROJECT}-{name}'
+        # 10 MB x 3 files bounds retained stdout/stderr to about 30 MB per service.
+        service['logging'] = {
+            'driver': 'json-file',
+            'options': {'max-size': '10m', 'max-file': '3'},
+        }
+        if name in {'canton', 'splice'}:
+            # Both pinned image entrypoints otherwise default these levels to DEBUG.
+            service.setdefault('environment', {}).update(
+                LOG_LEVEL_STDOUT='INFO', LOG_LEVEL_CANTON='INFO')
+        for port in service.get('ports', []):
+            port['host_ip'] = '127.0.0.1'
+
+
 def render():
     quickstart = prepare()
     module = quickstart / 'docker/modules/localnet'
@@ -57,10 +74,7 @@ def render():
             '-f', str(module / 'compose.yaml'),
             '-f', str(module / 'resource-constraints.yaml'), *PROFILES]
     config = json.loads(subprocess.check_output([*base, 'config', '--format', 'json'], env=env))
-    for name, service in config['services'].items():
-        service['container_name'] = f'{PROJECT}-{name}'
-        for port in service.get('ports', []):
-            port['host_ip'] = '127.0.0.1'
+    apply_local_defaults(config)
     CONFIG.write_text(json.dumps(config, indent=2) + '\n')
     CONFIG.chmod(0o600)
     return ['docker', 'compose', '--progress', 'plain', '-p', PROJECT, '-f', str(CONFIG), *PROFILES]

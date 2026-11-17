@@ -3,6 +3,12 @@ name: cantongrid-visibility
 services:
   pqs-ab:
     image: europe-docker.pkg.dev/da-images/public/docker/scribe@sha256:072faffbee3640448b282fc973b04ec99f5ba2bf92d2b43d01a00c89626c3a67
+    # Bound retained container output to about 30 MB per service.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     user: "${PQS_UID:-1000}:${PQS_GID:-1000}"
     command: [pipeline, ledger, postgres-document]
     environment:

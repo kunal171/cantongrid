@@ -87,6 +87,33 @@ shortcut. Avoid global Docker cleanup commands. If startup fails, inspect status
 and service logs; a source auth or readiness failure must not be treated as an
 empty ledger.
 
+## Disk usage and log retention
+
+All rendered LocalNet services and tracked development Compose services use Docker
+`json-file` rotation: `max-size: "10m"`, `max-file: "3"` (about 30 MiB per
+container). Canton and Splice default to INFO through the environment variables
+supported by their pinned entrypoints. Do not leave DEBUG enabled unattended.
+The configuration guard is `python3 scripts/dev.py check resources`; unit tests
+also cover the LocalNet renderer, including future services.
+
+Docker applies logging changes when containers are created. Run the corresponding
+`localnet up`, `pqs up`, `pqs up --visibility` and `storage up` helpers to apply new
+limits to an existing setup. These recreate changed containers and retain named
+database volumes. PQS `up` refreshes its one-hour local source credential.
+
+Before large builds, check `df -h /` and `docker system df`. Docker's summary
+does not include all container log usage. Inspect selected container log settings
+with `docker inspect --format '{{json .HostConfig.LogConfig}}' <container>`.
+Never truncate Docker-managed log files, run global prune commands, or delete
+volumes as routine disk maintenance. Stop unused development services with the
+helpers; use Cargo's cleanup command for reproducible build artifacts if needed.
+
+The 2026-11-17 incident came from uncapped DEBUG logs in Canton and Splice
+(about 176 GiB combined), exhausting the root disk and preventing PostgreSQL
+WAL recovery. Recreating the containers with rotation freed that space; retained
+database volumes recovered without a reset. This was local configuration and
+resource management, not evidence of an indexing or upstream storage defect.
+
 ## Sandbox alternative and PQS boundary
 
 Official DPM Sandbox is the lighter single-participant option. It is useful for
