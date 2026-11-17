@@ -113,3 +113,34 @@ It never upgrades SQL availability or nonempty results to complete history/curre
 permission. Pruned/unavailable update windows return a distinct gap error, including
 the pruning boundary until its retention semantics are verified. No automatic
 checkpoint skipping, data deletion or re-snapshot is triggered by that error.
+
+## Current-grant implementation (LocalNet subset)
+
+The maintainer approved reqwest 0.13, jsonwebtoken 12 and direct tokio (alongside
+future axum/async-graphql) in the conversation. `cantongrid-ledger` now adopts the
+first three with default features disabled where applicable; no TLS, proxy,
+compression, JWT signing or application authentication feature is enabled here.
+The inspected installed 3.5.7 OpenAPI and existing read-only probes confirm
+`GET /v2/users/{user-id}` and `GET /v2/users/{user-id}/rights`.
+
+The checker supports only explicitly configured numeric-loopback HTTP endpoints,
+the default identity provider, a JWT subject matching the exact configured user,
+and an exact nonempty set of CanReadAs rights. Admin/ActAs/wildcard/unknown rights,
+duplicates, deactivation and party changes fail closed. No permission repair is
+performed. Identity-provider support and remote TLS remain unsupported.
+
+The configured Ledger endpoint authenticates the bearer. Locally decoded JWT
+subject/expiry are unverified restrictions, never an authentication decision:
+a forged token must still succeed at the real participant, and expiry can only
+shorten the lease. This module must not authenticate website/API callers.
+Responses are bounded to 64 KiB, checks to five seconds; redirects and proxies are
+disabled. User-state reads bracket the rights read. These calls are not an atomic
+snapshot and do not promise instantaneous revocation: the core lease lasts at
+most 15 seconds from before the first request, capped by credential expiry.
+`SourceAuthorization` clears its old lease before renewal, including failed or
+cancelled attempts. Consumers must check scope/expiry again after SQL reads.
+
+Synthetic HTTP tests cover exact grants, missing/changed/privileged/ambiguous
+rights, substituted/deactivated users, invalid tokens, denied/unavailable/oversize
+responses and cached-lease removal. This is authorization groundwork, not live
+SQL ingestion, source freshness, filter verification or complete history evidence.
