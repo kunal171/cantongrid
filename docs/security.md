@@ -1,7 +1,6 @@
 # Authorization and private data
 
-Status: required design properties. Concrete upstream visibility semantics and
-credential validation must be verified before live ingestion.
+Status: the LocalNet subset is implemented and tested. See [runtime controls](live-runtime.md) and [Phase 3 acceptance](phase3-verification.md); later generated models/streams and remote identity integration remain design requirements.
 
 ## Two independent boundaries
 
@@ -124,3 +123,46 @@ instant and no sleeps. This is a core policy choice, not a deployed SLA or a
 completed source verifier. The HTTP grant probe, authenticated caller mapping,
 generation changes, renewal, invalidation distribution and API checks must still
 be wired and verified before any serving guarantee is made.
+
+
+## Phase 3 implementation update
+
+Current source grants now gate copying and serving; application HS256 bearers map
+to independently reloadable organization party subsets. Physical source/selection
+bindings prevent reusing participant-local cursors after configuration changes.
+Counts and keyset pages are filtered in SQL before pagination. Transports omit
+raw source witness sets and internal cursor PKs; public event provenance includes
+original source offsets, exact timestamps and snapshot/visibility-policy labels.
+Grant/epoch changes invalidate cursors; queries recheck authorization before
+returning, including complete multi-root GraphQL responses. Source/health failures
+deny cached data, and all responses are no-store. These are implemented LocalNet
+controls; the earlier sections also record historical research/design context.
+
+Schema041 archive evidence is retained as empty. The explicit prior-create policy
+requires an observed matching contract and current authorization; orphan archives
+cannot be inferred or repaired. Stored history is retained and reauthorized, not
+automatically erased. Remote/TLS identity, generated joins/aggregates and durable
+stream delivery remain separate acceptance work.
+
+
+## Delivered Phase 3 enforcement
+
+Source user/grant renewal is integrated into the live worker and query service.
+The default-identity-provider CanReadAs subset and physical source configuration
+are bound to an explicit plan/generation. Caller HS256 tokens have independent
+keys/issuer/audience and current local party-subset grants; source tokens never
+establish caller permissions. SQL applies source/caller intersection before both
+counts and pages. Leases and caller grants are rechecked before delivery, including
+after a complete GraphQL operation. Source errors/readiness failure deny access.
+
+Cursors bind principal, plan/grant fingerprint, query kind and expiry; old epochs,
+changed selections and keys cannot reuse them. Public lifecycle objects omit raw
+operator witnesses, persistence envelopes and internal source PK cursors. Responses
+are no-store, bounded, and use static public errors. Exact raw payloads remain
+visible only under record policy. Retained history requires current access and
+is never interpreted as a global ledger or a deletion/archival signal.
+
+The source lease is bounded to 15 seconds, not instantaneous distributed
+revocation. Local caller grants reload for each operation. Scope changes require
+an explicit generation/review; automated retention and other upstream profiles
+remain unsupported. See [the tested controls](phase3-verification.md).
