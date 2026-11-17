@@ -62,6 +62,13 @@ impl GrantCheckConfig {
             .collect()
     }
 
+    pub fn endpoint(&self) -> &str {
+        &self.endpoint
+    }
+    pub fn user(&self) -> &str {
+        &self.user
+    }
+
     pub fn credential_env(&self) -> &str {
         &self.credential_env
     }

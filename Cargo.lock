@@ -320,6 +320,7 @@ dependencies = [
  "axum",
  "cantongrid-core",
  "cantongrid-ledger",
+ "cantongrid-postgres",
  "cantongrid-pqs",
  "cantongrid-storage",
  "jsonwebtoken",

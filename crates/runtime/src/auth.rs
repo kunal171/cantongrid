@@ -106,7 +106,10 @@ pub(crate) fn authenticate(project: &Project, token: &str) -> Result<Identity, S
         return Err("unauthorized".into());
     }
     let bytes = read(&project.api.grants_file, 65536).map_err(|_| "authorization unavailable")?;
-    let grants: Grants = serde_json::from_slice(&bytes).map_err(|_| "authorization unavailable")?;
+    let grants: Grants = cantongrid_core::document::parse(
+        std::str::from_utf8(&bytes).map_err(|_| "authorization unavailable")?,
+    )
+    .map_err(|_| "authorization unavailable")?;
     if grants.version != 1 || grants.epoch == 0 || grants.principals.len() > 1024 {
         return Err("authorization unavailable".into());
     }

@@ -151,6 +151,7 @@ pub struct Plan {
     pub(crate) templates: BTreeSet<TemplateId>,
     fixture: PathBuf,
     live: bool,
+    source_binding: Option<String>,
 }
 
 impl fmt::Debug for Plan {
@@ -216,6 +217,7 @@ impl Plan {
             templates,
             fixture: source.fixture,
             live: false,
+            source_binding: None,
         })
     }
 
@@ -239,7 +241,15 @@ impl Plan {
             templates,
             fixture: PathBuf::new(),
             live: true,
+            source_binding: None,
         })
+    }
+
+    /// Bind a live plan to its nonsecret physical source configuration. A changed binding
+    /// conflicts with the stored definition and requires a new explicit generation.
+    pub fn with_source_binding(mut self, binding: String) -> Self {
+        self.source_binding = Some(binding);
+        self
     }
 
     pub fn is_live(&self) -> bool {
@@ -269,6 +279,9 @@ impl Plan {
         });
         if self.live {
             definition["profile"] = serde_json::json!("pqs041_partial_raw_prior_create_v1");
+        }
+        if let Some(binding) = &self.source_binding {
+            definition["source_binding"] = serde_json::json!(binding);
         }
         definition
     }

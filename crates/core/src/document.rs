@@ -6,10 +6,21 @@ use serde::{
 use serde_json::Value;
 use std::fmt;
 
-pub(crate) fn parse<T: de::DeserializeOwned>(text: &str) -> Result<T, ()> {
-    let value: UniqueValue = serde_json::from_str(text).map_err(|_| ())?;
-    serde_json::from_value(value.0).map_err(|_| ())
+/// Decode a configuration envelope without duplicate keys or floating-point coercion.
+pub fn parse<T: de::DeserializeOwned>(text: &str) -> Result<T, DocumentError> {
+    let value: UniqueValue = serde_json::from_str(text).map_err(|_| DocumentError)?;
+    serde_json::from_value(value.0).map_err(|_| DocumentError)
 }
+
+/// Redacted syntax/schema failure: no raw configuration values leave the parser.
+#[derive(Debug, Clone, Copy)]
+pub struct DocumentError;
+impl fmt::Display for DocumentError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("invalid strict JSON document")
+    }
+}
+impl std::error::Error for DocumentError {}
 
 struct UniqueValue(Value);
 impl<'de> Deserialize<'de> for UniqueValue {

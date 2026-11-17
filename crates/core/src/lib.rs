@@ -3,7 +3,7 @@
 
 pub mod authorization;
 pub mod config;
-mod document;
+pub mod document;
 mod envelope;
 pub mod fixture;
 pub mod lifecycle;

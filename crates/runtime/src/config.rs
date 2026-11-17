@@ -22,6 +22,8 @@ struct Document {
     payload: String,
     retention: String,
     api: Api,
+    #[serde(default = "default_page_size")]
+    page_size: usize,
 }
 
 /// Public transport settings and independent application identity/cursor key references.
@@ -44,6 +46,7 @@ pub struct Project {
     pub destination_database_env: String,
     pub source_health: String,
     pub api: Api,
+    pub page_size: usize,
 }
 
 /// Read only bounded regular files. Paths and parser errors never flow into public errors.
@@ -66,11 +69,19 @@ pub fn read(path: &Path, limit: u64) -> Result<Vec<u8>, String> {
 }
 
 /// The LocalNet milestone never guesses remote transport, retention or type policies.
+fn default_page_size() -> usize {
+    8
+}
+
 impl Project {
     pub fn load(path: &Path) -> Result<Self, String> {
-        let doc: Document = serde_json::from_slice(&read(path, 65536)?)
-            .map_err(|_| "invalid runtime configuration")?;
-        if doc.version != 1
+        let doc: Document = cantongrid_core::document::parse(
+            std::str::from_utf8(&read(path, 65536)?)
+                .map_err(|_| "invalid runtime configuration")?,
+        )
+        .map_err(|_| "invalid runtime configuration")?;
+        if !(1..=8).contains(&doc.page_size)
+            || doc.version != 1
             || doc.history != "snapshot_forward_partial"
             || doc.archive_policy != "prior_create_current_grants"
             || doc.payload != "raw_json"
@@ -127,6 +138,14 @@ impl Project {
         {
             return Err("unsafe runtime endpoint or key configuration".into());
         }
+        let identity = cantongrid_postgres::identity_env(&doc.source_database_env)
+            .map_err(|_| "source database identity unavailable")?;
+        let plan = plan.with_source_binding(source_binding(
+            authorization.endpoint(),
+            authorization.user(),
+            &identity,
+            &doc.source_health,
+        ));
         let mut api = doc.api;
         if api.grants_file.is_relative() {
             api.grants_file = path
@@ -141,6 +160,17 @@ impl Project {
             destination_database_env: doc.destination_database_env,
             source_health: doc.source_health,
             api,
+            page_size: doc.page_size,
         })
     }
+}
+
+/// Stable, nonsecret source-instance fingerprint shared by operator fixtures and the runtime.
+pub fn source_binding(endpoint: &str, user: &str, database: &str, health: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let value = serde_json::json!(["pqs041-template-v1", endpoint, user, database, health]);
+    Sha256::digest(value.to_string().as_bytes())
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
 }
