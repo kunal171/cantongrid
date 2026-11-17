@@ -12,6 +12,10 @@ records the tested limits: snapshot-forward partial history, raw exact JSON,
 loopback-only transport and no production claim. Generated business models and
 real-time streams remain Phase 4/5.
 
+The first [Phase 4 model tools](docs/phase4-models.md) now validate declarative
+projections, evaluate exact expressions offline and generate SQL table plans.
+Live model materialization and generated query fields are still in progress.
+
 The indexer runtime is **Rust**. Python scripts are development helpers for
 LocalNet and compatibility checks, not the ingestion or API implementation.
 

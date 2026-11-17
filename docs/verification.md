@@ -372,3 +372,28 @@ dependent Rust tests (61 total), 13 Python tests, formatting/Clippy, security,
 release metadata and container-retention checks passed. Outcomia local writes
 were separately approved; no sibling repository changes, devnet deployment or
 funded asset/trading test was performed. Remote release CI/publication is separate.
+
+### Phase 4 model compiler/planner — 0.3.0-alpha.1 in progress
+
+Added a separate Rust `models` crate for bounded declarative definitions, exact
+field conversion/arithmetic, filters and deterministic SQL proposals. Outcomia
+and unrelated Visibility use the same evaluator. CLI validation/planning/preview
+work offline without source/API credentials. No model registry, live projection
+installation, lifecycle maintenance or generated API is claimed from these tools.
+
+Local checks passed: 54 credential-free plus all 15 explicitly executed environment-
+dependent Rust tests (69 total), 13 Python tests, formatting/Clippy, release guard,
+RustSec, dependency/source/license policy, secret scanning and workflow linting.
+The new owned-Postgres test executes generated DDL and row encoding in a rollback-
+only transaction and verifies large Numeric/maximum Int64 plus nullable fields.
+It checks the disposable destination identity before writes. Model tests also
+cover filtering, invalid types/paths/definitions, normalization and overflow.
+No external runtime dependency, source write or persistent model table was added.
+
+The documentation audit caught an edit-script buffer reuse and inherited pages
+containing another document's text. Architecture, storage, source-contract and
+research baselines were restored from the earlier source release, retaining their
+current Phase 3 resolution notes. The CLI page was restored before adding model
+commands. Expected page titles and local links were checked. Model materialization,
+versioned rebuild/promotion and typed query generation remain the next Phase 4
+integration work; joins/aggregates need their own transitive policy acceptance.

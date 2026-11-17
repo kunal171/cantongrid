@@ -1,13 +1,14 @@
 # Phase 4: declarative model contract
 
-Status: implementation started on `feat/declarative-models`. This is the next
-release's bounded model slice, not a claim that Phase 4 acceptance is complete.
+Status: compiler/evaluator/SQL planning and offline CLI implemented on
+`feat/declarative-models`, targeting `0.3.0-alpha.1`. Live materialization and
+generated APIs are not wired yet; Phase 4 acceptance is incomplete.
 Phase 3's source identity, current source/caller checks and partial-history profile
 remain prerequisites. Models never grant access to their inputs.
 
 ## First model vocabulary
 
-A version-1 model document declares up to 16 named models. Each model pins one
+A version-1 model document declares 1–16 named models. Each model pins one
 exact template, a positive revision, up to 32 named output fields and an optional
 output-field equality filter. Field expressions read bounded object paths,
 provide typed literals, or perform checked add/subtract/multiply operations.
@@ -60,3 +61,53 @@ values, overflow/type/null rejection, filters and malformed definitions. Storage
 API and lifecycle integration are separate acceptance checks and must not be
 reported complete from compiler tests. No new external runtime dependency is
 needed for this initial compiler/evaluator/planner.
+
+
+## Implemented commands and configuration
+
+```bash
+cantongrid models validate examples/models/outcomia.json
+cantongrid models plan examples/models/visibility.json
+cantongrid models preview examples/models/visibility.json records /path/to/payload.json
+```
+
+These commands require no source connection or API credential. Validation emits
+only plan metadata; planning emits reviewable generated DDL, without executing
+it; preview deliberately reads an operator-supplied local payload file and emits
+typed projected values. Preview is not a server query or an authorization fallback.
+It does not validate that the input came from the declared template.
+
+[Outcomia](../examples/models/outcomia.json) projects verified BinaryMarket paths
+including exact Int64 lot, price tick and `priceTickBps = priceTick * 10000`.
+[Visibility](../examples/models/visibility.json) projects owner/amount/sequence,
+optional note and state, with an equality filter for Ready. Both pin real reviewed
+package identifiers; unit-test payloads are explicitly synthetic. This is not a
+new live-model demonstration or proof of accounting semantics.
+
+A field declaration looks like:
+
+```json
+{
+  "op": "field",
+  "path": ["terms", "priceTick"],
+  "as": {"type": "numeric", "scale": 10}
+}
+```
+
+Definitions are strict JSON: duplicate/unknown fields, unsafe names, unsupported
+operators/types and excessive expression depth are rejected. Filters run after
+projection/validation; invalid values do not disappear because a filter is false.
+Outputs use the core's explicit typed-value encoding. Numeric source normalization
+may add trailing zeros to the declared scale but never drops digits or rounds.
+
+Generated SQL targets `cantongrid_models`, quotes validated names, derives table
+names from definition fingerprints, uses exact bigint/numeric columns and links
+rows to canonical parent contracts. The schema/registry installer and automated
+migration/promotion mechanism are not implemented yet. The owned-Postgres test
+creates the generated table inside a rollback-only transaction to verify types
+and exact round trips; it does not install a live model.
+
+Next integration: versioned model registry/backfill/promotion, guarded model
+materialization/retraction inside canonical ingestion transactions, authorized
+model counts/pages and generated typed GraphQL. Aggregates/joins require separate
+transitive privacy and lifecycle acceptance; streams remain Phase 5.

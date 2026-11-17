@@ -64,7 +64,12 @@ Acceptance: LocalNet evidence covers initial snapshot, live changes, duplicates,
 restart, authorization changes and incomplete-history behavior. Verify exact
 numeric round trips and A/B/AB isolation through both API transports.
 
-## Phase 4 — Declarative processing and generated models
+## Phase 4 — Declarative processing and generated models (in progress)
+
+First slice delivered: strict model definitions, typed projections/filters, checked
+exact arithmetic, deterministic SQL plans, offline CLI and two configuration
+examples. These compiler/schema tests do not complete live model acceptance. See
+[the current contract](phase4-models.md).
 
 Introduce the bounded processing vocabulary incrementally: typed projections,
 filters and exact calculations first; grouping, aggregates and joins only with

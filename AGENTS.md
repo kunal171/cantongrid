@@ -1,11 +1,12 @@
 # Working on CantonGrid
 
-- Current phase: Phase 3 LocalNet contracts profile is implemented; consult
-  docs/live-runtime.md and docs/phase3-verification.md for verified scope and limits.
-  Release candidate: 0.2.0-alpha.1. Keep raw payloads, partial-history disclosure,
-  source/caller separation, physical-source bindings and guarded commits intact.
-  Generated business models and streams remain separate Phase 4/5 work. Fixture
-  party flags simulate grants and must never authenticate production requests.
+- Current phase: Phase 4 declarative models is in progress on feat/declarative-models,
+  targeting 0.3.0-alpha.1. The first compiler/evaluator/SQL planner and offline CLI
+  commands exist; live model storage, lifecycle integration and generated APIs do
+  not. See docs/phase4-models.md. Phase 3's 0.2.0-alpha.1 LocalNet profile remains
+  verified; preserve source/caller separation, bindings and guarded commits.
+  Streams remain Phase 5. Model declarations never authenticate callers or widen
+  input visibility. Do not claim full Phase 4 from compiler/schema tests.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python
   scripts are local development/verification helpers, not the product runtime.
 - Product: general-purpose, Daml-first Canton indexing infrastructure. Outcomia
