@@ -9,7 +9,7 @@ the capabilities delivered at their exact commit; they do not mark all Phase 3 c
 | Version | Scope | Acceptance |
 | --- | --- | --- |
 | `0.1.0-alpha.1` | Reference lifecycle/configuration, owned PostgreSQL recovery, source-contract research, security CI and contributor setup. | Baseline/DB/security checks pass; precise fixture/LocalNet boundaries and open gates are recorded. |
-| `0.2.0-alpha.1` | Authorized live contracts slice and generic authenticated REST/GraphQL. | Verified source/handoff, current grants, exact values, coverage, A/B/AB privacy and both integration examples; blockers remain explicitly incomplete. |
+| `0.2.0-alpha.1` | Authorized live contracts slice and generic authenticated REST/GraphQL. | LocalNet source/handoff, current grants, exact raw values, coverage, A/B/AB privacy and both actual examples verified; see [evidence](phase3-verification.md). |
 | Later | Derived models, then authenticated durable streams. | Separate Phase 4/5 acceptance; do not fold them into the Phase 3 release. |
 
 Keep feature changes in small reviewable commits on `release/<version>` or focused
@@ -39,7 +39,7 @@ integration or an explicit blocked status for unavailable contract data.
 
 ```bash
 python3 scripts/dev.py release check
-python3 scripts/dev.py release check --tag v0.1.0-alpha.1
+python3 scripts/dev.py release check --tag v0.2.0-alpha.1
 cargo run -p cantongrid-cli -- --version
 ```
 

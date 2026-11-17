@@ -16,7 +16,7 @@
 - Run explicit destination initialization to apply checksummed owned migration 002; migration 001 is unchanged.
 - Fixture format remains 1; live runtime configuration is a separate explicit version-1 profile.
 - Loopback-only LocalNet, exact template projections, raw payloads and snapshot-forward partial history.
-- Actual Outcomia lifecycle proof is pending separate local setup authorization; no production readiness claim.
+- Actual Outcomia lifecycle and unrelated Visibility proofs passed on the explicitly authorized LocalNet; no production readiness claim.
 - Generated typed models and real-time delivery remain Phase 4/5.
 
 ## 0.1.0-alpha.1 — unreleased

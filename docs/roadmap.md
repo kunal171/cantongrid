@@ -2,7 +2,7 @@
 
 Phases 0 and 2 are complete at their documented scope. The Phase 1 LocalNet/PQS
 baseline and visibility experiments are recorded in [LocalNet evidence](localnet-evidence.md);
-remaining live connector gates continue to apply. Phase 2 acceptance is recorded in
+The Phase 3 supported LocalNet profile is now verified in [its acceptance report](phase3-verification.md). Phase 2 acceptance is recorded in
 [verification](verification.md) and the [fixture workflow](fixtures.md). This does
 not mark every Phase 1 capability verified. Later acceptance items below are
 requirements, not statements that their checks have passed.
@@ -43,13 +43,16 @@ examples through one runner. Fixture caller grants are simulated and state is
 in memory. Models, live adapters and other planned CLI commands fail explicitly.
 Advanced Daml types/schema discovery remain restricted pending verification.
 
-## Phase 3 — Authorized LocalNet ingestion and baseline queries (in progress)
+## Phase 3 — Authorized LocalNet ingestion and baseline queries (LocalNet profile complete)
 
-First storage feature delivered: bounded PostgreSQL materialization, versioned
-journal recovery, atomic checkpoint/outbox, writer exclusion and durable synthetic
-fixture commands. The source inspector verifies schema 041 read-only and reports
-missing archive witnesses. Live copying, handoff/current grants, actual Daml type
-normalization and authenticated query APIs below remain open. See [storage](storage.md).
+Delivered in `0.2.0-alpha.1`: authorized read-only snapshots/forward paging,
+SQL-native owned lifecycle/checkpoint/outbox, physical-source/selection bindings,
+current source checks, independently authenticated REST/GraphQL, scoped cursors,
+coverage/freshness and real Outcomia plus unrelated Visibility demonstrations.
+History is partial and payloads explicitly raw JSON; generated typed normalization
+belongs to Phase 4. See [verification](phase3-verification.md) and
+[runtime limits](live-runtime.md). The following acceptance requirements describe
+this delivered profile; they do not certify remote/devnet/production behavior.
 
 Implement the verified read-only connector, owned PostgreSQL canonical storage,
 atomic checkpoints/outbox, snapshot/update handoff and restart recovery. Add
