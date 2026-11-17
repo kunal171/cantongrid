@@ -261,7 +261,7 @@ dependencies = [
 
 [[package]]
 name = "cantongrid-cli"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 dependencies = [
  "cantongrid-core",
  "cantongrid-ledger",
@@ -277,7 +277,7 @@ dependencies = [
 
 [[package]]
 name = "cantongrid-core"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -285,7 +285,7 @@ dependencies = [
 
 [[package]]
 name = "cantongrid-ledger"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 dependencies = [
  "cantongrid-core",
  "jsonwebtoken",
@@ -297,14 +297,14 @@ dependencies = [
 
 [[package]]
 name = "cantongrid-postgres"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 dependencies = [
  "postgres",
 ]
 
 [[package]]
 name = "cantongrid-pqs"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 dependencies = [
  "cantongrid-core",
  "cantongrid-postgres",
@@ -314,7 +314,7 @@ dependencies = [
 
 [[package]]
 name = "cantongrid-runtime"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 dependencies = [
  "async-graphql",
  "axum",
@@ -332,7 +332,7 @@ dependencies = [
 
 [[package]]
 name = "cantongrid-storage"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 dependencies = [
  "cantongrid-core",
  "cantongrid-postgres",

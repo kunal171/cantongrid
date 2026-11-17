@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.0-alpha.1 — unreleased
+
+### Added
+
+- Read-only, lease-checked PQS snapshot and forward-update paging with same-offset event keys.
+- SQL-native canonical lifecycle materialization, durable checkpoints/outbox and observation metadata.
+- Explicit raw JSON payload and prior-create archive authorization profiles with partial-history disclosure.
+- Independent organization JWT authentication, reloadable scoped grants and principal/epoch-bound cursors.
+- Generic authenticated REST/GraphQL, query limits and no-store responses.
+- Actual existing LocalNet Visibility pipeline and owned-Postgres transport privacy regressions.
+
+### Compatibility and limits
+
+- Run explicit destination initialization to apply checksummed owned migration 002; migration 001 is unchanged.
+- Fixture format remains 1; live runtime configuration is a separate explicit version-1 profile.
+- Loopback-only LocalNet, exact template projections, raw payloads and snapshot-forward partial history.
+- Actual Outcomia lifecycle proof is pending separate local setup authorization; no production readiness claim.
+- Generated typed models and real-time delivery remain Phase 4/5.
+
 ## 0.1.0-alpha.1 — unreleased
 
 ### Added
