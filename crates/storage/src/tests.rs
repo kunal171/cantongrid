@@ -251,3 +251,136 @@ fn inconsistent_checkpoint_and_oversized_delivery_fail_closed() {
         Err(StoreError::CorruptJournal)
     );
 }
+
+#[test]
+#[ignore = "requires owned PostgreSQL fixture and CANTONGRID_DESTINATION_URL"]
+fn database_pages_apply_visibility_before_counts_and_pagination() {
+    let scenario = Scenario::new();
+    let mut store = scenario.open();
+    for batch in &scenario.batches {
+        store.apply(&scenario.plan, batch).unwrap();
+    }
+    let now = Instant::now();
+    let parties = [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()];
+    let mut lease = SourceLease::from_verified(
+        scenario.plan.context().binding(),
+        parties,
+        now,
+        MAX_SOURCE_LEASE,
+        now + MAX_SOURCE_LEASE,
+    )
+    .unwrap();
+    for (names, active, history) in [
+        (vec!["A"], 2, 4),
+        (vec!["B"], 2, 2),
+        (vec!["A", "B"], 3, 5),
+        (vec![], 0, 0),
+    ] {
+        let caller = CallerGrants::from_verified(
+            scenario.plan.context().binding(),
+            names.into_iter().map(|p| PartyId::new(p).unwrap()),
+        );
+        for (kind, total) in [(PageKind::Active, active), (PageKind::History, history)] {
+            let mut after = None;
+            let mut count = 0;
+            let mut identities = std::collections::BTreeSet::new();
+            loop {
+                let page = store
+                    .read_page(&scenario.plan, &caller, &lease, kind, after.as_deref(), 1)
+                    .unwrap();
+                assert_eq!(page.visible_total, total);
+                for row in page.items {
+                    let id = row
+                        .get("eventId")
+                        .or_else(|| row.get("contractId"))
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .to_owned();
+                    assert!(identities.insert(id));
+                    count += 1;
+                }
+                after = page.next_after;
+                if after.is_none() {
+                    break;
+                }
+            }
+            assert_eq!(count, total);
+        }
+    }
+    let caller = CallerGrants::from_verified(
+        scenario.plan.context().binding(),
+        [PartyId::new("A").unwrap()],
+    );
+    lease.invalidate();
+    assert!(matches!(
+        store.read_page(&scenario.plan, &caller, &lease, PageKind::Active, None, 1),
+        Err(StoreError::Authorization)
+    ));
+}
+
+#[test]
+#[ignore = "requires owned PostgreSQL fixture and CANTONGRID_DESTINATION_URL"]
+fn history_sql_preserves_all_dependencies_and_denies_empty_evidence() {
+    let scenario = Scenario::new();
+    let mut store = scenario.open();
+    store.apply(&scenario.plan, &scenario.batches[0]).unwrap();
+    let mut archive = scenario.batches[1].clone();
+    archive.events.truncate(1);
+    archive.events[0].witnesses = [PartyId::new("B").unwrap()].into_iter().collect();
+    store.apply(&scenario.plan, &archive).unwrap();
+    let now = Instant::now();
+    let lease = SourceLease::from_verified(
+        scenario.plan.context().binding(),
+        [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()],
+        now,
+        MAX_SOURCE_LEASE,
+        now + MAX_SOURCE_LEASE,
+    )
+    .unwrap();
+    for (names, total) in [(vec!["A"], 2), (vec!["B"], 2), (vec!["A", "B"], 4)] {
+        let caller = CallerGrants::from_verified(
+            scenario.plan.context().binding(),
+            names.into_iter().map(|p| PartyId::new(p).unwrap()),
+        );
+        assert_eq!(
+            store
+                .read_page(
+                    &scenario.plan,
+                    &caller,
+                    &lease,
+                    PageKind::History,
+                    None,
+                    100
+                )
+                .unwrap()
+                .visible_total,
+            total
+        );
+    }
+    store
+        .client
+        .execute(
+            "UPDATE cantongrid.events SET visibility_clauses='[]'::jsonb WHERE stream_key=$1",
+            &[&stream_key(&scenario.plan).0],
+        )
+        .unwrap();
+    let caller = CallerGrants::from_verified(
+        scenario.plan.context().binding(),
+        [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()],
+    );
+    assert_eq!(
+        store
+            .read_page(
+                &scenario.plan,
+                &caller,
+                &lease,
+                PageKind::History,
+                None,
+                100
+            )
+            .unwrap()
+            .visible_total,
+        0
+    );
+}

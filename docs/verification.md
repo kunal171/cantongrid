@@ -248,3 +248,58 @@ journal replay, fixture-only caller simulation, no production retention policy,
 no live source-grant verifier/handoff/type normalization and no application APIs
 or stream delivery. Private live ingestion remains disabled pending those gates.
 The new GitHub workflow has not been run remotely for this branch yet.
+
+## Source contract, security and alpha candidate — 2026-11-17
+
+[PR #3](https://github.com/kunal171/cantongrid/pull/3) merged at `1007134b5001`
+after both fixture/PostgreSQL CI runs passed. Newer ecosystem documentation on
+main was preserved. Release-oriented work continues on `release/0.1.0-alpha.1`;
+this reference alpha is distinct from full Phase 3 acceptance.
+
+Delivered and locally checked:
+
+- Reviewed the supplied v0.3 handoff and preserved it with a historical-baseline
+  note. [Source contract](phase3-source-contract.md) records installed SQL,
+  visibility/retention restrictions and the SDK adoption decision before live work.
+- SDK v0.3.2, commit `5caaebc3eab380de827196663d4bb18b90ffd6f4`, decoded 3 creates,
+  3 archives and all 11 historical offset-80 active rows using a restricted read-only
+  connection. Eight historical rows had a later archive; the SDK retained them
+  correctly. No SDK writer/admin suite ran and no runtime dependency was adopted.
+- Retained interval 80→943 reconciled with baseline 11/creates 115/archives 116/
+  active 10 and no identity differences. Empty windows, invalid/regressed/future
+  bounds and pruning gaps have tests. Concurrent publication/pagination/reconnect
+  remains unverified; the probe explicitly reports that limit.
+- Machine-readable source coverage remains unknown/partial with reason codes;
+  snapshot availability does not imply current source permission or freshness.
+- Shared SQL active/history pages filter before totals and paging, preserve every
+  visibility dependency, reject empty evidence and recheck source leases before
+  returning. A/B/AB/no-party and one-row pagination tests passed on owned PostgreSQL.
+  This is a backend foundation using fixture grants, not real API authentication.
+- Contributor/security guides, release milestones, changelog, PR template and a
+  version/license/notice guard are added. The agreed Apache-2.0 target now has an
+  actual LICENSE and NOTICE; all workspace packages inherit it and the alpha version.
+- Pinned security tools verify both archive and executable hashes. The checker
+  rejects tampered binaries, ambiguous/linked archive members and tracked symlinks.
+  Explicit scanner configuration prevents ambient config/ignore/comment bypasses.
+  Full Git history and Git-eligible working files pass redacted secret scans.
+- RustSec audit passed with no advisories; dependency licenses (including workspace
+  and development packages), registry sources and version constraints passed. Two
+  transitive WASI versions produce an informational duplicate warning, not a denied
+  advisory. There are no blanket scanner/advisory or private-package license ignores.
+- New security CI runs on push/PR, manual dispatch and weekly with read-only
+  permissions. actionlint passed locally; GitHub execution is recorded on the PR.
+
+Local final baseline: **49 Rust tests** including all environment-dependent cases,
+**11 Python tests**, formatting, Clippy with warnings denied, YAML parsing, links,
+release metadata and security checks passed. SDK evaluation is additional isolated
+compatibility evidence, not counted as a workspace unit-test suite.
+
+The SDK build exhausted root-disk space and interrupted two documentation writes.
+Only this task's generated Cargo targets were cleaned, interrupted documents were
+restored, and `git fsck` plus link/nonempty-file checks passed. Subsequent builds
+use a private temporary target on tmpfs with debug symbols/incremental output
+reduced; unrelated project files and caches were not deleted.
+
+Remaining live gates and runtime dependency proposals are explicit in the source
+contract. No Outcomia deployment, new parties, source database migration or ledger
+transaction was performed. Phase 3 is not marked complete by this alpha candidate.

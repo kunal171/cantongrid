@@ -14,6 +14,7 @@ pub enum StoreError {
     Limit,
     InvalidBatch,
     CommitUnknown,
+    Authorization,
 }
 impl fmt::Display for StoreError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -27,6 +28,7 @@ impl fmt::Display for StoreError {
                 Self::CorruptJournal => "destination journal/checkpoint is inconsistent; no progress was acknowledged",
                 Self::Limit => "bounded reference store limit exceeded; no progress was acknowledged",
                 Self::InvalidBatch => "batch failed lifecycle, scope or payload validation; no progress was acknowledged",
+                Self::Authorization => "current source/caller authorization is unavailable, mismatched or expired",
                 Self::CommitUnknown => "commit acknowledgement failed; reconnect and replay the same batch before advancing",
                 Self::Database(_) => unreachable!(),
             }),

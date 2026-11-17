@@ -18,6 +18,8 @@ conflicting wording in the supplied technical brief, version 0.2.
 | D-011 | Work in small commits and phases. | Documentation is first; implementation details are added as verified, rather than invented now. |
 | D-012 | Keep init/index/serve as clear primary commands. | init scaffolds; index owns ingestion/projections; serve owns queries/stream delivery; dev supervises both locally. |
 | D-013 | The indexer runtime and APIs are Rust; Python is for development helpers only. | Do not grow compatibility scripts into a Python indexing engine. Confirmed 2026-11-17. |
+| D-014 | Work in versioned releases with small commits. | Start with an explicitly limited `0.1.0-alpha.1` reference milestone; record release scope, evidence and remaining gates before tagging. Confirmed 2026-11-17. |
+| D-015 | Add security CI and contributor guidance alongside implementation. | Dependency/advisory, secret and workflow checks plus reproducible contributor setup are part of release readiness. Confirmed 2026-11-17. |
 
 ## Interpretation of the original brief
 
@@ -29,3 +31,7 @@ In particular, the original second Scan slice is deferred, the Outcomia example
 is mandatory rather than optional, and developer-defined processing is a core
 capability. Live adapter verification, privacy, exact precision, source-local
 checkpoints and honest fixture labelling remain requirements.
+
+The user subsequently supplied and requested continuation under the
+[Phase 3 v0.3 handoff](specifications/phase3-v0.3.md). Its baseline is historical;
+current implementation/evidence remains recorded in verification and the roadmap.

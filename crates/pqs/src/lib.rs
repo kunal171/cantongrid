@@ -3,10 +3,15 @@
 use cantongrid_postgres::{DatabaseError, connect_env, postgres::IsolationLevel};
 use std::fmt;
 
+pub mod coverage;
+mod handoff;
+pub use handoff::{Reconciliation, RetainedWindow, reconcile_env};
+
 /// Operator-only SQL snapshot evidence. No payload, party identifier or credential is returned.
 #[derive(Debug, serde::Serialize)]
 pub struct Inspection {
     pub sql_schema_version: i32,
+    pub coverage: coverage::Coverage,
     pub oldest_offset: Option<i64>,
     pub latest_offset: Option<i64>,
     pub pruned_offset: Option<i64>,
@@ -28,25 +33,7 @@ pub fn inspect_env(variable: &str) -> Result<Inspection, InspectError> {
         .isolation_level(IsolationLevel::RepeatableRead)
         .read_only(true)
         .start()?;
-    let restricted: bool = tx.query_one(r#"
-        SELECT NOT r.rolsuper AND NOT r.rolcreatedb AND NOT r.rolcreaterole
-            AND NOT r.rolreplication AND NOT r.rolbypassrls AND d.datdba <> r.oid
-            AND NOT EXISTS (SELECT 1 FROM pg_auth_members WHERE member=r.oid)
-            AND NOT has_database_privilege(current_user,current_database(),'CREATE,TEMP')
-            AND NOT has_schema_privilege(current_user,'public','CREATE')
-            AND NOT EXISTS (SELECT 1 FROM pg_proc WHERE pronamespace='public'::regnamespace AND prosecdef)
-            AND NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.relnamespace='public'::regnamespace
-                AND c.relkind IN ('r','p') AND has_table_privilege(current_user,c.oid,
-                'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))
-        FROM pg_roles r JOIN pg_database d ON d.datname=current_database() WHERE r.rolname=current_user
-    "#, &[])?.get(0);
-    if !restricted {
-        return Err(InspectError::Reader);
-    }
-    let version: Option<String> = tx.query_opt("SELECT version FROM public.flyway_schema_history WHERE success AND version ~ '^[0-9]+$' ORDER BY installed_rank DESC LIMIT 1", &[])?.map(|r|r.get(0));
-    if version.as_deref() != Some("041") {
-        return Err(InspectError::Schema);
-    }
+    validate_source(&mut tx)?;
     let row = tx.query_one(
         "SELECT public.oldest_offset(),public.latest_offset(),public.pruned_offset()",
         &[],
@@ -75,6 +62,7 @@ pub fn inspect_env(variable: &str) -> Result<Inspection, InspectError> {
     tx.commit()?;
     Ok(Inspection {
         sql_schema_version: 41,
+        coverage: coverage::Coverage::from_sql_observation(latest, pruned),
         oldest_offset: oldest,
         latest_offset: latest,
         pruned_offset: pruned,
@@ -88,6 +76,32 @@ pub fn inspect_env(variable: &str) -> Result<Inspection, InspectError> {
     })
 }
 
+/// Apply the same privilege/schema gate inside every read transaction.
+fn validate_source(
+    tx: &mut impl cantongrid_postgres::postgres::GenericClient,
+) -> Result<(), InspectError> {
+    let restricted: bool = tx.query_one(r#"
+        SELECT NOT r.rolsuper AND NOT r.rolcreatedb AND NOT r.rolcreaterole
+            AND NOT r.rolreplication AND NOT r.rolbypassrls AND d.datdba <> r.oid
+            AND NOT EXISTS (SELECT 1 FROM pg_auth_members WHERE member=r.oid)
+            AND NOT has_database_privilege(current_user,current_database(),'CREATE,TEMP')
+            AND NOT has_schema_privilege(current_user,'public','CREATE')
+            AND NOT EXISTS (SELECT 1 FROM pg_proc WHERE pronamespace='public'::regnamespace AND prosecdef)
+            AND NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.relnamespace='public'::regnamespace
+                AND c.relkind IN ('r','p') AND has_table_privilege(current_user,c.oid,
+                'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))
+        FROM pg_roles r JOIN pg_database d ON d.datname=current_database() WHERE r.rolname=current_user
+    "#, &[])?.get(0);
+    if !restricted {
+        return Err(InspectError::Reader);
+    }
+    let version: Option<String> = tx.query_opt("SELECT version FROM public.flyway_schema_history WHERE success AND version ~ '^[0-9]+$' ORDER BY installed_rank DESC LIMIT 1", &[])?.map(|r|r.get(0));
+    if version.as_deref() != Some("041") {
+        return Err(InspectError::Schema);
+    }
+    Ok(())
+}
+
 /// Driver errors stay redacted; a failed probe never becomes permission to use a broader source.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InspectError {
@@ -95,6 +109,7 @@ pub enum InspectError {
     Reader,
     Schema,
     Bounds,
+    Gap,
 }
 impl fmt::Display for InspectError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -102,6 +117,7 @@ impl fmt::Display for InspectError {
             Self::Database(error) => error.fmt(f),
             Self::Reader => f.write_str("PQS inspection requires a restricted nonowner SELECT-only reader with no membership, schema/temp/write or security-definer access"),
             Self::Schema => f.write_str("unsupported PQS SQL schema; only the inspected schema-041 profile is supported"),
+            Self::Gap => f.write_str("requested source interval is unavailable or pruned; explicit re-snapshot/coverage decision required"),
             Self::Bounds => f.write_str("PQS temporal bounds are inconsistent; no data was copied"),
         }
     }

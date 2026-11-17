@@ -21,6 +21,7 @@ Usage:
   cantongrid fixture status <project.json> --database-env <CANTONGRID_VARIABLE>
   cantongrid fixture query <project.json> --database-env <CANTONGRID_VARIABLE> [--party <synthetic-party>]...
   cantongrid source inspect-pqs --database-env <CANTONGRID_VARIABLE>
+  cantongrid source verify-window --database-env <CANTONGRID_VARIABLE> --after <offset>
 
 Fixture run uses process memory; index/status/query use an explicitly initialized local PostgreSQL destination.
 Fixture caller grants are simulated. Source inspection is read-only metadata, not live ingestion.
@@ -43,6 +44,10 @@ fn run(args: Vec<String>) -> Result<(), String> {
             println!("{HELP}");
             Ok(())
         }
+        [flag] if flag == "--version" || flag == "-V" => {
+            println!("cantongrid {}", env!("CARGO_PKG_VERSION"));
+            Ok(())
+        }
         [flag] if flag == "--help" || flag == "-h" => {
             println!("{HELP}");
             Ok(())
@@ -61,6 +66,21 @@ fn run(args: Vec<String>) -> Result<(), String> {
             if command == "storage" && action == "init" && flag == "--database-env" =>
         {
             commands::storage::initialize(variable)
+        }
+        [command, action, flag, variable, after_flag, after]
+            if command == "source"
+                && action == "verify-window"
+                && flag == "--database-env"
+                && after_flag == "--after" =>
+        {
+            let after = after
+                .parse::<i64>()
+                .map_err(|_| "source boundary must be a nonnegative i64")?;
+            let report =
+                cantongrid_pqs::reconcile_env(variable, after, None).map_err(|e| e.to_string())?;
+            print_json(
+                &serde_json::json!({"operation":"retained_window_reconciliation","result":report}),
+            )
         }
         [command, action, flag, variable]
             if command == "source" && action == "inspect-pqs" && flag == "--database-env" =>
