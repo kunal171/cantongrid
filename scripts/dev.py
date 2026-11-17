@@ -18,6 +18,8 @@ ROUTES = {
 }
 CHECKS = {name.replace('_', '-'): name for name in ('ledger', 'pqs', 'reader', 'visibility', 'visibility_pqs')}
 CHECKS['resources'] = 'resources'
+CHECKS['pipeline'] = 'pipeline'
+CHECKS['outcomia-pipeline'] = 'outcomia_pipeline'
 
 
 def main():
@@ -36,7 +38,7 @@ def main():
             parser.error('check requires: ' + ', '.join(CHECKS))
         name = rest.pop(0)
         module = importlib.import_module('devtools.checks.' + CHECKS[name])
-        if name == 'pqs':
+        if name in ('pqs', 'outcomia-pipeline'):
             module.main(rest)
         else:
             check_parser = argparse.ArgumentParser(prog=f'{parser.prog} check {name}', description=module.__doc__)
