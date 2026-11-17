@@ -44,6 +44,10 @@ fn run(args: Vec<String>) -> Result<(), String> {
             println!("{HELP}");
             Ok(())
         }
+        [flag] if flag == "--version" || flag == "-V" => {
+            println!("cantongrid {}", env!("CARGO_PKG_VERSION"));
+            Ok(())
+        }
         [flag] if flag == "--help" || flag == "-h" => {
             println!("{HELP}");
             Ok(())

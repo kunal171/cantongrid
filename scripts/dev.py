@@ -11,6 +11,7 @@ ROUTES = {
     'pqs': 'pqs',
     'storage': 'storage',
     'security': 'security',
+    'release': 'release',
     'validate-dar': 'validate_dar',
     'visibility': 'setup_visibility',
     'check': None,

@@ -34,3 +34,16 @@ configuration/migration compatibility notes and [verification](verification.md).
 A prerelease may ship a useful verified subset with explicit limits. A Phase 3
 completion claim requires the full acceptance matrix, including actual Outcomia
 integration or an explicit blocked status for unavailable contract data.
+
+## Candidate metadata check
+
+```bash
+python3 scripts/dev.py release check
+python3 scripts/dev.py release check --tag v0.1.0-alpha.1
+cargo run -p cantongrid-cli -- --version
+```
+
+The check validates inherited workspace/lockfile versions, the project license and
+notice, changelog entry and an optional intended tag. CI also checks pushed tag
+names against the workspace version. It never creates a tag, publishes a release,
+packages binaries or changes `publish = false`.
