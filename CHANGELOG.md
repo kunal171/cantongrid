@@ -4,6 +4,8 @@
 
 ### Added
 
+- Apache-2.0 project license and consistent workspace prerelease versioning.
+
 - Rust project validation and deterministic create/archive fixture processing.
 - Exact tagged values, visibility dependencies and bounded source-grant lease decisions.
 - Owned local PostgreSQL materialization, atomic checkpoint/outbox and journal recovery.

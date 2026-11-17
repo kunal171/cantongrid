@@ -22,7 +22,7 @@ configuration/migration compatibility notes and [verification](verification.md).
 2. Run formatting, Clippy, unit/executable tests, isolated PostgreSQL tests and
    security checks. Live tests require authorized infrastructure; absence is not a pass.
 3. Review dependencies, licensing, schema/configuration compatibility and CLI changes.
-   An alpha name does not waive missing permissions or license publication requirements.
+   An alpha name does not waive missing permissions or third-party notice requirements.
 4. Confirm the workspace version and release notes match the exact candidate commit.
 5. Open a release PR; required CI must pass before merging, preserving focused commits.
 6. Create an annotated version tag and GitHub release only for the verified commit.

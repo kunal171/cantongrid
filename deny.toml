@@ -1,4 +1,4 @@
-# Runtime/development dependency policy. This does not publish a project license.
+# Runtime/development dependency policy, including workspace packages.
 [advisories]
 yanked = "deny"
 unmaintained = "all"
@@ -7,10 +7,6 @@ unmaintained = "all"
 include-dev = true
 allow = ["Apache-2.0", "Apache-2.0 WITH LLVM-exception", "MIT", "Unicode-3.0", "Zlib"]
 confidence-threshold = 0.95
-
-# Workspace packages are currently non-publishable; actual license publication is a release gate.
-[licenses.private]
-ignore = true
 
 [bans]
 multiple-versions = "warn"

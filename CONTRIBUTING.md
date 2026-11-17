@@ -120,5 +120,11 @@ Security CI runs on PRs/pushes, manually, and weekly to catch newly published
 advisories. It uses read-only permissions and no private service credentials.
 Default development passwords are not production secrets; do not introduce broad
 scanner allowlists to make a check green. The license policy checks third-party
-packages, including development dependencies. Non-publishable workspace packages
-remain excluded only from the license check while project licensing is finalized.
+packages, including development dependencies. Workspace packages are also covered by the license policy.
+
+## License
+
+CantonGrid is licensed under [Apache-2.0](LICENSE). Contributions are submitted
+under the same license. Include provenance/required notices for any externally
+sourced code; do not copy code with incompatible or unknown licensing. Binary
+release packaging must preserve dependency license/notice obligations.
