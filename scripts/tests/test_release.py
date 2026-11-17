@@ -29,4 +29,3 @@ class ReleaseMetadataTests(unittest.TestCase):
             (root / 'NOTICE').write_text('Synthetic test notice')
             with self.assertRaises(FileNotFoundError):
                 release.check(root)  # LICENSE is deliberately absent after all other metadata matches.
-
