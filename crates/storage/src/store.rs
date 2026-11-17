@@ -33,6 +33,9 @@ impl Store {
 
     /// Publish one validated delivery. Replaying a committed delivery returns false without writes.
     pub fn apply(&mut self, plan: &Plan, batch: &Batch) -> Result<bool, StoreError> {
+        if plan.is_live() {
+            return Err(StoreError::Authorization);
+        }
         self.apply_inner(plan, batch, false)
     }
 
@@ -43,6 +46,9 @@ impl Store {
         batch: &Batch,
         lease: &cantongrid_core::authorization::SourceLease,
     ) -> Result<bool, StoreError> {
+        if plan.is_live() {
+            return self.apply_live(plan, batch, lease);
+        }
         self.apply_guarded(plan, batch, false, Some(lease))
     }
 
