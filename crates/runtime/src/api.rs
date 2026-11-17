@@ -141,6 +141,11 @@ impl Service {
         {
             return Err("query response exceeds limit".into());
         }
+        if !source_valid(&_source, &project)
+            || auth::authenticate(&project, token)?.binding != binding
+        {
+            return Err("authorization expired or changed before delivery".into());
+        }
         Ok(result)
     }
 }
@@ -227,7 +232,20 @@ async fn current_source(project: &Project) -> Result<SourceAuthorization, String
         .await
         .map_err(|_| "source authorization unavailable")?;
     ready(project).await?;
+    if !source_valid(&source, project) {
+        return Err("source authorization expired".into());
+    }
     Ok(source)
+}
+
+/// Health checks and serialization also consume lease time; check after those awaits/work.
+fn source_valid(source: &SourceAuthorization, project: &Project) -> bool {
+    source
+        .lease()
+        .and_then(|lease| {
+            lease.source_parties(&project.plan.context().binding(), std::time::Instant::now())
+        })
+        .is_some()
 }
 
 /// Accept exactly one bounded bearer; avoid ambiguity between multiple Authorization headers.
@@ -335,7 +353,14 @@ async fn graphql(
     if !current.is_ok_and(|id| id.binding == identity.binding) {
         return error(StatusCode::UNAUTHORIZED);
     }
-    Json(response).into_response()
+    let response = Json(response).into_response();
+    if !source_valid(&_source, &latest_project)
+        || !auth::authenticate(&latest_project, &token)
+            .is_ok_and(|id| id.binding == identity.binding)
+    {
+        return error(StatusCode::UNAUTHORIZED);
+    }
+    response
 }
 
 /// Bind only configured loopback addresses, cap request bodies and bound concurrent DB work.

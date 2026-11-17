@@ -266,6 +266,24 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
             .is_err()
     );
     assert_eq!(store.checkpoint(&plan).unwrap(), checkpoint_before);
+    // An actual SQL uniqueness failure after staging a new contract must roll it back
+    // together with any journal/progress/outbox effects, not leave an orphan projection.
+    let mut conflicting = batch.events[0].clone();
+    conflicting.contract = "must-rollback-after-sql-error".into();
+    assert!(
+        store
+            .apply_authorized(
+                &plan,
+                &Batch {
+                    context: context.clone(),
+                    position: position(303),
+                    events: vec![conflicting]
+                },
+                &lease
+            )
+            .is_err()
+    );
+    assert_eq!(store.checkpoint(&plan).unwrap(), checkpoint_before);
     // A stale worker cannot rewind progress after another worker has committed a later page.
     assert!(
         store
@@ -355,6 +373,20 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
         let (status, result) = request(&rt, &format!("{base}/v1/contracts"), Some(token), None);
         assert_eq!(status, 200);
         assert_eq!(result["visibleTotal"], active);
+        let expected: BTreeSet<&str> = if token == &a {
+            BTreeSet::from(["a1", "joint"])
+        } else if token == &b {
+            BTreeSet::from(["b1", "joint"])
+        } else {
+            BTreeSet::from(["a1", "b1", "joint"])
+        };
+        let ids: BTreeSet<_> = result["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v["contractId"].as_str().unwrap())
+            .collect();
+        assert_eq!(ids, expected);
         assert_eq!(result["provenance"]["coverage"], "partial_history");
         let encoded = result.to_string();
         assert!(encoded.contains("12345678901234567890.1234567891"));
@@ -372,13 +404,55 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
             &base,
             Some(token),
             Some(
-                json!({"query":"{ activeContracts { visibleTotal items provenance } lifecycleEvents { visibleTotal } }"}),
+                json!({"query":"{ activeContracts { visibleTotal items provenance } lifecycleEvents { visibleTotal items } }"}),
             ),
         );
         assert_eq!(status, 200);
         assert!(result.get("errors").is_none(), "GraphQL operation failed");
         assert_eq!(result["data"]["activeContracts"]["visibleTotal"], active);
+        let ids: BTreeSet<_> = result["data"]["activeContracts"]["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v["contractId"].as_str().unwrap())
+            .collect();
+        assert_eq!(ids, expected);
         assert_eq!(result["data"]["lifecycleEvents"]["visibleTotal"], history);
+    }
+    assert_eq!(
+        request(
+            &rt,
+            &format!("{base}/v1/contracts"),
+            Some(&jwt(
+                "a",
+                "different-organization-signing-key-0001",
+                clock() + 600
+            )),
+            None
+        )
+        .0,
+        401
+    );
+    for (issuer, audience) in [
+        ("wrong-issuer", "owned-api"),
+        ("owned-tests", "wrong-audience"),
+    ] {
+        let invalid = encode(
+            &Header::new(Algorithm::HS256),
+            &json!({"sub":"a","iss":issuer,"aud":audience,"iat":clock(),"exp":clock()+600}),
+            &EncodingKey::from_secret(key.as_bytes()).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            request(
+                &rt,
+                &base,
+                Some(&invalid),
+                Some(json!({"query":"{ activeContracts { items } }"}))
+            )
+            .0,
+            401
+        );
     }
     let (_, first) = request(&rt, &format!("{base}/v1/contracts?limit=1"), Some(&a), None);
     let cursor = first["nextCursor"].as_str().unwrap();

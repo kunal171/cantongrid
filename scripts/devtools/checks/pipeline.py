@@ -100,12 +100,17 @@ def main():
             page = query('/v1/contracts', subject)
             if page['visibleTotal'] != str(count) or len(page['items']) != count:
                 raise ValueError('Live source/API visibility count differs')
+            labels = set()
             for item in page['items']:
                 if item['payload']['type'] != 'raw_json':
                     raise ValueError('Unexpected payload mode')
                 payload = json.loads(item['payload']['value'])
+                labels.add(payload['label'])
                 if payload['amount'] != AMOUNT or payload['sequence'] != SEQUENCE:
                     raise ValueError('Exact source numeric strings changed')
+            expected_labels = {'a': {'a-only', 'joint'}, 'b': {'b-only', 'joint'}, 'ab': {'a-only', 'b-only', 'joint'}}
+            if labels != expected_labels[subject]:
+                raise ValueError('Live API returned a record outside the caller scope')
             graphql = query('/graphql', subject, {'query': '{ activeContracts { visibleTotal provenance } lifecycleEvents { visibleTotal } }'})
             if ('errors' in graphql or graphql['data']['activeContracts']['visibleTotal'] != str(count)
                     or graphql['data']['lifecycleEvents']['visibleTotal'] != str(count)):
