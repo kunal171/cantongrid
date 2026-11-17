@@ -9,6 +9,7 @@ from urllib.error import HTTPError
 ROUTES = {
     'localnet': 'localnet',
     'pqs': 'pqs',
+    'storage': 'storage',
     'validate-dar': 'validate_dar',
     'visibility': 'setup_visibility',
     'check': None,
@@ -19,7 +20,7 @@ CHECKS = {name.replace('_', '-'): name for name in ('ledger', 'pqs', 'reader', '
 def main():
     parser = argparse.ArgumentParser(description=__doc__, epilog=(
         'localnet prepare|up|status|stop|logs|images; pqs up|stop|status|reader [--visibility]; '
-        'validate-dar <dar>; visibility setup; check ledger|pqs|reader|visibility|visibility-pqs'))
+        'storage up|status|stop; validate-dar <dar>; visibility setup; check ledger|pqs|reader|visibility|visibility-pqs'))
     parser.add_argument('command', choices=ROUTES)
     # Leave subcommand arguments (including --help) to their own parser.
     if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'):

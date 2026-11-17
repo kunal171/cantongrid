@@ -1,0 +1,46 @@
+//! Redacted persistence errors: driver diagnostics may contain bound private values.
+use cantongrid_postgres::DatabaseError;
+use std::fmt;
+
+/// Stable failure classes for operator handling and retry decisions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StoreError {
+    Database(DatabaseError),
+    UnsafeDestination,
+    Schema,
+    PlanChanged,
+    Busy,
+    CorruptJournal,
+    Limit,
+    InvalidBatch,
+    CommitUnknown,
+}
+impl fmt::Display for StoreError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Database(error) => error.fmt(f),
+            _ => f.write_str(match self {
+                Self::UnsafeDestination => "destination must be a separately owned database under a restricted non-superuser role, with no PQS schema",
+                Self::Schema => "destination schema is absent, incompatible or not owned by this role; initialize/review it explicitly",
+                Self::PlanChanged => "persisted source context has a different selection or schema definition; use a new generation and rebuild",
+                Self::Busy => "another worker holds this source context; retry after it finishes",
+                Self::CorruptJournal => "destination journal/checkpoint is inconsistent; no progress was acknowledged",
+                Self::Limit => "bounded reference store limit exceeded; no progress was acknowledged",
+                Self::InvalidBatch => "batch failed lifecycle, scope or payload validation; no progress was acknowledged",
+                Self::CommitUnknown => "commit acknowledgement failed; reconnect and replay the same batch before advancing",
+                Self::Database(_) => unreachable!(),
+            }),
+        }
+    }
+}
+impl std::error::Error for StoreError {}
+impl From<DatabaseError> for StoreError {
+    fn from(error: DatabaseError) -> Self {
+        Self::Database(error)
+    }
+}
+impl From<cantongrid_postgres::postgres::Error> for StoreError {
+    fn from(_: cantongrid_postgres::postgres::Error) -> Self {
+        Self::Database(DatabaseError::Query)
+    }
+}
