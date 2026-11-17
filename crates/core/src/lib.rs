@@ -2,3 +2,5 @@
 #![forbid(unsafe_code)]
 
 pub mod visibility;
+
+pub mod authorization;

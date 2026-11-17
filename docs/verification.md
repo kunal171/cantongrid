@@ -102,3 +102,14 @@ The schema-collision reproduction ran without Canton/application code against
 both the packaged and current-upstream V001 SQL: clean controls passed, unrelated
 type collision failed as expected, and a namespace-scoped in-memory correction
 passed both controls. No full current executable/Scala suite was claimed.
+
+
+## Rust core foundation — 2026-11-17
+
+Twelve unit tests passed for source-neutral visibility, derived-input dependency
+retention, empty-evidence denial, source/generation mismatch, identity redaction,
+source/caller grant intersection, bounded lease expiry, earlier credential expiry
+and explicit revocation. All run without source credentials or network access.
+`cargo test --workspace --offline`, Clippy with warnings denied, and formatting
+checks passed using Rust/Cargo 1.100. No external crate dependencies were added.
+These are pure decision-model tests; live connector/serving integration remains open.

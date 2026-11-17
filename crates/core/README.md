@@ -20,3 +20,15 @@ cargo test --workspace --offline
 cargo clippy --workspace --all-targets --offline -- -D warnings
 cargo fmt --all -- --check
 ```
+
+`authorization::SourceLease` adds a pure decision gate over source grants and the
+visibility policy. Leases have a positive lifetime of at most 15 seconds, expire
+earlier when the verified credential does, and can be invalidated immediately.
+They are not cloneable/deserializable. Each input requires a party present in
+both the caller's current grants and the source's current grants. Source and
+generation bindings must match, and the expiry boundary is exclusive.
+
+The 15-second value is an initial core policy limit, not a deployed revocation
+SLA. Network grant retrieval, credential verification, lease renewal, broadcast
+invalidation, ingestion and API integration remain to be built. Verified snapshots
+and the monotonic clock must come from trusted providers, never client input.

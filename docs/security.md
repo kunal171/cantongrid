@@ -109,3 +109,18 @@ and the read-only Ledger API authorization probe have separate credentials; this
 probe is not a second ledger-data ingestion connector. Failure to renew the lease
 must deny private serving. These requirements still need implementation and tests;
 connection readiness alone is insufficient, and cached retention is not an archive.
+
+
+## Rust core decision model
+
+The first `cantongrid-core` slice implements the visibility conjunctions, context
+matching and bounded source-lease decision rules. It rejects absent grants,
+nonpositive/excessive lease lifetimes and expired credentials. A read must match
+the caller/source party intersection for every contributing input and precede
+both lease and credential expiry. Known invalidation denies unchanged cached rows.
+
+The initial maximum lifetime is 15 seconds, tested with an injected monotonic
+instant and no sleeps. This is a core policy choice, not a deployed SLA or a
+completed source verifier. The HTTP grant probe, authenticated caller mapping,
+generation changes, renewal, invalidation distribution and API checks must still
+be wired and verified before any serving guarantee is made.

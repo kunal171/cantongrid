@@ -104,12 +104,26 @@ impl VisibilityPolicy {
 
     /// Pure policy check only. A serving caller must also require a current source-authorization lease.
     pub fn allows(&self, caller: &CallerGrants) -> bool {
-        self.scope == caller.scope
+        self.matches_parties(&caller.scope, |party| caller.parties.contains(party))
+    }
+
+    pub(crate) fn scope(&self) -> &ScopeBinding {
+        &self.scope
+    }
+
+    pub(crate) fn allows_within(&self, caller: &CallerGrants, source: &BTreeSet<PartyId>) -> bool {
+        self.matches_parties(&caller.scope, |party| {
+            caller.parties.contains(party) && source.contains(party)
+        })
+    }
+
+    fn matches_parties(&self, scope: &ScopeBinding, can_access: impl Fn(&PartyId) -> bool) -> bool {
+        self.scope == *scope
             && !self.clauses.is_empty()
             && self
                 .clauses
                 .iter()
-                .all(|clause| !clause.is_disjoint(&caller.parties))
+                .all(|clause| clause.iter().any(&can_access))
     }
 }
 

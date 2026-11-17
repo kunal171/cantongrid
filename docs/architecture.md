@@ -1,6 +1,6 @@
 # Architecture
 
-Status: accepted design direction. The initial Rust visibility-policy primitives
+Status: accepted design direction. The initial Rust visibility-policy and source-lease decision primitives
 are implemented in crates/core; the other runtime components below remain planned. Source
 protocols, dependency versions and exact database schemas remain research gates.
 
