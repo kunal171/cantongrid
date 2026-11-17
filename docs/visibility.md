@@ -9,8 +9,8 @@ small fixture contracts. It does not deploy Outcomia or use wallet balances.
 Build the Daml example, start LocalNet and then run from CantonGrid:
 
 ```bash
-python3 scripts/setup-localnet-visibility.py
-python3 scripts/check-localnet-visibility.py
+python3 scripts/dev.py visibility setup
+python3 scripts/dev.py check visibility
 ```
 
 Setup validates/uploads/vets the fixture DAR, creates a writer restricted to the
@@ -67,9 +67,9 @@ was inspected before constructing the fixture's request shapes.
 With the main PQS PostgreSQL fixture running, start the additional AB source:
 
 ```bash
-python3 scripts/localnet-visibility-pqs.py up
+python3 scripts/dev.py pqs up --visibility
 curl --fail http://127.0.0.1:18081/readyz
-python3 scripts/check-localnet-visibility-pqs.py
+python3 scripts/dev.py check visibility-pqs
 ```
 
 Wait for readiness before running the check. This source uses the dedicated
@@ -97,9 +97,9 @@ not asserted. Killed/interrupted tests still require checking the owned grants.
 To stop the experiments, stop AB before its shared database and LocalNet:
 
 ```bash
-python3 scripts/localnet-visibility-pqs.py stop
-python3 scripts/localnet-pqs.py stop
-python3 scripts/localnet.py stop
+python3 scripts/dev.py pqs stop --visibility
+python3 scripts/dev.py pqs stop
+python3 scripts/dev.py localnet stop
 ```
 
 Contracts, parties, database contents and ignored credential/context files are

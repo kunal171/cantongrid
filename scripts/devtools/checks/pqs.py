@@ -1,22 +1,17 @@
-#!/usr/bin/env python3
 """Read-only SQL and source-grant checks for the scoped PQS development fixture."""
 import argparse
 import json
-import os
-from pathlib import Path
 import subprocess
-import sys
-from urllib.request import urlopen
-from localnet_api import get, token
+from ..ledger import get, token
 
-ROOT = Path(__file__).resolve().parents[1]
+from ..common import ENV, pg_command, source_ready
 USER = 'cantongrid-pqs-app-provider'
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--at-offset', type=int, help='Check a retained historical snapshot')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.at_offset is not None and args.at_offset < 0:
         raise ValueError('Offset must be nonnegative')
     bound = str(args.at_offset) if args.at_offset is not None else 'latest_offset()'
@@ -29,10 +24,7 @@ def main():
     user = get(base, '/v2/users/' + USER, admin)['user']
     if user.get('isDeactivated') or user.get('primaryParty') != party:
         raise ValueError('Source user is inactive or no longer matches the selected party')
-    with urlopen('http://127.0.0.1:18080/readyz', timeout=10) as response:
-        health = json.load(response)
-    if health.get('status') != 'ok' or any(health.get(key) is not True for key in
-                                         ('grpc_up', 'jdbc_connection_pool_up', 'stream_up')):
+    if not source_ready():
         raise ValueError('PQS source, database or stream is not ready')
     # SQL stdin keeps the party identifier out of process arguments and output.
     literal = "'" + party.replace("'", "''") + "'"
@@ -52,23 +44,11 @@ SELECT json_build_object(
 );
 COMMIT;
 '''
-    env = {**os.environ, 'PQS_UID': str(os.getuid()), 'PQS_GID': str(os.getgid())}
-    result = subprocess.run([
-        'docker', 'compose', '-p', 'cantongrid-pqs', '-f', str(ROOT / 'dev/pqs.compose.yaml'),
-        'exec', '-T', '-e', 'PGPASSWORD=local-pqs-reader', 'pqs-postgres',
-        'psql', '-X', '-qAt', '-h', '127.0.0.1', '-U', 'cantongrid_pqs_reader', '-d', 'pqs',
-        '-v', 'ON_ERROR_STOP=1'], input=sql, text=True, capture_output=True, check=True, env=env)
+    result = subprocess.run(pg_command(reader=True), input=sql, text=True,
+                            capture_output=True, check=True, env=ENV)
     data = json.loads(result.stdout)
     if (data['create_rows'] < 1 or data['active_rows'] < 1
             or data['duplicate_create_rows'] != 0 or not data['all_creates_in_scope']):
         raise ValueError('Expected nonempty authorized contract data with matching witness evidence')
     print(json.dumps(data, indent=2))
     print('PASS: scoped source grants, pinned read-only SQL snapshot, contract and lifecycle queries')
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as exc:
-        print(f'Local PQS probe failed: {exc}', file=sys.stderr)
-        sys.exit(1)

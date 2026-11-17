@@ -16,7 +16,7 @@ The existing sibling Outcomia DAR passed `POST /v2/dars/validate`:
 Reproduce from CantonGrid after LocalNet is ready:
 
 ```bash
-python3 scripts/validate-localnet-dar.py \
+python3 scripts/dev.py validate-dar \
   ../outcomia-canton/contracts/main/.daml/dist/outcomia-markets-0.1.0.dar
 ```
 

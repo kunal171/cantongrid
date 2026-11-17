@@ -16,10 +16,10 @@ substantial free memory. Do not build the Quickstart demo for this workflow.
 From the CantonGrid repository:
 
 ```bash
-python3 scripts/localnet.py prepare
-python3 scripts/localnet.py up
-python3 scripts/localnet.py status
-python3 scripts/probe-localnet.py
+python3 scripts/dev.py localnet prepare
+python3 scripts/dev.py localnet up
+python3 scripts/dev.py localnet status
+python3 scripts/dev.py check ledger
 ```
 
 The first command obtains the upstream checkout under ignored `.local/`. It pins
@@ -57,7 +57,7 @@ Do not run upstream `make start` alongside this stack.
 
 ## Authenticated read-only use
 
-`probe-localnet.py` checks validator readiness and JSON API readiness, verifies
+`dev.py check ledger` checks validator readiness and JSON API readiness, verifies
 that a party-list request without a token is rejected, and then reads version,
 ledger end and one party-list page using a short-lived development JWT. It keeps
 the token in memory and prints only counts and nonsecret version/offset data.
@@ -76,9 +76,9 @@ submission or Outcomia deployment is included in this workflow.
 ## Inspect and stop
 
 ```bash
-python3 scripts/localnet.py logs
-python3 scripts/localnet.py images
-python3 scripts/localnet.py stop
+python3 scripts/dev.py localnet logs
+python3 scripts/dev.py localnet images
+python3 scripts/dev.py localnet stop
 ```
 
 `stop` removes this project's containers and network, retaining named data
@@ -112,3 +112,5 @@ upstream storage; CantonGrid must use a separately owned destination database.
 
 The downloaded current OpenAPI identifies itself as 3.5.19; it is reference
 material, not proof that all its methods exist in the pinned LocalNet image.
+
+All development commands now use one [entry point and module layout](../scripts/README.md).

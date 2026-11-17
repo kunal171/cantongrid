@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
 """Read-only health and authenticated Ledger API checks for our disposable LocalNet."""
-import sys
-from urllib.error import HTTPError, URLError
-from localnet_api import get, token
+from urllib.error import HTTPError
+from ..ledger import get, token
 
 
 def main():
@@ -29,11 +27,3 @@ def main():
               f'version={version.get("version")}; offset={end.get("offset")}; '
               f'party page count={len(parties["partyDetails"])}')
     print('PASS: all three validators and authenticated read-only Ledger APIs')
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (HTTPError, URLError, OSError, ValueError) as exc:
-        print(f'LocalNet probe failed: {exc}', file=sys.stderr)
-        sys.exit(1)

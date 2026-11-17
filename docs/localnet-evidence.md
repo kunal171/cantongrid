@@ -88,7 +88,7 @@ initial handoff; these linked results supersede its unverified baseline items.
 
 No Outcomia DAR has been uploaded and no custom contract transactions were
 submitted. PQS is running for the local test with a one-hour credential;
-`localnet-pqs.py up` renews it. Broader source authorization and the Rust indexer
+`dev.py pqs up` renews it. Broader source authorization and the Rust indexer
 remain unimplemented/unverified as described in the compatibility results.
 
 
