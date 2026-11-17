@@ -34,3 +34,25 @@ No arithmetic or inferred Daml schema validation is implemented here. Unsupporte
 kinds, out-of-range values and excessive nesting fail validation. Debug output
 redacts payloads. Live encodings must be normalized by a verified adapter;
 fixture encodings are not a claim about the Ledger API's wire format.
+
+## Lifecycle reference engine
+
+`lifecycle::Engine` holds a validated source/network/generation context and an
+in-memory canonical contract/history store. It applies each opaque-position batch
+atomically by staging a copy; it never orders positions lexically or numerically.
+An identical batch redelivery is a no-op and cannot regress the checkpoint.
+Conflicting positions/event IDs, unknown or repeated archives, contract ID reuse,
+invalid exact values and missing/out-of-scope witnesses fail without publishing
+partial state. Exact template selections do not infer archives from absent rows.
+
+Active and history reads require caller grants and a current source lease.
+Archive history retains both original-create and archive visibility dependencies.
+Event provenance retains source context, position, event/contract/template IDs,
+witnesses, observation time and optional ledger time. Times are explicit integer
+microseconds in this reference format, not inferred from ingestion wall time.
+
+This engine assumes ordered, complete create/archive input from origin. It rejects
+an archive with no selected create rather than inventing missing history. Snapshots,
+partial/pruned history, exercises and reassignments are not supported in this
+slice. State/checkpoints are process memory; owned PostgreSQL transactions,
+checkpoint recovery and outbox delivery remain Phase 3 work.
