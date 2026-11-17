@@ -114,3 +114,18 @@ This is a read-only operator probe of SQL metadata, temporal bounds and row coun
 It copies no payloads into the destination and always reports private lifecycle
 ingestion disabled. SQL availability does not establish source-stream health or
 current ledger grants. See the [archive evidence restriction](storage.md).
+
+## Retained source-window verification
+
+```bash
+cargo run -p cantongrid-cli -- source verify-window --database-env CANTONGRID_PQS_URL --after 80
+```
+
+The source variable uses the existing SELECT-only schema-041 fixture from the
+inspection example. The command compares active-state identity sets against
+creates/archives in a retained interval inside one read-only transaction. It
+returns counts only, never private payloads or party identifiers. A consistent
+historical interval is not a concurrent publication/pagination proof; the result
+explicitly reports `concurrent_handoff_verified=false`. Invalid, unavailable or
+pruned bounds fail instead of advancing a checkpoint. No source or destination
+writes occur. See the [source contract](phase3-source-contract.md).
