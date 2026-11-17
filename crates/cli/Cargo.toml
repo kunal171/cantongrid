@@ -1,6 +1,6 @@
 [package]
 name = "cantongrid-cli"
-version = "0.1.0"
+version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
@@ -10,10 +10,10 @@ name = "cantongrid"
 path = "src/main.rs"
 
 [dependencies]
-cantongrid-core = { path = "../core" }
+cantongrid-core = { path = "../core", version = "=0.1.0-alpha.1" }
 serde_json = "1.0"
-cantongrid-storage = { path = "../storage" }
-cantongrid-pqs = { path = "../pqs" }
+cantongrid-storage = { path = "../storage", version = "=0.1.0-alpha.1" }
+cantongrid-pqs = { path = "../pqs", version = "=0.1.0-alpha.1" }
 
 [dev-dependencies]
-cantongrid-postgres = { path = "../postgres" }
+cantongrid-postgres = { path = "../postgres", version = "=0.1.0-alpha.1" }
