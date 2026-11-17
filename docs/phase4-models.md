@@ -1,7 +1,7 @@
 # Phase 4: declarative model contract
 
-Status: compiler/evaluator/SQL planning and offline CLI implemented on
-`feat/declarative-models`, targeting `0.3.0-alpha.1`. Live materialization and
+Status: compiler/evaluator/SQL planning and offline CLI implemented,
+targeting `0.3.0-alpha.1`. Live materialization and
 generated APIs are not wired yet; Phase 4 acceptance is incomplete.
 Phase 3's source identity, current source/caller checks and partial-history profile
 remain prerequisites. Models never grant access to their inputs.

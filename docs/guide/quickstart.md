@@ -8,8 +8,6 @@ database is required for this page. Python 3.11+ is used by later development he
 ```bash
 git clone https://github.com/kunal171/cantongrid.git
 cd cantongrid
-# Until the model milestone merges, use its development branch for model commands.
-git switch feat/declarative-models
 rustup toolchain install 1.100.0 --profile minimal --component rustfmt --component clippy
 df -h /
 cargo +1.100.0 build -p cantongrid-cli --locked

@@ -1,6 +1,6 @@
 # Working on CantonGrid
 
-- Current phase: Phase 4 declarative models is in progress on feat/declarative-models,
+- Current phase: Phase 4 declarative models is in progress,
   targeting 0.3.0-alpha.1. The first compiler/evaluator/SQL planner and offline CLI
   commands exist; live model storage, lifecycle integration and generated APIs do
   not. See docs/phase4-models.md. Phase 3's 0.2.0-alpha.1 LocalNet profile remains

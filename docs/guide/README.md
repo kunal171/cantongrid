@@ -5,8 +5,8 @@ database and exposes caller-scoped REST and GraphQL APIs. The runtime is Rust.
 Developers select templates and define supported processing rules; operators
 supply infrastructure, source permissions and API access policy.
 
-This guide covers the current source checkout on `feat/declarative-models`,
-targeting `0.3.0-alpha.1`. The LocalNet runtime was verified in the Phase 3
+This guide covers the current source checkout, targeting `0.3.0-alpha.1`.
+The LocalNet runtime was verified in the Phase 3
 milestone. Model tools are available offline; live model integration is in progress.
 
 | Capability | Available now | Boundary |
