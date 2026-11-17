@@ -1,59 +1,142 @@
-# Development tools
+# Outcomia compatibility check
 
-Use one entry point from the repository root: `python3 scripts/dev.py --help`.
-These are LocalNet research/provisioning/check helpers, not the Rust indexer.
-The credential-free product workflow is documented in [CLI](../docs/cli.md).
+Verified locally on 2026-11-17 against the App Provider participant, Canton 3.5.7.
+The initial check below was package validation only. After separate maintainer authorization, a local-only Protocol/Draft/Open/Closed lifecycle also passed the full Rust/PQS/PostgreSQL/REST/GraphQL path. See [Phase 3 acceptance](phase3-verification.md). No funded assets, trades, devnet or production deployment was performed.
 
-| Command | Purpose | Side effects |
-| --- | --- | --- |
-| `dev.py localnet prepare/up/status/stop/logs/images` | Pinned upstream LocalNet lifecycle | Prepare/start/stop owned containers; retain named volumes. |
-| `dev.py pqs up/status/stop/reader` | One-party provider source lifecycle and reader ACLs | Owned source user/config/containers; reader installs local SQL ACLs. |
-| `dev.py pqs up/status/stop --visibility` | Separate AB visibility source | Owned AB source/config/database/containers; never the provider store. |
-| `dev.py visibility setup` | Seed the owned Daml visibility scenario | Explicitly uploads its DAR, provisions parties/users and creates fixture records. |
-| `dev.py validate-dar <file>` | Validate an existing DAR | Validation only; no upload/vetting. |
-| `dev.py check ledger` | Health/authentication checks | Read-only HTTP calls. |
-| `dev.py check pqs [--at-offset N]` | Scoped SQL/source compatibility | Read-only HTTP/SQL; requires live healthy source. |
-| `dev.py check reader` | Verify real SQL privileges | Rollback-only denied write probes; no data changes. |
-| `dev.py check visibility` | A/B/AB reads and rights-revocation controls | Temporarily revokes/restores only owned fixture grants. |
-| `dev.py check visibility-pqs` | AB cache and live-source revocation | Temporarily revokes/restores owned grants and recreates the AB source. |
+## Artifact evidence
 
-`python3 -m unittest discover -s scripts/tests -v` checks helper boundaries without
-Docker or HTTP. Each route supports `--help` (for example, `dev.py check pqs --help`).
+The existing sibling Outcomia DAR passed `POST /v2/dars/validate`:
 
-## Script review
+- File: `contracts/main/.daml/dist/outcomia-markets-0.1.0.dar` in outcomia-canton.
+- SHA-256: `eef7340eba83f4f2af4865258c66c6461876bacb05b8e4dbc6c7ca74459f6f0e`.
+- Main package ID: `73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a`.
+- The source project declares SDK 3.7.1 and LF target 2.1. The validated DAR was
+  already built; this check does not establish that it matches every current source file.
 
-The previous ten executable entry points are consolidated into this dispatcher;
-the two PQS lifecycle scripts are merged into `devtools/pqs.py`. Shared Compose,
-SQL command construction, repository root/environment and restrictive file writes
-live in `devtools/common.py`. Loopback-only HTTP/JWT helpers live in `ledger.py`;
-visibility scenario definitions live in `visibility.py`. Domain checks stay in
-`devtools/checks/` rather than being mixed with source provisioning.
+Reproduce from CantonGrid after LocalNet is ready:
 
-No compatibility experiment is discarded: source health, SQL reader denial,
-exact values, Ledger visibility and retained-cache revocation test different
-boundaries. Both source profiles remain separate even though their implementation
-is shared. Existing docs now use the new commands; old script names are removed
-instead of retaining redundant compatibility wrappers.
+```bash
+python3 scripts/dev.py validate-dar \
+  ../outcomia-canton/contracts/main/.daml/dist/outcomia-markets-0.1.0.dar
+```
 
-The [PQS schema-collision reproduction](../repros/pqs-schema-type-collision/README.md)
-stays independent. It must run without importing CantonGrid or starting LocalNet,
-so merging it with these helpers would weaken its upstream reproduction value.
-Python cache/build/output files remain ignored.
+The helper reports the exact artifact hash and fails on rejection. It only calls
+validation; it does not upload, vet packages, allocate parties or submit commands.
+The main package remained absent from the participant's package inventory after
+validation. Changing the DAR requires a new validation result and hash.
 
-## Owned Rust destination
+The [official JSON API specification](https://docs.canton.network/openapi/json-ledger-api/openapi.yaml)
+describes this validation endpoint as having no persistent ledger or package effect.
+The successful call verifies that endpoint on this particular LocalNet version.
 
-`dev.py storage up/status/stop` manages the separate PostgreSQL destination on
-loopback 5442. It uses a restricted owner role, dedicated volume and explicit
-operator bootstrap SQL in `dev/storage-init.sql`. It does not share the source's
-role, database or network. Stop retains its volume. Rust `storage init` owns the
-CantonGrid schema; the Python helper does not implement ingestion or migrations.
-See [durable fixture commands](../docs/cli.md).
+## Initial source review for the example
 
-## Security tools
+The actual Canton source defines `Outcomia.Binary:Protocol` and
+`Outcomia.Binary:BinaryMarket`. Protocol revisions carry the operator, protocol
+name, admin list, market counter and fee settings. BinaryMarket includes its
+operator, creator, protocol name, market ID, terms, timestamps and lifecycle state.
+Changes such as opening a market consume a revision and create a successor.
 
-`dev.py security install` verifies pinned upstream archive/executable hashes into
-ignored `.local/security-tools` on Linux x86_64. `dev.py security check` runs all
-checks; append `audit`, `dependencies`, `secrets` or `workflows` for one area.
-Secret scans cover complete Git history plus eligible working-tree files and
-redact output. Ignored credentials/build caches are not exported to the scanner.
-See [contributing](../CONTRIBUTING.md) for versions and other-host instructions.
+Example models must preserve contract IDs and explicitly define revision/domain
+identity. Operator/name alone must not be assumed globally unique across protocol
+roots. `Closed` stops trading; it does not prove final resolution or settlement.
+Custody, orders, positions and resolution use separate templates. A market record
+must not be interpreted as proof of collateral or a user's balance.
+
+This is a source review, not a verified metadata extraction pipeline. Do not copy
+these domain rules into the generic Rust engine. Typed bindings, actual authorized
+contract reads, complete lifecycle fixtures and an unrelated Daml example are
+still required. No Outcomia contracts have been indexed in the PQS fixture yet.
+
+
+## Authorized LocalNet lifecycle update
+
+The same DAR hash/main package above was uploaded after explicit approval. The
+controlled test reused owned parties and writer, captured a paged snapshot, then
+submitted Protocol_CreateBinary, Binary_Open and Binary_Close. Eight expected
+create/archive contract identities matched the index through single-event pages
+and worker restarts. Price tick `0.0000000001` and quantity lot
+`9223372036854775807` remained exact strings. Both REST and GraphQL succeeded.
+No Outcomia-specific Rust branches or sibling repository changes were required.
+The helper and explicit opt-in command are documented in [the runtime guide](live-runtime.md).
+
+
+## Live profile added in 0.2.0-alpha.1
+
+The fixture reference retains its bounded full-journal replay. Live indexing uses
+SQL-native row lifecycle checks and a guarded expected checkpoint, so continuous
+operation does not hit the fixture's 256-batch/16-MiB journal replay cap. Deliveries
+are bounded; state, events, source cursor and outbox still share one transaction.
+A stale concurrent worker cannot rewind progress, failed writes roll back the
+whole page, and ambiguous commit acknowledgement is resolved by reopening the
+acknowledged tail. Journal/history disk usage grows with retained data; automatic
+retention/erasure is not implemented.
+
+New immutable owned migration 002 adds observation timestamps and its own checksum
+record. Run explicit initialization to migrate an existing owned destination;
+opening alone never migrates. No upstream source schema is modified. Read pages
+expose observation age and first/complete source boundaries to the authenticated
+transports. See [runtime configuration and limits](live-runtime.md).
+
+
+## Delivered LocalNet subset
+
+The live partial-history policy, current source/caller checks, forward paging and
+both API transports are now integrated. Controlled Outcomia publication during a
+paged snapshot matched all eight expected lifecycle contract identities, including
+same-offset events and restart. Original event offsets are retained separately
+from delivery cursors; raw operator witness sets/PKs are not public API fields.
+Actual Outcomia and unrelated Visibility both passed the same engine. Earlier
+probe-only caveats describe their historical scope; current acceptance and limits
+are authoritative in [Phase 3 verification](phase3-verification.md) and
+[the runtime guide](live-runtime.md). Full historical completeness, interface/
+reassignment support, generated type normalization and remote source integration
+remain unsupported; schema041 availability is never a complete global ledger.
+
+The [live runtime](live-runtime.md) now integrates this checker into worker writes
+and both query transports; [acceptance evidence](phase3-verification.md) records
+its tested scope separately from this standalone probe.
+
+
+## Phase 3 LocalNet resolution
+
+The earlier gate inventory records the investigation baseline. The supported
+schema041 template-only/raw-payload profile is now delivered: explicit prior-create
+archive dependencies, current source grants, physical source bindings, bounded
+same-offset paging, SQL-native owned state/checkpoint/outbox, independent caller
+JWT/grants, scoped cursors and REST/GraphQL. Controlled actual Outcomia and unrelated
+Visibility demonstrations passed without production application branches.
+See [the acceptance report](phase3-verification.md) for evidence and exact limits.
+Interface/reassignment handling, complete history, generated typed metadata and
+remote source integration remain open rather than inferred from these results.
+
+
+## Delivered Phase 3 path
+
+The [LocalNet runtime](live-runtime.md) now wires these components through
+`index` and `serve`: current source rights/readiness → restricted read-only PQS
+snapshot/update pages → guarded owned SQL transaction → independent caller
+identity/current grants → shared authorized SQL pages → REST/GraphQL. Public
+lifecycle serialization removes operator-only witnesses, storage envelopes and
+page PKs while retaining record-local origin and explicit coverage. Generated
+business schemas/resolvers and outbox delivery remain later phases.
+
+
+## Rust runtime end-to-end checks
+
+Build the Rust CLI once and set `CANTONGRID_BIN` to that executable. The runtime,
+ingestion and API implementation stay in Rust; these helpers only configure and
+exercise the local test environment.
+
+- `check pipeline`: existing Visibility contracts, exact values, A/B/AB queries,
+  pagination, local caller revocation and source stop/start denial/recovery. No
+  ledger writes; restores its source service and grant file, and stops its API.
+- `check outcomia-pipeline --dar <existing.dar> --allow-ledger-writes`: explicit
+  opt-in DAR upload and minimal local Protocol/Draft/Open/Closed lifecycle, then
+  the same Rust source/store/APIs. It reuses owned test parties, creates no funded
+  assets/trades, and retains isolated test records. Do not run against shared or
+  remote networks; the helper is fixed to the authorized numeric-loopback source.
+
+See [the runtime guide](../docs/live-runtime.md) and
+[Phase 3 evidence](../docs/phase3-verification.md). Owner-only reports remain under
+ignored `.local/`. These tests do not publish releases or modify sibling repos.
