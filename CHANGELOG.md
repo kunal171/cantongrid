@@ -9,7 +9,10 @@
 - Owned local PostgreSQL materialization, atomic checkpoint/outbox and journal recovery.
 - Source-context writer exclusion, migration-checksum guards and durable fixture CLI commands.
 - Restricted read-only PQS schema-041 inspection and documented live-ingestion gates.
+- Shared SQL authorization before rows/counts/keyset paging, with lease rechecks.
 - Consolidated development commands, PostgreSQL CI and contributor/security guidance.
+- Pinned security tooling for RustSec, dependency policy, redacted full-history/tree secrets and workflow linting.
+- Tested SDK row compatibility and a read-only retained-window consistency probe; concurrent handoff remains unverified.
 
 ### Limits
 

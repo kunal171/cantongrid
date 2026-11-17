@@ -17,6 +17,7 @@ Source APIs and schema mappings require compatibility verification.
 | [Architecture](architecture.md) | Components, ingestion, generated storage and recovery. |
 | [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |
 | [Security](security.md) | Party-scoped access, derived data and revocation requirements. |
+| [Phase 3 handoff](specifications/phase3-v0.3.md) | Supplied v0.3 scope, acceptance matrix and historical baseline. |
 | [CLI](cli.md) | Implemented fixture commands and planned live commands. |
 | [Durable reference ingestion](storage.md) | Owned PostgreSQL transactions, replay, source inspection and limits. |
 | [Fixture pipeline](fixtures.md) | Strict configuration, exact values, lifecycle replay and limits. |

@@ -3,7 +3,10 @@
 CantonGrid is a general-purpose, authorization-aware Daml contract indexer written
 in Rust. Outcomia is its first example. Read [AGENTS.md](AGENTS.md), the
 [decisions](docs/decisions.md), [roadmap](docs/roadmap.md) and
-[security model](docs/security.md) before changing runtime behavior.
+[security model](docs/security.md) before changing runtime behavior. The
+[Phase 3 handoff](docs/specifications/phase3-v0.3.md) defines the remaining live
+source/API acceptance; read it alongside current verification, not as an up-to-date
+implementation inventory.
 
 ## Start without Canton infrastructure
 
