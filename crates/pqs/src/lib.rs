@@ -4,6 +4,8 @@ use cantongrid_postgres::{DatabaseError, connect_env, postgres::IsolationLevel};
 use std::fmt;
 
 pub mod coverage;
+mod reader;
+pub use reader::{Cursor, page_env};
 mod handoff;
 pub use handoff::{Reconciliation, RetainedWindow, reconcile_env};
 
@@ -110,6 +112,8 @@ pub enum InspectError {
     Schema,
     Bounds,
     Gap,
+    Authorization,
+    Limit,
 }
 impl fmt::Display for InspectError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -118,6 +122,8 @@ impl fmt::Display for InspectError {
             Self::Reader => f.write_str("PQS inspection requires a restricted nonowner SELECT-only reader with no membership, schema/temp/write or security-definer access"),
             Self::Schema => f.write_str("unsupported PQS SQL schema; only the inspected schema-041 profile is supported"),
             Self::Gap => f.write_str("requested source interval is unavailable or pruned; explicit re-snapshot/coverage decision required"),
+            Self::Authorization => f.write_str("current source lease is unavailable or expired"),
+            Self::Limit => f.write_str("source row exceeds the supported payload limit"),
             Self::Bounds => f.write_str("PQS temporal bounds are inconsistent; no data was copied"),
         }
     }
