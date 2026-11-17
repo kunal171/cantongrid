@@ -300,6 +300,7 @@ name = "cantongrid-models"
 version = "0.2.0-alpha.1"
 dependencies = [
  "cantongrid-core",
+ "cantongrid-postgres",
  "serde",
  "serde_json",
  "sha2",
