@@ -3,6 +3,7 @@
 use cantongrid_postgres::{DatabaseError, connect_env, postgres::IsolationLevel};
 use std::fmt;
 
+pub mod coverage;
 mod handoff;
 pub use handoff::{Reconciliation, RetainedWindow, reconcile_env};
 
@@ -10,6 +11,7 @@ pub use handoff::{Reconciliation, RetainedWindow, reconcile_env};
 #[derive(Debug, serde::Serialize)]
 pub struct Inspection {
     pub sql_schema_version: i32,
+    pub coverage: coverage::Coverage,
     pub oldest_offset: Option<i64>,
     pub latest_offset: Option<i64>,
     pub pruned_offset: Option<i64>,
@@ -60,6 +62,7 @@ pub fn inspect_env(variable: &str) -> Result<Inspection, InspectError> {
     tx.commit()?;
     Ok(Inspection {
         sql_schema_version: 41,
+        coverage: coverage::Coverage::from_sql_observation(latest, pruned),
         oldest_offset: oldest,
         latest_offset: latest,
         pruned_offset: pruned,

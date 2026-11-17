@@ -103,3 +103,13 @@ application bearer tokens), and direct tokio (already transitive). Use minimum
 features and audit the resolved lockfile. Source tokens and API signing keys stay
 separate. These are proposed, not adopted runtime dependencies. The v0.3 spec
 requires maintainer approval before new third-party hard dependencies.
+
+## Machine-readable coverage
+
+The inspector now exposes `coverage.status` (`unknown` or `partial_history`) and
+stable reason codes for unavailable archive evidence, unverified current source
+authorization, concurrent handoff, source freshness, absent snapshots and pruning.
+It never upgrades SQL availability or nonempty results to complete history/current
+permission. Pruned/unavailable update windows return a distinct gap error, including
+the pruning boundary until its retention semantics are verified. No automatic
+checkpoint skipping, data deletion or re-snapshot is triggered by that error.
