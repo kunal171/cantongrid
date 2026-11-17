@@ -1,31 +1,8 @@
 #!/usr/bin/env python3
 """Read-only health and authenticated Ledger API checks for our disposable LocalNet."""
-import base64
-import hashlib
-import hmac
-import json
 import sys
-import time
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
-
-
-def token():
-    def encode(value):
-        return base64.urlsafe_b64encode(value).rstrip(b'=').decode()
-    header = encode(json.dumps({'alg': 'HS256', 'typ': 'JWT'}).encode())
-    claims = encode(json.dumps({'sub': 'ledger-api-user',
-                                'aud': 'https://canton.network.global',
-                                'exp': int(time.time()) + 300}).encode())
-    signature = encode(hmac.new(b'unsafe', f'{header}.{claims}'.encode(), hashlib.sha256).digest())
-    return f'{header}.{claims}.{signature}'
-
-
-def get(base, path, bearer=None, read_json=True):
-    headers = {'Authorization': f'Bearer {bearer}'} if bearer else {}
-    with urlopen(Request(base + path, headers=headers), timeout=10) as response:
-        body = response.read()
-        return json.loads(body) if read_json and body else None
+from localnet_api import get, token
 
 
 def main():
