@@ -357,3 +357,18 @@ staleness remains bounded by the core 15-second lease. SQL-source association,
 filter validation, active-snapshot/update paging, archive provenance, private
 copying and authenticated REST/GraphQL remain open. No complete Phase 3 claim is
 made by this source-alpha update.
+
+### Phase 3 LocalNet acceptance — 0.2.0-alpha.1
+
+The [Phase 3 acceptance report](phase3-verification.md) supersedes the earlier
+open-gate inventory for the supported LocalNet profile. Actual Outcomia and
+Visibility now pass through the same authorized read-only Rust PQS reader,
+SQL-native owned destination and authenticated REST/GraphQL. Source boundaries,
+exact values, permissions, partial coverage, migration/transaction recovery,
+source outage, cursor isolation and local caller revocation have recorded controls.
+
+Final local baseline: 47 credential-free plus 14 explicitly executed environment-
+dependent Rust tests (61 total), 13 Python tests, formatting/Clippy, security,
+release metadata and container-retention checks passed. Outcomia local writes
+were separately approved; no sibling repository changes, devnet deployment or
+funded asset/trading test was performed. Remote release CI/publication is separate.
