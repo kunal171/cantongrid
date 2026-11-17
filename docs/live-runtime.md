@@ -128,7 +128,7 @@ query ContractsAndLifecycle($limit: Int, $cursor: String) {
 
 POST a single GraphQL operation to `/graphql`, with the same bearer header.
 Generic `items`/`provenance` use JSON scalars; typed generated fields are Phase 4.
-Page sizes are 1–50. GraphQL depth is capped at 8 and complexity at 100; request
+Page sizes are 1–25 (default 20). GraphQL depth is capped at 8 and complexity at 100; request
 bodies at 16 KiB, individual result pages at 2 MiB, and concurrent requests at 16.
 Mutation, subscriptions and introspection are disabled.
 
