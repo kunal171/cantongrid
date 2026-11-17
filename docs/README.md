@@ -18,6 +18,7 @@ Source APIs and schema mappings require compatibility verification.
 | [Processing model](processing-model.md) | Developer inputs and deterministic generated behavior. |
 | [Security](security.md) | Party-scoped access, derived data and revocation requirements. |
 | [CLI](cli.md) | Implemented fixture commands and planned live commands. |
+| [Durable reference ingestion](storage.md) | Owned PostgreSQL transactions, replay, source inspection and limits. |
 | [Fixture pipeline](fixtures.md) | Strict configuration, exact values, lifecycle replay and limits. |
 | [Development tools](../scripts/README.md) | Consolidated LocalNet commands and script review. |
 | [Roadmap](roadmap.md) | Phases, acceptance gates and small-commit workflow. |

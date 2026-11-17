@@ -1,5 +1,7 @@
-//! Local, credential-free fixture CLI. Live ingestion and API commands are not implemented.
+//! Local fixture persistence and read-only source inspection. Live ingestion/APIs remain gated.
 #![forbid(unsafe_code)]
+mod commands;
+
 use cantongrid_core::{config::Plan, fixture::Fixture};
 use std::{
     fs::{self, File},
@@ -8,14 +10,20 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "CantonGrid — Rust fixture milestone
+const HELP: &str = "CantonGrid — local ingestion and storage reference
 
 Usage:
   cantongrid init <new-directory>
   cantongrid validate <project.json>
   cantongrid fixture run <project.json> [--party <synthetic-party>]...
+  cantongrid storage init --database-env <CANTONGRID_VARIABLE>
+  cantongrid fixture index <project.json> --database-env <CANTONGRID_VARIABLE>
+  cantongrid fixture status <project.json> --database-env <CANTONGRID_VARIABLE>
+  cantongrid fixture query <project.json> --database-env <CANTONGRID_VARIABLE> [--party <synthetic-party>]...
+  cantongrid source inspect-pqs --database-env <CANTONGRID_VARIABLE>
 
-Fixture commands use process memory and simulated caller grants, with no network access.
+Fixture run uses process memory; index/status/query use an explicitly initialized local PostgreSQL destination.
+Fixture caller grants are simulated. Source inspection is read-only metadata, not live ingestion.
 No parties means no visible records. index, serve and dev remain planned.";
 const MAX_DOCUMENT_BYTES: u64 = 8 * 1024 * 1024;
 
@@ -48,6 +56,23 @@ fn run(args: Vec<String>) -> Result<(), String> {
             // Validation intentionally does not open the fixture or acquire credentials.
             let _ = plan;
             Ok(())
+        }
+        [command, action, flag, variable]
+            if command == "storage" && action == "init" && flag == "--database-env" =>
+        {
+            commands::storage::initialize(variable)
+        }
+        [command, action, flag, variable]
+            if command == "source" && action == "inspect-pqs" && flag == "--database-env" =>
+        {
+            commands::source::inspect(variable)
+        }
+        [command, action, path, flag, variable, rest @ ..]
+            if command == "fixture"
+                && ["index", "status", "query"].contains(&action.as_str())
+                && flag == "--database-env" =>
+        {
+            commands::storage::fixture(action, Path::new(path), variable, rest)
         }
         [command, action, path, rest @ ..] if command == "fixture" && action == "run" => {
             let mut parties = vec![];
@@ -135,6 +160,15 @@ fn init(directory: &Path) -> Result<(), String> {
     }
     println!(
         "Created synthetic fixture project; validate cantongrid.json, then fixture run with --party A or --party B"
+    );
+    Ok(())
+}
+
+/// Serialize bounded operator/fixture results without ever printing connection settings or payloads.
+fn print_json(value: &serde_json::Value) -> Result<(), String> {
+    println!(
+        "{}",
+        serde_json::to_string_pretty(value).map_err(|_| "cannot encode command result")?
     );
     Ok(())
 }

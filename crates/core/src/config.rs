@@ -1,11 +1,11 @@
 //! Strict, versioned fixture configuration. Live credentials/adapters are not accepted yet.
 use crate::visibility::{PartyId, ScopeBinding};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fmt, path::PathBuf};
 
 pub const FORMAT_VERSION: u32 = 1;
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct TemplateId {
     pub package_id: String,
@@ -58,6 +58,11 @@ impl SourceContext {
             network,
             generation,
         })
+    }
+
+    /// Stable identity fields for persistence; these identify a source, not permission to read it.
+    pub fn identity(&self) -> (&str, &str, u64) {
+        (&self.source, &self.network, self.generation)
     }
 
     pub fn binding(&self) -> ScopeBinding {
@@ -217,6 +222,28 @@ impl Plan {
     }
     pub fn party_count(&self) -> usize {
         self.parties.len()
+    }
+
+    /// Canonical selection definition binds persisted state to exactly this plan.
+    /// Fixture file location is excluded: relocating an identical input must not reset progress.
+    pub fn definition(&self) -> serde_json::Value {
+        let (source, network, generation) = self.context.identity();
+        serde_json::json!({
+            "format_version": 1, "model_version": 1, "payload_schema_version": 1,
+            "source": source, "network": network, "generation": generation,
+            "parties": self.parties.iter().map(PartyId::as_str).collect::<Vec<_>>(),
+            "templates": self.templates,
+        })
+    }
+
+    /// Declared source parties are configuration, never proof of current source/caller permissions.
+    pub fn source_parties(&self) -> impl Iterator<Item = &PartyId> {
+        self.parties.iter()
+    }
+
+    /// Test exact template membership without exposing a mutable selection.
+    pub fn selects(&self, template: &TemplateId) -> bool {
+        self.templates.contains(template)
     }
 
     pub fn fixture_path(&self) -> &std::path::Path {

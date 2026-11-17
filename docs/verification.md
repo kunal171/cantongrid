@@ -182,3 +182,69 @@ restart, PostgreSQL, a live connector, authenticated APIs, generated processing
 models or streams. Phase 3 must resolve source handoff, production permissions,
 current grant retrieval and live lifecycle/identity/coverage gates before copying
 private data. Do not infer those guarantees from the fixture or helper checks.
+
+## Owned PostgreSQL feature handoff — 2026-11-17
+
+Implemented the first Phase 3 storage slice on `feat/pqs-ingestion-storage`.
+This is a bounded local reference feature using synthetic fixtures, not completed
+live ingestion or authenticated serving.
+
+Delivered in focused commits:
+
+- Versioned persistence envelopes preserve original source/event/witness evidence;
+  current grant decisions are never deserialized. Canonical plan definitions bind
+  each source/network/generation to its exact selection/schema context.
+- A separate PostgreSQL 14.25 destination on loopback 5442, its own volume/network,
+  restricted owner role and checksum-guarded explicit schema initialization.
+  Source connection, privileges, database and migrations remain separate.
+- Atomic journal, canonical contracts/history, checkpoint/revision and outbox
+  publication, source-context writer exclusion, deterministic recovery and replay.
+- Durable `fixture index/status/query` and explicit `storage init` commands,
+  grouped separately from read-only `source inspect-pqs`. Both fixture examples
+  use the same implementation; caller grants remain explicitly simulated.
+- CI now starts the owned PostgreSQL fixture and runs transaction/recovery and
+  executable tests. The actual LocalNet/PQS profile check remains separate.
+
+Validation passed locally on the committed dependency lockfile:
+
+- **42 Rust tests**, including all PostgreSQL-dependent tests and the real source
+  inspection test (`cargo test --workspace --locked --offline -- --include-ignored`
+  with the dedicated local fixture environment variables).
+- **6 Python helper tests**, Python syntax, Rust formatting and Clippy with warnings
+  denied; workflow/Compose YAML parsing; 27 Markdown documents/71 relative links
+  at this handoff; Git whitespace checks.
+- Reopening destination connections preserves exact Numeric 10/Int64 values,
+  A/B/AB visibility, archive dependencies, lease invalidation and checkpoint order.
+  Replaying committed input produces no extra state/history/outbox effects.
+- A real SQL error injected after staged writes rolls back canonical state,
+  lifecycle events, outbox and progress together; reconnect/retry succeeds once.
+  A second worker is denied while the first transaction holds the source lock.
+- Selection changes within a generation, conflicting/invalid deliveries, oversized
+  input, migration-checksum drift and inconsistent checkpoints fail closed.
+- CLI queries work after removing the original fixture file. Outcomia Protocol
+  input persisted two batches/two contracts (one active), three events and three
+  outbox entries; replay applied zero batches. After stopping/recreating the
+  destination container with its volume retained, the same counts remained.
+- Manual role-mix checks rejected destination initialization against the existing
+  PQS reader connection and rejected PQS inspection using the destination owner.
+  Failures printed no connection settings, credentials or private payloads.
+
+The Rust source inspector read the existing schema-041 source in a read-only,
+repeatable-read transaction: oldest 0/latest 943, no pruning marker, 10 active
+rows/132 create rows/122 archive rows at that observation. All 122 archive rows
+had empty witnesses, consistent with the installed/upstream function definition.
+These are row counts (potentially including interface projections), not a claim
+about global contract counts, current stream health or complete authorized history.
+No source payloads were copied into the destination; no ledger transactions,
+party/DAR provisioning or Outcomia wallet changes were performed.
+
+Failure classification: the archive witness omission is documented source behavior,
+not a newly demonstrated upstream defect. The compile-time digest formatting and
+test cleanup lint failures encountered during development were local implementation
+issues and were corrected before validation. No new public issue/PR was opened.
+
+Limits remain explicit in [storage](storage.md): local-only transport, bounded
+journal replay, fixture-only caller simulation, no production retention policy,
+no live source-grant verifier/handoff/type normalization and no application APIs
+or stream delivery. Private live ingestion remains disabled pending those gates.
+The new GitHub workflow has not been run remotely for this branch yet.

@@ -39,3 +39,12 @@ The [PQS schema-collision reproduction](../repros/pqs-schema-type-collision/READ
 stays independent. It must run without importing CantonGrid or starting LocalNet,
 so merging it with these helpers would weaken its upstream reproduction value.
 Python cache/build/output files remain ignored.
+
+## Owned Rust destination
+
+`dev.py storage up/status/stop` manages the separate PostgreSQL destination on
+loopback 5442. It uses a restricted owner role, dedicated volume and explicit
+operator bootstrap SQL in `dev/storage-init.sql`. It does not share the source's
+role, database or network. Stop retains its volume. Rust `storage init` owns the
+CantonGrid schema; the Python helper does not implement ingestion or migrations.
+See [durable fixture commands](../docs/cli.md).

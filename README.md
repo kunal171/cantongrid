@@ -4,12 +4,13 @@
 Daml contracts into queryable PostgreSQL databases, GraphQL APIs, and real-time
 data streams.**
 
-Status: the Rust core/configuration/fixture milestone is implemented. The
-[CLI fixture workflow](docs/cli.md) validates projects and reproduces scoped
-create/archive state without credentials. Both [examples](examples/fixtures/README.md)
-use the same engine. [LocalNet development helpers](docs/localnet.md) support
-compatibility research. Live connectors, destination PostgreSQL migrations,
-REST/GraphQL and streams remain planned.
+Status: Rust configuration and fixture lifecycle processing are implemented. The
+[CLI](docs/cli.md) can persist synthetic input to an owned local PostgreSQL store,
+recover state and query simulated party scopes. [Durable ingestion evidence and
+limits](docs/storage.md) distinguish this bounded reference implementation from
+live source ingestion. A read-only PQS inspector reports source capabilities and
+open gates. Live contract copying, authenticated REST/GraphQL and streams remain
+planned. [LocalNet development helpers](docs/localnet.md) support compatibility research.
 
 The indexer runtime is **Rust**. Python scripts are development helpers for
 LocalNet and compatibility checks, not the ingestion or API implementation.

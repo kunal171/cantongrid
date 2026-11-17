@@ -1,10 +1,11 @@
 # Architecture
 
-Status: Rust configuration, exact fixture values, scoped lifecycle state and a
-credential-free CLI are implemented and fixture-tested. Live connectors,
-destination PostgreSQL, generated models/APIs and durable streams below remain
-planned. [Fixture contracts](fixtures.md) define the implemented boundary.
-Source protocols and destination database schemas still have research gates.
+Status: Rust configuration, exact fixture values, scoped lifecycle state and local
+CLI workflows are implemented. The [bounded reference store](storage.md) adds owned
+PostgreSQL state, journal/checkpoint/outbox atomicity and recovery for synthetic
+fixtures. PQS inspection is read-only; live ingestion, generated models/APIs and
+durable stream delivery remain planned. Verified source authorization, archival
+evidence, history coverage and handoff remain live-connector gates.
 
 ## System boundary
 
@@ -96,3 +97,16 @@ GraphQL subscriptions can reuse this durable log in a later phase.
 
 Policy changes, disconnections and replay are detailed in [security](security.md).
 The developer interface is described in [processing model](processing-model.md).
+
+## Current Rust module layout
+
+| Crate | Implemented responsibility |
+| --- | --- |
+| `crates/core` | Configuration, exact values, source identity, envelopes, visibility/leases and reference lifecycle processing. |
+| `crates/postgres` | Shared local connection validation and redacted database errors; no migrations. |
+| `crates/storage` | Owned destination migration, journal recovery, atomic materialization/checkpoints/outbox and writer exclusion. |
+| `crates/pqs` | Restricted read-only source metadata inspection; no destination migration or live copying. |
+| `crates/cli` | Command dispatch, separate source/storage operations and synthetic fixture workflows. |
+
+GraphQL/API modules will be separate when their authenticated implementation
+starts. Python `scripts/devtools` remains local provisioning/verification only.

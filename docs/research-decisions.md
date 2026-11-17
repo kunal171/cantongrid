@@ -16,7 +16,7 @@ Do not infer current endpoints, SQL functions or payload shapes from this plan.
 | LocalNet availability | Bootstrap and baseline reads verified; installed versions, endpoints and limits recorded in the LocalNet evidence. Application contract scope remains unverified. | Live connector implementation. |
 | First source | Scribe 3.5.4/schema 041 is verified for scoped LocalNet active/create/archive queries. A fixture SQL reader and version-specific authorization/history limits are recorded. Production grants and the Rust adapter remain open. | Source-specific code. |
 | Snapshot handoff | Stable boundary, pagination, concurrent changes and resume behavior; demonstrate no lost creates/archives. | Bootstrap/checkpoint implementation. |
-| Event identity and ordering | Stable dedup keys, source positions, lifecycle kinds and time semantics. | Canonical persistence. |
+| Event identity and ordering | Fixture persistence verifies source-local event/contract identity and opaque position replay. Live dedup/order/time semantics remain open. | Canonical persistence. |
 | Private visibility | Owned A/B/AB fresh-request matrix, exact fixture witnesses and revocation verified. Derived joins, full historical visibility and application caller isolation remain open. | Live private data copying. |
 | Revocation and retention | Self-rights revalidation verified; cached B-only data remains after source revocation and readiness loss. Rust lease/invalidation decision primitives are fixture-tested; live grant retrieval/renewal, historical access, erasure and rebuild policy remain open. | Live private data copying. |
 | History coverage | Pruning, unavailable ranges, filters, reassignments and other lifecycle limitations. | History completeness claims. |
@@ -26,7 +26,7 @@ Do not infer current endpoints, SQL functions or payload shapes from this plan.
 | Genericity fixture | Unrelated Visibility:Record package built/deployed and queried without Outcomia code. Both synthetic examples pass the same Rust configuration/lifecycle runner. Declarative derived models and real source ingestion remain open. | Processing interface acceptance. |
 | API identity | Token issuer/format, grant mapping, expiry, rotation and administrator roles. | Authenticated serving. |
 | Model language | Strict fixture configuration v1 and capability errors are implemented. Derived-model grammar, keys and expression semantics remain open. | Public configuration contract. |
-| Database ownership | Fixture SQL reader can query without table/schema writes or owner escalation. Production grants, destination namespace, worker fencing and migration/rebuild strategy remain open. | Persistence implementation. |
+| Database ownership | Fixture SQL reader can query without table/schema writes or owner escalation. Owned local destination/schema, restricted role, transaction writer exclusion and checksum-guarded initialization are tested. Production transport/grants, incremental state loading and migration/rebuild evolution remain open. | Persistence implementation. |
 | Stream contract | Cursor protection, scope binding, retention, gaps and replay authorization. | Durable stream serving. |
 | Distribution | Rust/dependency versions, license compatibility and packaging. | Executable release/publication. |
 

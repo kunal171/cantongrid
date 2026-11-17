@@ -1,4 +1,4 @@
-name: Fixture milestone
+name: Rust and PostgreSQL checks
 
 on:
   push:
@@ -26,3 +26,15 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -v
       - name: Python syntax
         run: python3 -m compileall -q scripts repros
+      - name: Start separate owned PostgreSQL fixture
+        run: python3 scripts/dev.py storage up
+      - name: PostgreSQL transaction and executable recovery tests
+        env:
+          CANTONGRID_DESTINATION_URL: host=127.0.0.1 port=5442 user=cantongrid_owner password=local-cantongrid-only dbname=cantongrid
+        run: |
+          cargo +1.100.0 test -p cantongrid-storage --locked --offline -- --ignored
+          cargo +1.100.0 test -p cantongrid-cli --locked --offline -- --ignored
+          cargo +1.100.0 test -p cantongrid-pqs destination_owner_cannot_be_used_as_a_source_reader --locked --offline -- --ignored
+      - name: Stop owned database fixture
+        if: always()
+        run: python3 scripts/dev.py storage stop

@@ -69,3 +69,48 @@ Nonbreaking managed schema changes follow configured operator policy. Breaking
 changes produce a rebuild/promotion plan, not an implicit destructive migration.
 The exact command surface for inspection and promotion will be designed when
 schema versioning is implemented.
+
+## Implemented durable fixture workflow
+
+Start the separately owned local destination (no Canton/ledger access required):
+
+```bash
+python3 scripts/dev.py storage up
+export CANTONGRID_DESTINATION_URL='host=127.0.0.1 port=5442 user=cantongrid_owner password=local-cantongrid-only dbname=cantongrid'
+cargo run -p cantongrid-cli -- storage init --database-env CANTONGRID_DESTINATION_URL
+cargo run -p cantongrid-cli -- fixture index examples/fixtures/visibility/cantongrid.json --database-env CANTONGRID_DESTINATION_URL
+cargo run -p cantongrid-cli -- fixture status examples/fixtures/visibility/cantongrid.json --database-env CANTONGRID_DESTINATION_URL
+cargo run -p cantongrid-cli -- fixture query examples/fixtures/visibility/cantongrid.json --database-env CANTONGRID_DESTINATION_URL --party A
+```
+
+Repeat `fixture index` to verify zero applied batches and unchanged state/outbox.
+Use the Outcomia example project with the same commands. `query` rebuilds its
+reference engine from the destination journal; the original fixture file is not
+required for querying. Repeat `--party` to simulate A + B; no parties yields zero
+visible records. These synthetic grants are not an authentication API. `status`
+and ingestion summaries are explicitly operator counts, not filtered user counts.
+
+Only `storage init` runs destination DDL. Indexing refuses an uninitialized or
+incompatible destination. The source connection can never be used for implicit
+migrations. Each delivery is atomic; a later invalid batch leaves earlier committed
+batches intact and reports failure. Recovery, size limits, ownership checks and
+commit-acknowledgement uncertainty are described in [storage](storage.md).
+
+Credentials are read only from an explicitly named `CANTONGRID_*` environment
+variable, not inline CLI arguments or project JSON. The credentials above are
+public disposable fixture defaults. This transport is loopback-only; production
+connections, TLS, retention and application authentication are not implemented.
+
+## Implemented PQS inspection
+
+Against the existing, separately provisioned schema-041 compatibility fixture:
+
+```bash
+export CANTONGRID_PQS_URL='host=127.0.0.1 port=5441 user=cantongrid_pqs_reader password=local-pqs-reader dbname=pqs'
+cargo run -p cantongrid-cli -- source inspect-pqs --database-env CANTONGRID_PQS_URL
+```
+
+This is a read-only operator probe of SQL metadata, temporal bounds and row counts.
+It copies no payloads into the destination and always reports private lifecycle
+ingestion disabled. SQL availability does not establish source-stream health or
+current ledger grants. See the [archive evidence restriction](storage.md).

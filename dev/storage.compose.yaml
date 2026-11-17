@@ -1,0 +1,22 @@
+# Owned reference destination: separate service, role, database, port and volume from PQS.
+name: cantongrid-storage
+services:
+  postgres:
+    image: postgres@sha256:c0e9c0e9bac7e4c1834b698217a03ee5c708de30d313c84a506972de0e24b059
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local-cantongrid-admin
+      POSTGRES_DB: postgres
+    ports:
+      - 127.0.0.1:5442:5432
+    volumes:
+      - storage-data:/var/lib/postgresql/data
+      - ./storage-init.sql:/docker-entrypoint-initdb.d/001-cantongrid.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres -d postgres]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    mem_limit: 512m
+volumes:
+  storage-data:

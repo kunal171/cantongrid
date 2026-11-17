@@ -111,6 +111,11 @@ impl Fixture {
         Ok(Self { batches })
     }
 
+    /// Ordered source batches, shared by the in-memory runner and durable fixture ingestion.
+    pub fn batches(&self) -> &[Batch] {
+        &self.batches
+    }
+
     pub fn replay_into(&self, engine: &mut Engine) -> Result<usize, FixtureError> {
         let mut applied = 0;
         for batch in &self.batches {
