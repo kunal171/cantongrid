@@ -81,12 +81,12 @@ async fn cycle(path: &Path) -> Result<(), String> {
             &project.plan,
             lease,
             checkpoint.as_deref(),
-            8,
+            project.page_size,
         )
         .map_err(|e| e.to_string())?
         {
             store
-                .apply_authorized(&project.plan, &batch, lease)
+                .apply_page(&project.plan, &batch, lease, checkpoint.as_deref())
                 .map_err(|e| e.to_string())?;
         } else {
             store

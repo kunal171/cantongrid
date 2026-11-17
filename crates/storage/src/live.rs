@@ -63,6 +63,19 @@ impl Store {
         tx.commit().map_err(|_| StoreError::CommitUnknown)
     }
 
+    /// Publish only if the acknowledged cursor still equals the one used to read this page.
+    /// This prevents a slower worker's empty page from rewinding a newer worker's progress.
+    pub fn apply_page(
+        &mut self,
+        plan: &Plan,
+        batch: &Batch,
+        lease: &SourceLease,
+        expected: Option<&str>,
+    ) -> Result<bool, StoreError> {
+        let expected = expected.map(str::to_owned);
+        self.apply_live_checked(plan, batch, lease, Some(&expected))
+    }
+
     /// Unlike the bounded fixture reference, live state uses row-level lifecycle checks. The
     /// historical journal remains durable but is never loaded wholesale into worker memory.
     pub(crate) fn apply_live(
@@ -70,6 +83,16 @@ impl Store {
         plan: &Plan,
         batch: &Batch,
         lease: &SourceLease,
+    ) -> Result<bool, StoreError> {
+        self.apply_live_checked(plan, batch, lease, None)
+    }
+
+    fn apply_live_checked(
+        &mut self,
+        plan: &Plan,
+        batch: &Batch,
+        lease: &SourceLease,
+        expected_cursor: Option<&Option<String>>,
     ) -> Result<bool, StoreError> {
         let scope = plan.context().binding();
         let expected: BTreeSet<_> = plan.source_parties().cloned().collect();
@@ -102,9 +125,17 @@ impl Store {
             return Err(StoreError::Busy);
         }
         let existing = tx.query_opt(
-            "SELECT definition,revision FROM cantongrid.streams WHERE stream_key=$1",
+            "SELECT definition,revision,checkpoint FROM cantongrid.streams WHERE stream_key=$1",
             &[&key],
         )?;
+        if let Some(expected) = expected_cursor {
+            let actual = existing
+                .as_ref()
+                .and_then(|r| r.get::<_, Option<String>>(2));
+            if &actual != expected {
+                return Err(StoreError::Busy);
+            }
+        }
         let revision = if let Some(row) = existing {
             if row.get::<_, serde_json::Value>(0) != plan.definition() {
                 return Err(StoreError::PlanChanged);

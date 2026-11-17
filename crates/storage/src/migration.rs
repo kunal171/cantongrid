@@ -133,6 +133,14 @@ mod tests {
         .unwrap();
         assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
         tx.rollback().unwrap();
+        let mut tx = client.transaction().unwrap();
+        tx.execute(
+            "UPDATE cantongrid.runtime_migrations SET migration_sha256='synthetic-progress-drift'",
+            &[],
+        )
+        .unwrap();
+        assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
+        tx.rollback().unwrap();
         check_schema(&mut client).unwrap();
     }
 }

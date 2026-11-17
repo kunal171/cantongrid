@@ -84,7 +84,7 @@ impl Service {
                 .map_err(|_| "destination unavailable")?;
             let page = store
                 .read_page(&project.plan, &caller, lease, kind, after.as_deref(), limit)
-                .map_err(|_| "authorized query unavailable")?;
+                .map_err(|e| format!("authorized query unavailable: {e}"))?;
             Ok::<_, String>(page)
         })
         .await
@@ -117,6 +117,7 @@ impl Service {
             provenance: async_graphql::Json(serde_json::json!({
                 "source":source,"network":network,"generation":generation,"coverage":coverage,
                 "sourceLocalWatermark":cursor.as_ref().map(|c|c.boundary.to_string()),
+            "historyFromOffset":page.first_checkpoint.as_deref().and_then(|text|serde_json::from_str::<cantongrid_pqs::Cursor>(text).ok()).map(|c|c.boundary.to_string()),
                 "observedAgeSeconds":page.observed_age_seconds,
                 "freshness":if page.observed_age_seconds.is_some_and(|s|s<=30){"recently_observed"}else{"stale_or_unknown"},
                 "payloadEncoding":"raw_json","archiveEvidence":"prior_create_dependency"
@@ -155,7 +156,10 @@ impl QueryRoot {
                 },
             )
             .await
-            .map_err(|_| async_graphql::Error::new("authorized query unavailable"))
+            .map_err(|reason| {
+                eprintln!("CantonGrid query: {reason}");
+                async_graphql::Error::new("authorized query unavailable")
+            })
     }
     #[graphql(complexity = 50)]
     async fn lifecycle_events(
@@ -176,7 +180,10 @@ impl QueryRoot {
                 },
             )
             .await
-            .map_err(|_| async_graphql::Error::new("authorized query unavailable"))
+            .map_err(|reason| {
+                eprintln!("CantonGrid query: {reason}");
+                async_graphql::Error::new("authorized query unavailable")
+            })
     }
 }
 
@@ -234,7 +241,16 @@ async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKi
     }
     match service.query(&token, kind, filter).await {
         Ok(page) => Json(page).into_response(),
-        Err(_) => error(StatusCode::SERVICE_UNAVAILABLE),
+        Err(reason) => {
+            eprintln!("CantonGrid query: {reason}");
+            error(
+                if reason == "invalid page limit" || reason == "invalid cursor" {
+                    StatusCode::BAD_REQUEST
+                } else {
+                    StatusCode::SERVICE_UNAVAILABLE
+                },
+            )
+        }
     }
 }
 async fn active(

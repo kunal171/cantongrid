@@ -182,6 +182,13 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
         BTreeSet::from([template.clone()]),
     )
     .unwrap();
+    let source_database = "host=127.0.0.1 port=9 user=read_only dbname=synthetic";
+    let plan = plan.with_source_binding(cantongrid_runtime::config::source_binding(
+        &source_url,
+        "source-reader",
+        &cantongrid_postgres::identity_local(source_database).unwrap(),
+        &format!("{source_url}/readyz"),
+    ));
     let mut store = Store::open_env("CANTONGRID_DESTINATION_URL").unwrap();
     let time = Instant::now();
     let lease = SourceLease::from_verified(
@@ -235,6 +242,69 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
             )
             .unwrap();
     }
+    // Stage a valid creation and then an orphan archive in the same page. The entire
+    // transaction must roll back, including the first row, journal, outbox and checkpoint.
+    let checkpoint_before = store.checkpoint(&plan).unwrap();
+    let mut staged = batch.events[0].clone();
+    staged.id = "rolled-back-create".into();
+    staged.contract = "rolled-back".into();
+    let mut orphan = archive.events[0].clone();
+    orphan.id = "orphan-archive".into();
+    orphan.contract = "never-observed".into();
+    assert!(
+        store
+            .apply_authorized(
+                &plan,
+                &Batch {
+                    context: context.clone(),
+                    position: position(300),
+                    events: vec![staged, orphan]
+                },
+                &lease
+            )
+            .is_err()
+    );
+    assert_eq!(store.checkpoint(&plan).unwrap(), checkpoint_before);
+    // A stale worker cannot rewind progress after another worker has committed a later page.
+    assert!(
+        store
+            .apply_page(
+                &plan,
+                &Batch {
+                    context: context.clone(),
+                    position: position(302),
+                    events: vec![]
+                },
+                &lease,
+                Some(&position(10))
+            )
+            .is_err()
+    );
+    assert_eq!(store.checkpoint(&plan).unwrap(), checkpoint_before);
+    // Narrowed/invalidated source authorization cannot publish a cached page.
+    let mut revoked = SourceLease::from_verified(
+        context.binding(),
+        [party("A"), party("B")],
+        Instant::now(),
+        MAX_SOURCE_LEASE,
+        Instant::now() + Duration::from_secs(60),
+    )
+    .unwrap();
+    revoked.invalidate();
+    assert!(
+        store
+            .apply_authorized(
+                &plan,
+                &Batch {
+                    context: context.clone(),
+                    position: position(301),
+                    events: vec![]
+                },
+                &revoked
+            )
+            .is_err()
+    );
+    assert_eq!(store.checkpoint(&plan).unwrap(), checkpoint_before);
     let mut grants = json!({"version":1,"epoch":1,"principals":{"a":{"enabled":true,"parties":["A"]},"b":{"enabled":true,"parties":["B"]},"ab":{"enabled":true,"parties":["A","B"]}}});
     let grants_path = root.join("grants.json");
     std::fs::write(&grants_path, grants.to_string()).unwrap();
@@ -248,6 +318,7 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
     let source_token = jwt("source-reader", key, clock() + 600);
     let child = Command::new(env!("CARGO_BIN_EXE_cantongrid"))
         .args(["serve", path.to_str().unwrap()])
+        .env("CANTONGRID_TEST_PQS_URL", source_database)
         .env("CANTONGRID_TEST_SOURCE_TOKEN", source_token)
         .env("CANTONGRID_TEST_API_KEY", key)
         .env("CANTONGRID_TEST_CURSOR_KEY", cursor_key)
