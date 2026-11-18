@@ -73,21 +73,27 @@ impl Store {
         name: &str,
         revision: u32,
     ) -> Result<Option<Model>, StoreError> {
-        validate_namespace(namespace)?;
-        if name.is_empty()
-            || name.len() > 48
-            || !name.as_bytes()[0].is_ascii_alphabetic()
-            || !name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
-            || revision == 0
-        {
-            return Err(StoreError::ModelDefinition);
-        }
+        validate_key(namespace, name, revision)?;
         load(&mut self.client, namespace, name, revision)
     }
 }
 
+/// Shared identity validation for registry reads and operator installation commands.
+pub(crate) fn validate_key(namespace: &str, name: &str, revision: u32) -> Result<(), StoreError> {
+    validate_namespace(namespace)?;
+    if name.is_empty()
+        || name.len() > 48
+        || !name.as_bytes()[0].is_ascii_alphabetic()
+        || !name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
+        || revision == 0
+    {
+        return Err(StoreError::ModelDefinition);
+    }
+    Ok(())
+}
+
 /// Always check persisted content, including on an idempotent retry; do not silently repair drift.
-fn load(
+pub(crate) fn load(
     client: &mut impl GenericClient,
     namespace: &str,
     name: &str,
