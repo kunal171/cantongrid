@@ -22,11 +22,7 @@ pub fn register(path: &Path, namespace: &str, variable: &str) -> Result<(), Stri
 
 /// Report revision identity only; persisted literals are never printed into an operator summary.
 pub fn inspect(namespace: &str, name: &str, revision: &str, variable: &str) -> Result<(), String> {
-    let revision = revision
-        .parse::<u32>()
-        .ok()
-        .filter(|value| *value > 0)
-        .ok_or("model revision must be a positive u32")?;
+    let revision = parse_revision(revision)?;
     let mut store = Store::open_env(variable).map_err(|e| e.to_string())?;
     let model = store
         .registered_model(namespace, name, revision)
@@ -40,4 +36,13 @@ pub fn inspect(namespace: &str, name: &str, revision: &str, variable: &str) -> R
         "model":name,"revision":revision,"registered":model.is_some(),
         "fingerprint":fingerprint
     }))
+}
+
+/// Registry and installation commands accept only the positive revision range used by the model.
+pub(super) fn parse_revision(value: &str) -> Result<u32, String> {
+    value
+        .parse::<u32>()
+        .ok()
+        .filter(|revision| *revision > 0)
+        .ok_or_else(|| "model revision must be a positive u32".into())
 }

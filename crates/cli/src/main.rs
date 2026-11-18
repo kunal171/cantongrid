@@ -20,6 +20,7 @@ Usage:
   cantongrid models preview <models.json> <model-name> <payload.json>
   cantongrid models register <models.json> --namespace <project> --database-env <CANTONGRID_VARIABLE>
   cantongrid models inspect <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
+  cantongrid models install <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
   cantongrid init <new-directory>
   cantongrid validate <project.json>
   cantongrid fixture run <project.json> [--party <synthetic-party>]...
@@ -85,6 +86,17 @@ fn run(args: Vec<String>) -> Result<(), String> {
             variable,
         ] if command == "models" && action == "inspect" && database_flag == "--database-env" => {
             commands::model_registry::inspect(namespace, name, revision, variable)
+        }
+        [
+            command,
+            action,
+            namespace,
+            name,
+            revision,
+            database_flag,
+            variable,
+        ] if command == "models" && action == "install" && database_flag == "--database-env" => {
+            commands::model_installation::install(namespace, name, revision, variable)
         }
         [command, action, path, rest @ ..] if command == "models" => {
             commands::models::run(action, Path::new(path), rest)

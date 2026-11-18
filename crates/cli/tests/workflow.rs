@@ -447,3 +447,150 @@ fn model_registry_cli_persists_revision_identity_without_printing_literals() {
     assert!(!String::from_utf8_lossy(&conflict.stderr).contains("REGISTRY_PRIVATE_SENTINEL"));
     assert_eq!(run(&inspect).stdout, before.stdout);
 }
+
+#[test]
+#[ignore = "requires the disposable owned PostgreSQL fixture"]
+fn model_installation_cli_is_explicit_idempotent_and_redacts_schema_failures() {
+    const VARIABLE: &str = "CANTONGRID_DESTINATION_URL";
+    let mut client = cantongrid_postgres::connect_env(VARIABLE).unwrap();
+    let fixture: bool = client
+        .query_one(
+            "SELECT current_database()='cantongrid' AND current_user='cantongrid_owner'",
+            &[],
+        )
+        .unwrap()
+        .get(0);
+    assert!(
+        fixture,
+        "installation CLI control requires the disposable owned destination"
+    );
+    let root = Scratch::new();
+    let suffix = format!(
+        "{}_{}",
+        std::process::id(),
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    );
+    let namespace = format!("cli_install_{suffix}");
+    let mut document: serde_json::Value =
+        serde_json::from_str(include_str!("../../../examples/models/visibility.json")).unwrap();
+    document["models"][0]["name"] = format!("record_{suffix}").into();
+    document["models"][0]["fields"]["privateNote"] = serde_json::json!({
+        "op":"literal", "value":{"type":"text","value":"INSTALLATION_PRIVATE_SENTINEL"}
+    });
+    let catalog = cantongrid_models::Catalog::parse(&document.to_string()).unwrap();
+    let model = &catalog.models()[0];
+    let plan = model.sql_plan().unwrap();
+    // Test-only teardown drops only this unique model's table, after unlinking our namespace.
+    struct Cleanup {
+        namespace: String,
+        table: String,
+        fingerprint: String,
+    }
+    impl Drop for Cleanup {
+        fn drop(&mut self) {
+            if let Ok(mut client) = cantongrid_postgres::connect_env(VARIABLE)
+                && let Ok(mut tx) = client.transaction()
+            {
+                if tx
+                    .execute(
+                        "DELETE FROM cantongrid.model_installations WHERE namespace=$1",
+                        &[&self.namespace],
+                    )
+                    .is_err()
+                {
+                    return;
+                }
+                let Ok(row) = tx.query_one(
+                    "SELECT count(*) FROM cantongrid.model_installations WHERE fingerprint=$1",
+                    &[&self.fingerprint],
+                ) else {
+                    return;
+                };
+                if row.get::<_, i64>(0) == 0
+                    && (tx
+                        .batch_execute(&format!(
+                            "DROP TABLE IF EXISTS cantongrid_models.\"{}\"",
+                            self.table
+                        ))
+                        .is_err()
+                        || tx
+                            .execute(
+                                "DELETE FROM cantongrid.model_tables WHERE fingerprint=$1",
+                                &[&self.fingerprint],
+                            )
+                            .is_err())
+                {
+                    return;
+                }
+                if tx
+                    .execute(
+                        "DELETE FROM cantongrid.model_revisions WHERE namespace=$1",
+                        &[&self.namespace],
+                    )
+                    .is_err()
+                {
+                    return;
+                }
+                let _ = tx.commit();
+            }
+        }
+    }
+    let _cleanup = Cleanup {
+        namespace: namespace.clone(),
+        table: plan.table.clone(),
+        fingerprint: plan.fingerprint.clone(),
+    };
+    let run = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_cantongrid"))
+            .current_dir(&root.0)
+            .env_remove("CANTONGRID_SOURCE_TOKEN")
+            .env_remove("CANTONGRID_API_KEY")
+            .env_remove("CANTONGRID_CURSOR_KEY")
+            .args(args)
+            .output()
+            .unwrap()
+    };
+    fs::write(root.0.join("models.json"), document.to_string()).unwrap();
+    assert!(
+        run(&["storage", "init", "--database-env", VARIABLE])
+            .status
+            .success()
+    );
+    assert!(
+        run(&[
+            "models",
+            "register",
+            "models.json",
+            "--namespace",
+            &namespace,
+            "--database-env",
+            VARIABLE
+        ])
+        .status
+        .success()
+    );
+    let args = [
+        "models",
+        "install",
+        &namespace,
+        &model.name,
+        "1",
+        "--database-env",
+        VARIABLE,
+    ];
+    for created in [true, false] {
+        let result = run(&args);
+        assert!(result.status.success());
+        assert!(!String::from_utf8_lossy(&result.stdout).contains("INSTALLATION_PRIVATE_SENTINEL"));
+        let body: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+        assert_eq!(body["result"]["created"], created);
+        assert_eq!(body["result"]["linked"], created);
+        assert_eq!(body["activated"], false);
+    }
+    client.batch_execute(&format!("ALTER TABLE cantongrid_models.\"{}\" ALTER COLUMN \"label\" SET DEFAULT 'INSTALLATION_PRIVATE_SENTINEL'", plan.table)).unwrap();
+    let result = run(&args);
+    assert!(!result.status.success());
+    assert!(result.stdout.is_empty());
+    assert!(!String::from_utf8_lossy(&result.stderr).contains("INSTALLATION_PRIVATE_SENTINEL"));
+    assert!(String::from_utf8_lossy(&result.stderr).contains("differs from the compiled plan"));
+}
