@@ -1,0 +1,42 @@
+{
+  "result": "passed",
+  "darSha256": "b53ccaa76903e755581b1c1ff03da39044c879b437ee57b7996b712447d83f85",
+  "packageId": "730711263d9ca88f4ee397a7428ef775dff14ee144216dc08053f955f3cb357e",
+  "contract": "Market:PredictionMarket",
+  "stages": [
+    "Draft",
+    "Open",
+    "Resolved"
+  ],
+  "controlledEventIdentitiesMatched": 13,
+  "source": "authorized node-local PQS",
+  "generated": [
+    "PostgreSQL schema",
+    "TypeScript transport interfaces",
+    "GraphQL schema"
+  ],
+  "typedGraphql": true,
+  "exactValues": true,
+  "partyPrivacy": true,
+  "cursorIsolation": true,
+  "callerRevocation": true,
+  "offlineCatchup": true,
+  "restartWithoutDuplicates": true,
+  "history": "snapshot_forward_partial",
+  "environment": "disposable LocalNet",
+  "fundedAssetsOrTrades": false,
+  "testedDate": "2026-11-18",
+  "sourceBranch": "feat/reproducible-localnet-poc",
+  "releaseStatus": "unreleased development branch",
+  "testedProfile": {
+    "canton": "3.5.7",
+    "scribe": "3.5.4/schema041",
+    "dpmSdkSelection": "3.7.1",
+    "damlLf": "2.1"
+  },
+  "completeRuns": 2,
+  "firstRunControlledEvents": 7,
+  "repeatRunControlledEvents": 13,
+  "typescriptCompilation": true,
+  "chromiumViewer": true
+}
