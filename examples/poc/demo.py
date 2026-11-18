@@ -27,6 +27,10 @@ def verify():
             raise ValueError('Party-scoped projected state differs from expected contract identities')
         for row in own:
             values = row['values']
+            if row['contractId'] == data['contracts']['shared']:
+                expected_outcome = True if data['stage'] == 'Resolved' else None
+                if values['state'] != data['stage'] or values['outcome'] != expected_outcome:
+                    raise ValueError('Projected lifecycle state or optional resolution outcome changed')
             if values['quantityLot'] != '9223372036854775807' or values['priceTick'] != '0.0000000001' or values['priceTickBps'] != '0.0000010000':
                 raise ValueError('Exact projected values changed')
     events = s.pages(typed=False)
