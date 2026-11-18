@@ -1,429 +1,99 @@
-# Verification plan and evidence
+# Verification
 
-## Documentation phase evidence
+These are recorded results, not tests rerun whenever this page changes.
+The supported environment is LocalNet; devnet and production are unverified.
 
-Phase 0 contains documentation and repository housekeeping only. Validation must
-check local Markdown links, whitespace, secret/build ignore rules, consistency of
-scope and planned-status labels. Record actual results in the phase handoff.
-No Rust build, database, source adapter or API test can be claimed for this phase.
+## Environment
 
-## Planned runtime acceptance matrix
-
-These checks are requirements for later phases, not tests already implemented.
-
-| Area | Required checks |
+| Component | Tested version / boundary |
 | --- | --- |
-| Configuration | Missing credentials, invalid selections, unknown types/operators and incompatible metadata fail clearly without secret leakage. |
-| Canonical ingestion | Create/archive and supported other events, duplicates, stable identity and explicit source capability limits. |
-| Snapshot/update handoff | Updates during snapshot, pagination, reconnect and interruption cause no missed lifecycle transitions. |
-| Atomic progress | Crash before/after commit never separates state, projections, checkpoint and outbox; replay has no duplicate state effect. |
-| Data fidelity | Exact numeric/Int64 round trips and aggregates; optional/variant/time mappings; unsupported mappings fail explicitly. |
-| Authorization | A/B/AB scope matrix through REST, GraphQL and streams; inaccessible filters/counts/relationships/errors reveal no private data. |
-| Derived outputs | Join dependencies, aggregate scope, archival retraction, deterministic replay and versioned rebuild equivalence. |
-| Cursor isolation | Tampering, another principal, changed grants/schema/source, expired retention and revoked access. |
-| Operational failure | Source failure, expired authorization lease, partial history, PostgreSQL outage and worker concurrency. |
-| Schema evolution | Compatible additions; breaking rebuild, controlled promotion and rollback; no upstream DDL or silent data deletion. |
-| Durable delivery | Outbox survives process failure; at-least-once IDs, reconnect, lag and explicit resync after retention gap. |
-| Genericity | Outcomia and an unrelated application work through public config with no core/resolver/migration edits per model. |
-| CLI | Init placeholders, validation, restart, once-boundary semantics, orderly shutdown and separate index/serve operation. |
-
-## Test levels and release claims
-
-Fixtures verify engine semantics without proving upstream behavior. PostgreSQL
-integration tests verify persistence and transaction boundaries. LocalNet checks
-verify the selected source and real Daml data flow. Devnet checks apply only when
-authorized infrastructure is available. Report each level separately.
-
-An end-to-end acceptance run must exercise authorized source data through
-persistence, processing, authenticated query and durable delivery. Capture
-nonsecret reproduction steps, versions, coverage, expected results and observed
-limitations. Do not commit private payloads or credentials as evidence.
-
-Capacity tests must measure representative model sizes, history, API queries and
-stream consumers. Publish the environment and practical limits with results;
-do not turn an unmeasured design into a scalability claim.
-
-## Phase 0 handoff — 2026-11-16
-
-Completed documentation checks:
-
-- All 17 relative links in 12 Markdown documents resolve; code fences balance.
-- Git whitespace checks pass across the complete documentation change.
-- Secret/build paths are ignored; `.env.example` and documentation remain eligible
-  for tracking. No secret values were used for this check.
-- Tracked files contain only Markdown and `.gitignore`; no remote is configured.
-- Both existing Outcomia repositories retain their prior state, including the
-  preexisting untracked `.vscode/` directory in outcomia-canton.
-
-This is documentation evidence only. No executable, LocalNet, database or API
-verification has been performed for CantonGrid.
-
-
-## Local infrastructure handoff — 2026-11-16
-
-LocalNet startup, read-only authenticated API checks, stop/start persistence and
-HTTP UI availability are recorded in [LocalNet evidence](localnet-evidence.md).
-Python parsing, local Markdown links, generated configuration isolation and Git
-whitespace checks pass. These development helpers do not implement the planned
-CantonGrid CLI, connector or API server. Runtime acceptance matrix items above
-remain future work unless explicitly covered by that evidence.
-
-
-## Compatibility handoff — 2026-11-17
-
-[Outcomia DAR validation](outcomia-compatibility.md) and
-[PQS SQL/source/recovery checks](pqs-compatibility.md) passed on the recorded
-LocalNet profile. An invalid DAR was rejected. The PQS probe rejected a stopped
-source despite retained database rows. Recreating it preserved an explicitly
-pinned historical snapshot, caught up to newer source updates and did not
-produce duplicate create identities. These are upstream fixture checks, not
-CantonGrid runtime, authorization-isolation or outbox acceptance.
-
-
-## SQL reader follow-up — 2026-11-17
-
-The fixture now has a separately authenticated database reader. Active and
-historical PQS queries pass under it. Table writes, public schema writes,
-temporary tables and assuming the owner role fail with insufficient-privilege
-SQLSTATE 42501 even after disabling the default read-only transaction setting.
-The reader setup is operator-side configuration of the owned development
-fixture; the future Rust source adapter remains read-only.
-
-
-## Visibility and upstream triage — 2026-11-17
-
-The owned Ledger API fixture passed A/B/AB visibility, forbidden cross-scope
-filters, preissued/fresh-token revocation, exact scalar and grant-restoration
-checks. The dedicated AB PQS source preserved exact payloads/witnesses and denied
-its database to the original reader. Stream readiness loss and retained B-only
-cache rows were measured, not interpreted as a complete authorization mechanism.
-
-The schema-collision reproduction ran without Canton/application code against
-both the packaged and current-upstream V001 SQL: clean controls passed, unrelated
-type collision failed as expected, and a namespace-scoped in-memory correction
-passed both controls. No full current executable/Scala suite was claimed.
-
-
-## Rust core foundation — 2026-11-17
-
-Twelve unit tests passed for source-neutral visibility, derived-input dependency
-retention, empty-evidence denial, source/generation mismatch, identity redaction,
-source/caller grant intersection, bounded lease expiry, earlier credential expiry
-and explicit revocation. All run without source credentials or network access.
-`cargo test --workspace --offline`, Clippy with warnings denied, and formatting
-checks passed using Rust/Cargo 1.100. No external crate dependencies were added.
-These are pure decision-model tests; live connector/serving integration remains open.
-
-## Phase 2 handoff — 2026-11-17
-
-Completed the Rust configuration and fixture pipeline milestone on
-`feat/core-config-fixtures`, in focused configuration, values, lifecycle, examples,
-fixture decoding, CLI, helper consolidation and CI commits.
-
-Implemented and checked:
-
-- Strict project/fixture/model/payload versions, explicit source/network/scope
-  generation, exact template selections and declared create/archive/history
-  capabilities. Unknown fields, adapters, event kinds, unsupported processing,
-  duplicate keys and numeric float tokens are rejected without raw diagnostics.
-- Tagged exact values including Numeric 10 and Int64 boundaries, optional/enum
-  values and nested records/lists. Validation rejects range/scale/precision and
-  unsupported-type errors. Full metadata/type checking and arithmetic are deferred.
-- Atomic in-memory batch publication, deterministic replay, conflict detection,
-  stable source-local identities and opaque positions. Invalid batches leave
-  canonical state/history and checkpoint unchanged. Archive-without-create,
-  repeated archive and contract reuse fail; missing rows never imply archival.
-- Active/history reads enforce caller/source grant intersection, visibility
-  dependencies and lease validity. Tests cover A/B/AB, no grants, revocation,
-  expiry, source/network/generation mismatch and archive dependency retention.
-- Executable `init`, `validate`, and `fixture run` workflows pass from a separate
-  working directory, including refusing scaffold overwrites, relative fixture
-  resolution, redacted failures, bad inputs, regular-file and size checks.
-- Both unrelated Visibility and Outcomia Protocol fixtures use one generic engine.
-  Each replay applies two batches initially and zero on repeated delivery.
-  Expected scoped counts are documented with the examples.
-
-Validation: **29 Rust tests** (26 core + 3 executable workflow tests), **6 isolated
-Python helper regressions**, formatting, Clippy with warnings denied, Python syntax,
-Markdown links and Git whitespace checks passed. Rust checks use the committed
-lockfile and run offline on Rust/Cargo 1.100. A GitHub Actions workflow was added
-for these credential-free checks; it has not been run remotely in this handoff.
-
-Development helper review replaced ten standalone executable scripts with one
-`dev.py` entry point and grouped modules, merged the PQS lifecycle implementations
-and shared Compose/SQL/health/private-file helpers. Purposeful independent checks
-and the standalone upstream reproduction were retained. No new upstream defect
-was found in this work. The test harness signature error encountered during
-refactoring was ours and corrected before this handoff.
-
-The refactored helpers were also exercised against the existing LocalNet:
-
-- All three validators/authenticated Ledger APIs passed; unauthenticated access
-  was rejected. The SQL reader still queries while DML, DDL, temporary-table and
-  owner-role probes fail with SQLSTATE 42501.
-- Both sources initially failed readiness. Recreating them with renewed one-hour
-  credentials for the existing scoped users restored readiness, consistent with
-  credential expiry. Source startup now waits for readiness, avoiding the observed
-  connection reset while the recreated process starts. No source processing
-  defect was demonstrated.
-- Historical offset 80 remains active 11/create 17/archive 6, with no duplicate
-  creates and all create witnesses in scope. Exercise coverage remains zero.
-- A/B/AB Ledger checks passed with exact values and restored grants. AB PQS cache
-  checked exact witnesses/payloads and denied the unrelated SQL reader. Source
-  readiness loss was observed after 2.02 seconds during this revocation run;
-  three cached records, including B-only, remained. Grants were restored and the
-  AB source recreated/ready. This measurement is not a revocation SLA.
-- The previously recorded Outcomia DAR digest was validated again without upload.
-  No Outcomia ledger transactions or wallet changes were performed.
-
-Limits: the Rust workflow is fixture-only, with synthetic input and simulated
-caller grants. State/checkpoints are process memory; it does not provide durable
-restart, PostgreSQL, a live connector, authenticated APIs, generated processing
-models or streams. Phase 3 must resolve source handoff, production permissions,
-current grant retrieval and live lifecycle/identity/coverage gates before copying
-private data. Do not infer those guarantees from the fixture or helper checks.
-
-## Owned PostgreSQL feature handoff — 2026-11-17
-
-Implemented the first Phase 3 storage slice on `feat/pqs-ingestion-storage`.
-This is a bounded local reference feature using synthetic fixtures, not completed
-live ingestion or authenticated serving.
-
-Delivered in focused commits:
-
-- Versioned persistence envelopes preserve original source/event/witness evidence;
-  current grant decisions are never deserialized. Canonical plan definitions bind
-  each source/network/generation to its exact selection/schema context.
-- A separate PostgreSQL 14.25 destination on loopback 5442, its own volume/network,
-  restricted owner role and checksum-guarded explicit schema initialization.
-  Source connection, privileges, database and migrations remain separate.
-- Atomic journal, canonical contracts/history, checkpoint/revision and outbox
-  publication, source-context writer exclusion, deterministic recovery and replay.
-- Durable `fixture index/status/query` and explicit `storage init` commands,
-  grouped separately from read-only `source inspect-pqs`. Both fixture examples
-  use the same implementation; caller grants remain explicitly simulated.
-- CI now starts the owned PostgreSQL fixture and runs transaction/recovery and
-  executable tests. The actual LocalNet/PQS profile check remains separate.
-
-Validation passed locally on the committed dependency lockfile:
-
-- **42 Rust tests**, including all PostgreSQL-dependent tests and the real source
-  inspection test (`cargo test --workspace --locked --offline -- --include-ignored`
-  with the dedicated local fixture environment variables).
-- **6 Python helper tests**, Python syntax, Rust formatting and Clippy with warnings
-  denied; workflow/Compose YAML parsing; 27 Markdown documents/71 relative links
-  at this handoff; Git whitespace checks.
-- Reopening destination connections preserves exact Numeric 10/Int64 values,
-  A/B/AB visibility, archive dependencies, lease invalidation and checkpoint order.
-  Replaying committed input produces no extra state/history/outbox effects.
-- A real SQL error injected after staged writes rolls back canonical state,
-  lifecycle events, outbox and progress together; reconnect/retry succeeds once.
-  A second worker is denied while the first transaction holds the source lock.
-- Selection changes within a generation, conflicting/invalid deliveries, oversized
-  input, migration-checksum drift and inconsistent checkpoints fail closed.
-- CLI queries work after removing the original fixture file. Outcomia Protocol
-  input persisted two batches/two contracts (one active), three events and three
-  outbox entries; replay applied zero batches. After stopping/recreating the
-  destination container with its volume retained, the same counts remained.
-- Manual role-mix checks rejected destination initialization against the existing
-  PQS reader connection and rejected PQS inspection using the destination owner.
-  Failures printed no connection settings, credentials or private payloads.
-
-The Rust source inspector read the existing schema-041 source in a read-only,
-repeatable-read transaction: oldest 0/latest 943, no pruning marker, 10 active
-rows/132 create rows/122 archive rows at that observation. All 122 archive rows
-had empty witnesses, consistent with the installed/upstream function definition.
-These are row counts (potentially including interface projections), not a claim
-about global contract counts, current stream health or complete authorized history.
-No source payloads were copied into the destination; no ledger transactions,
-party/DAR provisioning or Outcomia wallet changes were performed.
-
-Failure classification: the archive witness omission is documented source behavior,
-not a newly demonstrated upstream defect. The compile-time digest formatting and
-test cleanup lint failures encountered during development were local implementation
-issues and were corrected before validation. No new public issue/PR was opened.
-
-Limits remain explicit in [storage](storage.md): local-only transport, bounded
-journal replay, fixture-only caller simulation, no production retention policy,
-no live source-grant verifier/handoff/type normalization and no application APIs
-or stream delivery. Private live ingestion remains disabled pending those gates.
-The new GitHub workflow has not been run remotely for this branch yet.
-
-## Source contract, security and alpha candidate — 2026-11-17
-
-[PR #3](https://github.com/kunal171/cantongrid/pull/3) merged at `1007134b5001`
-after both fixture/PostgreSQL CI runs passed. Newer ecosystem documentation on
-main was preserved. Release-oriented work continues on `release/0.1.0-alpha.1`;
-this reference alpha is distinct from full Phase 3 acceptance.
-
-Delivered and locally checked:
-
-- Reviewed the supplied v0.3 handoff and preserved it with a historical-baseline
-  note. [Source contract](phase3-source-contract.md) records installed SQL,
-  visibility/retention restrictions and the SDK adoption decision before live work.
-- SDK v0.3.2, commit `5caaebc3eab380de827196663d4bb18b90ffd6f4`, decoded 3 creates,
-  3 archives and all 11 historical offset-80 active rows using a restricted read-only
-  connection. Eight historical rows had a later archive; the SDK retained them
-  correctly. No SDK writer/admin suite ran and no runtime dependency was adopted.
-- Retained interval 80→943 reconciled with baseline 11/creates 115/archives 116/
-  active 10 and no identity differences. Empty windows, invalid/regressed/future
-  bounds and pruning gaps have tests. Concurrent publication/pagination/reconnect
-  remains unverified; the probe explicitly reports that limit.
-- Machine-readable source coverage remains unknown/partial with reason codes;
-  snapshot availability does not imply current source permission or freshness.
-- Shared SQL active/history pages filter before totals and paging, preserve every
-  visibility dependency, reject empty evidence and recheck source leases before
-  returning. A/B/AB/no-party and one-row pagination tests passed on owned PostgreSQL.
-  This is a backend foundation using fixture grants, not real API authentication.
-- Contributor/security guides, release milestones, changelog, PR template and a
-  version/license/notice guard are added. The agreed Apache-2.0 target now has an
-  actual LICENSE and NOTICE; all workspace packages inherit it and the alpha version.
-- Pinned security tools verify both archive and executable hashes. The checker
-  rejects tampered binaries, ambiguous/linked archive members and tracked symlinks.
-  Explicit scanner configuration prevents ambient config/ignore/comment bypasses.
-  Full Git history and Git-eligible working files pass redacted secret scans.
-- RustSec audit passed with no advisories; dependency licenses (including workspace
-  and development packages), registry sources and version constraints passed. Two
-  transitive WASI versions produce an informational duplicate warning, not a denied
-  advisory. There are no blanket scanner/advisory or private-package license ignores.
-- New security CI runs on push/PR, manual dispatch and weekly with read-only
-  permissions. actionlint passed locally; GitHub execution is recorded on the PR.
-
-Local final baseline: **49 Rust tests** including all environment-dependent cases,
-**11 Python tests**, formatting, Clippy with warnings denied, YAML parsing, links,
-release metadata and security checks passed. SDK evaluation is additional isolated
-compatibility evidence, not counted as a workspace unit-test suite.
-
-The SDK build exhausted root-disk space and interrupted two documentation writes.
-Only this task's generated Cargo targets were cleaned, interrupted documents were
-restored, and `git fsck` plus link/nonempty-file checks passed. Subsequent builds
-use a private temporary target on tmpfs with debug symbols/incremental output
-reduced; unrelated project files and caches were not deleted.
-
-Remaining live gates and runtime dependency proposals are explicit in the source
-contract. No Outcomia deployment, new parties, source database migration or ledger
-transaction was performed. Phase 3 is not marked complete by this alpha candidate.
-
-### Local disk recovery (2026-11-17)
-
-Follow-up inspection identified the main disk consumer: Canton and Splice had
-about 176 GiB of unrotated Docker JSON logs. Both pinned entrypoints defaulted to
-DEBUG. PostgreSQL's recovery log confirmed `No space left on device`; the SDK
-build above was an additional allocation, not the main space consumer.
-
-Applied INFO defaults and 10m x 3-file rotation, then recreated owned development
-containers without deleting volumes. Root usage fell from 86% to 27%, with about
-220 GiB available. All 15 containers were running with verified rotation settings;
-all configured Docker healthchecks were healthy and both PQS readiness probes
-passed. Named volume identities were retained.
-
-Authenticated read-only Ledger API checks passed for all three participants.
-PQS at offset 80 retained 11 active contracts, 17 creates and 6 archives, with
-zero duplicate creates and correct witnesses. Visibility checks retained all three
-records and restored their test grant after the existing revocation regression.
-The SQL reader's write/DDL/escalation denial checks passed. Destination counts
-remained 1 stream, 2 batches, 2 contracts, 3 events and 3 outbox records.
-
-All 13 Python regressions, the Compose configuration guard, Python compilation,
-actionlint, release metadata and whitespace checks passed. The Rust suite was not
-rerun for this development configuration change. CI now checks tracked Compose
-rotation; unit tests cover rotation and INFO defaults in the LocalNet renderer.
-
-### Current source-grant checks (2026-11-17)
-
-Added `cantongrid-ledger` with the maintainer-approved reqwest/jsonwebtoken/tokio
-subset and a separate `source verify-grants` command. The existing LocalNet
-Canton 3.5.7 one-party CanReadAs user passed all three authenticated GETs. A token
-with unchanged subject/expiry and a forged signature was rejected by the actual
-participant. The CLI regression is opt-in through `CANTONGRID_GRANTS_CONFIG` and
-the credential variable named in that ignored owner-only configuration. Neither
-credentials nor party IDs were printed; no parties, grants or ledger transactions
-were created or changed.
-
-Verification: 45 credential-free Rust tests plus all 13 environment-dependent
-Rust tests passed (58 total), including 8 owned-destination tests, the existing
-source/window checks and the new LocalNet CLI acceptance/forged-token control.
-All 13 Python tests, workspace formatting/Clippy, release metadata, Compose
-retention, RustSec audit, dependency license/source checks and secret scanning
-passed. Dependency policy reports base64/syn/WASI version duplicates as warnings;
-no ignores or policy relaxations were added. Builds reused the existing private
-`/tmp` target; root still had about 220 GiB free afterward.
-
-Current-grant HTTP tests cover denied/unavailable/oversized responses, malformed
-and privileged grants, deactivated/substituted users, generation/expiry isolation,
-invalid credentials/configuration and dropping cached authorization before failed
-renewal. These probes do not prove atomic or instantaneous revocation; permission
-staleness remains bounded by the core 15-second lease. SQL-source association,
-filter validation, active-snapshot/update paging, archive provenance, private
-copying and authenticated REST/GraphQL remain open. No complete Phase 3 claim is
-made by this source-alpha update.
-
-### Phase 3 LocalNet acceptance — 0.2.0-alpha.1
-
-The [Phase 3 acceptance report](phase3-verification.md) supersedes the earlier
-open-gate inventory for the supported LocalNet profile. Actual Outcomia and
-Visibility now pass through the same authorized read-only Rust PQS reader,
-SQL-native owned destination and authenticated REST/GraphQL. Source boundaries,
-exact values, permissions, partial coverage, migration/transaction recovery,
-source outage, cursor isolation and local caller revocation have recorded controls.
-
-Final local baseline: 47 credential-free plus 14 explicitly executed environment-
-dependent Rust tests (61 total), 13 Python tests, formatting/Clippy, security,
-release metadata and container-retention checks passed. Outcomia local writes
-were separately approved; no sibling repository changes, devnet deployment or
-funded asset/trading test was performed. Remote release CI/publication is separate.
-
-### Phase 4 model compiler/planner — 0.3.0-alpha.1 in progress
-
-Added a separate Rust `models` crate for bounded declarative definitions, exact
-field conversion/arithmetic, filters and deterministic SQL proposals. Outcomia
-and unrelated Visibility use the same evaluator. CLI validation/planning/preview
-work offline without source/API credentials. No model registry, live projection
-installation, lifecycle maintenance or generated API is claimed from these tools.
-
-Local checks passed: 54 credential-free plus all 15 explicitly executed environment-
-dependent Rust tests (69 total), 13 Python tests, formatting/Clippy, release guard,
-RustSec, dependency/source/license policy, secret scanning and workflow linting.
-The new owned-Postgres test executes generated DDL and row encoding in a rollback-
-only transaction and verifies large Numeric/maximum Int64 plus nullable fields.
-It checks the disposable destination identity before writes. Model tests also
-cover filtering, invalid types/paths/definitions, normalization and overflow.
-No external runtime dependency, source write or persistent model table was added.
-
-The documentation audit caught an edit-script buffer reuse and inherited pages
-containing another document's text. Architecture, storage, source-contract and
-research baselines were restored from the earlier source release, retaining their
-current Phase 3 resolution notes. The CLI page was restored before adding model
-commands. Expected page titles and local links were checked. Model materialization,
-versioned rebuild/promotion and typed query generation remain the next Phase 4
-integration work; joins/aggregates need their own transitive policy acceptance.
-
-### Phase 4 compiler review follow-up
-
-Manual review found two storage-boundary gaps: NUL-containing text could pass
-projection validation even though PostgreSQL cannot store it, and directly
-supplied typed rows could bypass the evaluator's serialized-size limit. Both now
-fail before SQL encoding. Regression controls cover ordinary/optional text,
-literals, filters, oversized direct rows and valid Unicode/whitespace.
-
-After the fixes, all 55 credential-free workspace Rust tests passed (15 integration
-tests remained ignored in that run). The generated-schema owned-PostgreSQL test
-was separately executed and passed; the other 14 integration tests were not rerun
-for these model-only changes. Workspace formatting/Clippy and diff checks passed.
-This review does not complete live model materialization or generated API acceptance.
-
-### Developer guide examples
-
-The GitBook-ready guide was checked against the current CLI/runtime source.
-Executed the credential-free Visibility A/B/AB/no-grant fixtures and Outcomia
-fixture, scaffold/validate/run in a temporary directory, both checked-in model
-payload previews/plans, and the guide's complete custom model example (`1.20`
-and `2.40` exact outputs). All passed. Parsed all eight JSON snippets, checked
-all 23 shell examples with `bash -n`, verified local links/code fences and complete
-unique book navigation. The cached Rust CLI build and diff checks passed.
-
-The live source/authentication/API chapters were cross-checked against the code
-and earlier LocalNet evidence; their environment-dependent commands were not
-rerun for this documentation change. Corrected the older runtime reference's
-page-size statement to the implemented 1–25 range, default 20. No infrastructure,
-ledger writes, hosted GitBook space or publication was performed.
+| Rust/Cargo | 1.100.0 |
+| Python helpers | 3.11+ |
+| CN Quickstart | `8b898ed3ccb15e243b22ee8d0ed3573fb91ee6b9`, Splice 0.6.11 |
+| Participant / PQS | Canton 3.5.7, Scribe 3.5.4, SQL schema041 |
+| Database | PostgreSQL 14.25; separate source and owned destination |
+| Daml example | SDK 3.7.1, LF target 2.1; not a general SDK/runtime compatibility claim |
+
+## LocalNet contracts — 0.2.0-alpha.1
+
+Verified 2026-11-17; [PR #5](https://github.com/kunal171/cantongrid/pull/5)
+and its main-branch CI passed. Source release:
+[v0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1).
+
+| Check | Result and limit |
+| --- | --- |
+| Source permissions | Exact CanReadAs scope accepted; forged source-token signature rejected by Ledger. SQL readers denied writes, DDL, temporary objects and owner escalation. |
+| Snapshot/update paging | Controlled Outcomia publication produced all eight expected create/archive identities with one-event pages and 17 worker invocations. Snapshot-forward history remains partial. |
+| Atomicity/recovery | SQL failure rolled back state/history/checkpoint/outbox; duplicate delivery had no new effects; stale writers could not rewind progress; live path passed beyond the fixture's 256-batch cap. |
+| API visibility | Actual Visibility active counts A=2, B=2, AB=3 through REST/GraphQL. Tested identity isolation, paging, cursor tampering/principal/kind/epoch reuse, token signature/issuer/audience/expiry and local caller revocation. |
+| Source outage | Stopped exporter with rows still in SQL: no worker advancement, APIs returned 503; restart restored access. Source leases are bounded to 15 seconds. |
+| Exact values | Visibility Numeric `12345678901234567890.1234567891` and Int64 `9223372036854775807`; Outcomia tick `0.0000000001` and maximum lot retained as strings through PQS/PostgreSQL/APIs. |
+| Provenance | Public history retains original offsets/times, snapshot status and prior-create policy; omits operator witness sets and source PKs. Pruned/regressed cursors fail. |
+| Genericity | Actual Outcomia Protocol/BinaryMarket and unrelated Visibility use the same reader/store/APIs, with configuration changes only. |
+
+At that milestone, 47 credential-free and all 14 environment-dependent Rust tests
+passed (61 total), plus 13 Python tests, formatting, Clippy, release/security and
+container-retention checks. LocalNet reports stay ignored under `.local/`.
+
+### Source observations
+
+- Retained interval 80→943 reconciled 11 initial + 115 creates − 116 archives =
+  10 active rows, with no missing/unexpected identities. This historical control
+  is separate from the concurrent publication test above; offsets are not constants.
+- `set_latest(NULL)` / `set_oldest(NULL)` returned NULL in schema041. The adapter
+  resolves explicit bounds inside its transaction. Archives have empty witnesses.
+- Nodejumper SDK v0.3.2, commit `5caaebc3eab380de827196663d4bb18b90ffd6f4`, decoded
+  three create, three archive and eleven offset-80 active rows. Eight had later
+  archives and correctly remained active at 80. No SDK runtime dependency was added.
+- Fresh Ledger requests respected revoked B rights with a preissued token. PQS
+  cached B-only rows remained after revocation; readiness loss took about 1–5 seconds
+  in two observations. Those timings are not a revocation guarantee.
+
+### Outcomia artifact
+
+The explicitly approved local test used the existing DAR with SHA-256
+`eef7340eba83f4f2af4865258c66c6461876bacb05b8e4dbc6c7ca74459f6f0e`,
+main package `73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a`.
+It uploaded the DAR and created an isolated Protocol/Draft/Open/Closed lifecycle.
+No funded collateral, orders, trades or resolutions were created. The sibling
+source repository was not modified or asserted to have been rebuilt.
+
+## Model tools — 0.3.0-alpha.1 in progress
+
+[PR #6](https://github.com/kunal171/cantongrid/pull/6) and post-merge Rust/PostgreSQL
+and security CI passed. Both model examples share validation/evaluation/SQL planning.
+Controls cover exact arithmetic, overflow, filters, missing/optional values,
+invalid names/paths/definitions and deterministic fingerprints. Owned-Postgres
+DDL/row round trips run in a rollback-only transaction after checking fixture identity.
+
+The initial compiler pass ran 54 credential-free and all 15 environment-dependent
+Rust tests (69 total), plus 13 Python tests. Review then added a regression for
+PostgreSQL-incompatible NUL text and oversized direct rows: all 55 credential-free
+tests and the affected model PostgreSQL test passed. The other 14 integration tests
+were not rerun for that model-only fix. Formatting and Clippy passed.
+
+Offline guide checks ran scaffold/fixtures, both model previews/plans and a custom
+`1.20 × 2 = 2.40` example. JSON, shell syntax and links were checked. Live guide
+commands were checked against code and earlier evidence, not rerun for prose edits.
+Live model storage, lifecycle integration and generated APIs remain untested
+because they are not implemented.
+
+## Source defect
+
+An unrelated schema's `__event_type` prevented PQS store initialization. The
+[standalone reproduction](https://github.com/kunal171/cantongrid/blob/main/repros/pqs-schema-type-collision/README.md) isolates
+upstream SQL from CantonGrid processing. Tracking:
+[upstream issue #240](https://github.com/digital-asset/participant-query-store/issues/240),
+[PR #241](https://github.com/digital-asset/participant-query-store/pull/241),
+[CantonGrid issue #1](https://github.com/kunal171/cantongrid/issues/1).
+The proposed callback fix leaves versioned migrations unchanged. PostgreSQL 14.25
+controls passed; the full Mill suite was not run locally. These links record the
+contribution, not a claim about its current upstream merge status.
+
+## Limits
+
+No remote/TLS, alternate identity provider, interface/reassignment lifecycle,
+complete pre-snapshot history, automatic erasure, live typed models, durable
+streams, devnet or production acceptance is claimed. Fixture runs are synthetic.
+For new failures, separate our configuration/processing from documented source
+behavior, then reproduce any suspected upstream defect with nonsecret controls.
