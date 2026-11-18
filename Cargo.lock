@@ -332,6 +332,7 @@ dependencies = [
  "axum",
  "cantongrid-core",
  "cantongrid-ledger",
+ "cantongrid-models",
  "cantongrid-postgres",
  "cantongrid-pqs",
  "cantongrid-storage",
