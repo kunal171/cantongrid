@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0-alpha.2 — unreleased
+
+### Added
+
+- Exact TypeScript transport interfaces and GraphQL schema generation from model definitions.
+- Authenticated generated model GraphQL at `/models/graphql`, canonical visibility before counts/pages, revision-scoped cursors and bounded operations.
+- A standalone Daml prediction-market PoC, local deployment/transaction runner, privacy/recovery assertions and loopback viewer.
+
+### Compatibility
+
+- No new destination migration or external runtime dependency. Dynamic schema support uses the existing approved async-graphql dependency.
+- The PoC and generated model API require this source branch; they are not included in 0.3.0-alpha.1.
+
 ## 0.3.0-alpha.1 — 2026-11-18
 
 ### Added
