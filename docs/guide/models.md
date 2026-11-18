@@ -1,8 +1,9 @@
 # Build a declarative model
 
 Models describe which fields to extract and how to calculate derived values.
-The current tools validate definitions, preview a local payload and generate SQL
-plans. They **do not yet** install tables, backfill contracts, maintain live rows
+The tools validate definitions, preview a local payload, generate SQL plans and
+register immutable definitions in the owned database. They **do not yet** install
+projection tables, backfill contracts, maintain live rows
 or expose generated GraphQL fields.
 
 ## Run the complete Visibility example
@@ -143,6 +144,27 @@ A document is at most 64 KiB with 1–16 models. Each model has 1–32 fields, a
 at most 64 KiB; serialized projections at most 1 MiB. Text containing NUL is rejected for PostgreSQL
 compatibility, including optional text, literals and filter values.
 
+## Register a revision
+
+With the [owned PostgreSQL fixture](quickstart.md#persist-in-postgresql) running:
+
+```bash
+cantongrid storage init --database-env CANTONGRID_DESTINATION_URL
+cantongrid models register examples/models/visibility.json --namespace demo --database-env CANTONGRID_DESTINATION_URL
+cantongrid models inspect demo records 1 --database-env CANTONGRID_DESTINATION_URL
+```
+
+Initialization explicitly applies migration 003; opening a 002-only destination
+fails until upgraded. Migrations 001/002 are unchanged. Registration writes the
+whole catalog atomically. Repeating it returns `inserted: 0` and `unchanged: 1`.
+Changing an existing namespace/name/revision fails; use a new revision. Inspection
+reports registration and fingerprint, without printing stored literals.
+
+Namespaces are operator project labels (up to 64 ASCII characters), not source
+identities or permission scopes. Commands require the owned database role, not
+Ledger credentials. Registration does not change source checkpoints, install
+projection tables or expose a new API. No update/delete registry command exists.
+
 ## Understand the SQL plan
 
 `models plan` prints a canonical fingerprint, revision and deterministic table
@@ -152,7 +174,7 @@ Output names are validated ASCII identifiers, at most 48 characters, with system
 names reserved. Table names derive from canonical definition fingerprints.
 
 Treat this as a review artifact. Do not manually apply it expecting the worker
-to populate the table: registry/installer, lifecycle maintenance and generated
-query integration are still missing. Changed definitions need a new revision
-under the intended immutable-version policy; database enforcement/promotion is
-part of the remaining work. See the [remaining integration work](../roadmap.md#next-finish-phase-4).
+to populate the table: installation, lifecycle maintenance and generated
+query integration are still missing. Registration enforces immutable revisions;
+use a new revision for changed definitions. Managed backfill/promotion is still missing.
+See the [remaining integration work](../roadmap.md#next-finish-phase-4).

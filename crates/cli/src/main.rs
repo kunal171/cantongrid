@@ -18,6 +18,8 @@ Usage:
   cantongrid models validate <models.json>
   cantongrid models plan <models.json>
   cantongrid models preview <models.json> <model-name> <payload.json>
+  cantongrid models register <models.json> --namespace <project> --database-env <CANTONGRID_VARIABLE>
+  cantongrid models inspect <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
   cantongrid init <new-directory>
   cantongrid validate <project.json>
   cantongrid fixture run <project.json> [--party <synthetic-party>]...
@@ -57,6 +59,32 @@ fn run(args: Vec<String>) -> Result<(), String> {
         [flag] if flag == "--help" || flag == "-h" => {
             println!("{HELP}");
             Ok(())
+        }
+        [
+            command,
+            action,
+            path,
+            namespace_flag,
+            namespace,
+            database_flag,
+            variable,
+        ] if command == "models"
+            && action == "register"
+            && namespace_flag == "--namespace"
+            && database_flag == "--database-env" =>
+        {
+            commands::model_registry::register(Path::new(path), namespace, variable)
+        }
+        [
+            command,
+            action,
+            namespace,
+            name,
+            revision,
+            database_flag,
+            variable,
+        ] if command == "models" && action == "inspect" && database_flag == "--database-env" => {
+            commands::model_registry::inspect(namespace, name, revision, variable)
         }
         [command, action, path, rest @ ..] if command == "models" => {
             commands::models::run(action, Path::new(path), rest)

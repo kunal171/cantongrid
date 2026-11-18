@@ -15,6 +15,9 @@ pub enum StoreError {
     InvalidBatch,
     CommitUnknown,
     Authorization,
+    ModelDefinition,
+    ModelConflict,
+    ModelCorrupt,
 }
 impl fmt::Display for StoreError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -30,6 +33,9 @@ impl fmt::Display for StoreError {
                 Self::InvalidBatch => "batch failed lifecycle, scope or payload validation; no progress was acknowledged",
                 Self::Authorization => "current source/caller authorization is unavailable, mismatched or expired",
                 Self::CommitUnknown => "commit acknowledgement failed; reconnect and replay the same batch before advancing",
+                Self::ModelDefinition => "invalid model registry namespace, name, revision or definition",
+                Self::ModelConflict => "model revision already has another definition; register a new revision",
+                Self::ModelCorrupt => "stored model revision is invalid or its fingerprint differs; review registry integrity",
                 Self::Database(_) => unreachable!(),
             }),
         }

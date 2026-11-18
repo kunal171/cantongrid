@@ -78,6 +78,17 @@ commands were checked against code and earlier evidence, not rerun for prose edi
 Live model storage, lifecycle integration and generated APIs remain untested
 because they are not implemented.
 
+## Model registry
+
+The registry milestone passed 56 credential-free Rust tests and all 18 owned-
+PostgreSQL tests, including CLI redaction and transport privacy controls.
+Registration tests cover both examples, immutable/idempotent revisions, namespace
+isolation/locking, whole-catalog rollback and stored-content drift. Migration
+controls verify explicit 002→003 upgrade, checksum/unknown-version rejection and
+rollback. Formatting, Clippy, security, release and documentation checks passed.
+The three source-dependent tests were not run for this change. No Ledger writes,
+projection installation or live model activation was performed.
+
 ## Source defect
 
 An unrelated schema's `__event_type` prevented PQS store initialization. The

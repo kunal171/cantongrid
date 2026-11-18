@@ -56,7 +56,7 @@ the evaluated typed client did not expose. See [evidence](verification.md).
 
 ## Destination and recovery
 
-`storage init` explicitly applies immutable checksummed migrations 001/002 to the
+`storage init` explicitly applies immutable checksummed migrations 001–003 to the
 owned destination. Opening a store does not migrate it. Initialization checks
 ownership, schema identity and role restrictions; checksum drift fails.
 
@@ -83,8 +83,14 @@ caller rights are checked before reading and before delivery. Public events omit
 raw witness sets, persistence envelopes and source primary keys. See
 [security](security.md) and [API usage](guide/api.md).
 
-Models currently run offline. Before live integration, add a versioned registry,
-managed installation/backfill/promotion, transactional projection/retraction and
+Model definitions can now be registered under an operator project namespace,
+independent from source checkpoints. Registration is atomic and immutable per
+namespace/name/revision; reads validate the stored fingerprint. The registry has
+no update/delete API, but its database owner remains trusted and can alter SQL.
+It does not activate models or grant access to inputs.
+
+Before live integration, add managed installation/backfill/promotion, source
+bindings restricted to selected canonical templates, transactional projection/retraction and
 authorized typed queries. Model changes must not force an unrelated source
 snapshot or reuse incompatible cursors. Keep the previous usable version until
 promotion succeeds. Joins require access to every input; aggregates need an

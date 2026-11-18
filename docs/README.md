@@ -17,7 +17,8 @@ Reference: [architecture](architecture.md), [security](security.md),
 [roadmap](roadmap.md), [releases](releases.md), [contributing](https://github.com/kunal171/cantongrid/blob/main/CONTRIBUTING.md).
 
 The LocalNet contracts runtime is verified. Phase 4 model validation, exact
-calculation and SQL planning work offline. Live model installation, lifecycle
+calculation and SQL planning work offline; definitions can be registered in the
+owned database. Live model installation, lifecycle
 maintenance and generated typed APIs are still missing. Streams are later work.
 Remote/devnet/production deployment has not been verified.
 

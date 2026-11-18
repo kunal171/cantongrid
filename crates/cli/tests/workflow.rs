@@ -345,3 +345,105 @@ fn declarative_models_validate_plan_and_preview_without_source_credentials() {
     assert!(result.stdout.is_empty());
     assert!(!String::from_utf8_lossy(&result.stderr).contains("PRIVATE_SENTINEL"));
 }
+
+#[test]
+#[ignore = "requires the disposable owned PostgreSQL fixture"]
+fn model_registry_cli_persists_revision_identity_without_printing_literals() {
+    const VARIABLE: &str = "CANTONGRID_DESTINATION_URL";
+    // The command intentionally writes the fixture, never an arbitrary configured database.
+    let mut client = cantongrid_postgres::connect_env(VARIABLE).unwrap();
+    let fixture: bool = client
+        .query_one(
+            "SELECT current_database()='cantongrid' AND current_user='cantongrid_owner'",
+            &[],
+        )
+        .unwrap()
+        .get(0);
+    assert!(
+        fixture,
+        "registry CLI test requires the disposable owned destination"
+    );
+    let root = Scratch::new();
+    let namespace = format!(
+        "cli_registry_{}_{}",
+        std::process::id(),
+        NEXT_REGISTRY.fetch_add(1, Ordering::Relaxed)
+    );
+    // Scoped cleanup also runs after an assertion failure.
+    struct Cleanup(String);
+    impl Drop for Cleanup {
+        fn drop(&mut self) {
+            if let Ok(mut client) = cantongrid_postgres::connect_env(VARIABLE) {
+                let _ = client.execute(
+                    "DELETE FROM cantongrid.model_revisions WHERE namespace=$1",
+                    &[&self.0],
+                );
+            }
+        }
+    }
+    static NEXT_REGISTRY: AtomicU64 = AtomicU64::new(0);
+    let _cleanup = Cleanup(namespace.clone());
+    assert!(
+        cli(&root.0, &["storage", "init", "--database-env", VARIABLE])
+            .status
+            .success()
+    );
+    let mut document: serde_json::Value =
+        serde_json::from_str(include_str!("../../../examples/models/visibility.json")).unwrap();
+    document["models"][0]["fields"]["privateNote"] = serde_json::json!({
+        "op":"literal","value":{"type":"text","value":"REGISTRY_PRIVATE_SENTINEL"}
+    });
+    fs::write(root.0.join("models.json"), document.to_string()).unwrap();
+    let run = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_cantongrid"))
+            .current_dir(&root.0)
+            .env_remove("CANTONGRID_SOURCE_TOKEN")
+            .env_remove("CANTONGRID_API_KEY")
+            .env_remove("CANTONGRID_CURSOR_KEY")
+            .args(args)
+            .output()
+            .unwrap()
+    };
+    let args = [
+        "models",
+        "register",
+        "models.json",
+        "--namespace",
+        &namespace,
+        "--database-env",
+        VARIABLE,
+    ];
+    for inserted in [1, 0] {
+        let result = run(&args);
+        assert!(result.status.success());
+        assert!(!String::from_utf8_lossy(&result.stdout).contains("REGISTRY_PRIVATE_SENTINEL"));
+        let body: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+        assert_eq!(body["result"]["inserted"], inserted);
+        assert_eq!(body["activated"], false);
+    }
+    let inspect = [
+        "models",
+        "inspect",
+        &namespace,
+        "records",
+        "1",
+        "--database-env",
+        VARIABLE,
+    ];
+    let before = run(&inspect);
+    assert!(before.status.success());
+    assert!(!String::from_utf8_lossy(&before.stdout).contains("REGISTRY_PRIVATE_SENTINEL"));
+    let body: serde_json::Value = serde_json::from_slice(&before.stdout).unwrap();
+    assert_eq!(body["registered"], true);
+    assert_eq!(body["fingerprint"].as_str().unwrap().len(), 64);
+    document["models"][0]["fields"]
+        .as_object_mut()
+        .unwrap()
+        .remove("note");
+    fs::write(root.0.join("models.json"), document.to_string()).unwrap();
+    let conflict = run(&args);
+    assert!(!conflict.status.success());
+    assert!(conflict.stdout.is_empty());
+    assert!(!String::from_utf8_lossy(&conflict.stderr).contains("REGISTRY_PRIVATE_SENTINEL"));
+    assert_eq!(run(&inspect).stdout, before.stdout);
+}
