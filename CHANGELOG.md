@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0-alpha.2 — unreleased
+## 0.3.0-alpha.2 — 2026-11-18
 
 ### Added
 
@@ -11,7 +11,7 @@
 ### Compatibility
 
 - No new destination migration or external runtime dependency. Dynamic schema support uses the existing approved async-graphql dependency.
-- The PoC and generated model API require this source branch; they are not included in 0.3.0-alpha.1.
+- The PoC and generated model API are available in 0.3.0-alpha.2; they were not included in 0.3.0-alpha.1.
 
 ## 0.3.0-alpha.1 — 2026-11-18
 

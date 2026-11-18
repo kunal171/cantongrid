@@ -19,8 +19,8 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `serve <runtime.json>` | Authenticated generic REST/GraphQL |
 | `models validate <models.json>` | Strict offline definition validation |
 | `models preview <models.json> <model-name> <payload.json>` | Evaluate an explicitly supplied local payload |
-| `models typescript <models.json>` | Emit exact indexed-row interfaces (development branch) |
-| `models graphql <models.json>` | Emit generated model SDL (development branch) |
+| `models typescript <models.json>` | Emit exact indexed-row interfaces |
+| `models graphql <models.json>` | Emit generated model SDL |
 | `models plan <models.json>` | Print DDL without executing it |
 | `models register <models.json> --namespace <project> --database-env <variable>` | Atomically register immutable definitions; no activation |
 | `models inspect <project> <model-name> <revision> --database-env <variable>` | Read registration/fingerprint metadata |
@@ -35,4 +35,4 @@ with redacted errors. Runtime, fixture and model JSON are different schemas.
 Workflows: [fixtures/PostgreSQL](guide/quickstart.md), [LocalNet](guide/localnet-source.md),
 [API](guide/api.md), [models](guide/models.md). `dev`, `doctor`, live `status`,
 stream commands are not implemented. Generated model reads use `/models/graphql`;
-see the [PoC](guide/poc.md) for the development branch.
+see the [PoC](guide/poc.md) for a released example.

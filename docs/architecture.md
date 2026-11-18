@@ -107,7 +107,7 @@ identical physical revisions. Current-state model inserts/deletes join the
 canonical lifecycle/history/outbox/checkpoint transaction. Rows retain source and
 contract identity; models never grant visibility. See [limits](guide/models.md#bind-and-backfill-a-source).
 
-The development branch serves caller-scoped model pages/counts through generated
+The model API serves caller-scoped model pages/counts through generated
 GraphQL at `/models/graphql`, with revision/namespace-bound cursors and TypeScript
 transport interfaces. The [PoC](guide/poc.md) exercises this on LocalNet.
 Advanced filtering and REST model discovery remain pending. Joins require
