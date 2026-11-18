@@ -5,3 +5,5 @@ pub mod storage;
 pub mod model_installation;
 pub mod model_registry;
 pub mod models;
+
+pub mod model_binding;
