@@ -20,6 +20,8 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `models validate <models.json>` | Strict offline definition validation |
 | `models preview <models.json> <model-name> <payload.json>` | Evaluate an explicitly supplied local payload |
 | `models plan <models.json>` | Print DDL without executing it |
+| `models register <models.json> --namespace <project> --database-env <variable>` | Atomically register immutable definitions; no activation |
+| `models inspect <project> <model-name> <revision> --database-env <variable>` | Read registration/fingerprint metadata |
 
 Arguments and ordering are strict. Credentials are read from explicitly named
 `CANTONGRID_*` variables. Fixture documents are bounded to 8 MiB; runtime/model

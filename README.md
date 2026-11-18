@@ -11,7 +11,7 @@ Outcomia is the first application example; the engine is reusable.
 
 - LocalNet PQS snapshot/update ingestion, atomic checkpoints and authenticated
   generic APIs are verified for the [tested profile](docs/verification.md).
-- Offline model validation, exact calculations and SQL plans are available.
+- Model validation, exact calculations, SQL plans and a persisted revision registry are available.
 - Live model storage/generated APIs are in progress. Durable streams are planned.
 - Remote/devnet/production deployment is unverified.
 

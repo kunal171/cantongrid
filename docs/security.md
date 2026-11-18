@@ -43,6 +43,8 @@ reauthorized on read; automatic erasure is not implemented.
   source keys. Responses use `Cache-Control: no-store` and bounded public errors.
 - API limits: pages 1–25, request body 16 KiB, result page 2 MiB, GraphQL depth 8,
   complexity 100, concurrent requests 16. No mutations, subscriptions or introspection.
+- Model registry commands are operator-only database operations, not HTTP endpoints.
+  Registration/inspection summaries omit literals; definitions grant no data access.
 
 ## Operations
 
