@@ -6,6 +6,8 @@ mod live;
 mod query;
 pub use query::{PageKind, ReadPage};
 mod migration;
+mod model_registry;
+pub use model_registry::ModelRegistration;
 mod store;
 pub use error::StoreError;
 pub use migration::initialize_env;
