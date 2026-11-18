@@ -8,7 +8,6 @@ optional PostgreSQL step. Run commands from the repository root.
 ```bash
 git clone https://github.com/kunal171/cantongrid.git
 cd cantongrid
-rustup toolchain install 1.100.0 --profile minimal --component rustfmt --component clippy
 df -h /
 cargo +1.100.0 build -p cantongrid-cli --locked
 export PATH="$PWD/target/debug:$PATH"
@@ -16,6 +15,7 @@ cantongrid --version
 cantongrid --help
 ```
 
+With rustup installed, `rust-toolchain.toml` selects Rust 1.100.0, rustfmt and Clippy.
 If `CARGO_TARGET_DIR` is set, use its `debug` directory in PATH. Reuse one build
 directory; after fetching dependencies, Cargo checks can use `--offline`.
 

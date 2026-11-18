@@ -9,6 +9,7 @@ than adding application-specific branches.
 
 Requirements: Rust/Cargo 1.100.0 with rustfmt/Clippy, Python 3.11+. Docker/Compose
 with `up --wait` support is needed only for database/source-dependent checks.
+`rust-toolchain.toml` pins the compiler and components for rustup users.
 
 ```bash
 cargo +1.100.0 fmt --all -- --check
