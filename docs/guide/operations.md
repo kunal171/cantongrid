@@ -1,82 +1,66 @@
-# Operations and troubleshooting
+# Operations
 
-The current deployment profile is LocalNet-only. Run one continuous worker per
-source scope and a separate API process. PostgreSQL guards expected checkpoints
-against stale competing writes, but the CLI is not a process supervisor or a
-distributed leader-election service.
+Run one continuous worker per source scope and a separate API process. The CLI
+is not a process supervisor. Start LocalNet, PQS and the owned destination before
+starting `index`/`serve`. Resume with the same reviewed source configuration.
 
-## Start, resume and stop
+A committed checkpoint survives restart. Failed pages roll back; continuous
+indexing retries every two seconds. `--once` returns after one page or failure.
+See [storage behavior](../architecture.md#destination-and-recovery).
 
-1. Start LocalNet, then PQS, then the owned destination.
-2. Verify readiness, current source rights and the restricted SQL reader.
-3. Apply owned migrations explicitly with `storage init` when required.
-4. Start `cantongrid index <runtime.json>` and `cantongrid serve <runtime.json>`.
-5. Stop the CLI processes with your terminal/process manager when finished.
+## Troubleshooting
 
-Committed progress survives a process restart. State, lifecycle events, checkpoint
-and outbox publish in the same transaction. A failed page does not acknowledge
-progress. Continuous indexing retries every two seconds; `--once` returns failure
-and exits instead of retrying indefinitely. It processes at most one page, not an
-entire historical catch-up.
+| Symptom | Action |
+| --- | --- |
+| Unsupported command | Check `--help`; `dev`, `doctor`, live `status` and subscriptions are not implemented |
+| `init` refuses a directory | Use a new directory; it does not overwrite |
+| Runtime JSON fails fixture validation | Use `index`/`serve`; configuration schemas differ |
+| Indexing pauses | Check token expiry, exact rights, PQS readiness and destination connectivity |
+| API denies a bearer | Check issuer/audience/lifetime, source health, principal status and party subset |
+| Old cursor fails | Restart pagination after expiry or grant changes |
+| Unexpected empty result | Check exact template/package, caller scope and coverage; do not broaden access |
+| Binding/checkpoint conflict | Review source identity/scope/generation; do not force another source's offsets |
+| Source gap | Review retention/boundaries; do not skip data or claim complete history |
+| Numeric error | Use exact decimal strings, supported operators and declared scale |
+| Schema mismatch | Explicitly migrate only the owned destination; never edit applied migration checksums |
 
-To stop development infrastructure while preserving database volumes:
+Refresh local PQS credentials using the matching `pqs up` helper. Renew the
+worker/API source token for its exact Ledger user and restart those processes
+with the updated environment. Exporting a variable in another shell does not
+update a running process. Key rotation also invalidates old tokens/cursors.
+
+## Disk and shutdown
 
 ```bash
+df -h /
+docker system df
+python3 scripts/dev.py check resources
+python3 scripts/dev.py localnet logs
+python3 scripts/dev.py pqs status
+python3 scripts/dev.py storage status
+```
+
+Container logs are capped at 10 MiB × 3 files, with INFO defaults. Apply changed
+limits using the corresponding `up` helper; it recreates containers and retains
+volumes. Reuse one Cargo target. Do not truncate Docker-managed logs or globally
+prune volumes. Retained history grows; automatic erasure is not implemented.
+
+In November 2026, unrotated DEBUG logs consumed about 176 GiB and prevented
+PostgreSQL recovery. Container recreation with rotation freed space without a
+volume reset. Keep the guard enabled.
+
+Stop the CLI processes, then infrastructure in this order:
+
+```bash
+# Only if the optional Visibility source is running:
 python3 scripts/dev.py pqs stop --visibility
 python3 scripts/dev.py pqs stop
 python3 scripts/dev.py storage stop
 python3 scripts/dev.py localnet stop
 ```
 
-Use the first command only if the separate Visibility PQS experiment is running.
-Stop PQS before LocalNet because it attaches to the LocalNet network.
-
-## Diagnose common failures
-
-| Symptom | Check and action |
-| --- | --- |
-| Unsupported command | Run `cantongrid --help`; `dev`, `doctor`, live `status` and subscription commands are not implemented |
-| `init` refuses a directory | Choose a new directory; it never overwrites a project |
-| Fixture validation fails on runtime JSON | Use `index`/`serve` for runtime configuration; fixture and runtime schemas differ |
-| Indexing pauses | Check source token expiry, exact read rights, PQS readiness and destination connectivity; retained SQL alone is insufficient |
-| API denies an existing token | Check issuer/audience/lifetime, source availability, principal enabled status and permitted party subset |
-| Pagination fails after grant changes | Restart pagination with the current principal/token; old cursors are intentionally invalid |
-| An empty response surprises you | Check selected template/package and current grants, then coverage; never broaden access as a fallback |
-| Source binding/checkpoint conflict | Review physical source, selected scope and generation; do not force-reuse another source's offsets |
-| Source history gap | Stop and review retention/boundaries; do not advance past missing data or claim complete history |
-| Numeric/model error | Use decimal strings, exact scale and supported arithmetic; inspect locally without publishing payloads |
-| Destination schema mismatch | Apply reviewed migrations only to the owned destination; never edit a recorded migration checksum |
-
-Refresh expiring local PQS credentials with the matching `pqs up` helper and renew
-the runtime's source bearer for its exact Ledger user. Exporting a new variable in
-another shell does not update a running process's environment: restart worker/API
-processes with the renewed value. Use separate signing and cursor keys of at least
-32 bytes. Rotate keys through your operator workflow, then restart affected
-processes; do not expect old cursors/tokens to survive a key change.
-
-## Check disk and logs
-
-```bash
-df -h /
-docker system df
-python3 scripts/dev.py check resources
-python3 scripts/dev.py localnet status
-python3 scripts/dev.py localnet logs
-python3 scripts/dev.py pqs status
-python3 scripts/dev.py storage status
-```
-
-Development containers cap JSON logs at 10 MiB × 3 files per container and use INFO
-or quieter defaults. Recreate changed containers with the corresponding `up`
-helper to apply logging changes, preserving named volumes. Reuse one Cargo target
-directory. Never truncate Docker-managed log files or globally prune volumes.
-Retained journal/history also grows; automated data retention/erasure is not
-implemented yet.
-
-## Report a problem
-
-Record the CantonGrid version/commit, exact nonsecret source versions, failed
-command, expected behavior and a synthetic reproduction. Classify failures as
-our configuration/processing, documented source behavior or a reproducible
-upstream defect. See [upstream triage](../upstream-triage.md). Share private security
-reports through the repository's SECURITY.md process, not a public payload dump.
+Named database volumes are retained. Record exact versions, command, expected
+behavior and a synthetic reproduction when reporting failures. Distinguish our
+configuration/processing from source behavior before claiming an upstream bug;
+see [the reproduced source defect](../verification.md#source-defect).
+Use [private reporting](https://github.com/kunal171/cantongrid/blob/main/SECURITY.md) for vulnerabilities.

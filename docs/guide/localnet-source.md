@@ -1,13 +1,10 @@
-# Configure a LocalNet source
+# LocalNet ingestion
 
-The supported live path reads authorized contracts from PQS and writes to a
-separately owned PostgreSQL destination. The verified profile is Canton 3.5.7,
-Scribe 3.5.4/schema041, exact templates, and raw payloads. Remote transports,
-interfaces and reassignments are not supported by this profile.
+Requires Docker/Compose, Python 3.11+ and the [built CLI](quickstart.md).
+This profile uses Canton 3.5.7 and Scribe 3.5.4/schema041. It supports exact
+contract templates and raw payloads, not interfaces/reassignments or remote TLS.
 
-## Prepare development infrastructure
-
-With Docker/Compose and Python installed:
+## Start infrastructure
 
 ```bash
 python3 scripts/dev.py localnet prepare
@@ -21,21 +18,24 @@ python3 scripts/dev.py check pqs
 python3 scripts/dev.py storage up
 ```
 
-Wait for readiness; retry checks after initialization. LocalNet starts the pinned
-Quickstart network and its demo state. `pqs up` creates/verifies a dedicated local
-read-only Ledger user and its one-party scope, and writes an expiring development
-credential under `.local/pqs/`. `pqs reader` provisions a restricted SELECT-only
-SQL role in that isolated source database. These are development setup actions,
-not work performed implicitly by the Rust indexer.
+`prepare` pins Quickstart revision `8b898ed3ccb15e243b22ee8d0ed3573fb91ee6b9`.
+Wait for readiness and retry checks after startup. `pqs up` creates/verifies a
+one-party CanReadAs user and a one-hour local credential under `.local/pqs/`.
+`pqs reader` creates a separate SELECT-only SQL role. Neither uploads your DAR
+nor creates application contracts; those need separate authorized setup.
 
-This does not upload your application's DAR or create application contracts.
-Arrange an authorized package/contract lifecycle separately. An empty application
-selection can legitimately produce no records; a failed source check cannot.
-For environment details, see [LocalNet](../localnet.md) and
-[PQS setup](../pqs-local.md), reading their initial research notes alongside the
-current [runtime contract](../live-runtime.md).
+| Service | Local endpoint |
+| --- | --- |
+| JSON Ledger API: App User / Provider / SV | `127.0.0.1:2975` / `3975` / `4975` |
+| gRPC Ledger API: App User / Provider / SV | `127.0.0.1:2901` / `3901` / `4901` |
+| Wallet UI: App User / Provider / SV | `wallet.localhost:12000` / `13000` / `14000` |
+| LocalNet database / PQS source / owned destination | `127.0.0.1:5440` / `5441` / `5442` |
+| PQS readiness / optional Visibility source readiness | `http://127.0.0.1:18080/readyz` / `18081/readyz` |
 
-## Prepare runtime configuration
+Do not run upstream Quickstart startup alongside this isolated stack. Source
+and destination roles/databases are separate; never migrate the source.
+
+## Configure your source
 
 ```bash
 umask 077
@@ -45,38 +45,24 @@ cp examples/runtime/grants.json .local/my-app/grants.json
 chmod 600 .local/my-app/*.json
 ```
 
-Edit the copies with your existing metadata. The checked-in example is a schema
-template containing placeholders, not a working source identity.
+Replace placeholders with verified metadata:
 
-| Setting | Supply |
+| Setting | Value |
 | --- | --- |
-| `authorization.endpoint` | Existing numeric-loopback JSON Ledger API, e.g. `http://127.0.0.1:3975` |
-| `authorization.user` | Existing active user with exactly the selected CanReadAs scope |
-| `authorization.parties` | Exact authorized party identifiers, not aliases or wildcard |
+| `authorization.endpoint/user/parties` | Existing Ledger endpoint, active user and its exact nonempty CanReadAs set |
 | `authorization.source/network/generation` | Stable source identity and reviewed generation |
-| `templates` | Verified exact package ID, module and entity for each selection |
-| `source_health` | Corresponding PQS readiness endpoint, normally `http://127.0.0.1:18080/readyz` |
-| `api` | Loopback bind, organization issuer/audience, separate key references and grants file |
+| `templates` | Exact package ID, module and entity |
+| `source_health` | Matching PQS readiness URL |
+| `api` | Loopback bind, organization issuer/audience, separate key references and relative grants file |
 
-Retain the required policy values in `examples/runtime/project.json`:
+Keep `history: snapshot_forward_partial`, `archive_policy: prior_create_current_grants`,
+`payload: raw_json` and `retention: retain_while_authorized`. Ingestion `page_size`
+is 1–8. The example is the complete schema; do not add fixture or model properties.
+`validate` accepts fixture configuration only; live commands validate runtime JSON.
 
-```json
-{
-  "page_size": 8,
-  "history": "snapshot_forward_partial",
-  "archive_policy": "prior_create_current_grants",
-  "payload": "raw_json",
-  "retention": "retain_while_authorized"
-}
-```
+## Credentials and worker
 
-This fragment is explanatory, not a complete configuration. The full source file
-also defines authorization, database references, templates and API settings.
-Runtime documents reject unknown keys; do not add `models` or fixture fields.
-`cantongrid validate` validates fixture projects only. The live commands load and
-validate runtime settings and source identity before operating.
-
-## Supply credentials and start ingestion
+The following passwords are disposable local fixture defaults:
 
 ```bash
 export CANTONGRID_PQS_URL='host=127.0.0.1 port=5441 user=cantongrid_pqs_reader password=local-pqs-reader dbname=pqs'
@@ -86,34 +72,29 @@ export CANTONGRID_SOURCE_TOKEN
 printf '\n'
 cantongrid storage init --database-env CANTONGRID_DESTINATION_URL
 cantongrid source inspect-pqs --database-env CANTONGRID_PQS_URL
-```
-
-Use the source credential provisioned for your configured read-only Ledger user.
-It must match the selected party scope; an unrelated administrator token is not
-a substitute. Do not paste it into committed JSON or command-line arguments.
-The defaults above apply only to the disposable local database fixtures.
-
-Complete [API key and caller-grant configuration](authentication.md) before serving.
-Then index in one terminal and serve in another with the same required environment:
-
-```bash
-# Process at most one bounded page and exit; this does not promise full catch-up.
 cantongrid index .local/my-app/runtime.json --once
-# Keep processing subsequent pages, including snapshot bootstrap and updates.
 cantongrid index .local/my-app/runtime.json
 ```
 
+The bearer must belong to the configured read-only user; an administrator token
+is not a substitute. `--once` processes at most one page, not full catch-up.
+Continuous indexing retries failed cycles without acknowledging their progress.
+An initial snapshot reports `bootstrapping`; afterward coverage is `partial_history`.
+Contracts created and archived before the snapshot are not reconstructed.
+
+Configure [caller keys/grants](api.md), then start a separate terminal with the
+same required environment:
+
 ```bash
-# Separate terminal with the same source/database/API environment configured.
 cantongrid serve .local/my-app/runtime.json
 ```
 
-Keep continuous ingestion running while querying. Initial snapshot pages have
-`bootstrapping` coverage; completed snapshot-forward ingestion is `partial_history`.
-Contracts that were created and archived before the captured boundary are not
-reconstructed. Source offsets are local positions, not global Canton heights.
+For the standalone source-rights probe, save the runtime's `authorization` object
+as `.local/my-app/source-grants.json`, then run
+`cantongrid source verify-grants .local/my-app/source-grants.json`.
+This checks source access, not API callers.
 
-Source and destination identities are bound to progress. Do not change a physical
-source, selected parties or templates and expect old checkpoints to remain valid.
-Review scope/generation changes explicitly. The engine never drops a filter to
-make ingestion succeed.
+The read-only demonstration `CANTONGRID_BIN=target/debug/cantongrid python3 scripts/dev.py check pipeline`
+requires the existing authorized Visibility fixture and isolated reader. Its
+setup and side effects are listed in [development tools](https://github.com/kunal171/cantongrid/blob/main/scripts/README.md).
+For restart, token renewal and disk limits, see [operations](operations.md).
