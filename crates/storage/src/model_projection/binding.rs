@@ -227,3 +227,5 @@ fn clear(
     Ok(())
 }
 
+#[cfg(test)]
+mod tests;
