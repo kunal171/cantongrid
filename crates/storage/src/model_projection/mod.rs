@@ -1,6 +1,8 @@
 //! Private current-state projections. Canonical lifecycle, model rows and progress share a commit.
 mod binding;
 mod installed;
+mod query;
+pub use query::{BoundModel, ModelPage};
 
 use crate::{StoreError, journal::stream_key};
 pub use binding::ModelBinding;

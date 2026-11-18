@@ -18,14 +18,37 @@ pub(super) fn load(
     name: &str,
     revision: u32,
 ) -> Result<Installed, StoreError> {
+    load_checked(tx, namespace, name, revision, false)
+}
+
+/// Query snapshots cannot acquire row locks; immutable metadata and relation locks protect reads.
+pub(super) fn read(
+    tx: &mut Transaction<'_>,
+    namespace: &str,
+    name: &str,
+    revision: u32,
+) -> Result<Installed, StoreError> {
+    load_checked(tx, namespace, name, revision, true)
+}
+
+fn load_checked(
+    tx: &mut Transaction<'_>,
+    namespace: &str,
+    name: &str,
+    revision: u32,
+    read_only: bool,
+) -> Result<Installed, StoreError> {
     model_registry::validate_key(namespace, name, revision)?;
     let metadata = tx
         .query_opt(
-            "SELECT i.fingerprint,t.table_name,t.plan_version,t.ddl_sha256
+            &format!(
+                "SELECT i.fingerprint,t.table_name,t.plan_version,t.ddl_sha256
          FROM cantongrid.model_installations i
          JOIN cantongrid.model_revisions r USING(namespace,name,revision)
          JOIN cantongrid.model_tables t ON t.fingerprint=i.fingerprint
-         WHERE i.namespace=$1 AND i.name=$2 AND i.revision=$3 FOR SHARE OF i,r,t",
+         WHERE i.namespace=$1 AND i.name=$2 AND i.revision=$3 {}",
+                if read_only { "" } else { "FOR SHARE OF i,r,t" }
+            ),
             &[&namespace, &name, &i64::from(revision)],
         )?
         .ok_or(StoreError::ModelMissing)?;
@@ -44,11 +67,12 @@ pub(super) fn load(
         return Err(StoreError::ModelSchema);
     }
     schema::check_schema(tx)?;
-    schema::verify_writable(
-        tx,
-        &sql,
-        &model.sql_columns().map_err(|_| StoreError::ModelCorrupt)?,
-    )?;
+    let columns = model.sql_columns().map_err(|_| StoreError::ModelCorrupt)?;
+    if read_only {
+        schema::verify_readable(tx, &sql, &columns)?;
+    } else {
+        schema::verify_writable(tx, &sql, &columns)?;
+    }
     Ok(Installed { model, sql })
 }
 

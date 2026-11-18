@@ -77,6 +77,15 @@ pub(crate) fn verify_writable(
     verify_locked(tx, plan, columns, "ROW EXCLUSIVE")
 }
 
+/// Read-only API transactions may take ACCESS SHARE, preserving concurrent ingestion.
+pub(crate) fn verify_readable(
+    tx: &mut Transaction<'_>,
+    plan: &SqlPlan,
+    columns: &[SqlColumn],
+) -> Result<(), StoreError> {
+    verify_locked(tx, plan, columns, "ACCESS SHARE")
+}
+
 /// Lock modes come only from the two fixed callers above, never from configuration.
 fn verify_locked(
     tx: &mut Transaction<'_>,
