@@ -118,6 +118,23 @@ source-dependent tests were not run; actual LocalNet model activation/lifecycle
 acceptance and generated model queries remain pending. No Ledger writes or
 publication were performed for this slice.
 
+## Standalone LocalNet PoC (development branch)
+
+On 2026-11-18, two complete runs deployed `Market:PredictionMarket`, indexed its
+Draft/Open/Resolved lifecycle and verified generated model GraphQL. The first
+run matched seven real event identities; the repeat matched thirteen accumulated
+identities after archiving the previous resolved market, without resetting volumes.
+Both checked exact numeric/Int64 values, A-only/B-only/shared visibility, cursor
+isolation, caller revocation, a choice submitted while the worker was stopped,
+restart catch-up and no duplicate history on repeated observation. Generated
+TypeScript compiled; Chromium rendered the local viewer. API proxy checks returned
+2/2/3 rows for A/B/both. See the [runner and sanitized evidence](guide/poc.md).
+
+Credential-free checks also cover generated nullability/revision identity and safe
+PoC cycle replacement. Owned-PostgreSQL controls exercise typed API authorization,
+null cursors, namespace/operation limits and source health/permission failures.
+This is development-branch evidence, not a new published release or grant submission.
+
 ## Source defect
 
 An unrelated schema's `__event_type` prevented PQS store initialization. The
@@ -133,7 +150,7 @@ contribution, not a claim about its current upstream merge status.
 ## Limits
 
 No remote/TLS, alternate identity provider, interface/reassignment lifecycle,
-complete pre-snapshot history, automatic erasure, generated model APIs, durable
+complete pre-snapshot history, automatic erasure, advanced model filters, durable
 streams, devnet or production acceptance is claimed. Fixture runs are synthetic.
 For new failures, separate our configuration/processing from documented source
 behavior, then reproduce any suspected upstream defect with nonsecret controls.

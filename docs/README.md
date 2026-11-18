@@ -5,6 +5,7 @@ caller-scoped REST/GraphQL. Outcomia is an example, not an engine dependency.
 
 | Start here | Covers |
 | --- | --- |
+| [LocalNet PoC](guide/poc.md) | Deploy a Daml contract, generate types, transact and verify indexing |
 | [Quickstart](guide/quickstart.md) | Build, fixtures and PostgreSQL |
 | [LocalNet](guide/localnet-source.md) | Source setup, runtime configuration and ingestion |
 | [API](guide/api.md) | Caller authentication, REST, GraphQL and pagination |
@@ -20,7 +21,9 @@ The LocalNet contracts runtime is verified. Version 0.3.0-alpha.1 adds model
 validation, exact calculations, registry, installation, bounded source-bound
 backfill/promotion and atomic live projections. Projection controls use owned
 PostgreSQL and synthetic source authority; actual LocalNet model acceptance and
-generated typed APIs remain pending. Streams are later work.
+generated typed APIs remain pending in that release. The [PoC branch](guide/poc.md)
+adds generated model GraphQL/client contracts and actual LocalNet acceptance.
+Streams are later work.
 Remote/devnet/production deployment has not been verified.
 
 ## Publishing

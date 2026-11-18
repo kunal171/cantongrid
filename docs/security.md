@@ -47,7 +47,9 @@ reauthorized on read; automatic erasure is not implemented.
   Registration/inspection summaries omit literals; definitions grant no data access.
 - Table installation is also operator-only. It verifies schema/table ownership and
   rejects nonowner grants or schema drift. Parent-contract foreign keys preserve
-  identity, not permission; live model reads are not implemented yet.
+  identity, not permission. Development-branch model reads join canonical witnesses
+  before counts/pages, preserve exact numeric strings and revalidate bindings/grants
+  before delivery. Namespace labels never grant access.
 
 - Activation requires a verified physical source plan and exact current source-party lease.
   Backfill and live model writes share the canonical writer lock/transaction; failed

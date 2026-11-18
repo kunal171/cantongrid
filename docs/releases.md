@@ -4,6 +4,7 @@
 | --- | --- |
 | [0.1.0-alpha.1](releases/0.1.0-alpha.1.md) | Source prerelease: fixture/storage foundations and source checks |
 | [0.2.0-alpha.1](releases/0.2.0-alpha.1.md) | Source prerelease: LocalNet ingestion and authenticated generic APIs |
+| 0.3.0-alpha.2, development | [Runnable PoC](guide/poc.md), generated model GraphQL and TypeScript interfaces; unreleased |
 | [0.3.0-alpha.1](releases/0.3.0-alpha.1.md) | Source prerelease: declarative models and bounded atomic live projections |
 
 Published artifacts are listed on [GitHub Releases](https://github.com/kunal171/cantongrid/releases).

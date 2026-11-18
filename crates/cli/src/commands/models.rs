@@ -7,7 +7,7 @@ use std::path::Path;
 pub fn run(action: &str, path: &Path, rest: &[String]) -> Result<(), String> {
     if !matches!(
         (action, rest),
-        ("validate" | "plan", []) | ("preview", [_, _])
+        ("validate" | "plan" | "typescript" | "graphql", []) | ("preview", [_, _])
     ) {
         return Err("unsupported model command arguments".into());
     }
@@ -16,6 +16,14 @@ pub fn run(action: &str, path: &Path, rest: &[String]) -> Result<(), String> {
         Catalog::parse(std::str::from_utf8(&bytes).map_err(|_| "model document must be UTF-8")?)
             .map_err(|e| e.to_string())?;
     match action {
+        "typescript" => {
+            print!("{}", catalog.typescript().map_err(|e| e.to_string())?);
+            Ok(())
+        }
+        "graphql" => {
+            print!("{}", catalog.graphql_schema().map_err(|e| e.to_string())?);
+            Ok(())
+        }
         "validate" => crate::print_json(
             &serde_json::json!({"operation":"model_validation","models":catalog.models().len(),"fingerprint":catalog.fingerprint()}),
         ),

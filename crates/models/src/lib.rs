@@ -13,3 +13,5 @@ pub use sql::{SqlColumn, SqlPlan};
 
 #[cfg(test)]
 mod tests;
+
+mod client;

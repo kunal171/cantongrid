@@ -7,16 +7,17 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
-cantongrid-postgres = { path = "../postgres", version = "=0.3.0-alpha.1" }
-cantongrid-core = { path = "../core", version = "=0.3.0-alpha.1" }
-cantongrid-ledger = { path = "../ledger", version = "=0.3.0-alpha.1" }
-cantongrid-pqs = { path = "../pqs", version = "=0.3.0-alpha.1" }
-cantongrid-storage = { path = "../storage", version = "=0.3.0-alpha.1" }
+cantongrid-postgres = { path = "../postgres", version = "=0.3.0-alpha.2" }
+cantongrid-core = { path = "../core", version = "=0.3.0-alpha.2" }
+cantongrid-ledger = { path = "../ledger", version = "=0.3.0-alpha.2" }
+cantongrid-pqs = { path = "../pqs", version = "=0.3.0-alpha.2" }
+cantongrid-models = { path = "../models", version = "=0.3.0-alpha.2" }
+cantongrid-storage = { path = "../storage", version = "=0.3.0-alpha.2" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "signal"] }
 axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "query", "tokio"] }
-async-graphql = { version = "7.2.1", default-features = false }
+async-graphql = { version = "7.2.1", default-features = false, features = ["dynamic-schema"] }
 reqwest = { version = "0.13.5", default-features = false }
 jsonwebtoken = { version = "12.0.0", default-features = false, features = ["rust_crypto"] }
 sha2 = "0.11.1"

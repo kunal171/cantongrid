@@ -373,3 +373,96 @@ fn schema_drift_stops_live_and_idle_progress_without_repair() {
     );
     assert_eq!(s.bind(1, None), Err(StoreError::ModelSchema));
 }
+
+#[test]
+#[ignore = "requires owned PostgreSQL; synthetic authority; run serially"]
+fn model_pages_authorize_before_counts_and_reject_stale_revisions() {
+    use cantongrid_core::visibility::CallerGrants;
+    let mut s = Scenario::visibility();
+    s.plans[0] = Plan::pqs(
+        s.plans[0].context().clone(),
+        [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()].into(),
+        s.plans[0].templates().cloned().collect(),
+    )
+    .unwrap()
+    .with_source_binding("a".repeat(64));
+    let source = lease(&s.plans[0], vec!["A", "B"]);
+    let mut batch = s.create("snapshot", "a-only", PAYLOAD);
+    let mut private = s.create("snapshot", "b-only", PAYLOAD).events.remove(0);
+    private.witnesses = [PartyId::new("B").unwrap()].into();
+    batch.events.push(private);
+    let mut store = s.open();
+    store
+        .apply_authorized(&s.plans[0], &batch, &source)
+        .unwrap();
+    store
+        .bind_model(
+            &s.plans[0],
+            &source,
+            &s.namespace,
+            &s.models[0].name,
+            1,
+            None,
+        )
+        .unwrap();
+    let caller = |parties: Vec<&str>| {
+        CallerGrants::from_verified(
+            s.plans[0].context().binding(),
+            parties.into_iter().map(|p| PartyId::new(p).unwrap()),
+        )
+    };
+    let a = caller(vec!["A"]);
+    let b = caller(vec!["B"]);
+    let ab = caller(vec!["A", "B"]);
+    let models = store.bound_models(&s.plans[0], &a, &source).unwrap();
+    let first = store
+        .read_model(&s.plans[0], &a, &source, &models[0], None, 1)
+        .unwrap();
+    assert_eq!(first.visible_total, "1");
+    assert!(first.next_after.is_none());
+    assert_eq!(first.items[0]["contractId"], "a-only");
+    assert_eq!(first.items[0]["values"]["sequence"], "9223372036854775807");
+    assert_eq!(
+        first.items[0]["values"]["amount"],
+        "12345678901234567890.1234567891"
+    );
+    assert!(first.items[0]["values"]["note"].is_null());
+    let other = store
+        .read_model(&s.plans[0], &b, &source, &models[0], None, 1)
+        .unwrap();
+    assert_eq!(other.visible_total, "1");
+    assert_eq!(other.items[0]["contractId"], "b-only");
+    let first = store
+        .read_model(&s.plans[0], &ab, &source, &models[0], None, 1)
+        .unwrap();
+    assert_eq!(first.visible_total, "2");
+    let next = store
+        .read_model(
+            &s.plans[0],
+            &ab,
+            &source,
+            &models[0],
+            first.next_after.as_deref(),
+            1,
+        )
+        .unwrap();
+    assert_eq!(next.items[0]["contractId"], "b-only");
+    assert!(next.next_after.is_none());
+    let mut revision = s.models[0].clone();
+    revision.revision = 2;
+    s.install(revision);
+    store
+        .bind_model(
+            &s.plans[0],
+            &source,
+            &s.namespace,
+            &s.models[0].name,
+            2,
+            Some(1),
+        )
+        .unwrap();
+    assert!(matches!(
+        store.read_model(&s.plans[0], &a, &source, &models[0], None, 1),
+        Err(StoreError::ModelBinding)
+    ));
+}

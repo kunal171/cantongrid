@@ -11,7 +11,7 @@ pub use model_registry::ModelRegistration;
 mod model_installation;
 pub use model_installation::ModelInstallation;
 mod model_projection;
-pub use model_projection::ModelBinding;
+pub use model_projection::{BoundModel, ModelBinding, ModelPage};
 mod store;
 pub use error::StoreError;
 pub use migration::initialize_env;

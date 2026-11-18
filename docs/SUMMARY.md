@@ -4,6 +4,7 @@
 
 ## Developer guide
 
+* [LocalNet PoC](guide/poc.md)
 * [Quickstart and PostgreSQL](guide/quickstart.md)
 * [LocalNet ingestion](guide/localnet-source.md)
 * [Authentication and API](guide/api.md)

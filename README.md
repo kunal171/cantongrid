@@ -4,7 +4,7 @@ A Rust indexer for authorized Daml contracts on Canton. It maintains active
 contracts and lifecycle history in PostgreSQL and serves caller-scoped REST/GraphQL.
 Outcomia is the first application example; the engine is reusable.
 
-[Developer guide](docs/README.md) · [Architecture](docs/architecture.md) ·
+[Runnable PoC](docs/guide/poc.md) · [Developer guide](docs/README.md) · [Architecture](docs/architecture.md) ·
 [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## Current status

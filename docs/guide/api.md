@@ -134,3 +134,11 @@ Provenance reports source/network/generation, `sourceLocalWatermark`,
 `partial_history`, `unknown`). `recently_observed` means within 30 seconds, not
 zero ledger lag. Responses are `no-store`; limits and policy are in
 [security](../security.md).
+
+## Generated model queries
+
+The unreleased [PoC branch](poc.md) adds typed `POST /models/graphql` operations.
+Use `models graphql` for the model SDL and `models typescript` for exact transport
+interfaces. `/graphql` above retains its generic contract/history schema.
+Model operations use the same independent caller/source checks and no-store policy,
+with a maximum of two model resolvers and 25 rows/page.

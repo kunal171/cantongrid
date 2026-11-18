@@ -577,7 +577,7 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
     let allowed = Arc::new(AtomicBool::new(true));
     let healthy = Arc::new(AtomicBool::new(true));
     let (url, source_thread) = source(stop.clone(), allowed.clone(), healthy.clone());
-    let _running = Running {
+    let mut running = Running {
         child: None,
         directory: root.clone(),
         stop,
@@ -694,6 +694,95 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
         store.checkpoint(&plan).unwrap().as_deref(),
         Some("snapshot")
     );
+    // The same installed binding now supplies a typed schema; callers never supply party IDs.
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    drop(listener);
+    let mut api_config = config.clone();
+    api_config["api"]["bind"] = address.to_string().into();
+    std::fs::write(&path, api_config.to_string()).unwrap();
+    let grants = json!({"version":1,"epoch":1,"principals":{
+        "a":{"enabled":true,"parties":["A"]},"b":{"enabled":true,"parties":["B"]}}});
+    std::fs::write(root.join("grants.json"), grants.to_string()).unwrap();
+    running.child = Some(
+        Command::new(env!("CARGO_BIN_EXE_cantongrid"))
+            .args(["serve", path.to_str().unwrap()])
+            .env("CANTONGRID_TEST_PQS_URL", source_database)
+            .env("CANTONGRID_TEST_SOURCE_TOKEN", &token)
+            .env("CANTONGRID_TEST_API_KEY", key)
+            .env(
+                "CANTONGRID_TEST_CURSOR_KEY",
+                "local-cursor-test-key-separated-00000001",
+            )
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap(),
+    );
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while std::net::TcpStream::connect(address).is_err() {
+        assert!(Instant::now() < deadline, "model API did not start");
+        thread::sleep(Duration::from_millis(20));
+    }
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let base = format!("http://{address}/models");
+    let field = model.api_name().unwrap();
+    let selection = format!(
+        "{field}(namespace:\"{namespace}\"){{visibleTotal fingerprint items{{contractId values{{amount sequence note}}}}}}"
+    );
+    let operation = json!({"query":format!("query($cursor:String,$limit:Int){{{selection}}}").replace("(namespace:","(cursor:$cursor,limit:$limit,namespace:"),"variables":{"cursor":null,"limit":null}});
+    let a = jwt("a", key, clock() + 600);
+    let b = jwt("b", key, clock() + 600);
+    assert_eq!(request(&rt, &base, None, Some(operation.clone())).0, 401);
+    let (status, result) = request(&rt, &base, Some(&a), Some(operation.clone()));
+    assert_eq!(status, 200);
+    assert!(result.get("errors").is_none(), "{result}");
+    assert_eq!(result["data"][&field]["visibleTotal"], "1");
+    assert_eq!(
+        result["data"][&field]["items"][0]["values"]["amount"],
+        "12345678901234567890.1234567891"
+    );
+    assert_eq!(
+        result["data"][&field]["items"][0]["values"]["sequence"],
+        "9223372036854775807"
+    );
+    assert!(result["data"][&field]["items"][0]["values"]["note"].is_null());
+    let (_, hidden) = request(&rt, &base, Some(&b), Some(operation.clone()));
+    assert_eq!(hidden["data"][&field]["visibleTotal"], "0");
+    assert_eq!(hidden["data"][&field]["items"], json!([]));
+    let (_, limited) = request(
+        &rt,
+        &base,
+        Some(&a),
+        Some(json!({"query":format!("{{a:{selection} b:{selection} c:{selection}}}")})),
+    );
+    assert!(limited.get("errors").is_some());
+    let (_, unknown) = request(
+        &rt,
+        &base,
+        Some(&a),
+        Some(json!({"query":format!("{{{}(namespace:\"missing\"){{visibleTotal}}}}",field)})),
+    );
+    assert!(unknown.get("errors").is_some());
+    healthy.store(false, Ordering::Relaxed);
+    assert_eq!(
+        request(&rt, &base, Some(&a), Some(operation.clone())).0,
+        503
+    );
+    healthy.store(true, Ordering::Relaxed);
+    allowed.store(false, Ordering::Relaxed);
+    assert_eq!(
+        request(&rt, &base, Some(&a), Some(operation.clone())).0,
+        503
+    );
+    allowed.store(true, Ordering::Relaxed);
+    let mut revoked = grants;
+    revoked["principals"]["a"]["enabled"] = false.into();
+    std::fs::write(root.join("grants.json"), revoked.to_string()).unwrap();
+    assert_eq!(request(&rt, &base, Some(&a), Some(operation)).0, 401);
     // Only test-owned destination rows/tables are removed; the fake authority is read-only.
     let mut client = cantongrid_postgres::connect_env("CANTONGRID_DESTINATION_URL").unwrap();
     let stream: String = client

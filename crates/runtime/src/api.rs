@@ -1,4 +1,6 @@
 //! REST and GraphQL share one authorized SQL query path; neither transport supplies party grants.
+mod model_api;
+
 use crate::{auth, config::Project, index::ready};
 use async_graphql::{Context, EmptyMutation, EmptySubscription, Object, Schema, SimpleObject};
 use axum::{
@@ -378,6 +380,7 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .route("/v1/contracts", get(active))
         .route("/v1/events", get(history))
         .route("/graphql", post(graphql))
+        .route("/models/graphql", post(model_api::graphql))
         .layer(axum::middleware::from_fn(no_store))
         .layer(DefaultBodyLimit::max(16384))
         .with_state(service);

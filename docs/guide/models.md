@@ -4,7 +4,8 @@ Models describe which fields to extract and how to calculate derived values.
 The tools validate definitions, preview a local payload, generate SQL plans and
 register immutable definitions, install their tables and bind them to an indexed
 source. Bindings backfill known active contracts and maintain rows during live
-ingestion. Generated model queries/GraphQL fields are still pending.
+ingestion. The unreleased [PoC branch](poc.md) adds generated TypeScript and
+GraphQL schema output plus authenticated model queries.
 
 ## Run the complete Visibility example
 
@@ -249,6 +250,5 @@ no-op even when its `--replace` revision is now stale.
 
 Old rows are removed for this stream only when its last reference to that physical
 revision is replaced. Other namespaces and streams retain their rows. Namespaces
-remain operator labels, not access grants. No unbind command or caller-facing
-model API exists yet; [authorized typed queries](../roadmap.md#next-finish-phase-4)
-are next.
+remain operator labels, not access grants. No unbind command exists. The [PoC guide](poc.md) covers generated model GraphQL
+and client types on the current development branch.
