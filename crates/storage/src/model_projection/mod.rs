@@ -149,3 +149,5 @@ pub(crate) fn apply(
     Ok(())
 }
 
+#[cfg(test)]
+mod tests;
