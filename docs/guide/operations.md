@@ -22,6 +22,9 @@ See [storage behavior](../architecture.md#destination-and-recovery).
 | Binding/checkpoint conflict | Review source identity/scope/generation; do not force another source's offsets |
 | Source gap | Review retention/boundaries; do not skip data or claim complete history |
 | Numeric error | Use exact decimal strings, supported operators and declared scale |
+| Model binding refuses a replacement | Register/install the new revision and supply the expected old revision with `--replace` |
+| Model backfill/work limit | Atomic backfill is capped at 128 rows/8 MiB; staged rebuilds are not available; do not skip contracts |
+| Model projection failure | Correct payload/mapping or reviewed schema drift; retry without moving the checkpoint |
 | Schema mismatch | Explicitly migrate only the owned destination; never edit applied migration checksums |
 
 Refresh local PQS credentials using the matching `pqs up` helper. Renew the

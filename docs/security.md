@@ -49,6 +49,10 @@ reauthorized on read; automatic erasure is not implemented.
   rejects nonowner grants or schema drift. Parent-contract foreign keys preserve
   identity, not permission; live model reads are not implemented yet.
 
+- Activation requires a verified physical source plan and exact current source-party lease.
+  Backfill and live model writes share the canonical writer lock/transaction; failed
+  evaluation, drift or expired leases stop progress. Bindings never grant API access.
+
 ## Operations
 
 Keep source SQL SELECT-only and separate from the owned destination. Do not log

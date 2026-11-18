@@ -75,8 +75,8 @@ were not rerun for that model-only fix. Formatting and Clippy passed.
 Offline guide checks ran scaffold/fixtures, both model previews/plans and a custom
 `1.20 × 2 = 2.40` example. JSON, shell syntax and links were checked. Live guide
 commands were checked against code and earlier evidence, not rerun for prose edits.
-Live model storage, lifecycle integration and generated APIs remain untested
-because they are not implemented.
+At that milestone, model storage, lifecycle integration and generated APIs were
+not implemented; the projection checks below cover the later storage work.
 
 ## Model registry
 
@@ -100,6 +100,24 @@ Formatting, Clippy, security, release and documentation checks passed; the regis
 yanked-package lookup succeeded on retry. Three source-dependent tests were not run.
 Installation does not activate models, copy contracts or complete Phase 4.
 
+## Source-bound live projections
+
+This slice passed 56 credential-free Rust tests, 44 owned-PostgreSQL checks and
+13 Python helper tests. The source-bound projection tests use synthetic authority,
+not a live Canton source. Both model examples retain exact values through bounded
+backfill, forward creation and archive. Controls cover filtered/nullable rows,
+whole-page rollback, schema drift, compare-and-replace promotion/rollback,
+idempotent retries, lease expiry after writes, source/selection mismatches,
+writer exclusion, aliases and cross-stream isolation. Limits cover 129-row
+rejection, 16 bindings and a shared 8 MiB work budget. The CLI denies activation
+when source rights/readiness fail. Migration 005 upgrade/drift checks preserve
+existing installed tables and all earlier migration SQL.
+
+Formatting, Clippy, security, release and documentation checks passed. The three
+source-dependent tests were not run; actual LocalNet model activation/lifecycle
+acceptance and generated model queries remain pending. No Ledger writes or
+publication were performed for this slice.
+
 ## Source defect
 
 An unrelated schema's `__event_type` prevented PQS store initialization. The
@@ -115,7 +133,7 @@ contribution, not a claim about its current upstream merge status.
 ## Limits
 
 No remote/TLS, alternate identity provider, interface/reassignment lifecycle,
-complete pre-snapshot history, automatic erasure, live typed models, durable
+complete pre-snapshot history, automatic erasure, generated model APIs, durable
 streams, devnet or production acceptance is claimed. Fixture runs are synthetic.
 For new failures, separate our configuration/processing from documented source
 behavior, then reproduce any suspected upstream defect with nonsecret controls.
