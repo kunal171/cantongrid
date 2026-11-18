@@ -1,0 +1,34 @@
+-- Local demonstration only: no collateral, custody, trades or real-world outcome claims.
+module Market where
+
+data MarketState = Draft | Open | Resolved
+  deriving (Eq, Show)
+
+template PredictionMarket
+  with
+    operator : Party
+    readers : [Party]
+    demoId : Text
+    question : Text
+    priceTick : Numeric 10
+    quantityLot : Int
+    state : MarketState
+    outcome : Optional Bool
+  where
+    signatory operator
+    observer readers
+    ensure demoId /= "" && question /= "" && priceTick > 0.0 && quantityLot > 0
+
+    -- Consuming choices archive the old contract and create its next immutable revision.
+    choice Publish : ContractId PredictionMarket
+      controller operator
+      do
+        assertMsg "Only a draft can be published" (state == Draft)
+        create this with state = Open
+
+    choice Resolve : ContractId PredictionMarket
+      with result : Bool
+      controller operator
+      do
+        assertMsg "Only an open market can resolve" (state == Open)
+        create this with state = Resolved; outcome = Some result
