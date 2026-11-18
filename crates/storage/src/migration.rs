@@ -12,6 +12,7 @@ const PROGRESS: &str = include_str!("../migrations/002_progress.sql");
 // The registry allows 128 KiB of JSONB text for a compiler input capped at 64 KiB,
 // accounting for PostgreSQL's extra JSON formatting whitespace.
 const MODELS: &str = include_str!("../migrations/003_models.sql");
+const INSTALLATIONS: &str = include_str!("../migrations/004_model_installations.sql");
 const MIGRATION_LOCK: i64 = 0x43475249444d4947;
 
 /// Initialize only a separately owned destination; repeat calls verify the immutable migration.
@@ -68,7 +69,9 @@ pub(crate) fn check_schema(client: &mut impl GenericClient) -> Result<(), StoreE
     check_base(client)?;
     check_runtime_versions(client, true)?;
     let owned: bool = client.query_one(
-        "SELECT EXISTS (SELECT 1 FROM pg_class WHERE oid=to_regclass('cantongrid.model_revisions') AND relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))",
+        "SELECT count(*) = 3 AND bool_and(relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))
+         FROM pg_class WHERE oid IN (to_regclass('cantongrid.model_revisions'),
+             to_regclass('cantongrid.model_tables'), to_regclass('cantongrid.model_installations'))",
         &[],
     )?.get(0);
     if !owned {
@@ -81,20 +84,26 @@ pub(crate) fn check_schema(client: &mut impl GenericClient) -> Result<(), StoreE
 /// Validate existing checksums first, so an unknown migration is never adopted.
 fn upgrade_models(client: &mut impl GenericClient) -> Result<(), StoreError> {
     let versions = check_runtime_versions(client, false)?;
-    if !versions.contains(&3) {
-        client.batch_execute(MODELS)?;
-        client.execute(
-            "INSERT INTO cantongrid.runtime_migrations VALUES(3,$1)",
-            &[&models_checksum()],
-        )?;
+    for (version, sql) in [(3, MODELS), (4, INSTALLATIONS)] {
+        if !versions.contains(&version) {
+            client.batch_execute(sql)?;
+            client.execute(
+                "INSERT INTO cantongrid.runtime_migrations VALUES($1,$2)",
+                &[
+                    &version,
+                    &runtime_checksum(version).ok_or(StoreError::Schema)?,
+                ],
+            )?;
+        }
     }
     check_schema(client)
 }
 
-/// Reads require all migrations. Initialization may additionally accept the intact 002 baseline.
+/// Reads require the full set. Initialization accepts only an intact ordered prefix;
+/// for example, [2, 4] is corruption, not permission to recreate migration 003.
 fn check_runtime_versions(
     client: &mut impl GenericClient,
-    require_models: bool,
+    require_current: bool,
 ) -> Result<Vec<i32>, StoreError> {
     let exists: bool = client
         .query_one(
@@ -106,33 +115,41 @@ fn check_runtime_versions(
         return Err(StoreError::Schema);
     }
     let rows = client.query(
-        "SELECT version,migration_sha256 FROM cantongrid.runtime_migrations",
+        "SELECT version,migration_sha256 FROM cantongrid.runtime_migrations ORDER BY version",
         &[],
     )?;
     let mut versions = Vec::new();
-    for row in rows {
+    for (index, row) in rows.into_iter().enumerate() {
         let version: i32 = row.get(0);
-        let expected = match version {
-            2 => progress_checksum(),
-            3 => models_checksum(),
-            _ => return Err(StoreError::Schema),
-        };
+        if [2, 3, 4].get(index) != Some(&version) {
+            return Err(StoreError::Schema);
+        }
+        let expected = runtime_checksum(version).ok_or(StoreError::Schema)?;
         if row.get::<_, String>(1) != expected {
             return Err(StoreError::Schema);
         }
         versions.push(version);
     }
-    if !versions.contains(&2) || (require_models && !versions.contains(&3)) {
+    if versions.is_empty() || (require_current && versions.len() != 3) {
         return Err(StoreError::Schema);
     }
     Ok(versions)
 }
 
-fn models_checksum() -> String {
-    Sha256::digest(MODELS.as_bytes())
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+/// Checksum the exact applied SQL; even comments in an applied migration stay immutable.
+fn runtime_checksum(version: i32) -> Option<String> {
+    let sql = match version {
+        2 => PROGRESS,
+        3 => MODELS,
+        4 => INSTALLATIONS,
+        _ => return None,
+    };
+    Some(
+        Sha256::digest(sql.as_bytes())
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect(),
+    )
 }
 
 fn progress_checksum() -> String {
@@ -214,7 +231,7 @@ mod tests {
         let mut tx = client.transaction().unwrap();
         tx.execute("SELECT pg_advisory_xact_lock($1)", &[&MIGRATION_LOCK])
             .unwrap();
-        tx.batch_execute("DROP TABLE cantongrid.model_revisions; DELETE FROM cantongrid.runtime_migrations WHERE version=3").unwrap();
+        tx.batch_execute("DROP TABLE cantongrid.model_installations, cantongrid.model_tables, cantongrid.model_revisions; DELETE FROM cantongrid.runtime_migrations WHERE version IN (3,4)").unwrap();
         assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
         upgrade_models(&mut tx).unwrap();
         upgrade_models(&mut tx).unwrap(); // Reinitialization never rewrites a recorded checksum.
@@ -222,7 +239,7 @@ mod tests {
             tx.query_one("SELECT count(*) FROM cantongrid.runtime_migrations", &[])
                 .unwrap()
                 .get::<_, i64>(0),
-            2
+            3
         );
         tx.execute(
             "INSERT INTO cantongrid.runtime_migrations VALUES(99,'synthetic-unknown-version')",
@@ -237,6 +254,52 @@ mod tests {
         .unwrap();
         tx.execute("UPDATE cantongrid.runtime_migrations SET migration_sha256='synthetic-model-drift' WHERE version=3", &[]).unwrap();
         assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
+        assert_eq!(upgrade_models(&mut tx), Err(StoreError::Schema));
+        tx.rollback().unwrap();
+        check_schema(&mut client).unwrap();
+    }
+
+    #[test]
+    #[ignore = "requires the disposable owned PostgreSQL fixture; run schema tests serially"]
+    fn installation_upgrade_preserves_registry_and_rejects_noncontiguous_history() {
+        initialize_env("CANTONGRID_DESTINATION_URL").unwrap();
+        let mut client = connect_env("CANTONGRID_DESTINATION_URL").unwrap();
+        let fixture: bool = client
+            .query_one(
+                "SELECT current_database()='cantongrid' AND current_user='cantongrid_owner'",
+                &[],
+            )
+            .unwrap()
+            .get(0);
+        assert!(
+            fixture,
+            "upgrade control requires the disposable owned destination"
+        );
+        let mut tx = client.transaction().unwrap();
+        tx.execute("SELECT pg_advisory_xact_lock($1)", &[&MIGRATION_LOCK])
+            .unwrap();
+        let count: i64 = tx
+            .query_one("SELECT count(*) FROM cantongrid.model_revisions", &[])
+            .unwrap()
+            .get(0);
+        tx.batch_execute("DROP TABLE cantongrid.model_installations, cantongrid.model_tables; DELETE FROM cantongrid.runtime_migrations WHERE version=4").unwrap();
+        assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
+        upgrade_models(&mut tx).unwrap();
+        assert_eq!(
+            tx.query_one("SELECT count(*) FROM cantongrid.model_revisions", &[])
+                .unwrap()
+                .get::<_, i64>(0),
+            count
+        );
+        tx.execute(
+            "DELETE FROM cantongrid.runtime_migrations WHERE version=3",
+            &[],
+        )
+        .unwrap();
+        assert_eq!(upgrade_models(&mut tx), Err(StoreError::Schema));
+        tx.rollback().unwrap();
+        let mut tx = client.transaction().unwrap();
+        tx.execute("UPDATE cantongrid.runtime_migrations SET migration_sha256='synthetic-installation-drift' WHERE version=4", &[]).unwrap();
         assert_eq!(upgrade_models(&mut tx), Err(StoreError::Schema));
         tx.rollback().unwrap();
         check_schema(&mut client).unwrap();

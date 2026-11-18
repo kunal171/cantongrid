@@ -56,7 +56,7 @@ the evaluated typed client did not expose. See [evidence](verification.md).
 
 ## Destination and recovery
 
-`storage init` explicitly applies immutable checksummed migrations 001–003 to the
+`storage init` explicitly applies immutable checksummed migrations 001–004 to the
 owned destination. Opening a store does not migrate it. Initialization checks
 ownership, schema identity and role restrictions; checksum drift fails.
 
@@ -89,7 +89,14 @@ namespace/name/revision; reads validate the stored fingerprint. The registry has
 no update/delete API, but its database owner remains trusted and can alter SQL.
 It does not activate models or grant access to inputs.
 
-Before live integration, add managed installation/backfill/promotion, source
+The operator installer compiles the registered model, creates a private table and
+links the revision in one transaction. Stored definition/DDL hashes are checked
+against PostgreSQL's actual columns, keys, indexes, ownership and grants. Existing
+unmanaged tables and drift are rejected, not adopted or repaired. Identical
+definitions can share a physical table; source identity remains part of every row key.
+Installation does not activate processing or copy contracts.
+
+Before live integration, add backfill/promotion, source
 bindings restricted to selected canonical templates, transactional projection/retraction and
 authorized typed queries. Model changes must not force an unrelated source
 snapshot or reuse incompatible cursors. Keep the previous usable version until

@@ -89,6 +89,17 @@ rollback. Formatting, Clippy, security, release and documentation checks passed.
 The three source-dependent tests were not run for this change. No Ledger writes,
 projection installation or live model activation was performed.
 
+## Projection-table installation
+
+The installer passed 56 credential-free Rust tests and all 30 owned-PostgreSQL
+tests. Both examples round-trip exact types, including Numeric scales 0/10/37.
+Controls cover retries/sharing, private grants, schema/key/index/default drift,
+rules/triggers/inheritance, missing/unmanaged tables, metadata collisions, DDL
+locking and real SQL rollback of table/metadata/link writes. CLI errors omit literals.
+Formatting, Clippy, security, release and documentation checks passed; the registry
+yanked-package lookup succeeded on retry. Three source-dependent tests were not run.
+Installation does not activate models, copy contracts or complete Phase 4.
+
 ## Source defect
 
 An unrelated schema's `__event_type` prevented PQS store initialization. The

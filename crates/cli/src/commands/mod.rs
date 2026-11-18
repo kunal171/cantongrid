@@ -2,5 +2,6 @@
 pub mod source;
 pub mod storage;
 
+pub mod model_installation;
 pub mod model_registry;
 pub mod models;

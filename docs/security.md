@@ -45,6 +45,9 @@ reauthorized on read; automatic erasure is not implemented.
   complexity 100, concurrent requests 16. No mutations, subscriptions or introspection.
 - Model registry commands are operator-only database operations, not HTTP endpoints.
   Registration/inspection summaries omit literals; definitions grant no data access.
+- Table installation is also operator-only. It verifies schema/table ownership and
+  rejects nonowner grants or schema drift. Parent-contract foreign keys preserve
+  identity, not permission; live model reads are not implemented yet.
 
 ## Operations
 

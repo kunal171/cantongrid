@@ -4,12 +4,12 @@
 | --- | --- |
 | Phases 0–2: design, compatibility research and fixture engine | Delivered, including owned PostgreSQL replay/recovery |
 | Phase 3: authorized LocalNet contracts and generic REST/GraphQL | Delivered in `0.2.0-alpha.1`; snapshot-forward partial history, raw exact payloads |
-| Phase 4: declarative models | Compiler, evaluator, SQL plans, offline CLI and persisted registry delivered; live integration incomplete |
+| Phase 4: declarative models | Compiler, registry and guarded table installation delivered; live integration incomplete |
 | Phase 5: durable streams | Planned |
 
 ## Next: finish Phase 4
 
-1. Managed schema installation using registered model revisions.
+1. Bind installed revisions to selected canonical source templates.
 2. Backfill, controlled promotion and recovery while preserving the previous version.
 3. Projection updates/retractions in the canonical state/checkpoint transaction.
 4. Caller-scoped model counts/pages and generated typed GraphQL.

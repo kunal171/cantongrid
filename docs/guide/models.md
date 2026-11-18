@@ -2,8 +2,8 @@
 
 Models describe which fields to extract and how to calculate derived values.
 The tools validate definitions, preview a local payload, generate SQL plans and
-register immutable definitions in the owned database. They **do not yet** install
-projection tables, backfill contracts, maintain live rows
+register immutable definitions and install their tables. They **do not yet**
+backfill contracts, maintain live rows
 or expose generated GraphQL fields.
 
 ## Run the complete Visibility example
@@ -154,8 +154,8 @@ cantongrid models register examples/models/visibility.json --namespace demo --da
 cantongrid models inspect demo records 1 --database-env CANTONGRID_DESTINATION_URL
 ```
 
-Initialization explicitly applies migration 003; opening a 002-only destination
-fails until upgraded. Migrations 001/002 are unchanged. Registration writes the
+Initialization explicitly applies migrations through 004; older destinations
+fail to open until upgraded. Migrations 001–003 are unchanged. Registration writes the
 whole catalog atomically. Repeating it returns `inserted: 0` and `unchanged: 1`.
 Changing an existing namespace/name/revision fails; use a new revision. Inspection
 reports registration and fingerprint, without printing stored literals.
@@ -173,8 +173,28 @@ DDL with `applied: false`. Numeric columns use `numeric(38, scale)`; Int64 uses
 Output names are validated ASCII identifiers, at most 48 characters, with system
 names reserved. Table names derive from canonical definition fingerprints.
 
-Treat this as a review artifact. Do not manually apply it expecting the worker
-to populate the table: installation, lifecycle maintenance and generated
-query integration are still missing. Registration enforces immutable revisions;
-use a new revision for changed definitions. Managed backfill/promotion is still missing.
-See the [remaining integration work](../roadmap.md#next-finish-phase-4).
+`plan` remains a dry run. Use the installer below instead of applying SQL manually.
+
+## Install an empty projection table
+
+After registration:
+
+```bash
+cantongrid models install demo records 1 --database-env CANTONGRID_DESTINATION_URL
+```
+
+The first install reports `created: true`, `linked: true`, `activated: false`.
+Repeat it to verify the table and return `created: false`, `linked: false`.
+If commit acknowledgement is lost, reconnect and repeat the same command.
+Identical definitions across namespaces may share one verified physical table;
+namespace labels do not grant data access.
+
+DDL, installation metadata and the revision link commit together. The installer
+checks ownership/private grants, native column types/scales/nullability, parent
+contract key, indexes and unsupported rules/triggers/inheritance. It rejects
+unmanaged existing tables and schema/fingerprint drift; it does not repair them.
+It can briefly block writes while checking a table; lock timeouts fail the install.
+
+Installation creates empty tables only. Source bindings, backfill, promotion,
+live creation/archive processing and generated queries remain
+[next work](../roadmap.md#next-finish-phase-4). Use a new revision for changed definitions.

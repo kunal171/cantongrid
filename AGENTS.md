@@ -2,7 +2,7 @@
 
 - Current phase: Phase 4 declarative models is in progress,
   targeting 0.3.0-alpha.1. The first compiler/evaluator/SQL planner and offline CLI
-  commands and persisted immutable model registry exist; projection installation,
+  commands, persisted registry and guarded projection-table installation exist;
   lifecycle integration and generated APIs do not. See docs/guide/models.md.
   Phase 3's 0.2.0-alpha.1 LocalNet profile remains
   verified; preserve source/caller separation, bindings and guarded commits.

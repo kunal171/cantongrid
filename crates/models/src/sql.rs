@@ -2,6 +2,21 @@
 use crate::{FieldType, Model, ModelError};
 use serde::Serialize;
 
+/// Exact compiler output shared by DDL generation and database inspection. These are not
+/// deserialized plans: callers must compile them from a validated model.
+#[derive(Clone, PartialEq, Eq)]
+pub struct SqlColumn {
+    pub name: String,
+    pub sql_type: String,
+    pub nullable: bool,
+}
+
+impl std::fmt::Debug for SqlColumn {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("SqlColumn([redacted])")
+    }
+}
+
 /// A reviewable generated schema proposal. Model revisions are immutable; applying/promoting
 /// a plan and maintaining visibility/lifecycle are separate storage responsibilities.
 #[derive(Serialize)]
@@ -13,16 +28,20 @@ pub struct SqlPlan {
     pub create_sql: String,
 }
 impl Model {
-    /// All identifiers are validated before quoting; table names derive from canonical hashes.
-    /// DDL targets only CantonGrid-owned storage, never an upstream/source schema.
-    pub fn sql_plan(&self) -> Result<SqlPlan, ModelError> {
+    /// Preserve column order, native type/scale and nullability for exact schema checks.
+    pub fn sql_columns(&self) -> Result<Vec<SqlColumn>, ModelError> {
         self.validate()?;
-        let fingerprint = self.fingerprint()?;
-        // 9 + 48 bytes stays below PostgreSQL's 63-byte identifier limit, avoiding truncation.
-        let table = format!("cg_model_{}", &fingerprint[..48]);
         let mut columns = vec![
-            "\"_cg_stream_key\" text NOT NULL".into(),
-            "\"_cg_contract_id\" text NOT NULL".into(),
+            SqlColumn {
+                name: "_cg_stream_key".into(),
+                sql_type: "text".into(),
+                nullable: false,
+            },
+            SqlColumn {
+                name: "_cg_contract_id".into(),
+                sql_type: "text".into(),
+                nullable: false,
+            },
         ];
         for (name, expression) in &self.fields {
             let (kind, nullable) = match expression.output_type()? {
@@ -36,11 +55,34 @@ impl Model {
                 FieldType::Numeric { scale } => format!("numeric(38,{scale})"),
                 FieldType::Optional { .. } => return Err(ModelError::Type),
             };
-            columns.push(format!(
-                "\"{name}\" {sql_type}{}",
-                if nullable { "" } else { " NOT NULL" }
-            ));
+            columns.push(SqlColumn {
+                name: name.clone(),
+                sql_type,
+                nullable,
+            });
         }
+        Ok(columns)
+    }
+
+    /// All identifiers are validated before quoting; table names derive from canonical hashes.
+    /// DDL targets only CantonGrid-owned storage, never an upstream/source schema.
+    pub fn sql_plan(&self) -> Result<SqlPlan, ModelError> {
+        self.validate()?;
+        let fingerprint = self.fingerprint()?;
+        // 9 + 48 bytes stays below PostgreSQL's 63-byte identifier limit, avoiding truncation.
+        let table = format!("cg_model_{}", &fingerprint[..48]);
+        let mut columns: Vec<_> = self
+            .sql_columns()?
+            .into_iter()
+            .map(|column| {
+                format!(
+                    "\"{}\" {}{}",
+                    column.name,
+                    column.sql_type,
+                    if column.nullable { "" } else { " NOT NULL" }
+                )
+            })
+            .collect();
         columns.push("PRIMARY KEY (\"_cg_stream_key\",\"_cg_contract_id\")".into());
         columns.push("FOREIGN KEY (\"_cg_stream_key\",\"_cg_contract_id\") REFERENCES cantongrid.contracts(stream_key,contract_id)".into());
         let create_sql = format!(

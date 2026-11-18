@@ -40,6 +40,7 @@ jobs:
           cargo +1.100.0 test -p cantongrid-models --locked --offline -- --ignored
           cargo +1.100.0 test -p cantongrid-cli --test workflow durable_cli --locked --offline -- --ignored
           cargo +1.100.0 test -p cantongrid-cli --test workflow model_registry --locked --offline -- --ignored
+          cargo +1.100.0 test -p cantongrid-cli --test workflow model_installation --locked --offline -- --ignored
           cargo +1.100.0 test -p cantongrid-cli --test runtime --locked --offline -- --ignored
           cargo +1.100.0 test -p cantongrid-pqs destination_owner_cannot_be_used_as_a_source_reader --locked --offline -- --ignored
       - name: Stop owned database fixture

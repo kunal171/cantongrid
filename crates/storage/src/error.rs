@@ -18,6 +18,8 @@ pub enum StoreError {
     ModelDefinition,
     ModelConflict,
     ModelCorrupt,
+    ModelMissing,
+    ModelSchema,
 }
 impl fmt::Display for StoreError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -27,15 +29,17 @@ impl fmt::Display for StoreError {
                 Self::UnsafeDestination => "destination must be a separately owned database under a restricted non-superuser role, with no PQS schema",
                 Self::Schema => "destination schema is absent, incompatible or not owned by this role; initialize/review it explicitly",
                 Self::PlanChanged => "persisted source context has a different selection or schema definition; use a new generation and rebuild",
-                Self::Busy => "another worker holds this source context; retry after it finishes",
+                Self::Busy => "another worker or operator holds a required storage lock; retry after it finishes",
                 Self::CorruptJournal => "destination journal/checkpoint is inconsistent; no progress was acknowledged",
                 Self::Limit => "bounded reference store limit exceeded; no progress was acknowledged",
                 Self::InvalidBatch => "batch failed lifecycle, scope or payload validation; no progress was acknowledged",
                 Self::Authorization => "current source/caller authorization is unavailable, mismatched or expired",
-                Self::CommitUnknown => "commit acknowledgement failed; reconnect and replay the same batch before advancing",
+                Self::CommitUnknown => "commit acknowledgement failed; reconnect and retry the same operation before advancing",
                 Self::ModelDefinition => "invalid model registry namespace, name, revision or definition",
                 Self::ModelConflict => "model revision already has another definition; register a new revision",
                 Self::ModelCorrupt => "stored model revision is invalid or its fingerprint differs; review registry integrity",
+                Self::ModelMissing => "model revision is not registered in this namespace",
+                Self::ModelSchema => "model schema or installation metadata differs from the compiled plan; review without automatic repair",
                 Self::Database(_) => unreachable!(),
             }),
         }

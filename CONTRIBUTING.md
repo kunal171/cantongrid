@@ -32,6 +32,7 @@ cargo +1.100.0 test -p cantongrid-storage --locked -- --ignored --test-threads=1
 cargo +1.100.0 test -p cantongrid-models --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-cli --test workflow durable_cli --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-cli --test workflow model_registry --locked -- --ignored
+cargo +1.100.0 test -p cantongrid-cli --test workflow model_installation --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-cli --test runtime --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-pqs destination_owner_cannot_be_used_as_a_source_reader --locked -- --ignored
 python3 scripts/dev.py storage stop
