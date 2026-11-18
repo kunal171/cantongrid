@@ -4,9 +4,16 @@ This example builds a small Daml prediction-market contract, uploads its DAR,
 submits real choices and verifies their indexed state through generated GraphQL.
 A local viewer shows current markets, lifecycle events, checkpoint and freshness.
 
-**Source status:** this PoC and generated model API are on
-[`feat/reproducible-localnet-poc`](https://github.com/kunal171/cantongrid/tree/feat/reproducible-localnet-poc),
-targeting `0.3.0-alpha.2`. They are not in the `0.3.0-alpha.1` release.
+Available in [0.3.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.2).
+The example and current documentation are maintained on
+[`main`](https://github.com/kunal171/cantongrid/tree/main/examples/poc).
+Use the release tag for a reproducible review:
+
+```bash
+git clone https://github.com/kunal171/cantongrid.git
+cd cantongrid
+git checkout v0.3.0-alpha.2
+```
 
 ## Prerequisites
 
@@ -14,7 +21,7 @@ Use Linux with Docker/Compose, Python 3.11+, Git, the repository's Rust toolchai
 and DPM with SDK 3.7.1 selected. Optional TypeScript validation needs `tsc`.
 The tested source is Canton 3.5.7 and Scribe 3.5.4/schema041; the contract targets LF 2.1.
 
-Run from a checkout of the branch above. The following commands provision only
+Run from the release checkout above. The following commands provision only
 the owned disposable LocalNet. They create fixture parties/users, upload DARs and
 submit test transactions. No funds or actual prediction trades are involved.
 
@@ -133,7 +140,7 @@ The default API/viewer ports 18890/18891 must be free.
 
 ## Evidence and boundaries
 
-The checked-in [sanitized evidence](https://github.com/kunal171/cantongrid/blob/feat/reproducible-localnet-poc/examples/poc/evidence.json)
+The checked-in [sanitized evidence](https://github.com/kunal171/cantongrid/blob/main/examples/poc/evidence.json)
 records an actual LocalNet run. Generated TypeScript compiled and Chromium
 rendered the authorized viewer. Separate owned-PostgreSQL tests cover visibility
 before counts/pages, stale revisions, unknown namespaces, explicit null cursors,

@@ -4,7 +4,7 @@
 | --- | --- |
 | [0.1.0-alpha.1](releases/0.1.0-alpha.1.md) | Source prerelease: fixture/storage foundations and source checks |
 | [0.2.0-alpha.1](releases/0.2.0-alpha.1.md) | Source prerelease: LocalNet ingestion and authenticated generic APIs |
-| 0.3.0-alpha.2, development | [Runnable PoC](guide/poc.md), generated model GraphQL and TypeScript interfaces; unreleased |
+| [0.3.0-alpha.2](releases/0.3.0-alpha.2.md) | Source prerelease: runnable PoC, generated model GraphQL and TypeScript interfaces |
 | [0.3.0-alpha.1](releases/0.3.0-alpha.1.md) | Source prerelease: declarative models and bounded atomic live projections |
 
 Published artifacts are listed on [GitHub Releases](https://github.com/kunal171/cantongrid/releases).
@@ -24,7 +24,7 @@ Older binaries that do not know this migration set reject it; 001–004 remain u
 
 ```bash
 python3 scripts/dev.py release check
-python3 scripts/dev.py release check --tag v0.3.0-alpha.1
+python3 scripts/dev.py release check --tag v0.3.0-alpha.2
 ```
 
 These commands verify metadata only; they do not tag or publish. Binary packaging

@@ -17,13 +17,11 @@ Reference: [architecture](architecture.md), [security](security.md),
 [CLI](cli.md), [fixture format](fixtures.md), [verification](verification.md),
 [roadmap](roadmap.md), [releases](releases.md), [contributing](https://github.com/kunal171/cantongrid/blob/main/CONTRIBUTING.md).
 
-The LocalNet contracts runtime is verified. Version 0.3.0-alpha.1 adds model
-validation, exact calculations, registry, installation, bounded source-bound
-backfill/promotion and atomic live projections. Projection controls use owned
-PostgreSQL and synthetic source authority; actual LocalNet model acceptance and
-generated typed APIs remain pending in that release. The [PoC branch](guide/poc.md)
-adds generated model GraphQL/client contracts and actual LocalNet acceptance.
-Streams are later work.
+The LocalNet contracts runtime is verified. Version 0.3.0-alpha.2 includes model
+validation, exact calculations, registry, installation, bounded backfill/promotion,
+atomic live projections, generated model GraphQL and TypeScript interfaces.
+The [PoC](guide/poc.md) has actual LocalNet privacy and recovery evidence.
+Advanced model filtering and durable streams remain later work.
 Remote/devnet/production deployment has not been verified.
 
 ## Publishing

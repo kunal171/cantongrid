@@ -118,7 +118,7 @@ source-dependent tests were not run; actual LocalNet model activation/lifecycle
 acceptance and generated model queries remain pending. No Ledger writes or
 publication were performed for this slice.
 
-## Standalone LocalNet PoC (development branch)
+## Standalone LocalNet PoC (0.3.0-alpha.2)
 
 On 2026-11-18, two complete runs deployed `Market:PredictionMarket`, indexed its
 Draft/Open/Resolved lifecycle and verified generated model GraphQL. The first
@@ -133,7 +133,9 @@ TypeScript compiled; Chromium rendered the local viewer. API proxy checks return
 Credential-free checks also cover generated nullability/revision identity and safe
 PoC cycle replacement. Owned-PostgreSQL controls exercise typed API authorization,
 null cursors, namespace/operation limits and source health/permission failures.
-This is development-branch evidence, not a new published release or grant submission.
+These runs were recorded before release and are included as evidence for
+0.3.0-alpha.2. The sanitized artifact retains its original branch/status metadata
+for provenance. No grant submission is included.
 
 ## Source defect
 

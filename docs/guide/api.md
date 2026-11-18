@@ -137,7 +137,7 @@ zero ledger lag. Responses are `no-store`; limits and policy are in
 
 ## Generated model queries
 
-The unreleased [PoC branch](poc.md) adds typed `POST /models/graphql` operations.
+Version 0.3.0-alpha.2 provides typed `POST /models/graphql` operations.
 Use `models graphql` for the model SDL and `models typescript` for exact transport
 interfaces. `/graphql` above retains its generic contract/history schema.
 Model operations use the same independent caller/source checks and no-store policy,

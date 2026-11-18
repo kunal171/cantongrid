@@ -1,7 +1,7 @@
 # Working on CantonGrid
 
 - Current phase: Phase 4 declarative models is in progress,
-  targeting 0.3.0-alpha.2. The first compiler/evaluator/SQL planner and offline CLI
+  with 0.3.0-alpha.2 released. The first compiler/evaluator/SQL planner and offline CLI
   commands, persisted registry and guarded projection-table installation exist;
   bounded source-bound backfill/promotion and atomic live lifecycle projections exist.
   Generated model GraphQL, TypeScript transport interfaces and the standalone
