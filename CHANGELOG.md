@@ -18,6 +18,7 @@
 
 ### Fixed
 
+- Consolidate developer/reference docs, remove obsolete planning and comparison pages, and correct stale status claims.
 - Reject PostgreSQL-incompatible NUL text in model fields, optional values, literals and filters.
 - Apply the projection-size limit to directly supplied typed rows before SQL encoding.
 

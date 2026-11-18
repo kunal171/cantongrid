@@ -1,134 +1,91 @@
 # Architecture
 
-Current status: the supported Phase 3 LocalNet profile is delivered; see
-[acceptance evidence](phase3-verification.md). The original design/research
-baseline below is retained, with the resolved implementation notes at the end.
-Phase 4 model work is tracked separately in [its contract](phase4-models.md).
-
-Status: Rust configuration, exact fixture values, scoped lifecycle state and local
-CLI workflows are implemented. The [bounded reference store](storage.md) adds owned
-PostgreSQL state, journal/checkpoint/outbox atomicity and recovery for synthetic
-fixtures. PQS inspection is read-only; live ingestion, generated models/APIs and
-durable stream delivery remain planned. Verified source authorization, archival
-evidence, history coverage and handoff remain live-connector gates.
-
-## System boundary
+The runtime and APIs are Rust. Python under `scripts/devtools` manages local
+infrastructure and checks. Application selections and model definitions live in
+configuration; core code has no Outcomia-specific behavior.
 
 ```mermaid
 flowchart LR
-    S[Authorized Canton contract source] --> C[Read-only connector]
-    C --> N[Canonical normalization and visibility evidence]
-    M[Developer selections and processing definitions] --> P[Validated processing plan]
-    N --> P
-    P --> D[(Owned PostgreSQL: state, history, projections, checkpoints, outbox)]
-    D --> A[Authenticated REST and GraphQL]
-    D --> E[Durable change delivery]
-    A --> U[Applications]
-    E --> U
+    L[Ledger user and current rights] --> W[Source authorization checks]
+    P[Read-only PQS source] --> W
+    W --> D[(Owned PostgreSQL)]
+    C[Caller token and current grants] --> A[REST / GraphQL]
+    D --> A
+    M[Model definitions] --> T[Offline validation / preview / SQL plan]
 ```
 
-Source access is bounded by the operator's credentials and selection. API access
-is independently bounded by each caller's grants. PostgreSQL is CantonGrid-owned;
-any upstream PQS database is a read-only source, never a migration target.
+## Modules
 
-## Module responsibilities
-
-These are conceptual boundaries, not a committed crate layout.
-
-| Module | Owns |
+| Crate | Responsibility |
 | --- | --- |
-| CLI/configuration | Project scaffold, validation, command lifecycle and diagnostics. |
-| Connectors | Verified source protocol, snapshots, update acquisition and capabilities. |
-| Schema | Verified package metadata, Daml type mapping and schema versions. |
-| Core | Canonical identities, lifecycle records, provenance and authorization context. |
-| Processing | Declarative plan validation and deterministic projection execution. |
-| Storage | Owned migrations, atomic writes, checkpoints, rebuilds and durable outbox. |
-| API | Generated REST/GraphQL queries, authorization, pagination and stream delivery. |
-| Examples | Outcomia and an unrelated Daml application using public configuration interfaces. |
+| `core` | Exact values, source identity, lifecycle and visibility/lease rules |
+| `postgres` | Connection restrictions and redacted database errors |
+| `pqs` | Version-checked read-only snapshot/update paging |
+| `ledger` | Current source-user and grant checks |
+| `storage` | Owned migrations, state, history, checkpoints and outbox |
+| `runtime` | Worker, caller authentication and REST/GraphQL |
+| `models` | Declarative definitions, exact evaluation and SQL plans |
+| `cli` | Command dispatch |
 
-Core modules must not depend on example packages. Connector-specific payloads
-must not leak into the processing interface. Shared authorization rules belong in
-the core policy boundary and must apply to every query and delivery path.
+## Source adapter
 
-## Ingestion and recovery
+The tested source is Canton 3.5.7 with Scribe 3.5.4/schema041 and PostgreSQL 14.25.
+It uses a SELECT-only nonowner SQL role and a separate Ledger credential whose
+CanReadAs set matches the configured scope. Source SQL is never a migration target.
 
-1. Validate source identity, authorized scope, configuration and schema versions.
-2. Acquire an active-contract snapshot and supported history through a verified
-   snapshot/update handoff. The connector must document its actual guarantees.
-3. Normalize records with source identity, stable contract/event identity,
-   upstream position, observed time, ledger time when available, schema version,
-   visibility evidence and ingestion provenance.
-4. Apply lifecycle changes and configured processing. Commit canonical records,
-   projections, checkpoint and outbox entries in one PostgreSQL transaction.
-5. Resume from the committed position after interruption. Duplicate source
-   deliveries must have no duplicate state effect.
-
-Positions are opaque and scoped to a source, network and authorization epoch.
-There is no universal block height or total ordering across independent sources.
-A successful empty or truncated page does not prove archival. Failed parsing or
-unsupported events must stop progress or enter an explicitly configured,
-observable quarantine policy; they must never silently advance past lost data.
-History coverage and pruning gaps are queryable metadata, not invented history.
-
-## Generated storage and APIs
-
-Canonical active contracts and supported lifecycle records provide a useful
-baseline without a custom model. Verified Daml metadata enables typed fields;
-otherwise expose validated generic payloads with explicit schema limitations.
-Developer models declare typed outputs and processing rules. The planner derives
-managed projection storage, indexes, query fields and change records.
-
-Version migrations and processing definitions. Compatible additions may be
-applied automatically under operator policy. Breaking changes need a versioned
-rebuild and controlled promotion; never silently drop columns, reinterpret
-historical values or run model changes against the upstream database. Rebuilds
-must preserve privacy boundaries and expose their coverage/readiness.
-
-Daml numeric and integer values require exact mappings. JSON, SQL and GraphQL
-representations must preserve precision end to end, including aggregations.
-
-## Queries and real-time changes
-
-`serve` reads the indexed store. It must expose lag, coverage and readiness so
-clients can distinguish empty results from incomplete ingestion. It does not
-silently query a broader source when indexed data is unavailable.
-
-Start durable delivery with authenticated SSE. Persist changes in the same
-transaction as their state effects; notifications only wake consumers. Resume
-using opaque scoped cursors, with at-least-once delivery and stable event IDs for
-consumer deduplication. An expired retention window yields an explicit resync
-response. PostgreSQL outbox order is delivery order, not a global Canton order.
-GraphQL subscriptions can reuse this durable log in a later phase.
-
-Policy changes, disconnections and replay are detailed in [security](security.md).
-The developer interface is described in [processing model](processing-model.md).
-
-## Current Rust module layout
-
-| Crate | Implemented responsibility |
+| Interface | Use |
 | --- | --- |
-| `crates/core` | Configuration, exact values, source identity, envelopes, visibility/leases and reference lifecycle processing. |
-| `crates/postgres` | Shared local connection validation and redacted database errors; no migrations. |
-| `crates/storage` | Owned destination migration, journal recovery, atomic materialization/checkpoints/outbox and writer exclusion. |
-| `crates/pqs` | Restricted schema-041 inspection and authorized snapshot/update paging; no source writes. |
-| `crates/cli` | Command dispatch, separate source/storage operations and synthetic fixture workflows. |
+| `active(qname, offset)` | Active snapshot at a retained source-local boundary |
+| `creates(qname, from, to)` / `archives(qname, from, to)` | Inclusive retained interval; resume strictly after the acknowledged event key |
+| `oldest_offset`, `latest_offset`, `pruned_offset` | Resolve explicit bounds inside the same read-only snapshot |
 
-GraphQL/API modules will be separate when their authenticated implementation
-starts. Python `scripts/devtools` remains local provisioning/verification only.
+Each page uses repeatable-read and orders by offset plus source event primary key.
+The tie breaker prevents skipping events at the same offset. Schema041 archives
+have empty witnesses: the explicit prior-create policy requires a matching
+observed creation and current rights. Orphan archives fail. A missing snapshot
+row is never treated as an archive.
 
+History starts with the captured active snapshot and continues forward. It does
+not reconstruct contracts created and archived before that boundary. Pruning,
+regressed bounds and incompatible source bindings stop progress.
 
-## Added runtime modules
+Nodejumper's Rust SDK v0.3.2 decoded the installed rows correctly. The initial
+adapter uses the existing PostgreSQL driver because it needs event/projection
+identity, runtime template selections and a single checked paged transaction that
+the evaluated typed client did not expose. See [evidence](verification.md).
 
-- `crates/ledger`: current source-user/grant checks and bounded leases.
-- `crates/runtime`: source worker, caller authentication and REST/GraphQL.
-- `crates/models`: Phase 4 typed definitions, exact evaluation and generated SQL plans; no live model installer yet.
+## Destination and recovery
 
-## Delivered Phase 3 path
+`storage init` explicitly applies immutable checksummed migrations 001/002 to the
+owned destination. Opening a store does not migrate it. Initialization checks
+ownership, schema identity and role restrictions; checksum drift fails.
 
-The [LocalNet runtime](live-runtime.md) now wires these components through
-`index` and `serve`: current source rights/readiness → restricted read-only PQS
-snapshot/update pages → guarded owned SQL transaction → independent caller
-identity/current grants → shared authorized SQL pages → REST/GraphQL. Public
-lifecycle serialization removes operator-only witnesses, storage envelopes and
-page PKs while retaining record-local origin and explicit coverage. Generated
-business schemas/resolvers and outbox delivery remain later phases.
+A delivery commits canonical state, history/evidence, checkpoint and outbox in
+one transaction. Source-scoped advisory locks coordinate writers; an expected
+checkpoint comparison rejects stale live writers. Duplicate exact deliveries
+have no new effects. After an uncertain commit acknowledgement, reopen and check
+committed progress before retrying. Outbox sequence gaps are not ledger gaps.
+
+The fixture reference path replays a bounded journal: 256 batches, 1000 events or
+1 MiB per batch, 16 MiB journal text per source generation. Live indexing updates
+SQL state directly and does not inherit the full-journal replay cap. Retained
+history still grows; automatic retention/erasure is not implemented.
+
+Plans bind source/network/generation, templates, parties and physical source
+endpoints/database identity. Credential rotation preserves identity; changing a
+source under an existing generation cannot reuse its offsets. Source positions
+are not global heights or event counts.
+
+## Queries and models
+
+REST and GraphQL share authorized SQL counts/keyset pages. Current source and
+caller rights are checked before reading and before delivery. Public events omit
+raw witness sets, persistence envelopes and source primary keys. See
+[security](security.md) and [API usage](guide/api.md).
+
+Models currently run offline. Before live integration, add a versioned registry,
+managed installation/backfill/promotion, transactional projection/retraction and
+authorized typed queries. Model changes must not force an unrelated source
+snapshot or reuse incompatible cursors. Keep the previous usable version until
+promotion succeeds. Joins require access to every input; aggregates need an
+explicit scope. The outbox exists, but no public durable stream is served yet.

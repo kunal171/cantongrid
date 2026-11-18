@@ -2,7 +2,7 @@
 
 CantonGrid is pre-release software. Fixture tests and source inspection are not a
 production security certification. The current source/transport restrictions and
-open live-ingestion gates are documented in [storage](docs/storage.md) and the
+unsupported profiles are documented in [architecture](docs/architecture.md) and the
 [security model](docs/security.md).
 
 ## Reporting
