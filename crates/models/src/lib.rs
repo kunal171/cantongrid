@@ -9,7 +9,7 @@ pub use error::ModelError;
 mod arithmetic;
 mod evaluate;
 mod sql;
-pub use sql::SqlPlan;
+pub use sql::{SqlColumn, SqlPlan};
 
 #[cfg(test)]
 mod tests;

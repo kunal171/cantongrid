@@ -53,6 +53,25 @@ fn fingerprints_and_ddl_are_deterministic_and_names_cannot_inject_sql() {
     let second = Catalog::parse(&text).unwrap();
     assert_eq!(first.fingerprint(), second.fingerprint());
     let plan = first.models()[0].sql_plan().unwrap();
+    let columns = first.models()[0].sql_columns().unwrap();
+    assert_eq!(columns[0].name, "_cg_stream_key");
+    assert_eq!(columns[1].name, "_cg_contract_id");
+    assert_eq!(
+        columns
+            .iter()
+            .find(|c| c.name == "amount")
+            .unwrap()
+            .sql_type,
+        "numeric(38,10)"
+    );
+    assert!(
+        !columns
+            .iter()
+            .find(|c| c.name == "amount")
+            .unwrap()
+            .nullable
+    );
+    assert!(columns.iter().find(|c| c.name == "note").unwrap().nullable);
     assert!(plan.table.len() < 64);
     assert!(
         plan.create_sql
