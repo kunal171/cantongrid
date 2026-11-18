@@ -252,6 +252,11 @@ impl Plan {
         self
     }
 
+    /// Nonsecret physical identity, not proof of current source permission.
+    pub fn source_binding(&self) -> Option<&str> {
+        self.source_binding.as_deref()
+    }
+
     pub fn is_live(&self) -> bool {
         self.live
     }
