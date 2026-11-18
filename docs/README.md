@@ -18,7 +18,7 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 The LocalNet contracts runtime is verified. Phase 4 model validation, exact
 calculation and SQL planning work offline; definitions can be registered in the
-owned database. Live model installation, lifecycle
+owned database and their empty tables installed. Live model processing, lifecycle
 maintenance and generated typed APIs are still missing. Streams are later work.
 Remote/devnet/production deployment has not been verified.
 

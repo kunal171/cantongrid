@@ -9,6 +9,8 @@
 - Offline model validation, planning and preview CLI commands.
 - Owned model revision registry with atomic/idempotent registration, integrity checks
   and operator `models register` / `models inspect` commands.
+- Atomic `models install` for private empty projection tables, with actual schema
+  inspection, safe retries and rejection of unmanaged tables or drift.
 - Outcomia and unrelated Visibility model definitions plus owned-Postgres schema round-trip tests.
 - GitBook-ready developer guide covering setup, persistence, LocalNet, authentication,
   REST/GraphQL, model examples and operations, with synthetic preview payloads.
@@ -16,7 +18,7 @@
 ### In progress
 
 - Phase 4 live model materialization, lifecycle retractions, backfill/promotion and generated typed APIs remain incomplete.
-- These model commands do not install schemas, ingest contracts or authenticate API callers.
+- Installation does not ingest contracts, activate live processing or authenticate API callers.
 
 ### Fixed
 
@@ -26,9 +28,9 @@
 
 ### Compatibility
 
-- Run explicit `storage init` to apply new owned migration 003 before opening the
-  destination with this version. Migrations 001/002 are unchanged. A 0.2 binary
-  rejects the upgraded migration set; downgrade requires a separate reviewed plan.
+- Run explicit `storage init` to apply owned migrations through 004 before opening
+  the destination. Migrations 001–003 are unchanged. Older binaries reject unknown
+  migration sets; downgrade requires a separate reviewed plan.
 
 ## 0.2.0-alpha.1 — unreleased
 

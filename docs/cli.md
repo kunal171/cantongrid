@@ -22,6 +22,7 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `models plan <models.json>` | Print DDL without executing it |
 | `models register <models.json> --namespace <project> --database-env <variable>` | Atomically register immutable definitions; no activation |
 | `models inspect <project> <model-name> <revision> --database-env <variable>` | Read registration/fingerprint metadata |
+| `models install <project> <model-name> <revision> --database-env <variable>` | Create/verify a private empty table and link its revision; no activation |
 
 Arguments and ordering are strict. Credentials are read from explicitly named
 `CANTONGRID_*` variables. Fixture documents are bounded to 8 MiB; runtime/model
@@ -30,4 +31,4 @@ with redacted errors. Runtime, fixture and model JSON are different schemas.
 
 Workflows: [fixtures/PostgreSQL](guide/quickstart.md), [LocalNet](guide/localnet-source.md),
 [API](guide/api.md), [models](guide/models.md). `dev`, `doctor`, live `status`,
-managed model installation and stream commands are not implemented.
+live model activation/backfill and stream commands are not implemented.
