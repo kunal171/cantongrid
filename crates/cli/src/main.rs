@@ -20,6 +20,7 @@ Usage:
   cantongrid models preview <models.json> <model-name> <payload.json>
   cantongrid models register <models.json> --namespace <project> --database-env <CANTONGRID_VARIABLE>
   cantongrid models inspect <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
+  cantongrid models bind <runtime.json> <project> <model-name> <revision> [--replace <previous-revision>]
   cantongrid models install <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
   cantongrid init <new-directory>
   cantongrid validate <project.json>
@@ -52,6 +53,11 @@ fn run(args: Vec<String>) -> Result<(), String> {
         [] => {
             println!("{HELP}");
             Ok(())
+        }
+        [command, action, path, namespace, name, revision, rest @ ..]
+            if command == "models" && action == "bind" =>
+        {
+            commands::model_binding::bind(path, namespace, name, revision, rest)
         }
         [flag] if flag == "--version" || flag == "-V" => {
             println!("cantongrid {}", env!("CARGO_PKG_VERSION"));

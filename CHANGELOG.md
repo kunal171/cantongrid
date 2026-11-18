@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0-alpha.1 — unreleased
+## 0.3.0-alpha.1 — 2026-11-18
 
 ### Added
 
@@ -11,13 +11,15 @@
   and operator `models register` / `models inspect` commands.
 - Atomic `models install` for private empty projection tables, with actual schema
   inspection, safe retries and rejection of unmanaged tables or drift.
+- Source-scoped `models bind`, bounded atomic backfill/promotion and transactional
+  live creation/archive projections, with schema/lease checks and rollback controls.
 - Outcomia and unrelated Visibility model definitions plus owned-Postgres schema round-trip tests.
 - GitBook-ready developer guide covering setup, persistence, LocalNet, authentication,
   REST/GraphQL, model examples and operations, with synthetic preview payloads.
 
 ### In progress
 
-- Phase 4 live model materialization, lifecycle retractions, backfill/promotion and generated typed APIs remain incomplete.
+- Phase 4 generated typed APIs, revision-bound cursors and actual LocalNet model acceptance remain incomplete.
 - Installation does not ingest contracts, activate live processing or authenticate API callers.
 
 ### Fixed
@@ -28,8 +30,8 @@
 
 ### Compatibility
 
-- Run explicit `storage init` to apply owned migrations through 004 before opening
-  the destination. Migrations 001–003 are unchanged. Older binaries reject unknown
+- Run explicit `storage init` to apply owned migrations through 005 before opening
+  the destination. Migrations 001–004 are unchanged. Older binaries reject unknown
   migration sets; downgrade requires a separate reviewed plan.
 
 ## 0.2.0-alpha.1 — unreleased

@@ -25,15 +25,17 @@ use std::{
 };
 
 struct Running {
-    child: Child,
+    child: Option<Child>,
     directory: PathBuf,
     stop: Arc<AtomicBool>,
     source: Option<thread::JoinHandle<()>>,
 }
 impl Drop for Running {
     fn drop(&mut self) {
-        let _ = self.child.kill();
-        let _ = self.child.wait();
+        if let Some(child) = &mut self.child {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
         self.stop.store(true, Ordering::Relaxed);
         if let Some(t) = self.source.take() {
             let _ = t.join();
@@ -346,7 +348,7 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
         .spawn()
         .unwrap();
     let _running = Running {
-        child,
+        child: Some(child),
         directory: root,
         stop,
         source: Some(thread),
@@ -562,4 +564,179 @@ fn rest_graphql_enforce_party_scopes_cursors_revocation_and_source_outages() {
         tx.execute(&format!("DELETE FROM cantongrid.{table} WHERE stream_key IN (SELECT stream_key FROM cantongrid.streams WHERE definition->>'source'=$1)"),&[&source]).unwrap();
     }
     tx.commit().unwrap();
+}
+
+#[test]
+#[ignore = "requires owned PostgreSQL; mock source authority; no Canton ledger writes"]
+fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
+    use cantongrid_models::Catalog;
+    initialize_env("CANTONGRID_DESTINATION_URL").unwrap();
+    let root = std::env::temp_dir().join(format!("cantongrid-bind-cli-{}", std::process::id()));
+    std::fs::create_dir(&root).unwrap();
+    let stop = Arc::new(AtomicBool::new(false));
+    let allowed = Arc::new(AtomicBool::new(true));
+    let healthy = Arc::new(AtomicBool::new(true));
+    let (url, source_thread) = source(stop.clone(), allowed.clone(), healthy.clone());
+    let _running = Running {
+        child: None,
+        directory: root.clone(),
+        stop,
+        source: Some(source_thread),
+    };
+    let namespace = format!("bind_cli_{}", std::process::id());
+    let mut definition: Json =
+        serde_json::from_str(include_str!("../../../examples/models/visibility.json")).unwrap();
+    definition["models"][0]["name"] = namespace.clone().into();
+    let catalog = Catalog::parse(&definition.to_string()).unwrap();
+    let model = &catalog.models()[0];
+    let template = &model.template;
+    let context = SourceContext::new(namespace.clone(), "synthetic".into(), 1).unwrap();
+    let source_database = "host=127.0.0.1 port=9 user=read_only dbname=synthetic";
+    let plan = Plan::pqs(
+        context.clone(),
+        [party("A"), party("B")].into(),
+        [template.clone()].into(),
+    )
+    .unwrap()
+    .with_source_binding(cantongrid_runtime::config::source_binding(
+        &url,
+        "source-reader",
+        &cantongrid_postgres::identity_local(source_database).unwrap(),
+        &format!("{url}/readyz"),
+    ));
+    let config = json!({"version":1,"authorization":{"endpoint":url,"user":"source-reader","source":namespace,"network":"synthetic","generation":1,"parties":["A","B"],"credential_env":"CANTONGRID_TEST_SOURCE_TOKEN"},"source_database_env":"CANTONGRID_TEST_PQS_URL","destination_database_env":"CANTONGRID_DESTINATION_URL","source_health":format!("{url}/readyz"),"templates":[template],"history":"snapshot_forward_partial","archive_policy":"prior_create_current_grants","payload":"raw_json","retention":"retain_while_authorized","api":{"bind":"127.0.0.1:0","issuer":"owned-tests","audience":"owned-api","token_key_env":"CANTONGRID_TEST_API_KEY","cursor_key_env":"CANTONGRID_TEST_CURSOR_KEY","grants_file":"grants.json"}});
+    let path = root.join("runtime.json");
+    std::fs::write(&path, config.to_string()).unwrap();
+    let key = "local-owned-fixture-organization-key-0001";
+    let token = jwt("source-reader", key, clock() + 600);
+    let command = |rest: &[&str]| {
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_cantongrid"));
+        cmd.args([
+            "models",
+            "bind",
+            path.to_str().unwrap(),
+            &namespace,
+            &model.name,
+            "1",
+        ])
+        .args(rest)
+        .env("CANTONGRID_TEST_PQS_URL", source_database)
+        .env("CANTONGRID_TEST_SOURCE_TOKEN", &token)
+        .env_remove("CANTONGRID_TEST_API_KEY")
+        .env_remove("CANTONGRID_TEST_CURSOR_KEY");
+        cmd.output().unwrap()
+    };
+    let mut store = Store::open_env("CANTONGRID_DESTINATION_URL").unwrap();
+    store.register_models(&namespace, &catalog).unwrap();
+    store.install_model(&namespace, &model.name, 1).unwrap();
+    let lease = SourceLease::from_verified(
+        context.binding(),
+        [party("A"), party("B")],
+        Instant::now(),
+        MAX_SOURCE_LEASE,
+        Instant::now() + Duration::from_secs(60),
+    )
+    .unwrap();
+    store
+        .apply_authorized(
+            &plan,
+            &Batch {
+                context,
+                position: "snapshot".into(),
+                events: vec![Event {
+                    id: "created".into(),
+                    contract: "first".into(),
+                    template: template.clone(),
+                    witnesses: [party("A")].into(),
+                    observed_at_micros: 1,
+                    ledger_at_micros: None,
+                    origin: None,
+                    action: Action::Create(Value::RawJson(
+                        include_str!("../../../examples/models/visibility-payload.json").into(),
+                    )),
+                }],
+            },
+            &lease,
+        )
+        .unwrap();
+    let relation = format!("cantongrid_models.\"{}\"", model.sql_plan().unwrap().table);
+    let count = || -> i64 {
+        cantongrid_postgres::connect_env("CANTONGRID_DESTINATION_URL")
+            .unwrap()
+            .query_one(&format!("SELECT count(*) FROM {relation}"), &[])
+            .unwrap()
+            .get(0)
+    };
+    for (allow, health) in [(false, true), (true, false)] {
+        allowed.store(allow, Ordering::Relaxed);
+        healthy.store(health, Ordering::Relaxed);
+        let output = command(&[]);
+        assert!(!output.status.success());
+        assert_eq!(count(), 0);
+        assert!(!String::from_utf8_lossy(&output.stderr).contains(&token));
+    }
+    allowed.store(true, Ordering::Relaxed);
+    healthy.store(true, Ordering::Relaxed);
+    assert!(!command(&["--replace", "0"]).status.success());
+    let output = command(&[]);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let result: Json = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(result["result"]["changed"], true);
+    assert_eq!(result["result"]["projected_rows"], 1);
+    assert_eq!(count(), 1);
+    let retry: Json = serde_json::from_slice(&command(&[]).stdout).unwrap();
+    assert_eq!(retry["result"]["changed"], false);
+    assert_eq!(
+        store.checkpoint(&plan).unwrap().as_deref(),
+        Some("snapshot")
+    );
+    // Only test-owned destination rows/tables are removed; the fake authority is read-only.
+    let mut client = cantongrid_postgres::connect_env("CANTONGRID_DESTINATION_URL").unwrap();
+    let stream: String = client
+        .query_one(
+            "SELECT stream_key FROM cantongrid.model_bindings WHERE namespace=$1",
+            &[&namespace],
+        )
+        .unwrap()
+        .get(0);
+    client
+        .batch_execute(&format!("DROP TABLE {relation}"))
+        .unwrap();
+    for table in [
+        "model_bindings",
+        "outbox",
+        "events",
+        "contracts",
+        "batches",
+        "streams",
+    ] {
+        client
+            .execute(
+                &format!("DELETE FROM cantongrid.{table} WHERE stream_key=$1"),
+                &[&stream],
+            )
+            .unwrap();
+    }
+    client
+        .execute(
+            "DELETE FROM cantongrid.model_installations WHERE namespace=$1",
+            &[&namespace],
+        )
+        .unwrap();
+    client
+        .execute(
+            "DELETE FROM cantongrid.model_revisions WHERE namespace=$1",
+            &[&namespace],
+        )
+        .unwrap();
+    client
+        .execute(
+            "DELETE FROM cantongrid.model_tables WHERE fingerprint=$1",
+            &[&model.fingerprint().unwrap()],
+        )
+        .unwrap();
 }

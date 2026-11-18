@@ -3,7 +3,9 @@
 - Current phase: Phase 4 declarative models is in progress,
   targeting 0.3.0-alpha.1. The first compiler/evaluator/SQL planner and offline CLI
   commands, persisted registry and guarded projection-table installation exist;
-  lifecycle integration and generated APIs do not. See docs/guide/models.md.
+  bounded source-bound backfill/promotion and atomic live lifecycle projections exist.
+  Generated model APIs remain pending; projection tests use owned PostgreSQL and
+  synthetic authority, not LocalNet acceptance. See docs/guide/models.md.
   Phase 3's 0.2.0-alpha.1 LocalNet profile remains
   verified; preserve source/caller separation, bindings and guarded commits.
   Streams remain Phase 5. Model declarations never authenticate callers or widen

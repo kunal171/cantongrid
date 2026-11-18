@@ -22,6 +22,7 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `models plan <models.json>` | Print DDL without executing it |
 | `models register <models.json> --namespace <project> --database-env <variable>` | Atomically register immutable definitions; no activation |
 | `models inspect <project> <model-name> <revision> --database-env <variable>` | Read registration/fingerprint metadata |
+| `models bind <runtime.json> <project> <model-name> <revision> [--replace <previous-revision>]` | Verify source rights/readiness, atomically backfill and activate an installed revision |
 | `models install <project> <model-name> <revision> --database-env <variable>` | Create/verify a private empty table and link its revision; no activation |
 
 Arguments and ordering are strict. Credentials are read from explicitly named
@@ -31,4 +32,4 @@ with redacted errors. Runtime, fixture and model JSON are different schemas.
 
 Workflows: [fixtures/PostgreSQL](guide/quickstart.md), [LocalNet](guide/localnet-source.md),
 [API](guide/api.md), [models](guide/models.md). `dev`, `doctor`, live `status`,
-live model activation/backfill and stream commands are not implemented.
+generated model query and stream commands are not implemented.

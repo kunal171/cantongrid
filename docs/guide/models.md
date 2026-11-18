@@ -2,9 +2,9 @@
 
 Models describe which fields to extract and how to calculate derived values.
 The tools validate definitions, preview a local payload, generate SQL plans and
-register immutable definitions and install their tables. They **do not yet**
-backfill contracts, maintain live rows
-or expose generated GraphQL fields.
+register immutable definitions, install their tables and bind them to an indexed
+source. Bindings backfill known active contracts and maintain rows during live
+ingestion. Generated model queries/GraphQL fields are still pending.
 
 ## Run the complete Visibility example
 
@@ -154,8 +154,8 @@ cantongrid models register examples/models/visibility.json --namespace demo --da
 cantongrid models inspect demo records 1 --database-env CANTONGRID_DESTINATION_URL
 ```
 
-Initialization explicitly applies migrations through 004; older destinations
-fail to open until upgraded. Migrations 001–003 are unchanged. Registration writes the
+Initialization explicitly applies migrations through 005; older destinations
+fail to open until upgraded. Migrations 001–004 are unchanged. Registration writes the
 whole catalog atomically. Repeating it returns `inserted: 0` and `unchanged: 1`.
 Changing an existing namespace/name/revision fails; use a new revision. Inspection
 reports registration and fingerprint, without printing stored literals.
@@ -195,6 +195,60 @@ contract key, indexes and unsupported rules/triggers/inheritance. It rejects
 unmanaged existing tables and schema/fingerprint drift; it does not repair them.
 It can briefly block writes while checking a table; lock timeouts fail the install.
 
-Installation creates empty tables only. Source bindings, backfill, promotion,
-live creation/archive processing and generated queries remain
-[next work](../roadmap.md#next-finish-phase-4). Use a new revision for changed definitions.
+Installation alone leaves an empty table. Activate it explicitly below.
+
+## Bind and backfill a source
+
+Use a reviewed [runtime configuration](localnet-source.md) whose selected template
+matches the installed model. Run at least one successful `index --once` page first:
+
+```bash
+cantongrid index .local/runtime.json --once
+cantongrid models bind .local/runtime.json demo records 1
+cantongrid index .local/runtime.json
+```
+
+`bind` verifies current source rights and readiness, then backfills that stream's
+known active contracts and activates the revision in one owned transaction.
+The result reports `changed`, `input_rows`, `projected_rows` and `source_revision`.
+The last value is the destination batch revision, not a Canton offset. A repeat
+verifies the installed model and returns `changed: false`.
+
+The worker discovers persisted bindings each cycle. Creation inserts a matched
+row; archive removes it. Filters are checked on both paths. Projection errors,
+expired source leases or schema drift roll back the entire canonical page,
+including history, outbox and checkpoint. Correct the cause before retrying;
+processing never skips a rejected event. Model bindings do not change the source
+plan or require a new snapshot.
+
+The initial atomic backfill supports at most 128 active contracts of the model's
+template and 8 MiB of input/output work. Cleanup is also capped at 128 rows.
+Each stream supports at most 16 bindings, including aliases; live pages share an
+8 MiB projection work budget. Larger staged rebuilds are not implemented.
+Backfill covers the known prefix, including partial snapshots; later pages fill
+it forward. It cannot recover missing pre-snapshot history.
+
+## Promote or roll back a revision
+
+Register and install a new revision first, then replace the expected current one:
+
+```bash
+cantongrid models register .local/visibility-v2.json --namespace demo --database-env CANTONGRID_DESTINATION_URL
+cantongrid models install demo records 2 --database-env CANTONGRID_DESTINATION_URL
+cantongrid models bind .local/runtime.json demo records 2 --replace 1
+# Explicit rollback also rebuilds from the current canonical prefix:
+cantongrid models bind .local/runtime.json demo records 1 --replace 2
+```
+
+Revision 2 must keep the same model name and use a runtime-selected template.
+Promotion uses the
+same source lock as ingestion, so no event can slip between backfill and live
+processing. Failure preserves the previous binding and rows. If acknowledgement
+is lost, repeat the same command; reaching the requested revision is a verified
+no-op even when its `--replace` revision is now stale.
+
+Old rows are removed for this stream only when its last reference to that physical
+revision is replaced. Other namespaces and streams retain their rows. Namespaces
+remain operator labels, not access grants. No unbind command or caller-facing
+model API exists yet; [authorized typed queries](../roadmap.md#next-finish-phase-4)
+are next.

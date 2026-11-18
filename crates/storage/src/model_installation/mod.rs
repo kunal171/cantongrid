@@ -1,5 +1,5 @@
 //! Atomic installation of compiler-generated schemas. No activation, copying or caller grants.
-mod schema;
+pub(crate) mod schema;
 
 use crate::{Store, StoreError, model_registry};
 use cantongrid_postgres::postgres::Transaction;

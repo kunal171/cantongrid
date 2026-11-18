@@ -56,7 +56,7 @@ the evaluated typed client did not expose. See [evidence](verification.md).
 
 ## Destination and recovery
 
-`storage init` explicitly applies immutable checksummed migrations 001–004 to the
+`storage init` explicitly applies immutable checksummed migrations 001–005 to the
 owned destination. Opening a store does not migrate it. Initialization checks
 ownership, schema identity and role restrictions; checksum drift fails.
 
@@ -96,9 +96,18 @@ unmanaged tables and drift are rejected, not adopted or repaired. Identical
 definitions can share a physical table; source identity remains part of every row key.
 Installation does not activate processing or copy contracts.
 
-Before live integration, add backfill/promotion, source
-bindings restricted to selected canonical templates, transactional projection/retraction and
-authorized typed queries. Model changes must not force an unrelated source
-snapshot or reuse incompatible cursors. Keep the previous usable version until
-promotion succeeds. Joins require access to every input; aggregates need an
-explicit scope. The outbox exists, but no public durable stream is served yet.
+Source bindings select installed revisions for an already indexed physical plan.
+Binding, backfill, promotion, ingestion and idle observation use the same source
+writer lock. Backfill reads after lock acquisition under READ COMMITTED, ensuring
+it sees a preceding worker's commit. It is bounded and promotes atomically;
+failure preserves the old binding. Model changes leave the source plan untouched.
+
+Workers verify every bound alias/physical schema each page and deduplicate
+identical physical revisions. Current-state model inserts/deletes join the
+canonical lifecycle/history/outbox/checkpoint transaction. Rows retain source and
+contract identity; models never grant visibility. See [limits](guide/models.md#bind-and-backfill-a-source).
+
+Caller-scoped model pages/counts and typed GraphQL are still pending. Future
+cursors must bind model revisions as well as source and grants. Joins require
+access to every input; aggregates need an explicit scope. No public durable
+stream is served yet.

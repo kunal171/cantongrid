@@ -7,3 +7,6 @@ pub use index::index;
 mod api;
 mod auth;
 pub use api::serve;
+
+mod model_binding;
+pub use model_binding::bind_model;
