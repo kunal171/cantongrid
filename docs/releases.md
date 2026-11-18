@@ -4,12 +4,12 @@
 | --- | --- |
 | [0.1.0-alpha.1](releases/0.1.0-alpha.1.md) | Source prerelease: fixture/storage foundations and source checks |
 | [0.2.0-alpha.1](releases/0.2.0-alpha.1.md) | Source prerelease: LocalNet ingestion and authenticated generic APIs |
-| 0.3.0-alpha.1, unreleased | Model tools, registry and table installer; live Phase 4 integration pending |
+| [0.3.0-alpha.1](releases/0.3.0-alpha.1.md) | Source prerelease: declarative models and bounded atomic live projections |
 
 Published artifacts are listed on [GitHub Releases](https://github.com/kunal171/cantongrid/releases).
 An alpha version describes its tested subset, not production readiness.
-Current source requires explicit destination initialization through migration 004.
-Older binaries that do not know this migration set reject it; 001–003 remain unchanged.
+Current source requires explicit destination initialization through migration 005.
+Older binaries that do not know this migration set reject it; 001–004 remain unchanged.
 
 ## Cut a release
 
