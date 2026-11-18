@@ -2,4 +2,5 @@
 pub mod source;
 pub mod storage;
 
+pub mod model_registry;
 pub mod models;
