@@ -1,9 +1,9 @@
-# Install and run your first example
+# Quickstart
 
-Requirements: Git and Rust/Cargo **1.100.0**. No Docker, Daml SDK, source token or
-database is required for this page. Python 3.11+ is used by later development helpers.
+Requirements: Git, Rust/Cargo 1.100.0; Python 3.11+ and Docker/Compose for the
+optional PostgreSQL step. Run commands from the repository root.
 
-## Build the CLI
+## Build
 
 ```bash
 git clone https://github.com/kunal171/cantongrid.git
@@ -16,12 +16,10 @@ cantongrid --version
 cantongrid --help
 ```
 
-If you set `CARGO_TARGET_DIR`, add that directory's `debug` folder to PATH instead.
-Reuse one build directory. After dependencies have been fetched, Cargo also accepts
-`--offline`. These instructions build from source; no package-manager installation
-or prebuilt binary distribution is assumed.
+If `CARGO_TARGET_DIR` is set, use its `debug` directory in PATH. Reuse one build
+directory; after fetching dependencies, Cargo checks can use `--offline`.
 
-## Run the Visibility fixture
+## Run without Canton or Docker
 
 ```bash
 cantongrid validate examples/fixtures/visibility/cantongrid.json
@@ -31,13 +29,6 @@ cantongrid fixture run examples/fixtures/visibility/cantongrid.json --party A --
 cantongrid fixture run examples/fixtures/visibility/cantongrid.json
 ```
 
-The JSON output identifies `mode: fixture`, `storage: memory` and
-`authentication: simulated_fixture_grants`. The result includes lifecycle/replay
-and caller-filtered counts. Omitting parties yields zero visible records. Each run
-starts from scratch and internally replays the delivery to check idempotency.
-
-Expected caller-visible counts for the checked-in fixture:
-
 | Simulated grants | `visible_active` | `visible_history` |
 | --- | --- | --- |
 | A | 2 | 4 |
@@ -45,15 +36,10 @@ Expected caller-visible counts for the checked-in fixture:
 | A + B | 3 | 5 |
 | None | 0 | 0 |
 
-Each run reports `applied_batches: 2` and `replay_applied_batches: 0`. History
-includes archived contracts, which is why its counts can exceed active state.
+Each run starts in memory and reports two applied batches, then zero on its
+internal replay. `--party` simulates grants; it does not authenticate real users.
 
-`--party` is a simulation flag. Real API users cannot select their permissions
-with a query parameter or this flag.
-
-## Scaffold a project
-
-Choose a directory name that does not exist:
+To create a new local fixture project:
 
 ```bash
 cantongrid init ./my-cantongrid-demo
@@ -61,13 +47,30 @@ cantongrid validate ./my-cantongrid-demo/cantongrid.json
 cantongrid fixture run ./my-cantongrid-demo/cantongrid.json --party A
 ```
 
-`init` creates `cantongrid.json` and `events.json` for the synthetic Visibility
-fixture. It refuses an existing directory. The fixture path is relative to the
-configuration file, so the project can be moved together with its event file.
-Keep this local demo uncommitted unless you intend to contribute a fixture.
+`init` requires a new directory and writes `cantongrid.json` plus `events.json`.
+It scaffolds a fixture, not a live source. Event paths are relative to the project
+file. Keep the local demo uncommitted unless contributing it intentionally.
 
-Today `init` scaffolds a fixture, not a live Ledger/PQS connection. Live runtime
-configuration has a separate schema and workflow.
+## Persist in PostgreSQL
 
-Next: [persist the same fixture](postgresql.md), or try an
-[offline declarative model](models.md).
+Docker Compose must support `up --wait`. This creates a separate disposable
+PostgreSQL destination on loopback 5442, with a public development password:
+
+```bash
+python3 scripts/dev.py storage up
+export CANTONGRID_DESTINATION_URL='host=127.0.0.1 port=5442 user=cantongrid_owner password=local-cantongrid-only dbname=cantongrid'
+cantongrid storage init --database-env CANTONGRID_DESTINATION_URL
+cantongrid fixture index examples/fixtures/visibility/cantongrid.json --database-env CANTONGRID_DESTINATION_URL
+cantongrid fixture status examples/fixtures/visibility/cantongrid.json --database-env CANTONGRID_DESTINATION_URL
+cantongrid fixture query examples/fixtures/visibility/cantongrid.json --database-env CANTONGRID_DESTINATION_URL --party A
+```
+
+Repeat `fixture index`: zero new batches should apply. `status` shows operator
+counts; `query` applies simulated caller grants to the stored journal. Querying
+already indexed data does not need the original events file.
+
+Only `storage init` applies destination migrations. Never target upstream PQS.
+`python3 scripts/dev.py storage stop` stops containers but retains the volume.
+The fixture journal has [bounded replay limits](../architecture.md#destination-and-recovery).
+
+Next: [LocalNet ingestion](localnet-source.md), [API](api.md) or [models](models.md).

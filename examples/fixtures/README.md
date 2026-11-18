@@ -8,7 +8,7 @@ history. They never contact Canton, create users or submit transactions.
   fixture, with A-only, B-only and joint witnesses, an archive and a successor.
   Numeric 10 and Int64-max strings exercise precision preservation.
 - `outcomia`: `Outcomia.Binary:Protocol`, using the source fields reviewed in
-  [Outcomia compatibility](../../docs/outcomia-compatibility.md): operator,
+  [Outcomia example](../../docs/guide/outcomia.md): operator,
   protocolName, admins, nextMarketId, takerFeeBps and feeRevision. A consuming
   revision archives the old contract and creates a successor. This is a
   prediction-market application's protocol configuration example, not a full

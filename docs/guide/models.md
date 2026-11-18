@@ -139,8 +139,8 @@ not supported. Arithmetic overflow fails the evaluation rather than saturating.
 
 Definitions are strict JSON: no duplicate/unknown keys or floating-point tokens.
 A document is at most 64 KiB with 1–16 models. Each model has 1–32 fields, at most
-256 expression nodes and depth 16. Payloads are at most 64 KiB; serialized
-projections at most 1 MiB. Text containing NUL is rejected for PostgreSQL
+256 expression nodes and depth 16; paths have at most 16 segments. Payloads are
+at most 64 KiB; serialized projections at most 1 MiB. Text containing NUL is rejected for PostgreSQL
 compatibility, including optional text, literals and filter values.
 
 ## Understand the SQL plan
@@ -148,11 +148,11 @@ compatibility, including optional text, literals and filter values.
 `models plan` prints a canonical fingerprint, revision and deterministic table
 DDL with `applied: false`. Numeric columns use `numeric(38, scale)`; Int64 uses
 `bigint`. Optional fields are nullable. Rows link to a canonical parent contract.
-The definition-derived table name prevents user-supplied SQL identifiers from
-becoming executable syntax.
+Output names are validated ASCII identifiers, at most 48 characters, with system
+names reserved. Table names derive from canonical definition fingerprints.
 
 Treat this as a review artifact. Do not manually apply it expecting the worker
 to populate the table: registry/installer, lifecycle maintenance and generated
 query integration are still missing. Changed definitions need a new revision
 under the intended immutable-version policy; database enforcement/promotion is
-part of the remaining work. See the [model contract](../phase4-models.md).
+part of the remaining work. See the [remaining integration work](../roadmap.md#next-finish-phase-4).
