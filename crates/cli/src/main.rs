@@ -15,6 +15,8 @@ const HELP: &str = "CantonGrid — local ingestion and storage reference
 Usage:
   cantongrid index <runtime.json> [--once]
   cantongrid serve <runtime.json>
+  cantongrid models typescript <models.json>
+  cantongrid models graphql <models.json>
   cantongrid models validate <models.json>
   cantongrid models plan <models.json>
   cantongrid models preview <models.json> <model-name> <payload.json>
