@@ -14,8 +14,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 pub(super) const VARIABLE: &str = "CANTONGRID_DESTINATION_URL";
 const VISIBILITY: &str = include_str!("../../assets/models/visibility.json");
 const OUTCOMIA: &str = include_str!("../../assets/models/outcomia.json");
-pub(super) const PAYLOAD: &str =
-    include_str!("../../assets/models/visibility-payload.json");
+pub(super) const PAYLOAD: &str = include_str!("../../assets/models/visibility-payload.json");
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
 /// Own every synthetic source/model identity so cleanup never deletes another stream's data.

@@ -1,5 +1,10 @@
 # Releases
 
+> Packaging backport: this branch enables crates.io publication after archive
+> verification, with per-crate READMEs, legal files and local assets. The
+> original source tag and its publication status are unchanged. The release
+> guard now checks the reviewed crates.io metadata policy.
+
 | Version | Scope |
 | --- | --- |
 | [0.1.0-alpha.1](releases/0.1.0-alpha.1.md) | Source prerelease: fixture/storage foundations and source checks |
