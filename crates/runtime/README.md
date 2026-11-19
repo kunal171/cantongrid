@@ -2,6 +2,32 @@
 
 Authenticated CantonGrid indexing workers and REST/GraphQL query services.
 
+## Usage
+
+```toml
+[dependencies]
+cantongrid-runtime = "=0.3.0-alpha.5"
+```
+
+The library exposes `index`, `serve`, `bind_model` and bounded `rebuild`
+operations. It combines source authorization, PQS paging, owned PostgreSQL
+persistence and caller-scoped REST/GraphQL. Credentials are supplied through
+explicit operator environment variables referenced by runtime configuration.
+
+Most applications should run the equivalent CLI commands:
+
+```bash
+cantongrid index runtime.json --once
+cantongrid serve runtime.json
+```
+
+These require a prepared runtime configuration and databases; they are not a
+standalone fixture. Follow the [LocalNet guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet-source.md)
+and [API guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/api.md).
+
+Authenticated model queries are available through `/models/graphql`. Real-time
+stream delivery is planned and is not provided by this release.
+
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
 Alpha API: the tested live profile is loopback-only, with authorized node-local
