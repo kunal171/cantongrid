@@ -60,11 +60,15 @@ def environment():
             'CANTONGRID_POC_API_KEY': data['apiKey'], 'CANTONGRID_POC_CURSOR_KEY': data['cursorKey']}
 
 
+class CliError(ValueError):
+    """An actual child CLI rejection, distinct from malformed evidence or failed assertions."""
+
+
 def cli(*args):
     """Keep credentials in the child environment, never command arguments or public output."""
     result = subprocess.run([str(BINARY), *map(str, args)], env=environment(), capture_output=True, text=True)
     if result.returncode:
-        raise ValueError('CantonGrid command failed: ' + ' '.join(str(a) for a in args[:2]))
+        raise CliError('CantonGrid command failed: ' + ' '.join(str(a) for a in args[:2]))
     return result.stdout
 
 

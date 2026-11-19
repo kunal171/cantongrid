@@ -1,7 +1,6 @@
 """Write-enabled LocalNet acceptance for private, bounded model rebuilds."""
 import json
 import secrets
-import subprocess
 
 import support as s
 import queries
@@ -20,7 +19,7 @@ def denied(call):
     """Require a rejected CLI operation; an unexpected success must fail acceptance."""
     try:
         call()
-    except subprocess.CalledProcessError:
+    except s.CliError:
         return
     raise ValueError('Expected rebuild rejection did not occur')
 
@@ -83,14 +82,25 @@ def verify_rows(marker, expected):
             raise ValueError('Staged model changed an exact financial string')
 
 
-def run():
+def run(resume=None):
     """Keep revision 1 serving while real creates/archives arrive between rebuild pages."""
     data = s.state()
     if queries.metadata()['revision'] != '1':
         raise ValueError('Run the standard PoC first and restore revision 1')
-    marker = 'rebuild-' + secrets.token_hex(6)
-    journal = s.DIRECTORY / (marker + '.json')
-    expected = {}
+    if resume is not None:
+        # Resume only initial fixture setup, before any rebuild or lifecycle mutations.
+        journal = resume.resolve()
+        if journal.parent != s.DIRECTORY.resolve():
+            raise ValueError('Resume requires a private journal in the PoC directory')
+        saved = json.loads(journal.read_text())
+        marker, expected = saved['marker'], saved['contracts']
+        if journal.stem != marker or len(expected) != ROWS:
+            raise ValueError('Only the initial 261-contract journal can resume setup')
+        verify_rows(marker, expected)
+    else:
+        marker = 'rebuild-' + secrets.token_hex(6)
+        journal = s.DIRECTORY / (marker + '.json')
+        expected = {}
     original_runtime = json.loads((s.DIRECTORY / 'runtime.json').read_text())
     runtime = {**original_runtime, 'page_size': 8}
     original_field = data['field']
@@ -104,9 +114,10 @@ def run():
     promoted = False
     try:
         # Explicit batches keep requests bounded and make ambiguous submissions inspectable.
-        for start in range(0, ROWS, 32):
-            expected.update(create_rows(marker, start, min(32, ROWS - start)))
-            s.write_private(journal, {'marker': marker, 'contracts': expected})
+        if resume is None:
+            for start in range(0, ROWS, 32):
+                expected.update(create_rows(marker, start, min(32, ROWS - start)))
+                s.write_private(journal, {'marker': marker, 'contracts': expected})
         with s.process('index'):
             s.wait(lambda: len(rows(marker)) == ROWS, 'Large source fixture was not indexed', timeout=180)
         denied(lambda: s.cli('models', 'bind', s.DIRECTORY / 'runtime.json', data['namespace'], 'markets', 3, '--replace', 1))

@@ -76,6 +76,16 @@ class QuerySafetyTests(unittest.TestCase):
 
 
 class RebuildOptInTests(unittest.TestCase):
+    def test_negative_control_accepts_only_an_actual_cli_rejection(self):
+        import rebuilds
+        import support
+        with patch.object(support, 'cli', side_effect=support.CliError('expected')):
+            rebuilds.denied(lambda: support.cli('models', 'bind'))
+        with self.assertRaisesRegex(ValueError, 'bad evidence'):
+            rebuilds.denied(lambda: (_ for _ in ()).throw(ValueError('bad evidence')))
+        with self.assertRaisesRegex(ValueError, 'did not occur'):
+            rebuilds.denied(lambda: None)
+
     def test_rebuild_requires_explicit_ledger_write_opt_in(self):
         import demo
         with patch('sys.argv', ['demo.py', 'rebuild']), patch('sys.stderr'):
