@@ -11,6 +11,7 @@ use std::{
     time::Instant,
 };
 
+/// Normalized create/archive actions; missing source witnesses require an explicit prior-create policy.
 #[derive(Clone, PartialEq, Eq)]
 pub enum Action {
     Create(Value),
@@ -19,6 +20,7 @@ pub enum Action {
     ArchiveByPriorContract,
 }
 
+/// Original lifecycle evidence, retaining witness scope and source-local provenance for later authorization.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Event {
     pub id: String,
@@ -39,6 +41,7 @@ pub struct Origin {
     pub snapshot_observation: bool,
 }
 
+/// One ordered delivery staged atomically; its position is not a universal ledger height.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Batch {
     pub context: SourceContext,
@@ -53,6 +56,7 @@ impl fmt::Debug for Batch {
     }
 }
 
+/// Current immutable contract revision plus its retained creation visibility and active flag.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Contract {
     pub id: String,
@@ -64,6 +68,7 @@ pub struct Contract {
     active: bool,
 }
 
+/// History entry with the visibility clauses required to read that event under current grants.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Observation {
     pub event: Event,
@@ -71,6 +76,7 @@ pub struct Observation {
     policy: VisibilityPolicy,
 }
 
+/// In-memory reference state; cloned staging gives atomic fixture application, not durable storage.
 #[derive(Clone)]
 pub struct Engine {
     plan: Plan,
@@ -82,6 +88,7 @@ pub struct Engine {
 }
 
 impl Engine {
+    /// Start empty reference state for one validated plan; no source permissions are inferred.
     pub fn new(plan: Plan) -> Self {
         Self {
             plan,
@@ -94,7 +101,7 @@ impl Engine {
     }
 
     /// Validate and stage a whole source batch before publishing any state/progress.
-    /// A future database adapter must implement this transaction boundary durably.
+    /// Owned storage implements the same whole-delivery boundary with a durable SQL transaction.
     pub fn apply(&mut self, batch: Batch) -> Result<bool, IngestError> {
         if batch.context != self.plan.context {
             return Err(IngestError::Context);
@@ -119,6 +126,7 @@ impl Engine {
         Ok(true)
     }
 
+    /// Validate and stage one event, preserving create/archive dependencies and rejecting identity reuse.
     fn apply_event(&mut self, event: &Event, position: &str) -> Result<(), IngestError> {
         if !identifier(&event.id)
             || !identifier(&event.contract)
@@ -206,6 +214,7 @@ impl Engine {
         Ok(())
     }
 
+    /// Return only active contracts authorized by both the caller and the current source lease.
     pub fn active<'a>(
         &'a self,
         caller: &CallerGrants,
@@ -218,6 +227,7 @@ impl Engine {
             .collect()
     }
 
+    /// Reauthorize retained event evidence on read; archival does not erase visibility dependencies.
     pub fn history<'a>(
         &'a self,
         caller: &CallerGrants,
@@ -236,6 +246,7 @@ impl Engine {
     }
 }
 
+/// Redacted lifecycle rejection classes; a rejected event must not acknowledge its delivery.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IngestError {
     Context,

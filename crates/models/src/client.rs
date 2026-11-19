@@ -112,6 +112,7 @@ fn graphql_type(kind: &FieldType) -> String {
         _ => "String!".into(),
     }
 }
+/// Use strings for exact scalars and an explicit null union for optional output fields.
 fn typescript_type(kind: &FieldType) -> String {
     match kind {
         FieldType::Optional { item } => format!("{} | null", typescript_type(item)),

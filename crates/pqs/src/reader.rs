@@ -107,6 +107,7 @@ pub fn page_env(
             &(limit as i64 + 1),
         ],
     )?;
+    // The extra row answers has-more without acknowledging an event not returned in this page.
     let more = rows.len() > limit;
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -164,6 +165,7 @@ pub fn page_env(
         cursor.offset = offset;
         cursor.pk = pk;
     }
+    // Advance the interval boundary only after all same-offset/event-key ties were emitted.
     if !more {
         cursor.snapshot = false;
         cursor.boundary = cursor.through;

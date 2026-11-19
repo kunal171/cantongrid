@@ -1,10 +1,11 @@
-//! Strict, versioned fixture configuration. Live credentials/adapters are not accepted yet.
+//! Strict fixture documents and validated source plans; live credentials are managed outside plans.
 use crate::visibility::{PartyId, ScopeBinding};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fmt, path::PathBuf};
 
 pub const FORMAT_VERSION: u32 = 1;
 
+/// Exact package/module/entity selection; independent IN lists must never broaden this triple.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct TemplateId {
@@ -14,6 +15,7 @@ pub struct TemplateId {
 }
 
 impl TemplateId {
+    /// Check the lowercase package hash and supported Daml identifier shapes before selection or SQL use.
     pub fn validate(&self) -> Result<(), ConfigError> {
         if self.package_id.len() != 64
             || !self
@@ -35,6 +37,7 @@ impl fmt::Debug for TemplateId {
     }
 }
 
+/// Logical source/network/generation identity, separate from physical endpoints and current permissions.
 #[derive(Clone, PartialEq, Eq)]
 pub struct SourceContext {
     source: String,
@@ -49,6 +52,7 @@ impl fmt::Debug for SourceContext {
 }
 
 impl SourceContext {
+    /// Validate an explicit source generation before it can label contracts or persisted progress.
     pub fn new(source: String, network: String, generation: u64) -> Result<Self, ConfigError> {
         if !identifier(&source) || !identifier(&network) || generation == 0 {
             return Err(ConfigError::InvalidSource);
@@ -75,6 +79,7 @@ impl SourceContext {
     }
 }
 
+/// Supported lifecycle selections; unsupported exercises/reassignments are not inferred.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EventKind {
@@ -82,6 +87,7 @@ pub enum EventKind {
     Archive,
 }
 
+/// Adapter promises used to reject requested event/history behavior that the adapter cannot supply.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Capabilities {
     pub creates: bool,
@@ -96,6 +102,7 @@ impl Capabilities {
         complete_history: true,
     };
 
+    /// Reject an unsupported selection before starting ingestion, including complete-history requirements.
     pub fn require(&self, events: &[EventKind], complete_history: bool) -> Result<(), ConfigError> {
         if events.iter().any(|kind| match kind {
             EventKind::Create => !self.creates,
@@ -108,6 +115,7 @@ impl Capabilities {
     }
 }
 
+/// Fixture-only configuration envelope; live runtime configuration is a separate schema.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Document {
@@ -118,6 +126,7 @@ struct Document {
     selection: Selection,
 }
 
+/// Declared fixture source and file path; none of these fields authenticate a source user.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Source {
@@ -129,12 +138,14 @@ struct Source {
     fixture: PathBuf,
 }
 
+/// Closed adapter vocabulary for fixture documents; runtime PQS setup uses its own constructor.
 #[derive(Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum Adapter {
     Fixture,
 }
 
+/// Exact templates and lifecycle/history requirements validated against adapter capabilities.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Selection {
@@ -161,6 +172,7 @@ impl fmt::Debug for Plan {
 }
 
 impl Plan {
+    /// Build a trusted fixture plan only after strict document, version, selection and scope checks.
     pub fn parse(input: &str) -> Result<Self, ConfigError> {
         // Never forward Serde's value-containing diagnostics into logs.
         let document: Document =
@@ -301,18 +313,22 @@ impl Plan {
         self.templates.contains(template)
     }
 
+    /// Return the declared fixture path; CLI resolution remains relative to the configuration file.
     pub fn fixture_path(&self) -> &std::path::Path {
         &self.fixture
     }
+    /// Borrow the stable logical identity used for authorization binding and persistence.
     pub fn context(&self) -> &SourceContext {
         &self.context
     }
 }
 
+/// Reject empty, padded or control-containing opaque identities without imposing offset ordering.
 pub(crate) fn identifier(value: &str) -> bool {
     !value.is_empty() && !value.chars().any(char::is_control) && value.trim() == value
 }
 
+/// Validate object/module identifiers, allowing dotted segments only for the supported module form.
 fn name(value: &str, dotted: bool) -> bool {
     value.split('.').all(|part| {
         let mut chars = part.chars();
@@ -323,6 +339,7 @@ fn name(value: &str, dotted: bool) -> bool {
     }) && (dotted || !value.contains('.'))
 }
 
+/// Redacted configuration failure classes; values and source identifiers must not appear in diagnostics.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ConfigError {
     InvalidDocument,

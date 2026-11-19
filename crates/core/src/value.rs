@@ -2,6 +2,7 @@
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fmt};
 
+/// Explicit tagged values prevent financial strings, optional nulls and source JSON from being conflated.
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(
     tag = "type",
@@ -23,6 +24,7 @@ pub enum Value {
     Record(BTreeMap<String, Value>),
 }
 
+/// Fixed-scale decimal text; for example scale 2 retains `1.20` rather than converting to a float.
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Decimal {
@@ -30,6 +32,7 @@ pub struct Decimal {
     pub decimal: String,
 }
 
+/// An explicit enum type and constructor; neither string is inferred from arbitrary source JSON.
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct EnumValue {
@@ -44,10 +47,12 @@ impl fmt::Debug for Value {
 }
 
 impl Value {
+    /// Validate exact encodings and bounded nesting before fixture ingestion or model literal use.
     pub fn validate(&self) -> Result<(), ValueError> {
         self.validate_at(0)
     }
 
+    /// Apply the same value rules recursively while rejecting nesting beyond the supported depth.
     fn validate_at(&self, depth: usize) -> Result<(), ValueError> {
         if depth > 64 {
             return Err(ValueError);
@@ -97,6 +102,7 @@ impl Value {
 }
 
 impl Decimal {
+    /// Require canonical sign, fixed scale and at most 38 significant/scale digits without rounding.
     fn validate(&self) -> Result<(), ValueError> {
         if self.scale > 37 {
             return Err(ValueError);
@@ -118,6 +124,7 @@ impl Decimal {
     }
 }
 
+/// Value-validation failure without including the rejected private value in diagnostics.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ValueError;
 impl fmt::Display for ValueError {

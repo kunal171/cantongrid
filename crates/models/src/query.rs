@@ -69,6 +69,7 @@ pub struct Sort {
     #[serde(default)]
     pub direction: Direction,
 }
+/// Value ordering only; nulls remain last and contract-ID ties remain ascending in either direction.
 #[derive(Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Direction {
@@ -121,6 +122,7 @@ impl FieldType {
         }
         ops
     }
+    /// Separate one optional layer from its underlying scalar without inventing a default value.
     pub fn query_scalar(&self) -> (&Self, bool) {
         match self {
             Self::Optional { item } => (item, true),
@@ -193,6 +195,7 @@ impl Model {
         normalize(kind.query_scalar().0, value)
     }
 
+    /// Expose safe type/operator metadata while keeping source paths, expressions and literals private.
     pub fn query_fields(&self) -> Result<Vec<QueryField>, ModelError> {
         self.validate()?;
         self.fields

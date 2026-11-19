@@ -34,6 +34,7 @@ pub fn identity_env(name: &str) -> Result<String, DatabaseError> {
     identity_local(&std::env::var(name).map_err(|_| DatabaseError::Configuration)?)
 }
 
+/// Derive nonsecret physical database identity from the same validated settings used to connect.
 pub fn identity_local(value: &str) -> Result<String, DatabaseError> {
     let config = local_config(value)?;
     let host = match &config.get_hosts()[0] {

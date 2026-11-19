@@ -147,6 +147,7 @@ impl Model {
     }
 }
 
+/// Encode supported scalar SQL-row values without converting Int64/Numeric through JSON numbers.
 fn plain(value: &cantongrid_core::value::Value) -> Result<serde_json::Value, ModelError> {
     use cantongrid_core::value::Value;
     Ok(match value {

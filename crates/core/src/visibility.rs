@@ -2,10 +2,12 @@
 use std::collections::BTreeSet;
 use std::fmt;
 
+/// Validated party identity with redacted debug output; strings alone do not grant access.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PartyId(String);
 
 impl PartyId {
+    /// Validate an opaque party ID without treating it as authentication evidence.
     pub fn new(value: impl Into<String>) -> Result<Self, PolicyError> {
         let value = value.into();
         validate_identity(&value)?;
@@ -31,6 +33,7 @@ pub struct ScopeBinding {
 }
 
 impl ScopeBinding {
+    /// Create a source-generation binding; matching it is required for every policy/grant combination.
     pub fn new(id: impl Into<String>, generation: u64) -> Result<Self, PolicyError> {
         let id = id.into();
         validate_identity(&id)?;
@@ -68,6 +71,7 @@ impl CallerGrants {
         Some(self.parties.intersection(source).cloned().collect())
     }
 
+    /// Construct grants only after an external trusted provider authenticated and authorized the caller.
     pub fn from_verified(scope: ScopeBinding, parties: impl IntoIterator<Item = PartyId>) -> Self {
         Self {
             scope,
@@ -84,6 +88,7 @@ pub struct VisibilityPolicy {
 }
 
 impl VisibilityPolicy {
+    /// Build one OR clause from source witnesses; an empty clause never authorizes a record.
     pub fn from_witnesses(
         scope: ScopeBinding,
         witnesses: impl IntoIterator<Item = PartyId>,
@@ -129,6 +134,7 @@ impl VisibilityPolicy {
         })
     }
 
+    /// Require one permitted party in every contributing clause and an identical source generation.
     fn matches_parties(&self, scope: &ScopeBinding, can_access: impl Fn(&PartyId) -> bool) -> bool {
         self.scope == *scope
             && !self.clauses.is_empty()
@@ -139,6 +145,7 @@ impl VisibilityPolicy {
     }
 }
 
+/// Redacted identity/evidence/scope failures, independent from any network authentication provider.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PolicyError {
     InvalidIdentity,
@@ -158,6 +165,7 @@ impl fmt::Display for PolicyError {
 
 impl std::error::Error for PolicyError {}
 
+/// Bound opaque identities and reject padding/control characters before policy construction.
 fn validate_identity(value: &str) -> Result<(), PolicyError> {
     if value.is_empty() || value.chars().any(char::is_control) {
         Err(PolicyError::InvalidIdentity)

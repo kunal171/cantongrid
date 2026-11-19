@@ -19,6 +19,7 @@ pub struct SourceLease {
 }
 
 impl SourceLease {
+    /// Bound trusted provider evidence by check time, credential expiry and the maximum lease duration.
     pub fn from_verified(
         scope: ScopeBinding,
         parties: impl IntoIterator<Item = PartyId>,
@@ -69,6 +70,7 @@ impl SourceLease {
         caller.within(scope, &self.parties)
     }
 
+    /// Drop known-revoked evidence immediately even if its original deadline has not passed.
     pub fn invalidate(&mut self) {
         self.valid = false;
     }
@@ -88,6 +90,7 @@ impl SourceLease {
     }
 }
 
+/// Lease construction failures; callers must not fall back to earlier source permissions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LeaseError {
     MissingGrants,

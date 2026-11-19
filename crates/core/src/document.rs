@@ -22,6 +22,7 @@ impl fmt::Display for DocumentError {
 }
 impl std::error::Error for DocumentError {}
 
+/// Intermediate strict JSON tree that preserves duplicate-key detection before serde schema decoding.
 struct UniqueValue(Value);
 impl<'de> Deserialize<'de> for UniqueValue {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -34,6 +35,7 @@ impl<'de> Deserialize<'de> for UniqueValue {
             fn visit_bool<E: de::Error>(self, v: bool) -> Result<Self::Value, E> {
                 Ok(UniqueValue(Value::Bool(v)))
             }
+            // There is deliberately no float visitor: financial JSON numbers cannot be coerced.
             fn visit_i64<E: de::Error>(self, v: i64) -> Result<Self::Value, E> {
                 Ok(UniqueValue(v.into()))
             }
