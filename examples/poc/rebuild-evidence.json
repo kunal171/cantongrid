@@ -1,0 +1,21 @@
+{
+  "result": "passed",
+  "initialRows": 261,
+  "finalRows": 264,
+  "boundedStep": 32,
+  "freshProcessResume": true,
+  "sourceRevocation": true,
+  "concurrentCreateArchive": true,
+  "postReadyActivationRejected": true,
+  "privateStaging": true,
+  "partyIsolation": true,
+  "exactValues": true,
+  "stagedPromotionRollback": true,
+  "source": "real LocalNet PQS",
+  "readyScanned": "269",
+  "recordedAt": "2026-11-19",
+  "implementationCommit": "8ff178cda4fd5ef135cc797a2957b4dfc8f29cbb",
+  "postgresVersion": "17.12",
+  "fixtureSetupResumed": true,
+  "testContractsArchived": true
+}

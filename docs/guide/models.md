@@ -325,4 +325,4 @@ Limits and recovery:
   retention is not implemented.
 
 See [verification](../verification.md#staged-rebuilds) for owned-PostgreSQL and
-mock-source coverage. Large staged LocalNet acceptance remains pending.
+mock-source coverage and the 261-contract [LocalNet acceptance](poc.md#evidence-and-boundaries).

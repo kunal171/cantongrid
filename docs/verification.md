@@ -16,6 +16,33 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## 0.3.0 release acceptance
+
+Recorded 2026-11-19 on PostgreSQL **17.12**, using the same pinned Canton/PQS
+profile above. Implementation and runner commit:
+[`8ff178c`](https://github.com/kunal171/cantongrid/tree/8ff178c).
+
+- Logical restores of the two PQS databases and owned destination matched all
+  983 application-table row counts/hashes. Original PostgreSQL 14 volumes remain
+  intact; no in-place major upgrade was attempted.
+- 57 owned-PostgreSQL/mock-source checks passed on 17.12, alongside 64
+  credential-free Rust checks, formatting, Clippy and the security suite.
+- The full standalone PoC passed again: 35 accumulated controlled event identities,
+  54 filtered page sequences, exact values, caller isolation/revocation, offline
+  catch-up, revision rollback and exporter recovery.
+- The [large rebuild](../examples/poc/rebuild-evidence.json) used 261 initial real
+  contracts, fresh-process resume, actual source revocation, concurrent creates
+  and an archive, stale-activation rejection and staged promotion/rollback.
+  The final 264 test contracts were archived after checking all three caller
+  scopes and exact Numeric/Int64 values. Source history remains partial.
+
+Initial fixture setup resumed from its private journal after correcting a helper's
+handling of an expected atomic-bind rejection. The rejected operation was correct;
+this was a test-harness issue, not an engine or upstream failure.
+The participant's upstream Quickstart database was not upgraded; compatibility
+and restore evidence above covers only the PQS and CantonGrid databases.
+Funded trading, joins/aggregates and streams remain outside this release.
+
 ## Latest local checks
 
 Recorded 2026-11-19 during alpha.5 development, through code commit

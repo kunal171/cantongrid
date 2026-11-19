@@ -4,7 +4,7 @@ This example builds a small Daml prediction-market contract, uploads its DAR,
 submits real choices and verifies their indexed state through generated GraphQL.
 A local viewer shows current markets, lifecycle events, checkpoint and freshness.
 
-Use [0.3.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.4)
+Use [0.3.0](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0)
 for the query, revision and recovery checks described here.
 The example and current documentation are maintained on
 [`main`](https://github.com/kunal171/cantongrid/tree/main/examples/poc).
@@ -13,12 +13,12 @@ Use the release tag for a reproducible review:
 ```bash
 git clone https://github.com/kunal171/cantongrid.git
 cd cantongrid
-git checkout v0.3.0-alpha.4
+git checkout v0.3.0
 ```
 
-If reusing a destination initialized by alpha.5, keep an alpha.5 checkout instead
-of switching to alpha.4. Older binaries reject migration 006; release-tag
-reproduction needs a separate compatible destination. See [migration compatibility](../releases.md).
+Version 0.3.0 uses migration 006. Keep an owned destination at that migration
+level; older alpha.4 binaries reject it. The [database upgrade guide](operations.md#postgresql-support)
+covers restoring PostgreSQL 14 fixtures into separate PostgreSQL 17 volumes.
 
 ## Prerequisites
 
@@ -174,6 +174,26 @@ the tested commits, query runs and separate viewer evidence.
 
 The contract demonstrates lifecycle indexing without collateral, matching or
 settlement. API identities are local fixtures and history is snapshot-forward.
-This PoC uses atomic model bindings; the alpha.5 staged rebuild path
-has separate owned-PostgreSQL tests and still needs large LocalNet acceptance.
+The normal PoC uses atomic model bindings. Run the larger staged acceptance after
+it completes:
+
+```bash
+python3 examples/poc/demo.py rebuild --allow-ledger-writes
+```
+
+It creates 261 real contracts across A-private, B-private and shared scopes,
+exceeding the 128-row atomic cap. Fresh CLI processes resume 32-row steps while
+revision 1 serves. The check revokes/restores actual source rights, ingests creates
+and an archive between pages, rejects activation after a new post-ready create,
+then promotes and rolls back through staging. It checks exact values and actual
+contract identities for all three caller scopes and archives its own test contracts.
+History and database volumes remain intact.
+
+Private journals and `rebuild-report.json` stay under `.local/poc`. If setup stopped
+after all 261 initial contracts were acknowledged and before rebuild changes,
+`--rebuild-journal .local/poc/rebuild-<id>.json` verifies and reuses them. Later
+failures require inspection of that journal and `models rebuild status`; do not
+resubmit ambiguous ledger commands or overwrite an active job. The public
+[rebuild evidence](https://github.com/kunal171/cantongrid/blob/main/examples/poc/rebuild-evidence.json)
+contains counts and checks, without party/contract IDs or credentials.
 See the [current scope and next steps](../README.md#current-scope).
