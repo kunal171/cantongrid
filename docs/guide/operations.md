@@ -39,11 +39,22 @@ update a running process. Key rotation also invalidates old tokens/cursors.
 
 ## PostgreSQL support
 
-The pinned PostgreSQL 14.25 compatibility fixture reached
-[end of support on November 12, 2026](https://www.postgresql.org/support/versioning/).
-It remains LocalNet test evidence, not a supported production database choice.
-Validate PQS and destination behavior on a supported major version using separate
-restored databases before migrating existing volumes.
+The source and destination fixtures use digest-pinned **PostgreSQL 17.12** in
+new `pqs-data-pg17` and `storage-data-pg17` volumes. PostgreSQL 17 is
+[supported through November 2029](https://www.postgresql.org/support/versioning/).
+
+The former PostgreSQL 14 volumes remain intact. Changing the image alone cannot
+upgrade a major-version data directory. Stop the workers/exporters, retain a
+private logical backup of each database and its roles, restore into separate
+17.x volumes, and compare application rows and privileges before restarting.
+Use [PostgreSQL's upgrade procedure](https://www.postgresql.org/docs/17/upgrading.html).
+Never mount a 14.x directory into a 17.x server or remove the old volumes before
+reviewing the restored data. A fresh `up` creates empty 17.x fixtures; it does
+not automatically migrate an existing installation.
+
+The pinned upstream Quickstart manages its own participant database. Its image
+is unchanged; the source/destination compatibility checks do not establish a
+production upgrade procedure for Canton itself.
 
 ## Disk and shutdown
 
