@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-alpha.4 — unreleased
+
+### In progress
+
+- Validated model filters, deterministic sorting, model discovery and REST query parity.
+
 ## 0.3.0-alpha.3 — unreleased
 
 ### Added
