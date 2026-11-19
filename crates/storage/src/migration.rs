@@ -71,17 +71,17 @@ pub(crate) fn check_schema(client: &mut impl GenericClient) -> Result<(), StoreE
     check_base(client)?;
     check_runtime_versions(client, true)?;
     let owned: bool = client.query_one(
-        "SELECT count(*) = 6 AND bool_and(relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))
-         FROM pg_class WHERE oid IN (to_regclass('cantongrid.model_revisions'),
+        "SELECT count(*) = 13 AND bool_and(relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))
+         FROM pg_class WHERE oid IN (to_regclass('cantongrid.schema_version'),
+             to_regclass('cantongrid.streams'),to_regclass('cantongrid.batches'),
+             to_regclass('cantongrid.contracts'),to_regclass('cantongrid.events'),
+             to_regclass('cantongrid.outbox'),to_regclass('cantongrid.runtime_migrations'),
+             to_regclass('cantongrid.model_revisions'),
              to_regclass('cantongrid.model_tables'), to_regclass('cantongrid.model_installations'), to_regclass('cantongrid.model_bindings'),
              to_regclass('cantongrid.model_rebuilds'),to_regclass('cantongrid.model_rebuild_dirty'))",
         &[],
     )?.get(0);
     if !owned {
-        return Err(StoreError::Schema);
-    }
-    let private: bool = client.query_one("SELECT NOT EXISTS(SELECT 1 FROM pg_class c CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) acl WHERE c.oid IN (to_regclass('cantongrid.model_rebuilds'),to_regclass('cantongrid.model_rebuild_dirty')) AND acl.grantee<>c.relowner)", &[])?.get(0);
-    if !private {
         return Err(StoreError::Schema);
     }
     Ok(())
@@ -178,6 +178,14 @@ fn check_base(client: &mut impl GenericClient) -> Result<(), StoreError> {
     if !owned {
         return Err(StoreError::Schema);
     }
+    // A revoked schema grant alone does not prove that tables, sequences or individual
+    // columns remain private. Reject drift instead of silently changing an operator's ACLs.
+    let private: bool = client
+        .query_one(include_str!("sql/private_destination.sql"), &[])?
+        .get(0);
+    if !private {
+        return Err(StoreError::Schema);
+    }
     let rows = client.query(
         "SELECT version, migration_sha256 FROM cantongrid.schema_version",
         &[],
@@ -200,6 +208,29 @@ fn checksum() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    /// Privilege drift must fail even when migration checksums and table ownership still match.
+    #[test]
+    #[ignore = "requires owned PostgreSQL; run serially"]
+    fn canonical_schema_tables_columns_and_sequences_reject_nonowner_grants() {
+        initialize_env("CANTONGRID_DESTINATION_URL").unwrap();
+        let mut client = connect_env("CANTONGRID_DESTINATION_URL").unwrap();
+        for grant in [
+            "GRANT USAGE ON SCHEMA cantongrid TO PUBLIC",
+            "GRANT SELECT ON cantongrid.contracts TO PUBLIC",
+            "GRANT SELECT(payload) ON cantongrid.contracts TO PUBLIC",
+            "GRANT SELECT(definition) ON cantongrid.model_revisions TO PUBLIC",
+            "GRANT SELECT(contract_id) ON cantongrid.model_rebuild_dirty TO PUBLIC",
+            "GRANT SELECT ON cantongrid.runtime_migrations TO PUBLIC",
+            "GRANT USAGE ON SEQUENCE cantongrid.outbox_delivery_id_seq TO PUBLIC",
+        ] {
+            let mut tx = client.transaction().unwrap();
+            tx.batch_execute(grant).unwrap();
+            assert_eq!(check_schema(&mut tx), Err(StoreError::Schema), "{grant}");
+            tx.rollback().unwrap();
+        }
+        check_schema(&mut client).unwrap();
+    }
+
     #[test]
     #[ignore = "requires the owned PostgreSQL fixture and CANTONGRID_DESTINATION_URL"]
     fn initialization_is_idempotent_and_migration_drift_is_rejected() {
