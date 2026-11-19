@@ -15,6 +15,23 @@ opaque and are redacted in Debug output.
 have already happened. The pure policy check is not an authentication provider,
 source-authorization lease, HTTP middleware or data-serving implementation.
 
+## Usage
+
+```toml
+[dependencies]
+cantongrid-core = "=0.3.0-alpha.5"
+```
+
+```rust
+use cantongrid_core::value::{Decimal, Value};
+
+// Scale 2 preserves the exact amount, including the trailing zero.
+let amount = Value::Numeric(Decimal { scale: 2, decimal: "1.20".into() });
+assert!(amount.validate().is_ok());
+```
+
+[Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
+
 Checks, using the tested Rust/Cargo 1.100 toolchain:
 
 ```bash

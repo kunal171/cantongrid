@@ -4,6 +4,27 @@ CantonGrid CLI for authorized Daml contract indexing, model generation and query
 
 The executable is named `cantongrid`. Run `cantongrid --help` for commands.
 
+## Install and try it
+
+Requires Rust 1.100.0 or newer. The package installs the `cantongrid` executable.
+
+```bash
+cargo install cantongrid-cli --version 0.3.0-alpha.5 --locked
+cantongrid --help
+cantongrid init ./my-demo
+cantongrid validate ./my-demo/cantongrid.json
+cantongrid fixture run ./my-demo/cantongrid.json --party A
+```
+
+This example runs synthetic events in memory without Canton or PostgreSQL.
+`--party` simulates fixture grants; it does not authenticate a live user.
+
+For a configured live project, `cantongrid index runtime.json` ingests contracts
+and `cantongrid serve runtime.json` serves authenticated REST/GraphQL.
+`cantongrid models` validates projections and generates SQL, TypeScript and
+GraphQL definitions. Source credentials and database setup are separate steps;
+follow the [LocalNet PoC](https://github.com/kunal171/cantongrid/blob/main/docs/guide/poc.md).
+
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
 Alpha API: the tested live profile is loopback-only, with authorized node-local

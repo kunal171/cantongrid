@@ -2,6 +2,25 @@
 
 Current Canton Ledger API user and party-grant verification for CantonGrid.
 
+## Usage
+
+```toml
+[dependencies]
+cantongrid-ledger = "=0.3.0-alpha.5"
+```
+
+Use `GrantChecker` with the configured source scope and wrap it in
+`SourceAuthorization`. Refresh authorization from an explicitly named
+`CANTONGRID_*` credential variable before reading; `lease()` returns a borrowed
+lease only after a successful check. Failed renewal discards previous success.
+
+This crate verifies the source user's current party grants. API callers require
+separate authentication and grant checks. Only the configured loopback LocalNet
+JSON Ledger API profile is supported in this release.
+
+See the [source setup](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet-source.md)
+for endpoint, user and scope configuration.
+
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
 Alpha API: the tested live profile is loopback-only, with authorized node-local

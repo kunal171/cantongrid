@@ -22,7 +22,8 @@ class PackageArchiveTests(unittest.TestCase):
             (root / 'LICENSE').write_text('Synthetic license')
             (root / 'NOTICE').write_text('Synthetic notice')
             entries = {
-                'Cargo.toml': '[package]\nname="example"\nversion="1.0.0"\npublish=["crates-io"]\n',
+                'Cargo.toml': '[package]\nname="example"\nversion="1.0.0"\npublish=["crates-io"]\nreadme="README.md"\n',
+                'README.md': '# Example\n\nSynthetic package usage.\n',
                 'LICENSE': 'Synthetic license', 'NOTICE': 'Synthetic notice',
                 '.cargo_vcs_info.json': json.dumps({'git': {'sha1': 'a' * 40}}),
                 'src/lib.rs': '#[cfg(test)] const VALUE: &str = include_str!("../assets/value.json");',
@@ -46,6 +47,9 @@ class PackageArchiveTests(unittest.TestCase):
 
     def test_bad_archive_contents_and_provenance_are_rejected(self):
         changes = [
+            lambda files: files.pop('README.md'),
+            lambda files: files.update({'README.md': ' \n'}),
+            lambda files: files.update({'Cargo.toml': files['Cargo.toml'].replace('readme="README.md"', 'readme=false')}),
             lambda files: files.pop('assets/value.json'),
             lambda files: files.update({'../outside': 'bad'}),
             lambda files: files.update({'.env': 'PRIVATE-DO-NOT-PUBLISH'}),

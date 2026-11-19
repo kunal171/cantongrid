@@ -53,6 +53,11 @@ def verify(directory):
             metadata = tomllib.loads(bundle.extractfile(prefix + 'Cargo.toml').read().decode())['package']
             if metadata.get('publish') != ['crates-io'] or metadata.get('version') != version:
                 raise ValueError('Packaged identity/publication policy differs from the workspace')
+            # crates.io renders the declared packaged README, not the repository root file.
+            if metadata.get('readme') != 'README.md' or prefix + 'README.md' not in names:
+                raise ValueError('Package must declare and include README.md')
+            if not bundle.extractfile(prefix + 'README.md').read().strip():
+                raise ValueError('Packaged README.md must not be empty')
             vcs = json.loads(bundle.extractfile(prefix + '.cargo_vcs_info.json').read())
             if not re.fullmatch(r'[0-9a-f]{40}', vcs.get('git', {}).get('sha1', '')):
                 raise ValueError('Package archive has no valid source commit')

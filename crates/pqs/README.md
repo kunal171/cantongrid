@@ -2,6 +2,31 @@
 
 Read-only authorized Canton Participant Query Store snapshot and update paging.
 
+## Usage
+
+```toml
+[dependencies]
+cantongrid-pqs = "=0.3.0-alpha.5"
+```
+
+Use `inspect_env` to check a dedicated PQS reader's schema and retained boundary.
+`page_env` reads bounded authorized snapshot/update pages; `reconcile_env` checks
+a retained historical interval. These calls require the configured database
+role and, for authorized paging, current source authorization.
+
+The supported adapter targets PQS SQL schema 041. A readable SQL connection does
+not grant permission to serve contract data. Snapshot-forward ingestion reports
+partial history; it cannot recreate events already pruned upstream.
+
+For an operator inspection with the CLI:
+
+```bash
+cantongrid source inspect-pqs --database-env CANTONGRID_PQS_URL
+```
+
+See the [source guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet-source.md)
+for role setup and supported coverage.
+
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
 Alpha API: the tested live profile is loopback-only, with authorized node-local
