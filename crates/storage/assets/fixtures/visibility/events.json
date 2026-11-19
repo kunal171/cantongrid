@@ -1,0 +1,270 @@
+{
+  "format_version": 1,
+  "model_version": 1,
+  "payload_schema_version": 1,
+  "source": {
+    "id": "visibility-fixture",
+    "network": "synthetic-fixture",
+    "generation": 1
+  },
+  "coverage": "complete_from_origin",
+  "batches": [
+    {
+      "position": "fixture-z",
+      "events": [
+        {
+          "id": "create-a",
+          "contract": "a",
+          "template": {
+            "package_id": "05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111",
+            "module": "Visibility",
+            "entity": "Record"
+          },
+          "witnesses": [
+            "A"
+          ],
+          "observed_at_micros": 1700000000000000,
+          "ledger_at_micros": 1700000000000000,
+          "action": {
+            "kind": "create",
+            "payload": {
+              "type": "record",
+              "value": {
+                "owner": {
+                  "type": "party",
+                  "value": "A"
+                },
+                "readers": {
+                  "type": "list",
+                  "value": []
+                },
+                "label": {
+                  "type": "text",
+                  "value": "a-only"
+                },
+                "amount": {
+                  "type": "numeric",
+                  "value": {
+                    "scale": 10,
+                    "decimal": "12345678901234567890.1234567891"
+                  }
+                },
+                "sequence": {
+                  "type": "int64",
+                  "value": "9223372036854775807"
+                },
+                "note": {
+                  "type": "optional",
+                  "value": null
+                },
+                "state": {
+                  "type": "enum",
+                  "value": {
+                    "type_id": "Visibility:ProbeState",
+                    "constructor": "Ready"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "create-b",
+          "contract": "b",
+          "template": {
+            "package_id": "05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111",
+            "module": "Visibility",
+            "entity": "Record"
+          },
+          "witnesses": [
+            "B"
+          ],
+          "observed_at_micros": 1700000000000000,
+          "ledger_at_micros": 1700000000000000,
+          "action": {
+            "kind": "create",
+            "payload": {
+              "type": "record",
+              "value": {
+                "owner": {
+                  "type": "party",
+                  "value": "B"
+                },
+                "readers": {
+                  "type": "list",
+                  "value": []
+                },
+                "label": {
+                  "type": "text",
+                  "value": "b-only"
+                },
+                "amount": {
+                  "type": "numeric",
+                  "value": {
+                    "scale": 10,
+                    "decimal": "12345678901234567890.1234567891"
+                  }
+                },
+                "sequence": {
+                  "type": "int64",
+                  "value": "9223372036854775807"
+                },
+                "note": {
+                  "type": "optional",
+                  "value": null
+                },
+                "state": {
+                  "type": "enum",
+                  "value": {
+                    "type_id": "Visibility:ProbeState",
+                    "constructor": "Ready"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "create-joint",
+          "contract": "joint",
+          "template": {
+            "package_id": "05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111",
+            "module": "Visibility",
+            "entity": "Record"
+          },
+          "witnesses": [
+            "A",
+            "B"
+          ],
+          "observed_at_micros": 1700000000000000,
+          "ledger_at_micros": 1700000000000000,
+          "action": {
+            "kind": "create",
+            "payload": {
+              "type": "record",
+              "value": {
+                "owner": {
+                  "type": "party",
+                  "value": "A"
+                },
+                "readers": {
+                  "type": "list",
+                  "value": [
+                    {
+                      "type": "party",
+                      "value": "B"
+                    }
+                  ]
+                },
+                "label": {
+                  "type": "text",
+                  "value": "joint"
+                },
+                "amount": {
+                  "type": "numeric",
+                  "value": {
+                    "scale": 10,
+                    "decimal": "12345678901234567890.1234567891"
+                  }
+                },
+                "sequence": {
+                  "type": "int64",
+                  "value": "9223372036854775807"
+                },
+                "note": {
+                  "type": "optional",
+                  "value": null
+                },
+                "state": {
+                  "type": "enum",
+                  "value": {
+                    "type_id": "Visibility:ProbeState",
+                    "constructor": "Ready"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "position": "fixture-a",
+      "events": [
+        {
+          "id": "archive-a",
+          "contract": "a",
+          "template": {
+            "package_id": "05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111",
+            "module": "Visibility",
+            "entity": "Record"
+          },
+          "witnesses": [
+            "A"
+          ],
+          "observed_at_micros": 1700000000000000,
+          "ledger_at_micros": 1700000000000000,
+          "action": {
+            "kind": "archive"
+          }
+        },
+        {
+          "id": "create-a2",
+          "contract": "a2",
+          "template": {
+            "package_id": "05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111",
+            "module": "Visibility",
+            "entity": "Record"
+          },
+          "witnesses": [
+            "A"
+          ],
+          "observed_at_micros": 1700000000000000,
+          "ledger_at_micros": 1700000000000000,
+          "action": {
+            "kind": "create",
+            "payload": {
+              "type": "record",
+              "value": {
+                "owner": {
+                  "type": "party",
+                  "value": "A"
+                },
+                "readers": {
+                  "type": "list",
+                  "value": []
+                },
+                "label": {
+                  "type": "text",
+                  "value": "a-successor"
+                },
+                "amount": {
+                  "type": "numeric",
+                  "value": {
+                    "scale": 10,
+                    "decimal": "12345678901234567890.1234567891"
+                  }
+                },
+                "sequence": {
+                  "type": "int64",
+                  "value": "9223372036854775807"
+                },
+                "note": {
+                  "type": "optional",
+                  "value": null
+                },
+                "state": {
+                  "type": "enum",
+                  "value": {
+                    "type_id": "Visibility:ProbeState",
+                    "constructor": "Ready"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

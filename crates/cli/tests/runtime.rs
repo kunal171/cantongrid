@@ -585,7 +585,7 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
     };
     let namespace = format!("bind_cli_{}", std::process::id());
     let mut definition: Json =
-        serde_json::from_str(include_str!("../../../examples/models/visibility.json")).unwrap();
+        serde_json::from_str(include_str!("../assets/models/visibility.json")).unwrap();
     definition["models"][0]["name"] = namespace.clone().into();
     let catalog = Catalog::parse(&definition.to_string()).unwrap();
     let model = &catalog.models()[0];
@@ -652,7 +652,7 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
                     ledger_at_micros: None,
                     origin: None,
                     action: Action::Create(Value::RawJson(
-                        include_str!("../../../examples/models/visibility-payload.json").into(),
+                        include_str!("../assets/models/visibility-payload.json").into(),
                     )),
                 }],
             },

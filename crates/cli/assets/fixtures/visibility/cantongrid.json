@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "model_version": 1,
+  "payload_schema_version": 1,
+  "source": {
+    "adapter": "fixture",
+    "id": "visibility-fixture",
+    "network": "synthetic-fixture",
+    "generation": 1,
+    "parties": [
+      "A",
+      "B"
+    ],
+    "fixture": "events.json"
+  },
+  "selection": {
+    "templates": [
+      {
+        "package_id": "05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111",
+        "module": "Visibility",
+        "entity": "Record"
+      }
+    ],
+    "events": [
+      "create",
+      "archive"
+    ],
+    "require_complete_history": true
+  }
+}

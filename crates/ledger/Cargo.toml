@@ -1,4 +1,11 @@
 [package]
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+description = "Current Canton Ledger API source-user and party-grant verification for the configured loopback LocalNet profile."
+readme = "README.md"
+categories = ["database"]
 name = "cantongrid-ledger"
 version.workspace = true
 edition.workspace = true

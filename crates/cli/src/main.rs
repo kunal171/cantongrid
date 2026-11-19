@@ -237,11 +237,11 @@ fn init(directory: &Path) -> Result<(), String> {
     for (name, content) in [
         (
             "cantongrid.json",
-            include_str!("../../../examples/fixtures/visibility/cantongrid.json"),
+            include_str!("../assets/fixtures/visibility/cantongrid.json"),
         ),
         (
             "events.json",
-            include_str!("../../../examples/fixtures/visibility/events.json"),
+            include_str!("../assets/fixtures/visibility/events.json"),
         ),
     ] {
         let result = File::create_new(directory.join(name)).and_then(|mut file| {

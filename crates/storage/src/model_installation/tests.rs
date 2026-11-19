@@ -46,7 +46,7 @@ impl Scenario {
     }
     fn visibility() -> Self {
         Self::new(
-            Catalog::parse(include_str!("../../../../examples/models/visibility.json"))
+            Catalog::parse(include_str!("../../assets/models/visibility.json"))
                 .unwrap()
                 .models()[0]
                 .clone(),
@@ -206,12 +206,12 @@ fn installation_is_idempotent_and_reuses_only_verified_managed_tables() {
 fn both_examples_install_exact_native_columns_and_enforce_parent_identity() {
     for (example, payload) in [
         (
-            include_str!("../../../../examples/models/visibility.json"),
-            include_str!("../../../../examples/models/visibility-payload.json"),
+            include_str!("../../assets/models/visibility.json"),
+            include_str!("../../assets/models/visibility-payload.json"),
         ),
         (
-            include_str!("../../../../examples/models/outcomia.json"),
-            include_str!("../../../../examples/models/outcomia-payload.json"),
+            include_str!("../../assets/models/outcomia.json"),
+            include_str!("../../assets/models/outcomia-payload.json"),
         ),
     ] {
         let mut model = Catalog::parse(example).unwrap().models()[0].clone();
