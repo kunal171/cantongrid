@@ -1,4 +1,11 @@
 [package]
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+description = "Authorized PQS ingestion and authenticated REST/GraphQL orchestration with owned PostgreSQL persistence."
+readme = "README.md"
+categories = ["database"]
 name = "cantongrid-runtime"
 version.workspace = true
 edition.workspace = true

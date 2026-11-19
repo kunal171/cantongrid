@@ -1,4 +1,11 @@
 [package]
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+description = "The cantongrid command-line executable for fixture replay and the source/indexing operations supported by this release.."
+readme = "README.md"
+categories = ["database"]
 name = "cantongrid-cli"
 version.workspace = true
 edition.workspace = true
