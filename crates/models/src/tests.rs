@@ -4,7 +4,7 @@ use cantongrid_core::value::{Decimal, Value};
 use serde_json::{Value as Json, json};
 
 fn visibility() -> Catalog {
-    Catalog::parse(include_str!("../../../examples/models/visibility.json")).unwrap()
+    Catalog::parse(include_str!("../assets/models/visibility.json")).unwrap()
 }
 fn payload() -> Json {
     json!({"label":"test","owner":"A","amount":"12345678901234567890.1234567891","sequence":"9223372036854775807","note":null,"state":"Ready"})
@@ -13,12 +13,12 @@ fn literal(value: Value) -> Expression {
     Expression::Literal { value }
 }
 fn definition() -> Json {
-    serde_json::from_str(include_str!("../../../examples/models/visibility.json")).unwrap()
+    serde_json::from_str(include_str!("../assets/models/visibility.json")).unwrap()
 }
 
 #[test]
 fn outcomia_and_unrelated_definitions_use_the_same_exact_evaluator() {
-    let outcomia = Catalog::parse(include_str!("../../../examples/models/outcomia.json")).unwrap();
+    let outcomia = Catalog::parse(include_str!("../assets/models/outcomia.json")).unwrap();
     let input = json!({"marketId":"7","protocolName":"test","status":"Closed","terms":{"question":"Test question","priceTick":"0.0000000001","quantityLot":"9223372036854775807"}});
     let row = outcomia.models()[0]
         .evaluate(&input.to_string())
