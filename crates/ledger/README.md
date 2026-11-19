@@ -1,11 +1,22 @@
 # cantongrid-ledger
 
-Current Canton Ledger API user and party-grant verification for CantonGrid.
+Current Canton Ledger API source-user and party-grant verification for the configured loopback LocalNet profile. Source grants and API caller authentication are separate.
 
-[Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
+## Usage
 
-Alpha API: the tested live profile is loopback-only, with authorized node-local
-PQS data and snapshot-forward partial history. Model declarations do not grant
-source or caller access. See the guide for setup, limits and the LocalNet PoC.
+```toml
+[dependencies]
+cantongrid-ledger = "=0.3.0-alpha.4"
+```
+
+[Library modules and examples](https://github.com/kunal171/cantongrid/tree/v0.3.0-alpha.4/crates/ledger/src) describe the API available in this version.
+
+## Release scope
+
+This is the historical 0.3.0-alpha.4 release, packaged for crates.io. Packaging adds
+crate-local assets and metadata; the original source release remains unchanged.
+Prefer the latest release for new integrations. APIs are alpha and may change.
+
+[Versioned repository and setup](https://github.com/kunal171/cantongrid/tree/v0.3.0-alpha.4) · [Current developer guide](https://shady-3.gitbook.io/cantongrid/)
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.

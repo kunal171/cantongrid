@@ -1,13 +1,24 @@
 # cantongrid-cli
 
-CantonGrid CLI for authorized Daml contract indexing, model generation and query services.
+The cantongrid command-line executable for fixture replay and the source/indexing operations supported by this release.
 
-The executable is named `cantongrid`. Run `cantongrid --help` for commands.
+## Usage
 
-[Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
+```bash
+cargo install cantongrid-cli --version 0.3.0-alpha.4 --locked
+cantongrid --help
+cantongrid init ./my-demo
+cantongrid fixture run ./my-demo/cantongrid.json --party A
+```
 
-Alpha API: the tested live profile is loopback-only, with authorized node-local
-PQS data and snapshot-forward partial history. Model declarations do not grant
-source or caller access. See the guide for setup, limits and the LocalNet PoC.
+This runs a synthetic in-memory fixture. `--party` simulates grants and does not authenticate a live user.
+
+## Release scope
+
+This is the historical 0.3.0-alpha.4 release, packaged for crates.io. Packaging adds
+crate-local assets and metadata; the original source release remains unchanged.
+Prefer the latest release for new integrations. APIs are alpha and may change.
+
+[Versioned repository and setup](https://github.com/kunal171/cantongrid/tree/v0.3.0-alpha.4) · [Current developer guide](https://shady-3.gitbook.io/cantongrid/)
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
