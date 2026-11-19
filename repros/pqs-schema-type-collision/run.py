@@ -15,10 +15,12 @@ GUARD = "select 1 from pg_type where typname = '__event_type'"
 
 
 def call(args, **kwargs):
+    """Fail immediately on a reproduction command error; use argument arrays rather than a shell."""
     return subprocess.run(args, check=True, **kwargs)
 
 
 def main():
+    """Compare clean/collision SQL controls in isolated containers and clean up only their owned resources."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--migration-file', type=Path, help='Test the exact SQL from an upstream checkout')
     args = parser.parse_args()

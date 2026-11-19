@@ -4,6 +4,7 @@ from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_ope
 
 
 class _NoRedirect(HTTPRedirectHandler):
+    """Reject all redirects so a local bearer cannot be copied to another URL."""
     def redirect_request(self, request, response, code, message, headers, new_url):
         """Returning None makes urllib reject the redirect rather than copying Authorization."""
         return None

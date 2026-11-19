@@ -9,6 +9,7 @@ USER = 'cantongrid-pqs-app-provider'
 
 
 def main(argv=None):
+    """Check exact source rights, readiness and retained SQL data in one read-only transaction."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--at-offset', type=int, help='Check a retained historical snapshot')
     args = parser.parse_args(argv)

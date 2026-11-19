@@ -9,6 +9,7 @@ ENV = {**os.environ, 'PQS_UID': str(os.getuid()), 'PQS_GID': str(os.getgid())}
 
 
 def compose(visibility=False):
+    """Select the owned provider or Visibility Compose project and its matching file."""
     project = 'cantongrid-visibility' if visibility else 'cantongrid-pqs'
     filename = 'visibility.compose.yaml' if visibility else 'pqs.compose.yaml'
     return ['docker', 'compose', '--progress', 'plain', '-p', project,
@@ -16,6 +17,7 @@ def compose(visibility=False):
 
 
 def pg_command(database='pqs', *, reader=False, sqlstate=False, tuples=True):
+    """Build psql arguments for an explicit owner/reader role; SQL and party values use stdin."""
     command = [*compose(), 'exec', '-T']
     if reader:
         command += ['-e', 'PGPASSWORD=local-pqs-reader']  # Disposable fixture password.
@@ -49,6 +51,7 @@ def write_private(path, value):
 
 
 def source_ready(visibility=False):
+    """Require exporter, database-pool and stream health before treating the source as ready."""
     from .http import open_local
     port = 18081 if visibility else 18080
     try:
@@ -61,6 +64,7 @@ def source_ready(visibility=False):
 
 
 def wait_source(visibility=False, timeout=45):
+    """Bound startup polling; readiness failure never becomes permission to use cached data."""
     import time
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:

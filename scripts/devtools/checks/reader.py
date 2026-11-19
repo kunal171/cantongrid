@@ -8,6 +8,7 @@ COMMAND = pg_command(reader=True, sqlstate=True)
 
 
 def main():
+    """Probe SELECT access and rollback-only write/escalation denials for the restricted source reader."""
     sql = '''SELECT json_build_object(
       'reader', current_user = 'cantongrid_pqs_reader',
       'default_read_only', current_setting('default_transaction_read_only') = 'on',

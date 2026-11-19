@@ -2,16 +2,21 @@
 -- This fixture does not hold assets, move funds or implement prediction markets.
 module Visibility where
 
+-- | Enum transport control, independent from the prediction-market lifecycle.
 data ProbeState = Ready | Paused
   deriving (Eq, Show)
 
+-- | One immutable visibility probe. Only the owner signs; readers observe without signing.
 template Record
   with
     owner : Party
     readers : [Party]
     label : Text
+    -- Numeric 10 retains all digits, e.g. 12345678901234567890.1234567891.
     amount : Numeric 10
+    -- The fixture uses Int64 max to detect accidental conversion through floating point.
     sequence : Int
+    -- Missing text is an explicit optional value, not an empty string.
     note : Optional Text
     state : ProbeState
   where

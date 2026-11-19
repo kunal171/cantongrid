@@ -5,6 +5,7 @@ from .common import ROOT
 
 
 def main(argv=None):
+    """Manage only the separate owned destination; stop removes containers but keeps its volume."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['up', 'status', 'stop'])
     args = parser.parse_args(argv)

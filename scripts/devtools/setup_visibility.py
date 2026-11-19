@@ -10,6 +10,7 @@ from .visibility import (
 
 
 def main():
+    """Upload the fixture DAR and prepare owned users, parties and initial records for LocalNet tests."""
     pid = package_id()
     saved = DIRECTORY / 'context.json'
     if saved.exists() and json.loads(saved.read_text())['packageId'] != pid:

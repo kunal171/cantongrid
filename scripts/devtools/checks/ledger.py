@@ -4,6 +4,7 @@ from ..ledger import get, token
 
 
 def main():
+    """Verify local services, anonymous denial and authenticated Ledger reads without submitting writes."""
     bearer = token()  # Public upstream dev credential, never a shared-network token.
     for name, prefix in [('app-user', 2), ('app-provider', 3), ('sv', 4)]:
         base = f'http://127.0.0.1:{prefix}975'

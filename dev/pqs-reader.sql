@@ -29,9 +29,13 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 REVOKE TEMPORARY ON DATABASE pqs FROM PUBLIC;
 GRANT CONNECT ON DATABASE pqs TO cantongrid_pqs_reader;
 GRANT USAGE ON SCHEMA public TO cantongrid_pqs_reader;
+-- SQL access is a coarse source-storage boundary, not API caller authorization.
+-- The Rust worker still checks current Ledger rights and exact configured selections.
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO cantongrid_pqs_reader;
 ALTER DEFAULT PRIVILEGES FOR ROLE pqs_owner IN SCHEMA public
   GRANT SELECT ON TABLES TO cantongrid_pqs_reader;
+-- This default is defense in depth; the rollback-only probes verify real ACL denial
+-- even when a session explicitly requests a read-write transaction.
 ALTER ROLE cantongrid_pqs_reader SET default_transaction_read_only = on;
 DO $$
 BEGIN
