@@ -176,34 +176,8 @@ restoration and rejection of pre-revocation cursors. Generated TypeScript compil
 
 Evidence: [sanitized report](../examples/poc/evidence.json), with the tested code
 commit and environment. Chromium viewer evidence remains from alpha.2; it was
-not repeated for alpha.4. This does not complete Phase 4: the application check below extends lifecycle acceptance, while large staged
-rebuilds and funded trading projections remain open.
-
-
-## Outcomia model queries — alpha.4 development
-
-Verified 2026-11-19 against the unchanged approved Outcomia DAR identified above.
-The full run reconciled 25 submitted create/archive identities and seven final
-active contracts. It passed 60 page sequences across A/B/AB and REST/GraphQL,
-including exact and derived filters, native Int64 sorting, null/non-null closure
-reasons and private/shared visibility. Generated revision-2 TypeScript compiled.
-
-Revision 2 adds a real optional application field; promotion invalidated old
-cursors and rollback restored revision 1. Caller revocation and grant-epoch
-changes rejected prior access/cursors. Credential-free controls check restoration
-after assertion and ambiguous promotion failures, pinned template identities and
-source preflight before test writes. All 19 development-helper and four PoC unit
-tests passed. The Rust engine was unchanged.
-
-The initial application run passed 42 page sequences. A later attempt stopped
-because the fixture exporter's one-hour token had expired (`stream_up=false`,
-UNAUTHENTICATED). Renewing that token restored ingestion; the full 60-sequence
-run then passed. This was local fixture credential expiry, not an upstream defect.
-
-[Sanitized evidence](../examples/fixtures/outcomia/model-query-evidence.json)
-records the tested code commit and counts. No new parties, funded collateral,
-orders, trades or resolutions were created. This extends application lifecycle
-query coverage; it does not verify funded-market projections or staged rebuilding.
+not repeated for alpha.4. This does not complete Phase 4: the application check below extends lifecycle
+acceptance, while large staged rebuilds and funded trading projections remain open.
 
 
 ## Outcomia model queries — alpha.4 development
