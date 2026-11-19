@@ -1,4 +1,11 @@
 [package]
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+description = "Read-only Participant Query Store inspection, retained-window reconciliation and source coverage checks."
+readme = "README.md"
+categories = ["database"]
 name = "cantongrid-pqs"
 version.workspace = true
 edition.workspace = true

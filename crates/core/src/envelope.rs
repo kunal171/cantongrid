@@ -155,11 +155,11 @@ mod tests {
     #[test]
     fn envelopes_round_trip_and_reject_conflicting_context_or_duplicate_keys() {
         let plan = Plan::parse(include_str!(
-            "../../../examples/fixtures/visibility/cantongrid.json"
+            "../assets/fixtures/visibility/cantongrid.json"
         ))
         .unwrap();
         let fixture = Fixture::parse(
-            include_str!("../../../examples/fixtures/visibility/events.json"),
+            include_str!("../assets/fixtures/visibility/events.json"),
             &plan,
         )
         .unwrap();
@@ -175,7 +175,7 @@ mod tests {
     }
     #[test]
     fn relocation_and_selection_order_do_not_change_the_persisted_definition() {
-        let text = include_str!("../../../examples/fixtures/visibility/cantongrid.json");
+        let text = include_str!("../assets/fixtures/visibility/cantongrid.json");
         let original = Plan::parse(text).unwrap();
         let mut raw: serde_json::Value = serde_json::from_str(text).unwrap();
         raw["source"]["fixture"] = "different/location.json".into();

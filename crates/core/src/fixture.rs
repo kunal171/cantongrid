@@ -197,8 +197,8 @@ impl std::error::Error for FixtureError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    const PROJECT: &str = include_str!("../../../examples/fixtures/visibility/cantongrid.json");
-    const EVENTS: &str = include_str!("../../../examples/fixtures/visibility/events.json");
+    const PROJECT: &str = include_str!("../assets/fixtures/visibility/cantongrid.json");
+    const EVENTS: &str = include_str!("../assets/fixtures/visibility/events.json");
     #[test]
     fn examples_share_one_runner_and_preserve_party_isolation() {
         let plan = Plan::parse(PROJECT).unwrap();
@@ -218,11 +218,11 @@ mod tests {
             assert!(result.has_checkpoint);
         }
         let plan = Plan::parse(include_str!(
-            "../../../examples/fixtures/outcomia/cantongrid.json"
+            "../assets/fixtures/outcomia/cantongrid.json"
         ))
         .unwrap();
         let fixture = Fixture::parse(
-            include_str!("../../../examples/fixtures/outcomia/events.json"),
+            include_str!("../assets/fixtures/outcomia/events.json"),
             &plan,
         )
         .unwrap();
