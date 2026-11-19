@@ -14,12 +14,12 @@ description = "Authenticated CantonGrid indexing workers and REST/GraphQL query 
 categories = ["database"]
 
 [dependencies]
-cantongrid-postgres = { path = "../postgres", version = "=0.3.0-alpha.4" }
-cantongrid-core = { path = "../core", version = "=0.3.0-alpha.4" }
-cantongrid-ledger = { path = "../ledger", version = "=0.3.0-alpha.4" }
-cantongrid-pqs = { path = "../pqs", version = "=0.3.0-alpha.4" }
-cantongrid-models = { path = "../models", version = "=0.3.0-alpha.4" }
-cantongrid-storage = { path = "../storage", version = "=0.3.0-alpha.4" }
+cantongrid-postgres = { path = "../postgres", version = "=0.3.0-alpha.5" }
+cantongrid-core = { path = "../core", version = "=0.3.0-alpha.5" }
+cantongrid-ledger = { path = "../ledger", version = "=0.3.0-alpha.5" }
+cantongrid-pqs = { path = "../pqs", version = "=0.3.0-alpha.5" }
+cantongrid-models = { path = "../models", version = "=0.3.0-alpha.5" }
+cantongrid-storage = { path = "../storage", version = "=0.3.0-alpha.5" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "signal"] }

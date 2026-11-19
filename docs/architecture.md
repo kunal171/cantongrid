@@ -113,3 +113,31 @@ transport interfaces. The [PoC](guide/poc.md) exercises this on LocalNet.
 Bounded equality/range/null filters, native sorting, query-bound keysets and REST/GraphQL model discovery share validation. Broader model acceptance remains pending. Joins require
 access to every input; aggregates need an explicit scope. No public durable
 stream is served yet.
+
+
+## Staged model rebuild contract (alpha.5 development)
+
+An operator names a job for an installed, currently inactive revision. Job metadata
+reserves its stream/model/fingerprint; another bind or rebuild cannot write the
+same output rows. Staging uses the existing private compiler-owned table. API
+queries discover only active bindings, so partial staging rows remain inaccessible.
+An already active physical fingerprint cannot be rebuilt in place.
+
+Each step renews source authorization and holds the canonical source lock only
+for a bounded transaction. It first removes stale inactive rows, then scans active
+canonical contracts by ID. Ingestion continues between steps and records dirty
+contract IDs atomically with its canonical writes. Reconciliation reevaluates
+those contracts' current state, covering creates behind the scan cursor and
+archives of already scanned rows. No long-lived SQL snapshot or external CDC is
+required. Processing failures roll back the page and progress together.
+
+Activation checks the expected old binding and empty dirty queue under that same
+source lock, then changes only binding metadata. Old unreferenced projection rows
+are removed afterward in bounded cleanup steps; aliases keep their referenced
+rows. Cancellation cleans only the inactive target in bounded steps. Source
+grant/plan drift or expired leases never authorize fallback reads or job progress.
+All jobs are operator commands, not public API resources or new caller grants.
+The proposed CLI is `models rebuild start|step|status|activate|cancel`; jobs and
+cursor state persist in a new explicit destination migration, leaving 001–005
+unchanged. This contract is not evidence that the staged path is implemented or
+tested until its code and acceptance checks land.

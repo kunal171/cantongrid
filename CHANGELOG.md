@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-alpha.5 — unreleased
+
+### In progress
+
+- Resumable, source-authorized model rebuild jobs with bounded work and atomic activation.
+
 ## 0.3.0-alpha.4 — 2026-11-19
 
 ### Added
