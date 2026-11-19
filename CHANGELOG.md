@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 — 2026-11-19
+
+- Regular release of the verified LocalNet contracts/indexing/model API profile.
+- Digest-pinned PostgreSQL 17.12 source and destination fixtures in separate new
+  volumes. Existing 14.x data requires a logical restore; original volumes remain.
+- Real 261-contract staged rebuild acceptance: process restart, source revocation,
+  concurrent creates/archive, stale-activation rejection, promotion and rollback.
+- Reproducible write-enabled PoC command, private journals and sanitized evidence.
+- Runtime APIs and migrations 001–006 are unchanged from alpha.5. Funded trading,
+  joins/aggregates, streams and production acceptance remain outside this release.
+
 ## 0.3.0-alpha.5 — 2026-11-19
 
 ### Added

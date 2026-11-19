@@ -6,7 +6,7 @@ Declarative Daml contract projections, exact calculations, SQL and client type g
 
 ```toml
 [dependencies]
-cantongrid-models = "=0.3.0-alpha.5"
+cantongrid-models = "=0.3.0"
 ```
 
 The library exposes `Catalog`, `Model`, exact typed expressions, SQL plans and
@@ -30,7 +30,7 @@ for a complete definition and lifecycle.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
-Alpha API: the tested live profile is loopback-only, with authorized node-local
+Supported profile: the tested live profile is loopback-only, with authorized node-local
 PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 

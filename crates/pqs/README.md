@@ -6,7 +6,7 @@ Read-only authorized Canton Participant Query Store snapshot and update paging.
 
 ```toml
 [dependencies]
-cantongrid-pqs = "=0.3.0-alpha.5"
+cantongrid-pqs = "=0.3.0"
 ```
 
 Use `inspect_env` to check a dedicated PQS reader's schema and retained boundary.
@@ -29,7 +29,7 @@ for role setup and supported coverage.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
-Alpha API: the tested live profile is loopback-only, with authorized node-local
+Supported profile: the tested live profile is loopback-only, with authorized node-local
 PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 

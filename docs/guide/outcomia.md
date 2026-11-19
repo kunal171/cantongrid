@@ -78,8 +78,8 @@ Local exporter credentials expire after one hour. Renew them with
 `python3 scripts/dev.py pqs up --visibility` before a later run. Source preflight
 fails before DAR upload or test submission when the exporter is unhealthy.
 The captured [model-query evidence](https://github.com/kunal171/cantongrid/blob/main/examples/fixtures/outcomia/model-query-evidence.json)
-records the exact tested commit, DAR hash and environment. Larger staged model
-backfills and funded trading projections are not established by this check.
+records the exact tested commit, DAR hash and environment. The standalone [large rebuild acceptance](poc.md#evidence-and-boundaries) covers
+staged backfills. Funded trading projections remain outside this check.
 
 A sibling checkout is not needed for the synthetic examples. To query existing
 authorized contracts, use [LocalNet setup](localnet-source.md) and [API](api.md)

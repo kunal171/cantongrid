@@ -6,19 +6,19 @@ Restricted PostgreSQL connections and redacted database errors for CantonGrid.
 
 ```toml
 [dependencies]
-cantongrid-postgres = "=0.3.0-alpha.5"
+cantongrid-postgres = "=0.3.0"
 ```
 
-```rust,no_run
+```rust
 use cantongrid_postgres::connect_env;
 
-# fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
 // The operator sets this variable to an explicit loopback connection string.
 let mut database = connect_env("CANTONGRID_DESTINATION_URL")?;
 let row = database.query_one("SELECT 1::int4", &[])?;
 assert_eq!(row.get::<_, i32>(0), 1);
-# Ok(())
-# }
+Ok(())
+}
 ```
 
 Connections require an explicit user and database, and a loopback IP address.
@@ -28,7 +28,7 @@ or make source writes; use separate source-reader and owned-destination roles.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
-Alpha API: the tested live profile is loopback-only, with authorized node-local
+Supported profile: the tested live profile is loopback-only, with authorized node-local
 PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 

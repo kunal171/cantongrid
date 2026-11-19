@@ -19,11 +19,10 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest GitHub source prerelease is **0.3.0-alpha.5**. It includes LocalNet
-ingestion, model projections, generated TypeScript/GraphQL, filters, sorting and
-discovery. Alpha.5 adds staged rebuilds and security fixes with owned-PostgreSQL
-and mock-source HTTP coverage. See
-[verification](verification.md) for the environments actually tested.
+The latest release is **0.3.0**. It includes LocalNet ingestion, model projections,
+generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
+PostgreSQL 17.12 compatibility and large real-ledger rebuild acceptance pass.
+See [verification](verification.md) for the exact environments and checks.
 
 Phase 4 model integration remains in progress. History starts at an active
 snapshot and continues forward. Joins, aggregates, interfaces/reassignments,
@@ -32,12 +31,8 @@ Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
-1. Validate PQS and destination compatibility on a supported PostgreSQL major
-   version, then plan migration of the pinned PostgreSQL 14 fixtures.
-2. Run a larger staged rebuild on LocalNet, including ingestion between pages,
-   restart, revocation and activation.
-3. Extend Outcomia projections to funded assets/trading after separate authorization.
-4. Define joins/aggregates with retraction and visibility for every input before
+1. Extend Outcomia projections to funded assets/trading after separate authorization.
+2. Define joins/aggregates with retraction and visibility for every input before
    implementation. Phase 5 then adds authenticated resumable streams, retention-gap
    handling and reauthorization; existing outbox rows are not a public stream.
 

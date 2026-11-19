@@ -9,7 +9,7 @@ The executable is named `cantongrid`. Run `cantongrid --help` for commands.
 Requires Rust 1.100.0 or newer. The package installs the `cantongrid` executable.
 
 ```bash
-cargo install cantongrid-cli --version 0.3.0-alpha.5 --locked
+cargo install cantongrid-cli --version 0.3.0 --locked
 cantongrid --help
 cantongrid init ./my-demo
 cantongrid validate ./my-demo/cantongrid.json
@@ -27,7 +27,7 @@ follow the [LocalNet PoC](https://github.com/kunal171/cantongrid/blob/main/docs/
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
-Alpha API: the tested live profile is loopback-only, with authorized node-local
+Supported profile: the tested live profile is loopback-only, with authorized node-local
 PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 

@@ -10,7 +10,7 @@ The current implementation and remaining work are listed in the [overview](READM
 | Rust/Cargo / Python helpers | 1.100.0 / 3.11+ |
 | CN Quickstart / Splice | `8b898ed3ccb15e243b22ee8d0ed3573fb91ee6b9` / 0.6.11 |
 | Participant / PQS | Canton 3.5.7 / Scribe 3.5.4, SQL schema041 |
-| Database | PostgreSQL 14.25, separate source and owned destination |
+| Database | PostgreSQL 17.12, separate source and owned destination; historical alpha runs used 14.25 |
 | Daml example | SDK 3.7.1, LF target 2.1 |
 
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
@@ -43,7 +43,7 @@ The participant's upstream Quickstart database was not upgraded; compatibility
 and restore evidence above covers only the PQS and CantonGrid databases.
 Funded trading, joins/aggregates and streams remain outside this release.
 
-## Latest local checks
+## Alpha.5 local checks
 
 Recorded 2026-11-19 during alpha.5 development, through code commit
 [`0cca1ee`](https://github.com/kunal171/cantongrid/tree/0cca1ee):
