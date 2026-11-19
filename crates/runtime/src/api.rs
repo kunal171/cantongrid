@@ -1,5 +1,6 @@
 //! REST and GraphQL share one authorized SQL query path; neither transport supplies party grants.
 mod model_api;
+mod resources;
 
 use crate::{auth, config::Project, index::ready};
 use async_graphql::{Context, EmptyMutation, EmptySubscription, Object, Schema, SimpleObject};
@@ -13,15 +14,12 @@ use axum::{
 use cantongrid_ledger::SourceAuthorization;
 use cantongrid_storage::{PageKind, Store};
 use serde::{Deserialize, Serialize};
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
 struct Service {
     path: PathBuf,
-    permits: Arc<tokio::sync::Semaphore>,
+    limits: resources::Limits,
 }
 #[derive(Clone)]
 struct RequestContext {
@@ -78,19 +76,21 @@ impl Service {
         let caller = identity.caller.clone();
         let binding = identity.binding.clone();
         let path = self.path.clone();
-        let mut page = tokio::task::spawn_blocking(move || {
-            let lease = authorization
-                .lease()
-                .ok_or("source authorization unavailable")?;
-            let mut store = Store::open_env(&project.destination_database_env)
-                .map_err(|_| "destination unavailable")?;
-            let page = store
-                .read_page(&project.plan, &caller, lease, kind, after.as_deref(), limit)
-                .map_err(|e| format!("authorized query unavailable: {e}"))?;
-            Ok::<_, String>(page)
-        })
-        .await
-        .map_err(|_| "query worker failed")??;
+        let mut page = self
+            .limits
+            .blocking(move || {
+                let lease = authorization
+                    .lease()
+                    .ok_or("source authorization unavailable")?;
+                let mut store = Store::open_env(&project.destination_database_env)
+                    .map_err(|_| "destination unavailable")?;
+                let page = store
+                    .read_page(&project.plan, &caller, lease, kind, after.as_deref(), limit)
+                    .map_err(|e| format!("authorized query unavailable: {e}"))?;
+                Ok::<_, String>(page)
+            })
+            .await
+            .map_err(|_| "query worker failed")??;
         let project = Project::load(&path)?;
         let _source = current_source(&project).await?;
         let current = auth::authenticate(&project, token)?;
@@ -136,13 +136,6 @@ impl Service {
                 "payloadEncoding":"raw_json","archiveEvidence":"prior_create_dependency"
             })),
         };
-        if serde_json::to_vec(&result)
-            .map_err(|_| "query encoding failed")?
-            .len()
-            > 2 * 1024 * 1024
-        {
-            return Err("query response exceeds limit".into());
-        }
         if !source_valid(&_source, &project)
             || auth::authenticate(&project, token)?.binding != binding
         {
@@ -272,9 +265,6 @@ fn error(status: StatusCode) -> Response {
 }
 
 async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKind) -> Response {
-    let Ok(_permit) = service.permits.clone().try_acquire_owned() else {
-        return error(StatusCode::TOO_MANY_REQUESTS);
-    };
     let token = match bearer(&headers) {
         Ok(t) => t,
         Err(r) => return error(r),
@@ -286,7 +276,7 @@ async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKi
         return error(StatusCode::UNAUTHORIZED);
     }
     match service.query(&token, kind, filter).await {
-        Ok(page) => Json(page).into_response(),
+        Ok(page) => resources::json(&page),
         Err(reason) => {
             eprintln!("CantonGrid query: {reason}");
             error(
@@ -321,9 +311,6 @@ async fn graphql(
     headers: HeaderMap,
     Json(request): Json<async_graphql::Request>,
 ) -> Response {
-    let Ok(_permit) = service.permits.clone().try_acquire_owned() else {
-        return error(StatusCode::TOO_MANY_REQUESTS);
-    };
     let token = match bearer(&headers) {
         Ok(t) => t,
         Err(r) => return error(r),
@@ -355,7 +342,7 @@ async fn graphql(
     if !current.is_ok_and(|id| id.binding == identity.binding) {
         return error(StatusCode::UNAUTHORIZED);
     }
-    let response = Json(response).into_response();
+    let response = resources::json(&response);
     if !source_valid(&_source, &latest_project)
         || !auth::authenticate(&latest_project, &token)
             .is_ok_and(|id| id.binding == identity.binding)
@@ -374,7 +361,7 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .map_err(|_| "cannot bind API listener")?;
     let service = Service {
         path: path.to_owned(),
-        permits: Arc::new(tokio::sync::Semaphore::new(16)),
+        limits: resources::Limits::default(),
     };
     let router = Router::new()
         .route("/v1/contracts", get(active))
@@ -384,8 +371,12 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .route("/v1/models", get(model_api::list))
         .route("/v1/models/{namespace}/{name}", get(model_api::describe))
         .route("/v1/models/{namespace}/{name}/query", post(model_api::rows))
-        .layer(axum::middleware::from_fn(no_store))
         .layer(DefaultBodyLimit::max(16384))
+        .layer(axum::middleware::from_fn_with_state(
+            service.limits.clone(),
+            resources::admit,
+        ))
+        .layer(axum::middleware::from_fn(no_store))
         .with_state(service);
     axum::serve(listener, router)
         .with_graceful_shutdown(async {

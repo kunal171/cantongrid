@@ -3,11 +3,10 @@ use super::{Project, RequestContext, Service, auth, bearer, current_source, erro
 mod graphql_schema;
 mod rest;
 use axum::{
-    Json,
     body::Bytes,
     extract::State,
     http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
+    response::Response,
 };
 use cantongrid_models::QueryOptions;
 use cantongrid_storage::{BoundModel, Store};
@@ -26,18 +25,20 @@ async fn catalog(service: &Service, token: &str) -> Result<Vec<BoundModel>, Stri
     let project = Project::load(&service.path)?;
     let id = auth::authenticate(&project, token)?;
     let source = current_source(&project).await?;
-    tokio::task::spawn_blocking(move || {
-        Store::open_env(&project.destination_database_env)
-            .map_err(|e| e.to_string())?
-            .bound_models(
-                &project.plan,
-                &id.caller,
-                source.lease().ok_or("source unavailable")?,
-            )
-            .map_err(|e| e.to_string())
-    })
-    .await
-    .map_err(|_| "model discovery failed")?
+    service
+        .limits
+        .blocking(move || {
+            Store::open_env(&project.destination_database_env)
+                .map_err(|e| e.to_string())?
+                .bound_models(
+                    &project.plan,
+                    &id.caller,
+                    source.lease().ok_or("source unavailable")?,
+                )
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|_| "model discovery failed")?
 }
 
 /// Input errors are safe to report as 400; source/storage/authorization races stay unavailable.
@@ -79,28 +80,30 @@ async fn query(
         .map_err(|_| QueryError::Unavailable)?;
     let path = service.path.clone();
     let old_identity = identity.binding.clone();
-    let mut page = tokio::task::spawn_blocking(move || {
-        Store::open_env(&project.destination_database_env)
-            .map_err(|_| QueryError::Unavailable)?
-            .read_model_query(
-                &project.plan,
-                &identity.caller,
-                source.lease().ok_or(QueryError::Unavailable)?,
-                &binding,
-                &options,
-                after.as_deref(),
-                limit,
-            )
-            .map_err(|e| {
-                if e == cantongrid_storage::StoreError::ModelQuery {
-                    QueryError::Input
-                } else {
-                    QueryError::Unavailable
-                }
-            })
-    })
-    .await
-    .map_err(|_| QueryError::Unavailable)??;
+    let mut page = service
+        .limits
+        .blocking(move || {
+            Store::open_env(&project.destination_database_env)
+                .map_err(|_| QueryError::Unavailable)?
+                .read_model_query(
+                    &project.plan,
+                    &identity.caller,
+                    source.lease().ok_or(QueryError::Unavailable)?,
+                    &binding,
+                    &options,
+                    after.as_deref(),
+                    limit,
+                )
+                .map_err(|e| {
+                    if e == cantongrid_storage::StoreError::ModelQuery {
+                        QueryError::Input
+                    } else {
+                        QueryError::Unavailable
+                    }
+                })
+        })
+        .await
+        .map_err(|_| QueryError::Unavailable)??;
     let project = Project::load(&path).map_err(|_| QueryError::Unavailable)?;
     let current = auth::authenticate(&project, token).map_err(|_| QueryError::Unavailable)?;
     if old_identity != current.binding {
@@ -125,9 +128,6 @@ pub(super) async fn graphql(
     headers: HeaderMap,
     body: Bytes,
 ) -> Response {
-    let Ok(_permit) = service.permits.clone().try_acquire_owned() else {
-        return error(StatusCode::TOO_MANY_REQUESTS);
-    };
     let Ok(token) = bearer(&headers) else {
         return error(StatusCode::UNAUTHORIZED);
     };
@@ -192,13 +192,7 @@ async fn finish<T: serde::Serialize>(
     {
         return error(StatusCode::UNAUTHORIZED);
     }
-    let Ok(bytes) = serde_json::to_vec(value) else {
-        return error(StatusCode::SERVICE_UNAVAILABLE);
-    };
-    if bytes.len() > 2 * 1024 * 1024 {
-        return error(StatusCode::SERVICE_UNAVAILABLE);
-    }
-    let response = Json(value).into_response();
+    let response = super::resources::json(value);
     if !source_valid(&source, &latest)
         || !auth::authenticate(&latest, token).is_ok_and(|id| id.binding == identity_binding)
     {

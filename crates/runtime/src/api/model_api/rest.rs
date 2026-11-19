@@ -74,9 +74,6 @@ async fn handle(
     path: Option<(String, String)>,
     body: Option<Bytes>,
 ) -> Response {
-    let Ok(_permit) = service.permits.clone().try_acquire_owned() else {
-        return error(StatusCode::TOO_MANY_REQUESTS);
-    };
     let Ok(token) = bearer(&headers) else {
         return error(StatusCode::UNAUTHORIZED);
     };
