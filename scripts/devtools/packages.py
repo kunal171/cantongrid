@@ -20,6 +20,9 @@ def verify(directory):
     for manifest in sorted((ROOT / 'crates').glob('*/Cargo.toml')):
         package = tomllib.loads(manifest.read_text())['package']['name']
         archive = directory / f'{package}-{version}.crate'
+        # Workspace publish verification stages dependencies in Cargo's temporary registry.
+        if not archive.is_file():
+            archive = directory / 'tmp-registry' / archive.name
         prefix = f'{package}-{version}/'
         with tarfile.open(archive, 'r:gz') as bundle:
             members = bundle.getmembers()
@@ -51,7 +54,9 @@ def verify(directory):
             if metadata.get('publish') != ['crates-io'] or metadata.get('version') != version:
                 raise ValueError('Packaged identity/publication policy differs from the workspace')
             vcs = json.loads(bundle.extractfile(prefix + '.cargo_vcs_info.json').read())
-            if vcs['git']['dirty']:
+            if not re.fullmatch(r'[0-9a-f]{40}', vcs.get('git', {}).get('sha1', '')):
+                raise ValueError('Package archive has no valid source commit')
+            if vcs['git'].get('dirty', False):
                 raise ValueError('Publishable archives must be built from a clean commit')
         report.append({'name': package, 'version': version, 'bytes': archive.stat().st_size,
                        'sha256': hashlib.sha256(archive.read_bytes()).hexdigest()})
