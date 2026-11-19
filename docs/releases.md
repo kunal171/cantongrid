@@ -1,5 +1,10 @@
 # Releases
 
+> Packaging backport: this branch enables crates.io publication after archive
+> verification, with per-crate READMEs, legal files and local assets. The
+> original source tag and its publication status are unchanged. The release
+> guard now checks the reviewed crates.io metadata policy.
+
 Status: release-oriented development begins with `0.1.0-alpha.1`. No CantonGrid tag
 or GitHub release existed when this plan was recorded. Alpha releases describe
 the capabilities delivered at their exact commit; they do not mark all Phase 3 complete.
