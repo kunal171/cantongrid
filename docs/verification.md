@@ -203,3 +203,26 @@ helper now preflights readiness before uploading/submitting and follows all API
 pages; the complete run needed 26 worker invocations rather than the old fixed 17.
 Nineteen development-helper tests and four PoC helper tests pass. Staged large
 backfills and funded trading projections remain outside this acceptance result.
+
+
+## Staged model rebuilds — alpha.5 development
+
+Verified 2026-11-19 with owned PostgreSQL 14.25, synthetic source leases and a mock
+HTTP authorization/readiness server. This is not a large staged LocalNet run.
+
+Six storage regressions cover a 261-row model beyond the atomic limit, resumed
+pages, creates behind the scan cursor, archives before/after scanning, changes
+after readiness, private staging, cancellation, alias/stream isolation and writer
+lock contention. Real SQL failures during backfill and activation, plus lease
+expiry after writes, preserve both durable progress and the prior binding.
+The active model keeps ingesting when a staged expression fails.
+
+The CLI integration test uses separate processes to resume, reject source outages
+and revocation, promote, invalidate old cursors, retain caller privacy, clean up
+and rebuild back to the old revision. Migration controls verify explicit 005→006
+upgrade and reject checksum drift and public job-table grants; 001–005 stay intact.
+
+All 59 credential-free Rust tests and 53 owned-PostgreSQL/HTTP tests passed, plus
+19 development-helper and four PoC helper tests. Formatting, Clippy, release
+metadata and container log-retention checks passed. Source-dependent PQS tests
+and the existing LocalNet application scenarios were not rerun for this change.

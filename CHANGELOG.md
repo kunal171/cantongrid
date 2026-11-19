@@ -2,9 +2,22 @@
 
 ## 0.3.0-alpha.5 — unreleased
 
-### In progress
+### Added
 
-- Resumable, source-authorized model rebuild jobs with bounded work and atomic activation.
+- Resumable, source-authorized model rebuild jobs with bounded backfill, dirty-ID
+  reconciliation, explicit atomic activation, retirement cleanup and cancellation.
+- Operator `models rebuild start|step|status|activate|cancel` commands; staged rows
+  remain private while the existing revision serves.
+- Owned-PostgreSQL recovery/privacy controls and CLI process-restart, source-outage,
+  revocation and rollback tests. Large staged LocalNet acceptance remains pending.
+
+### Compatibility
+
+- Explicit `storage init` applies migration 006; migrations 001–005 are unchanged.
+  Older binaries reject the new migration set. No automatic downgrade or new
+  external runtime dependency.
+- Atomic `models bind` retains its 128-row cap. Staged steps use 1–64 rows
+  (default 32) and an 8 MiB evaluation budget. Activation invalidates old model cursors.
 
 ## 0.3.0-alpha.4 — 2026-11-19
 

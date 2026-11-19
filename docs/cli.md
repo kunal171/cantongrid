@@ -25,6 +25,11 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `models register <models.json> --namespace <project> --database-env <variable>` | Atomically register immutable definitions; no activation |
 | `models inspect <project> <model-name> <revision> --database-env <variable>` | Read registration/fingerprint metadata |
 | `models bind <runtime.json> <project> <model-name> <revision> [--replace <previous-revision>]` | Verify source rights/readiness, atomically backfill and activate an installed revision |
+| `models rebuild start <runtime.json> <job> <project> <model-name> <revision> [--replace <previous-revision>]` | Reserve a private inactive target and persist a rebuild job |
+| `models rebuild step <runtime.json> <job> [--limit <1..64>]` | Commit one bounded build/reconciliation/cleanup page; default 32 |
+| `models rebuild status <runtime.json> <job>` | Inspect operator progress under current source rights |
+| `models rebuild activate <runtime.json> <job>` | Switch a ready, reconciled target into the active binding |
+| `models rebuild cancel <runtime.json> <job>` | Request bounded cleanup before activation |
 | `models install <project> <model-name> <revision> --database-env <variable>` | Create/verify a private empty table and link its revision; no activation |
 
 Arguments and ordering are strict. Credentials are read from explicitly named

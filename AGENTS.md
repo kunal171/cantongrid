@@ -9,7 +9,8 @@
   have owned-PostgreSQL/HTTP coverage and two alpha.4 LocalNet query runs.
   Actual Outcomia BinaryMarket acceptance now covers 60 page sequences, private
   scopes, optional-field promotion/rollback and 25 controlled events. Staged
-  rebuilds and funded trading projection acceptance remain pending. See docs/guide/models.md.
+  rebuilds now have owned-PostgreSQL and mock-source CLI coverage in unreleased
+  alpha.5; large staged LocalNet and funded trading projection acceptance remain pending. See docs/guide/models.md.
   Phase 3's 0.2.0-alpha.1 LocalNet profile remains
   verified; preserve source/caller separation, bindings and guarded commits.
   Streams remain Phase 5. Model declarations never authenticate callers or widen

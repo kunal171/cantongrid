@@ -56,7 +56,7 @@ the evaluated typed client did not expose. See [evidence](verification.md).
 
 ## Destination and recovery
 
-`storage init` explicitly applies immutable checksummed migrations 001–005 to the
+`storage init` explicitly applies immutable checksummed migrations 001–006 to the
 owned destination. Opening a store does not migrate it. Initialization checks
 ownership, schema identity and role restrictions; checksum drift fails.
 
@@ -100,7 +100,9 @@ Source bindings select installed revisions for an already indexed physical plan.
 Binding, backfill, promotion, ingestion and idle observation use the same source
 writer lock. Backfill reads after lock acquisition under READ COMMITTED, ensuring
 it sees a preceding worker's commit. It is bounded and promotes atomically;
-failure preserves the old binding. Model changes leave the source plan untouched.
+failure preserves the old binding. Larger rebuilds commit bounded pages and
+reconcile ingestion changes before explicit activation, as described below.
+Model changes leave the source plan untouched.
 
 Workers verify every bound alias/physical schema each page and deduplicate
 identical physical revisions. Current-state model inserts/deletes join the
@@ -137,7 +139,9 @@ are removed afterward in bounded cleanup steps; aliases keep their referenced
 rows. Cancellation cleans only the inactive target in bounded steps. Source
 grant/plan drift or expired leases never authorize fallback reads or job progress.
 All jobs are operator commands, not public API resources or new caller grants.
-The proposed CLI is `models rebuild start|step|status|activate|cancel`; jobs and
-cursor state persist in a new explicit destination migration, leaving 001–005
-unchanged. This contract is not evidence that the staged path is implemented or
-tested until its code and acceptance checks land.
+The CLI is `models rebuild start|step|status|activate|cancel`; jobs and cursor
+state persist through explicit destination migration 006, leaving 001–005
+unchanged. Owned-PostgreSQL tests cover resume, changes between pages, private
+staging, rollback, cancellation and alias retention. CLI tests use a mock source
+server for current-grant/readiness checks. Large staged LocalNet acceptance is
+still pending; see the [operator workflow](guide/models.md#rebuild-a-larger-model-in-stages).

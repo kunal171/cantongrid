@@ -155,9 +155,10 @@ cantongrid models register examples/models/visibility.json --namespace demo --da
 cantongrid models inspect demo records 1 --database-env CANTONGRID_DESTINATION_URL
 ```
 
-Initialization explicitly applies migrations through 005; older destinations
-fail to open until upgraded. Migrations 001–004 are unchanged. Registration writes the
-whole catalog atomically. Repeating it returns `inserted: 0` and `unchanged: 1`.
+Initialization explicitly applies migrations through 006; older destinations
+fail to open until upgraded. Migrations 001–005 are unchanged. Binaries from
+alpha.4 or earlier reject this migration set; do not downgrade the destination.
+Registration writes the whole catalog atomically. Repeating it returns `inserted: 0` and `unchanged: 1`.
 Changing an existing namespace/name/revision fails; use a new revision. Inspection
 reports registration and fingerprint, without printing stored literals.
 
@@ -225,7 +226,8 @@ plan or require a new snapshot.
 The initial atomic backfill supports at most 128 active contracts of the model's
 template and 8 MiB of input/output work. Cleanup is also capped at 128 rows.
 Each stream supports at most 16 bindings, including aliases; live pages share an
-8 MiB projection work budget. Larger staged rebuilds are not implemented.
+8 MiB projection work budget. For larger datasets, use the staged workflow below
+(available in the unreleased alpha.5 source).
 Backfill covers the known prefix, including partial snapshots; later pages fill
 it forward. It cannot recover missing pre-snapshot history.
 
@@ -252,3 +254,81 @@ Old rows are removed for this stream only when its last reference to that physic
 revision is replaced. Other namespaces and streams retain their rows. Namespaces
 remain operator labels, not access grants. No unbind command exists. The [PoC guide](poc.md) covers generated model GraphQL
 and client types in 0.3.0-alpha.2.
+
+## Rebuild a larger model in stages
+
+A staged job keeps the existing binding serving while building an inactive
+revision. Register and install the target first, and ensure the source has a
+committed canonical page. Upgrade the destination explicitly with `storage init`.
+For example, after installing `demo records 2`:
+
+```bash
+cantongrid models rebuild start .local/runtime.json records-v2 demo records 2 --replace 1
+cantongrid models rebuild status .local/runtime.json records-v2
+cantongrid models rebuild step .local/runtime.json records-v2 --limit 32
+```
+
+Repeat `step` until `result.phase` is `ready` and `result.has_pending` is false.
+Every command is a separate process; job progress survives restart. Phases are
+`cleaning` → `backfill` → `catchup` → `ready`. Cleaning removes stale inactive
+rows; backfill scans current active contracts; catchup reconciles creates and
+archives received between pages, including creates behind the scan cursor.
+Ingestion can continue between steps. No historical snapshot is retained.
+
+Activation is explicit:
+
+```bash
+cantongrid models rebuild activate .local/runtime.json records-v2
+# Repeat until result.phase is complete:
+cantongrid models rebuild step .local/runtime.json records-v2 --limit 32
+```
+
+If new changes arrive after readiness, activation refuses; step again and retry.
+The activation transaction verifies the expected old binding and empty change
+queue, then switches metadata under the canonical writer lock. Partial target
+rows are never discoverable or queryable through model APIs. Source and caller
+permissions remain independent. Existing revision-bound API cursors must restart.
+
+A replacement enters `cleanup`; continue stepping to remove unreferenced old
+rows before starting another job for the same model. Other active aliases retain
+their rows. First activation without `--replace` has no old rows to retire and
+finishes immediately. To roll back afterward, start a **new** job targeting the
+old installed revision with `--replace 2`, then step and activate it normally.
+
+Before activation, cancellation keeps the current model active:
+
+```bash
+cantongrid models rebuild cancel .local/runtime.json records-v2
+# Repeat until result.phase is cancelled:
+cantongrid models rebuild step .local/runtime.json records-v2 --limit 32
+```
+
+Cancellation also uses bounded cleanup. It cannot undo activation; use a new
+rebuild for rollback. A cancelled job ID remains historical and cannot restart.
+Repeating `start` with the same job ID and options reports its persisted state;
+conflicting options fail. If a commit acknowledgement is uncertain, reconnect,
+inspect status and retry the same action. Repeated activation verifies that its
+target is still bound; it does not replace a later revision.
+
+Limits and recovery:
+
+- A step handles 1–64 contracts, default 32, with an 8 MiB evaluation budget.
+  Oversized work rolls back the page and progress; retry with a smaller limit.
+- Each source permits at most 16 unfinished jobs and 16 active model bindings.
+  A job reserves its model name and inactive physical fingerprint. An already
+  active fingerprint cannot be rebuilt in place, including through another alias.
+- Every action checks fresh source rights/readiness and the exact physical plan;
+  leases are checked again before commit. A busy source lock means retry later.
+- Bad staged expressions roll back only that job's page. Live ingestion continues
+  using the active revision and transactionally queues IDs for reconciliation.
+- Status contains string counters and a pending flag, never payloads or scan keys.
+  `projected_rows` is a build counter, not a live count after activation;
+  `source_revision` is the last processed destination batch revision.
+- Job history and dirty IDs persist in owned PostgreSQL. Cleanup removes staged
+  or retired rows, not source contracts or lifecycle history. Automatic job-history
+  retention is not implemented.
+
+This path is tested with owned PostgreSQL and a mock source authorization/readiness
+server, including more than 260 contracts and process restarts. A large staged
+LocalNet rebuild has not yet been verified. It does not add missing pre-snapshot
+history, joins, aggregates or reassignment support.

@@ -17,7 +17,8 @@ Outcomia is the first application example; the engine is reusable.
 - Bounded model backfill/promotion and atomic live projections have owned-Postgres tests.
 - Generated REST/GraphQL model queries support exact filters, sorting, discovery
   and query-bound cursors, verified on LocalNet with the standalone PoC and Outcomia.
-- Staged large backfills and durable streams remain planned.
+- Unreleased alpha.5 adds resumable staged rebuilds with owned-Postgres/HTTP coverage;
+  large staged LocalNet acceptance is pending. Durable streams remain planned.
 - Remote/devnet/production deployment is unverified.
 
 ```bash

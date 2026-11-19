@@ -9,8 +9,9 @@
 
 ## Next: finish Phase 4
 
-1. Define resumable staged rebuilds for datasets above the atomic backfill budget,
-   including concurrent ingestion, authorization renewal and atomic activation.
+1. Verify the staged rebuild workflow on a larger LocalNet dataset. The unreleased
+   alpha.5 implementation has owned-PostgreSQL and mock-source CLI coverage for
+   resume, ingestion between pages, authorization renewal and atomic activation.
 2. Extend application projections beyond the verified BinaryMarket lifecycle only
    after obtaining funded-asset/trading acceptance authorization.
 

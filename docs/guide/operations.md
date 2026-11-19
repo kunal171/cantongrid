@@ -23,7 +23,9 @@ See [storage behavior](../architecture.md#destination-and-recovery).
 | Source gap | Review retention/boundaries; do not skip data or claim complete history |
 | Numeric error | Use exact decimal strings, supported operators and declared scale |
 | Model binding refuses a replacement | Register/install the new revision and supply the expected old revision with `--replace` |
-| Model backfill/work limit | Atomic backfill is capped at 128 rows/8 MiB; staged rebuilds are not available; do not skip contracts |
+| Model backfill/work limit | Use [staged rebuilds](models.md#rebuild-a-larger-model-in-stages) above the 128-row atomic cap; lower the step limit for the 8 MiB work budget |
+| Rebuild is ready but activation refuses | Check `has_pending`; step again after new ingestion, then retry activation |
+| Rebuild reservation blocks another job | Finish cleanup or cancel and step until cancelled; retain the same source plan |
 | Model projection failure | Correct payload/mapping or reviewed schema drift; retry without moving the checkpoint |
 | Schema mismatch | Explicitly migrate only the owned destination; never edit applied migration checksums |
 
