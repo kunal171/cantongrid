@@ -18,6 +18,7 @@ pub(super) struct QueryPlan {
     pub page: String,
     pub order: String,
     pub parameters: Vec<String>,
+    pub filter_parameters: usize,
     columns: std::collections::BTreeMap<String, String>,
     query: ValidatedQuery,
 }
@@ -39,6 +40,7 @@ impl QueryPlan {
             page: String::new(),
             order: "c.contract_id ASC".into(),
             parameters: vec![],
+            filter_parameters: 0,
             columns,
             query,
         };
@@ -80,6 +82,7 @@ impl QueryPlan {
                 sort.field
             );
         }
+        result.filter_parameters = result.parameters.len();
         if let Some(after) = after {
             if after.len() > 4096 {
                 return Err(StoreError::ModelQuery);
@@ -134,6 +137,9 @@ impl QueryPlan {
             .as_str()
             .ok_or(StoreError::ModelCorrupt)?
             .to_owned();
+        if contract.is_empty() || contract.len() > 2048 || contract.chars().any(char::is_control) {
+            return Err(StoreError::Limit);
+        }
         let value = self
             .query
             .options()

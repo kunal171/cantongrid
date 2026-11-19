@@ -180,17 +180,8 @@ impl Store {
         );
         // Count excludes keyset predicates but includes every caller-visible filter.
         let mut parameters: Vec<&(dyn ToSql + Sync)> = vec![&key, &parties, &template];
-        let filter_count: usize = options
-            .filters
-            .values()
-            .map(|ops| {
-                ops.keys()
-                    .filter(|op| **op != cantongrid_models::Comparison::IsNull)
-                    .count()
-            })
-            .sum();
         parameters.extend(
-            compiled.parameters[..filter_count]
+            compiled.parameters[..compiled.filter_parameters]
                 .iter()
                 .map(|s| s as &(dyn ToSql + Sync)),
         );
@@ -217,7 +208,7 @@ impl Store {
             if bytes > 2 * 1024 * 1024 {
                 return Err(StoreError::Limit);
             }
-            if more {
+            if more && items.len() + 1 == limit {
                 last = Some(compiled.key(&value)?);
             }
             items.push(value);
