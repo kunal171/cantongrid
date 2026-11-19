@@ -76,7 +76,10 @@ fn evaluate(expression: &Expression, root: &serde_json::Value) -> Result<Value, 
 }
 
 /// Preserve source financial strings, applying only exact declared-scale normalization.
-fn convert(kind: &FieldType, input: Option<&serde_json::Value>) -> Result<Value, ModelError> {
+pub(crate) fn convert(
+    kind: &FieldType,
+    input: Option<&serde_json::Value>,
+) -> Result<Value, ModelError> {
     if let FieldType::Optional { item } = kind {
         return match input {
             None | Some(serde_json::Value::Null) => Ok(Value::Optional(None)),

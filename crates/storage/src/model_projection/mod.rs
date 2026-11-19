@@ -2,6 +2,7 @@
 mod binding;
 mod installed;
 mod query;
+mod query_plan;
 pub use query::{BoundModel, ModelPage};
 
 use crate::{StoreError, journal::stream_key};

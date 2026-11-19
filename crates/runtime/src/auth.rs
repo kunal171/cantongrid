@@ -166,12 +166,17 @@ pub(crate) fn cursor(
         kind: kind.into(),
         after,
     };
-    encode(
+    let token = encode(
         &Header::new(Algorithm::HS256),
         &claims,
         &EncodingKey::from_secret(key.as_bytes()).map_err(|_| "authorization unavailable")?,
     )
-    .map_err(|_| "cursor unavailable".into())
+    .map_err(|_| "cursor unavailable")?;
+    // JSON escaping and base64 can enlarge a model key; never issue a cursor we cannot resume.
+    if token.len() > 8192 {
+        return Err("cursor unavailable".into());
+    }
+    Ok(token)
 }
 
 /// A signed cursor is an opaque API token, not encrypted storage. Its key belongs only to

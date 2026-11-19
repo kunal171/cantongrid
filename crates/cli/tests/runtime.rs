@@ -134,7 +134,11 @@ fn request(
             .unwrap();
         let mut request = if let Some(body) = query {
             client
-                .post(format!("{address}/graphql"))
+                .post(if address.ends_with("/query") {
+                    address.to_owned()
+                } else {
+                    format!("{address}/graphql")
+                })
                 .header("content-type", "application/json")
                 .body(body.to_string())
         } else {
@@ -753,6 +757,143 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
     let (_, hidden) = request(&rt, &base, Some(&b), Some(operation.clone()));
     assert_eq!(hidden["data"][&field]["visibleTotal"], "0");
     assert_eq!(hidden["data"][&field]["items"], json!([]));
+    // Catalog metadata is scoped to active project bindings; it never serializes expressions.
+    let rest_base = format!("http://{address}/v1/models");
+    assert_eq!(request(&rt, &rest_base, None, None).0, 401);
+    let (status, discovery) = request(&rt, &rest_base, Some(&a), None);
+    assert_eq!(status, 200, "{discovery}");
+    let discovery = discovery["models"].clone();
+    assert_eq!(discovery[0]["queryField"], field);
+    assert_eq!(discovery[0]["revision"], "1");
+    assert!(discovery[0].get("model").is_none());
+    assert!(discovery[0]["fields"][0].get("path").is_none());
+    let (_, gql_discovery) = request(
+        &rt,
+        &base,
+        Some(&a),
+        Some(
+            json!({"query":"{models{namespace name revision fingerprint queryField fields{name kind nullable scale operators}}}"}),
+        ),
+    );
+    assert_eq!(gql_discovery["data"]["models"], discovery);
+    let endpoint = format!("{rest_base}/{namespace}/{}/query", model.name);
+    let (_, described) = request(
+        &rt,
+        &format!("{rest_base}/{namespace}/{}", model.name),
+        Some(&a),
+        None,
+    );
+    assert_eq!(described, discovery[0]);
+    // Add two visible values and a cheaper private B value. Filtering/counting must stay scoped.
+    let lease = SourceLease::from_verified(
+        plan.context().binding(),
+        [party("A"), party("B")],
+        Instant::now(),
+        MAX_SOURCE_LEASE,
+        Instant::now() + Duration::from_secs(60),
+    )
+    .unwrap();
+    let events = [
+        ("second", "2.0", "A"),
+        ("third", "10.0", "A"),
+        ("private", "1.0", "B"),
+    ]
+    .into_iter()
+    .map(|(contract, amount, witness)| {
+        let mut payload: Json =
+            serde_json::from_str(include_str!("../assets/models/visibility-payload.json")).unwrap();
+        payload["amount"] = amount.into();
+        if contract == "second" {
+            payload["note"] = "\"".repeat(1900).into();
+        }
+        Event {
+            id: format!("created-{contract}"),
+            contract: contract.into(),
+            template: template.clone(),
+            witnesses: [party(witness)].into(),
+            observed_at_micros: 2,
+            ledger_at_micros: None,
+            origin: None,
+            action: Action::Create(Value::RawJson(payload.to_string())),
+        }
+    })
+    .collect();
+    store
+        .apply_authorized(
+            &plan,
+            &Batch {
+                context: plan.context().clone(),
+                position: "additional".into(),
+                events,
+            },
+            &lease,
+        )
+        .unwrap();
+    let input = json!({"limit":1,"filters":{"amount":{"gte":"0","lt":"20.0"}},"sort":{"field":"amount","direction":"asc"}});
+    let (status, page) = request(&rt, &endpoint, Some(&a), Some(input.clone()));
+    assert_eq!(status, 200, "{page}");
+    assert_eq!(page["visibleTotal"], "2");
+    assert_eq!(page["items"][0]["contractId"], "second");
+    let cursor = page["nextCursor"].as_str().unwrap();
+    let mut next = input.clone();
+    next["cursor"] = cursor.into();
+    let (_, second) = request(&rt, &endpoint, Some(&a), Some(next.clone()));
+    assert_eq!(second["items"][0]["contractId"], "third");
+    assert!(second["nextCursor"].is_null());
+    let gql_page = json!({"query":format!("query($cursor:String){{{field}(namespace:\"{namespace}\",limit:1,cursor:$cursor,filters:{{amount:{{gte:\"0.0\",lt:\"20\"}}}},sort:{{field:\"amount\",direction:asc}}){{visibleTotal nextCursor fingerprint items{{contractId values{{amount sequence note label owner state}}}}}}}}"), "variables":{"cursor":cursor}});
+    let (_, gql_second) = request(&rt, &base, Some(&a), Some(gql_page));
+    assert_eq!(
+        gql_second["data"][&field]["items"][0]["contractId"], "third",
+        "{gql_second}"
+    );
+    assert_eq!(gql_second["data"][&field]["visibleTotal"], "2");
+    assert_eq!(request(&rt, &endpoint, Some(&b), Some(next.clone())).0, 400);
+    next["sort"]["direction"] = "desc".into();
+    assert_eq!(request(&rt, &endpoint, Some(&a), Some(next)).0, 400);
+    for invalid in [
+        json!({"filters":{"amount":{"eq":1.2}}}),
+        json!({"filters":{"amount":{"eq":"1.00000000001"}}}),
+        json!({"sort":{"field":"unknown"}}),
+        json!({"sort":{"field":"amount;DROP TABLE x"}}),
+        json!({"filters":{"missing":{"eq":"x"}}}),
+        json!({"filters":{"label":{"gt":"x"}}}),
+        json!({"limit":26}),
+        json!({"cursor":"bad-token"}),
+    ] {
+        assert_eq!(request(&rt, &endpoint, Some(&a), Some(invalid)).0, 400);
+    }
+    // Duplicate keys and floats must fail before conversion loses their original encoding.
+    for body in [
+        r#"{"filters":{"amount":{"eq":"1","eq":"2"}}}"#,
+        r#"{"filters":{"amount":{"eq":1.2}}}"#,
+    ] {
+        rt.block_on(async {
+            let response = reqwest::Client::builder()
+                .no_proxy()
+                .build()
+                .unwrap()
+                .post(&endpoint)
+                .bearer_auth(&a)
+                .header("content-type", "application/json")
+                .body(body.to_owned())
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(response.status().as_u16(), 400);
+        });
+    }
+    // A valid projected string can expand beyond the signed-token cap after nested escaping.
+    // Return no page instead of handing the client a cursor that cannot be resumed.
+    assert_eq!(
+        request(
+            &rt,
+            &endpoint,
+            Some(&a),
+            Some(json!({"limit":1,"sort":{"field":"note"}}))
+        )
+        .0,
+        503
+    );
     let (_, limited) = request(
         &rt,
         &base,
@@ -768,6 +909,11 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
     );
     assert!(unknown.get("errors").is_some());
     healthy.store(false, Ordering::Relaxed);
+    assert_eq!(request(&rt, &rest_base, Some(&a), None).0, 503);
+    assert_eq!(
+        request(&rt, &endpoint, Some(&a), Some(input.clone())).0,
+        503
+    );
     assert_eq!(
         request(&rt, &base, Some(&a), Some(operation.clone())).0,
         503
@@ -783,6 +929,8 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
     revoked["principals"]["a"]["enabled"] = false.into();
     std::fs::write(root.join("grants.json"), revoked.to_string()).unwrap();
     assert_eq!(request(&rt, &base, Some(&a), Some(operation)).0, 401);
+    assert_eq!(request(&rt, &rest_base, Some(&a), None).0, 401);
+    assert_eq!(request(&rt, &endpoint, Some(&a), Some(input)).0, 401);
     // Only test-owned destination rows/tables are removed; the fake authority is read-only.
     let mut client = cantongrid_postgres::connect_env("CANTONGRID_DESTINATION_URL").unwrap();
     let stream: String = client

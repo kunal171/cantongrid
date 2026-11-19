@@ -110,6 +110,6 @@ contract identity; models never grant visibility. See [limits](guide/models.md#b
 The model API serves caller-scoped model pages/counts through generated
 GraphQL at `/models/graphql`, with revision/namespace-bound cursors and TypeScript
 transport interfaces. The [PoC](guide/poc.md) exercises this on LocalNet.
-Advanced filtering and REST model discovery remain pending. Joins require
+Bounded equality/range/null filters, native sorting, query-bound keysets and REST/GraphQL model discovery share validation. Broader model acceptance remains pending. Joins require
 access to every input; aggregates need an explicit scope. No public durable
 stream is served yet.

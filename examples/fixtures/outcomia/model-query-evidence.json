@@ -1,0 +1,51 @@
+{
+  "dar_sha256": "eef7340eba83f4f2af4865258c66c6461876bacb05b8e4dbc6c7ca74459f6f0e",
+  "main_package_id": "73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a",
+  "outcomia_lifecycle": [
+    "Protocol",
+    "Draft",
+    "Open",
+    "Closed"
+  ],
+  "own_active_records": 7,
+  "original_lifecycle_events": 8,
+  "controlled_lifecycle_events": 25,
+  "controlled_event_identity_set_matched": true,
+  "single_event_pages": true,
+  "worker_restarts": 26,
+  "exact_price_tick_and_int64": true,
+  "rest_and_graphql": true,
+  "ledger_writes": "explicitly authorized local-only test",
+  "funded_assets_or_trades": false,
+  "history": "snapshot_forward_partial",
+  "model_queries": {
+    "result": "passed",
+    "filtered_page_sequences": 60,
+    "real_application_choices": true,
+    "party_scopes": [
+      "A-only",
+      "B-only",
+      "shared"
+    ],
+    "exact_values_and_derived_filters": true,
+    "discovery_and_transport_parity": true,
+    "cursor_principal_filter_sort_revision_binding": true,
+    "caller_revocation_and_epoch": true,
+    "optional_field_promotion_and_rollback": true,
+    "model_revisions": [
+      1,
+      2,
+      1
+    ]
+  },
+  "tested_date": "2026-11-19",
+  "tested_code_commit": "76f8f54e8c65abce53877e7b8fc650d98b87deb8",
+  "release": "0.3.0-alpha.4 unreleased development",
+  "environment": "disposable LocalNet",
+  "profile": {
+    "canton": "3.5.7",
+    "scribe": "3.5.4/schema041",
+    "postgres": "14.25"
+  },
+  "typescript_compilation": true
+}

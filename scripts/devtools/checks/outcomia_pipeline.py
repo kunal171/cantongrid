@@ -12,7 +12,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from zipfile import ZipFile
 
-from ..common import ROOT, ENV, compose, write_private
+from ..common import ROOT, ENV, compose, write_private, source_ready
 from ..ledger import request, get, token
 from ..visibility import BASE, WRITER, USERS, context
 from .pipeline import application_token
@@ -24,7 +24,9 @@ def main(argv=None):
     parser.add_argument('--allow-ledger-writes', action='store_true', required=True,
                         help='Required explicit opt-in; uploads DAR and submits an isolated local test lifecycle')
     args = parser.parse_args(argv)
-    binary = Path(os.environ['CANTONGRID_BIN']).resolve()
+    if not source_ready(True):
+        raise ValueError('Visibility PQS is unavailable; renew its local credentials with pqs up --visibility before submitting test commands')
+    binary = Path(os.environ.get('CANTONGRID_BIN', ROOT / 'target/debug/cantongrid')).resolve()
     payload = args.dar.read_bytes()
     with ZipFile(args.dar) as archive:
         lines = []
@@ -63,13 +65,16 @@ def main(argv=None):
         response = request(BASE, '/v2/commands/submit-and-wait-for-transaction', token(WRITER), body={
             'commands': {'commandId': identifier + suffix, 'userId': WRITER,
                          'actAs': selected, 'packageIdSelectionPreference': [package], 'commands': [command]}}, timeout=120)
+        created = []
         for event in response['transaction']['events']:
             for tag, kind in [('CreatedEvent', 'create'), ('ArchivedEvent', 'archive')]:
                 if tag in event:
                     expected_events.add((kind, event[tag]['contractId']))
+                    if kind == 'create': created.append(event[tag])
+        return created
 
     def exercise(template, contract, choice, arguments, suffix):
-        submit({'ExerciseCommand': {'templateId': template, 'contractId': contract,
+        return submit({'ExerciseCommand': {'templateId': template, 'contractId': contract,
                                    'choice': choice, 'choiceArgument': arguments}}, suffix)
 
     # Existing test parties and writer are reused; no balances, assets or trades are created.
@@ -110,7 +115,7 @@ def main(argv=None):
         if time.monotonic() > deadline:
             raise ValueError('PQS did not observe the created protocol')
         time.sleep(0.2)
-    subprocess.run(args_index, env=env, check=True)
+    subprocess.run(args_index, env=env, check=True, capture_output=True)
     # Terms reference a deliberately local test document, not a real market or funded asset.
     document = b'CantonGrid local prediction-market lifecycle test; no collateral or trading.\n'
     write_private(directory / 'rules.json', {'text': document.decode()})
@@ -130,18 +135,34 @@ def main(argv=None):
     exercise(market_template, market, 'Binary_Close', {'protocol': protocol, 'reason': 'Local integration test complete'}, '-close')
     time.sleep(1)
     # Single-event pages force same-offset tie handling; each invocation restarts the worker.
+    worker_restarts = 1
     for _ in range(16):
-        subprocess.run(args_index, env=env, check=True)
+        subprocess.run(args_index, env=env, check=True, capture_output=True)
+        worker_restarts += 1
     process = subprocess.Popen([str(binary), 'serve', str(directory / 'runtime.json')], env=env,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     base = 'http://127.0.0.1:18889'
 
     def query(path, subject, body=None):
         headers = {'Authorization': 'Bearer ' + application_token(subject, key)}
-        if body:
+        if body is not None:
             headers['Content-Type'] = 'application/json'
-        with urlopen(Request(base + path, data=json.dumps(body).encode() if body else None, headers=headers), timeout=15) as response:
+        with urlopen(Request(base + path, data=json.dumps(body).encode() if body is not None else None, headers=headers), timeout=15) as response:
+            if response.headers.get('Cache-Control') != 'no-store':
+                raise ValueError('Private Outcomia API response permits caching')
             return json.load(response)
+
+    def pages(path):
+        """Read all bounded pages; previous test runs may put this run beyond the first page."""
+        items = []
+        base_path = path + '?limit=25'
+        for _ in range(64):
+            page = query(path if '?' in path else base_path, 'ab')
+            items.extend(page['items'])
+            if not page['nextCursor']:
+                return items
+            path = base_path + '&cursor=' + page['nextCursor']
+        raise ValueError('Outcomia acceptance exceeded its API page budget')
 
     try:
         deadline = time.monotonic() + 10
@@ -153,9 +174,24 @@ def main(argv=None):
                 if process.poll() is not None or time.monotonic() > deadline:
                     raise ValueError('Outcomia Rust API did not become ready') from None
                 time.sleep(0.1)
-        # This selection includes all authorized instances of these exact templates. The test
-        # owns a unique protocol name and checks its own lifecycle without assuming global uniqueness.
-        own = [item for item in page['items'] if json.loads(item['payload']['value'])['protocolName'] == identifier]
+        # Older local runs increase the snapshot size. Observe actual state/history instead
+        # of assuming exactly 17 restarts are sufficient to reach this run's source offset.
+        deadline = time.monotonic() + 90
+        for _ in range(128):
+            own = [item for item in pages('/v1/contracts') if json.loads(item['payload']['value'])['protocolName'] == identifier]
+            history_items = pages('/v1/events')
+            observed = {(item['kind'], item['contractId']) for item in history_items}
+            if len(own) == 2 and expected_events.issubset(observed):
+                market = next(json.loads(item['payload']['value']) for item in own if item['template']['entity'] == 'BinaryMarket')
+                if market['status'] == 'Closed':
+                    break
+            if time.monotonic() > deadline:
+                raise ValueError('Outcomia lifecycle did not catch up within its acceptance budget')
+            subprocess.run(args_index, env=env, check=True, capture_output=True)
+            worker_restarts += 1
+            time.sleep(0.1)
+        else:
+            raise ValueError('Outcomia lifecycle exceeded its worker restart budget')
         if len(own) != 2:
             raise ValueError('Expected one current protocol and one current market')
         market = next(json.loads(item['payload']['value']) for item in own if item['template']['entity'] == 'BinaryMarket')
@@ -178,14 +214,28 @@ def main(argv=None):
             result = query('/graphql', principal, {'query': '{ activeContracts { visibleTotal provenance } lifecycleEvents { visibleTotal items } }'})
             if 'errors' in result or int(result['data']['lifecycleEvents']['visibleTotal']) < 8:
                 raise ValueError('Outcomia GraphQL lifecycle is incomplete')
+        from .outcomia_models import verify_models
+        model_report = verify_models(binary=binary, directory=directory, env=env, query=query,
+                                     package=package, parties=parties, identifier=identifier,
+                                     terms=terms, protocol=protocol, submit=submit, exercise=exercise)
+        # New market choices include intermediate archives. Reconcile every submitted identity,
+        # not just the three final model rows that can survive a missed-event implementation.
+        observed = {(item['kind'], item['contractId']) for item in pages('/v1/events')}
+        if not expected_events.issubset(observed):
+            raise ValueError('An Outcomia model-control lifecycle event was not indexed')
+        creates = {contract for kind, contract in expected_events if kind == 'create'}
+        archives = {contract for kind, contract in expected_events if kind == 'archive'}
+        own = [item for item in pages('/v1/contracts') if json.loads(item['payload']['value'])['protocolName'] in {identifier, identifier + '-a', identifier + '-b'}]
+        if {item['contractId'] for item in own} != creates - archives:
+            raise ValueError('Outcomia canonical active set differs from submitted lifecycle events')
         write_private(directory / 'report.json', {
             'dar_sha256': hashlib.sha256(payload).hexdigest(), 'main_package_id': package,
-            'outcomia_lifecycle': ['Protocol', 'Draft', 'Open', 'Closed'], 'own_active_records': 2,
-            'controlled_lifecycle_events': 8, 'controlled_event_identity_set_matched': True, 'single_event_pages': True, 'worker_restarts': 17,
+            'outcomia_lifecycle': ['Protocol', 'Draft', 'Open', 'Closed'], 'own_active_records': len(own),
+            'original_lifecycle_events': 8, 'controlled_lifecycle_events': len(expected_events), 'controlled_event_identity_set_matched': True, 'single_event_pages': True, 'worker_restarts': worker_restarts,
             'exact_price_tick_and_int64': True, 'rest_and_graphql': True,
             'ledger_writes': 'explicitly authorized local-only test', 'funded_assets_or_trades': False,
-            'history': 'snapshot_forward_partial'})
-        print('PASS: actual Outcomia Protocol/Draft/Open/Closed -> PQS -> Rust -> owned PostgreSQL -> REST/GraphQL; same-offset single-event pages, restart and exact terms')
+            'history': 'snapshot_forward_partial', 'model_queries': model_report})
+        print('PASS: actual Outcomia lifecycle and model queries; exact values, private scopes, cursors, optional-field promotion/rollback and caller revocation')
     finally:
         process.terminate()
         try:

@@ -1,12 +1,15 @@
 # Working on CantonGrid
 
 - Current phase: Phase 4 declarative models is in progress,
-  with 0.3.0-alpha.2 released and 0.3.0-alpha.3 packaging in progress. The first compiler/evaluator/SQL planner and offline CLI
+  with 0.3.0-alpha.2 released, core alpha.3 published and alpha.4 prepared for source release. The first compiler/evaluator/SQL planner and offline CLI
   commands, persisted registry and guarded projection-table installation exist;
   bounded source-bound backfill/promotion and atomic live lifecycle projections exist.
   Generated model GraphQL, TypeScript transport interfaces and the standalone
-  LocalNet PoC now exist. See docs/guide/poc.md; advanced filtering and broader
-  application acceptance remain pending. See docs/guide/models.md.
+  LocalNet PoC now exist. See docs/guide/poc.md; bounded filtering/sorting, discovery and REST model queries
+  have owned-PostgreSQL/HTTP coverage and two alpha.4 LocalNet query runs.
+  Actual Outcomia BinaryMarket acceptance now covers 60 page sequences, private
+  scopes, optional-field promotion/rollback and 25 controlled events. Staged
+  rebuilds and funded trading projection acceptance remain pending. See docs/guide/models.md.
   Phase 3's 0.2.0-alpha.1 LocalNet profile remains
   verified; preserve source/caller separation, bindings and guarded commits.
   Streams remain Phase 5. Model declarations never authenticate callers or widen

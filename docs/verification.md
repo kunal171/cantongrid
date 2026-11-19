@@ -134,8 +134,8 @@ Credential-free checks also cover generated nullability/revision identity and sa
 PoC cycle replacement. Owned-PostgreSQL controls exercise typed API authorization,
 null cursors, namespace/operation limits and source health/permission failures.
 These runs were recorded before release and are included as evidence for
-0.3.0-alpha.2. The sanitized artifact retains its original branch/status metadata
-for provenance. No grant submission is included.
+0.3.0-alpha.2. The original report is retained in that release tag; the current
+artifact adds the alpha.4 query evidence and separates the earlier viewer check. No grant submission is included.
 
 ## Source defect
 
@@ -152,7 +152,80 @@ contribution, not a claim about its current upstream merge status.
 ## Limits
 
 No remote/TLS, alternate identity provider, interface/reassignment lifecycle,
-complete pre-snapshot history, automatic erasure, advanced model filters, durable
+complete pre-snapshot history, automatic erasure, model joins/aggregates, durable
 streams, devnet or production acceptance is claimed. Fixture runs are synthetic.
 For new failures, separate our configuration/processing from documented source
 behavior, then reproduce any suspected upstream defect with nonsecret controls.
+
+
+## Model queries — alpha.4 development
+
+Verified 2026-11-19 on the same pinned LocalNet profile. Two complete query runs
+matched 23 and 29 cumulative controlled event identities; each checked 54 page
+sequences across A/B/AB and REST/GraphQL. Four reusable query contracts provide
+prices 1/2/10, equal-value ties, Int64 quantities above 2^53 and null/false/true
+outcomes. Every page checks visible count, contract identity, ordering and exact values.
+
+Discovery and equivalent cross-transport cursors matched. Different callers,
+filters, sorting, grant epochs and active revisions rejected old cursors. Revision
+2 promotion and rollback preserved projections; failure-path unit controls check
+restoration after assertion and ambiguous promotion failures. The repeat run also
+stopped the exporter: retained rows returned 503, then recovered without checkpoint
+movement or duplicate effects. A separate live check verified monotonic grant
+restoration and rejection of pre-revocation cursors. Generated TypeScript compiled.
+
+Evidence: [sanitized report](../examples/poc/evidence.json), with the tested code
+commit and environment. Chromium viewer evidence remains from alpha.2; it was
+not repeated for alpha.4. This does not complete Phase 4: the application check below extends lifecycle acceptance, while large staged
+rebuilds and funded trading projections remain open.
+
+
+## Outcomia model queries — alpha.4 development
+
+Verified 2026-11-19 against the unchanged approved Outcomia DAR identified above.
+The full run reconciled 25 submitted create/archive identities and seven final
+active contracts. It passed 60 page sequences across A/B/AB and REST/GraphQL,
+including exact and derived filters, native Int64 sorting, null/non-null closure
+reasons and private/shared visibility. Generated revision-2 TypeScript compiled.
+
+Revision 2 adds a real optional application field; promotion invalidated old
+cursors and rollback restored revision 1. Caller revocation and grant-epoch
+changes rejected prior access/cursors. Credential-free controls check restoration
+after assertion and ambiguous promotion failures, pinned template identities and
+source preflight before test writes. All 19 development-helper and four PoC unit
+tests passed. The Rust engine was unchanged.
+
+The initial application run passed 42 page sequences. A later attempt stopped
+because the fixture exporter's one-hour token had expired (`stream_up=false`,
+UNAUTHENTICATED). Renewing that token restored ingestion; the full 60-sequence
+run then passed. This was local fixture credential expiry, not an upstream defect.
+
+[Sanitized evidence](../examples/fixtures/outcomia/model-query-evidence.json)
+records the tested code commit and counts. No new parties, funded collateral,
+orders, trades or resolutions were created. This extends application lifecycle
+query coverage; it does not verify funded-market projections or staged rebuilding.
+
+
+## Outcomia model queries — alpha.4 development
+
+Verified 2026-11-19 using the approved Outcomia DAR identified above, with no
+sibling source changes or Rust engine special cases. The [sanitized application
+report](https://github.com/kunal171/cantongrid/blob/main/examples/fixtures/outcomia/model-query-evidence.json)
+records the tested commit. The complete run passed 60 one-row page sequences,
+25 exact submitted create/archive identities and seven current contracts.
+
+A-only, B-only and shared BinaryMarket contracts covered Draft/Open/Closed,
+lot sizes 2/10/9007199254740993, exact ticks and derived basis-point filters.
+REST and generated GraphQL matched discovery, counts, values and cursor behavior.
+Caller/filter/sort/revision changes rejected cursors; disabling B denied its
+bearer while A retained its permitted view. Grant restoration advanced the epoch.
+Revision 2 added the real optional closure reason, checked null/non-null filters
+and nulls-last sorting, then restored revision 1. Generated TypeScript compiled.
+
+The earlier run passed 42 narrower page sequences. An intervening repeat stopped
+because the exporter's one-hour local token expired (`stream_up=false`); renewal
+restored export. This was fixture credential expiry, not an upstream defect. The
+helper now preflights readiness before uploading/submitting and follows all API
+pages; the complete run needed 26 worker invocations rather than the old fixed 17.
+Nineteen development-helper tests and four PoC helper tests pass. Staged large
+backfills and funded trading projections remain outside this acceptance result.

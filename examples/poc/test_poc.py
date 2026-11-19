@@ -32,5 +32,48 @@ class RepeatRunTests(unittest.TestCase):
             submit.assert_not_called()
 
 
+class QuerySafetyTests(unittest.TestCase):
+    def test_revision_is_restored_when_acceptance_assertion_fails(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        import queries
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'models.json').write_text(json.dumps({'version': 1, 'models': [{'revision': 1}]}))
+            calls = []
+            with patch.object(queries.s, 'DIRECTORY', root), \
+                    patch.object(queries.s, 'state', return_value={'namespace': 'owned'}), \
+                    patch.object(queries.s, 'cli', side_effect=lambda *args: calls.append(args)):
+                with self.assertRaisesRegex(ValueError, 'acceptance failed'):
+                    with queries.promoted():
+                        raise ValueError('acceptance failed')
+            self.assertEqual(calls[-1], ('models', 'bind', root / 'runtime.json', 'owned', 'markets', 1, '--replace', 2))
+            self.assertEqual(json.loads((root / 'models.json').read_text())['models'][0]['revision'], 1)
+
+    def test_revision_restore_also_runs_after_ambiguous_promotion_failure(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        import queries
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'models.json').write_text(json.dumps({'version': 1, 'models': [{'revision': 1}]}))
+            calls = []
+
+            def cli(*args):
+                calls.append(args)
+                if args[:2] == ('models', 'bind') and args[5] == 2:
+                    raise ValueError('promotion acknowledgement lost')
+
+            with patch.object(queries.s, 'DIRECTORY', root), \
+                    patch.object(queries.s, 'state', return_value={'namespace': 'owned'}), \
+                    patch.object(queries.s, 'cli', side_effect=cli):
+                with self.assertRaisesRegex(ValueError, 'acknowledgement lost'):
+                    with queries.promoted():
+                        self.fail('failed promotion must not enter acceptance body')
+            self.assertEqual(calls[-1][5:], (1, '--replace', 2))
+
+
 if __name__ == '__main__':
     unittest.main()

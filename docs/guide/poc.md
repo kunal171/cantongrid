@@ -4,7 +4,8 @@ This example builds a small Daml prediction-market contract, uploads its DAR,
 submits real choices and verifies their indexed state through generated GraphQL.
 A local viewer shows current markets, lifecycle events, checkpoint and freshness.
 
-Available in [0.3.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.2).
+Use [0.3.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.4)
+for the query, revision and recovery checks described here.
 The example and current documentation are maintained on
 [`main`](https://github.com/kunal171/cantongrid/tree/main/examples/poc).
 Use the release tag for a reproducible review:
@@ -12,7 +13,7 @@ Use the release tag for a reproducible review:
 ```bash
 git clone https://github.com/kunal171/cantongrid.git
 cd cantongrid
-git checkout v0.3.0-alpha.2
+git checkout v0.3.0-alpha.4
 ```
 
 ## Prerequisites
@@ -70,15 +71,19 @@ The runner:
    A-only, B-only and shared Draft markets.
 2. Generates runtime configuration and client contracts from `models.json`.
 3. Captures a source snapshot, registers/installs the model, and binds its backfill.
-4. Starts the Rust indexer/API, publishes the shared market and waits for Open.
+4. Creates four query-control contracts, starts the Rust indexer/API, publishes
+   the shared market and waits for Open.
 5. Stops the worker, resolves the market on Canton, restarts the worker and waits
    for Resolved. Consuming choices archive the previous contract revisions.
 6. Verifies exact values, real event identities, caller privacy, cursor isolation,
    grant revocation and repeat observation without duplicate records.
+7. Runs 54 filtered page sequences through REST/GraphQL, promotes and restores
+   a model revision, then stops/restarts PQS to verify fail-closed recovery.
 
-Expected output ends with two `PASS` lines and the evidence path.
+Expected output ends with `PASS` lines and the evidence path.
 `.local/poc/report.json` contains the result; secrets and contract IDs remain in
-owner-only local state files. A first run checks seven create/archive identities.
+owner-only local state files. A fresh run checks eleven create/archive identities, including the four query
+controls. Saved query contracts are reused on later runs.
 A repeat archives the previous resolved shared market and starts another cycle,
 retaining history and database volumes. An interrupted Open cycle can be completed
 with `transact --choice resolve` before rerunning acceptance. Review ambiguous
@@ -113,6 +118,26 @@ the complete query. Model API limits: 25 rows/page, two model resolvers/operatio
 depth 8, complexity 100 and a 2 MiB response. Signed cursors bind caller, source,
 grants, namespace and immutable model fingerprint.
 
+## Query acceptance
+
+`queries.py` submits four real contracts through the local writer. Prices 1, 2
+and 10 expose string-based numeric sorting errors; quantities above 2^53 expose
+floating-point conversion. Two equal prices check contract-ID tie breaking.
+Null, false and true outcomes check nullable ordering and comparison semantics.
+
+For A, B and AB separately, the runner compares actual contract identities,
+filtered counts and exact values on every one-row page in both transports. It
+checks discovery parity, cursor reuse between equivalent REST/GraphQL queries,
+rejection after filter/sort/principal/grant changes, and invalid numeric inputs.
+Revision 2 is registered/installed, activated and restored to revision 1 in a
+`finally` block. An exporter outage must return 503 despite retained rows;
+restart must restore access without moving the acknowledged source checkpoint.
+
+The full run requires `--allow-ledger-writes`. `verify` reuses the contracts and
+checks query/permission behavior without creating contracts, changing model
+bindings or stopping PQS. It does update the local grants epoch during its cursor
+control. `report.json` records the full-run results under `modelQueries`.
+
 ## Watch transactions
 
 ```bash
@@ -121,7 +146,8 @@ python3 examples/poc/demo.py serve
 ```
 
 Open **http://127.0.0.1:18891**. Alice sees her private market and the shared market;
-Bob sees his private market and the shared market. Both parties see three rows.
+Bob sees his private market and the shared market. After query acceptance, each
+also sees three query-control rows: A=5, B=5, AB=7 active rows.
 Switch identities to inspect the different state/history views. The viewer polls
 every two seconds and clears data on identity changes or failed requests.
 Its Python proxy is a local test-identity selector, not production sign-in.
@@ -149,5 +175,5 @@ operation limits, caller revocation and source-health/permission failures.
 The contract demonstrates lifecycle indexing. It has no collateral, matching or
 settlement. History is snapshot-forward partial; the indexer cannot recover events
 before its captured snapshot. API keys/users are local fixtures. Public streams,
-advanced model filters, remote/TLS, devnet and production acceptance remain later
+joins/aggregates, staged large backfills, remote/TLS, devnet and production acceptance remain later
 work. See [verification](../verification.md) for the earlier Outcomia evidence.

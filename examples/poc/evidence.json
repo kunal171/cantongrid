@@ -8,7 +8,7 @@
     "Open",
     "Resolved"
   ],
-  "controlledEventIdentitiesMatched": 13,
+  "controlledEventIdentitiesMatched": 29,
   "source": "authorized node-local PQS",
   "generated": [
     "PostgreSQL schema",
@@ -25,18 +25,41 @@
   "history": "snapshot_forward_partial",
   "environment": "disposable LocalNet",
   "fundedAssetsOrTrades": false,
-  "testedDate": "2026-11-18",
-  "sourceBranch": "feat/reproducible-localnet-poc",
-  "releaseStatus": "unreleased development branch",
+  "modelQueries": {
+    "filteredPageSequences": 54,
+    "modelDiscoveryParity": true,
+    "modelRestGraphqlParity": true,
+    "numericAndNullableSorting": true,
+    "queryCursorBinding": true,
+    "grantEpochCursorInvalidation": true,
+    "revisionPromotionRollback": true,
+    "modelSourceOutageRecovery": true
+  },
+  "testedDate": "2026-11-19",
+  "sourceBranch": "feat/model-query-api",
+  "sourceCommit": "61a976a50be3d36dea2bf65a8ab1fcbb3a915190",
+  "releaseStatus": "unreleased 0.3.0-alpha.4 development",
   "testedProfile": {
     "canton": "3.5.7",
     "scribe": "3.5.4/schema041",
     "dpmSdkSelection": "3.7.1",
     "damlLf": "2.1"
   },
-  "completeRuns": 2,
-  "firstRunControlledEvents": 7,
-  "repeatRunControlledEvents": 13,
+  "queryAcceptanceRuns": 2,
+  "queryRunControlledEvents": [
+    23,
+    29
+  ],
+  "exporterOutageRuns": 1,
   "typescriptCompilation": true,
-  "chromiumViewer": true
+  "monotonicGrantRestoration": true,
+  "historicalPoc": {
+    "date": "2026-11-18",
+    "runs": 2,
+    "controlledEvents": [
+      7,
+      13
+    ],
+    "chromiumViewer": true
+  }
 }
