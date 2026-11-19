@@ -10,6 +10,7 @@ type generation, transactions, privacy and recovery checks.
 - `models.json`: selected fields and exact `priceTick × 10000` calculation.
 - `demo.py`: acceptance run, separate transactions, verification and viewer startup.
 - `lifecycle.py` / `support.py`: local Ledger commands and shared fixture plumbing.
+- `queries.py`: exact filters, ordering, privacy, revision rollback and source-outage acceptance.
 - `dashboard.py` / `dashboard.html`: loopback-only viewer using fixture identities.
 - `evidence.json`: sanitized result of the recorded LocalNet run.
 

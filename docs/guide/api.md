@@ -216,5 +216,5 @@ invalid callers with 401 and source/schema outages with 503. GraphQL clients mus
 also check `errors`. Inputs remain bounded to 16 KiB and responses to 2 MiB;
 large sort keys that cannot fit a 4 KiB internal cursor fail without returning a
 partial page. No migration, new runtime dependency or automatic index creation
-is included. These additions have owned-PostgreSQL and HTTP fixture coverage;
-a fresh LocalNet run for alpha.4 is still pending.
+is included. These additions have owned-PostgreSQL/HTTP fixture coverage and two recorded
+LocalNet query runs. See the [PoC](poc.md#query-acceptance-in-alpha4-development).

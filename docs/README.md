@@ -21,7 +21,9 @@ The LocalNet contracts runtime is verified. Version 0.3.0-alpha.2 includes model
 validation, exact calculations, registry, installation, bounded backfill/promotion,
 atomic live projections, generated model GraphQL and TypeScript interfaces.
 The [PoC](guide/poc.md) has actual LocalNet privacy and recovery evidence.
-Advanced model filtering and durable streams remain later work.
+Alpha.4 development adds bounded model filters, native sorting and REST/GraphQL
+discovery with LocalNet query evidence. Staged large backfills and durable streams
+remain later work.
 Remote/devnet/production deployment has not been verified.
 
 ## Publishing

@@ -134,8 +134,8 @@ Credential-free checks also cover generated nullability/revision identity and sa
 PoC cycle replacement. Owned-PostgreSQL controls exercise typed API authorization,
 null cursors, namespace/operation limits and source health/permission failures.
 These runs were recorded before release and are included as evidence for
-0.3.0-alpha.2. The sanitized artifact retains its original branch/status metadata
-for provenance. No grant submission is included.
+0.3.0-alpha.2. The original report is retained in that release tag; the current
+artifact adds the alpha.4 query evidence and separates the earlier viewer check. No grant submission is included.
 
 ## Source defect
 
@@ -152,7 +152,29 @@ contribution, not a claim about its current upstream merge status.
 ## Limits
 
 No remote/TLS, alternate identity provider, interface/reassignment lifecycle,
-complete pre-snapshot history, automatic erasure, advanced model filters, durable
+complete pre-snapshot history, automatic erasure, model joins/aggregates, durable
 streams, devnet or production acceptance is claimed. Fixture runs are synthetic.
 For new failures, separate our configuration/processing from documented source
 behavior, then reproduce any suspected upstream defect with nonsecret controls.
+
+
+## Model queries — alpha.4 development
+
+Verified 2026-11-19 on the same pinned LocalNet profile. Two complete query runs
+matched 23 and 29 cumulative controlled event identities; each checked 54 page
+sequences across A/B/AB and REST/GraphQL. Four reusable query contracts provide
+prices 1/2/10, equal-value ties, Int64 quantities above 2^53 and null/false/true
+outcomes. Every page checks visible count, contract identity, ordering and exact values.
+
+Discovery and equivalent cross-transport cursors matched. Different callers,
+filters, sorting, grant epochs and active revisions rejected old cursors. Revision
+2 promotion and rollback preserved projections; failure-path unit controls check
+restoration after assertion and ambiguous promotion failures. The repeat run also
+stopped the exporter: retained rows returned 503, then recovered without checkpoint
+movement or duplicate effects. A separate live check verified monotonic grant
+restoration and rejection of pre-revocation cursors. Generated TypeScript compiled.
+
+Evidence: [sanitized report](../examples/poc/evidence.json), with the tested code
+commit and environment. Chromium viewer evidence remains from alpha.2; it was
+not repeated for alpha.4. This does not complete Phase 4: actual application query
+acceptance beyond the standalone example and large staged rebuilds remain open.

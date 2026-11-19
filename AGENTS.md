@@ -6,8 +6,8 @@
   bounded source-bound backfill/promotion and atomic live lifecycle projections exist.
   Generated model GraphQL, TypeScript transport interfaces and the standalone
   LocalNet PoC now exist. See docs/guide/poc.md; bounded filtering/sorting, discovery and REST model queries
-  have owned-PostgreSQL/HTTP fixture coverage; alpha.4 LocalNet and broader
-  application acceptance remain pending. See docs/guide/models.md.
+  have owned-PostgreSQL/HTTP coverage and two alpha.4 LocalNet query runs.
+  Broader application acceptance and staged rebuilds remain pending. See docs/guide/models.md.
   Phase 3's 0.2.0-alpha.1 LocalNet profile remains
   verified; preserve source/caller separation, bindings and guarded commits.
   Streams remain Phase 5. Model declarations never authenticate callers or widen
