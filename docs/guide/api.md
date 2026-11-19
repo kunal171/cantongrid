@@ -127,7 +127,8 @@ Int64, Numeric and offset strings; do not convert financial values to JavaScript
 
 Cursors bind principal, grants, query kind and expiry. They last at most 60 seconds
 and no longer than the bearer. After expiry or grant changes, start a new page
-sequence. Never edit or transfer them between users/endpoints.
+sequence. Never edit them or transfer them between users. Generic contract/history cursors
+remain endpoint-specific; matching model queries can share cursors as described below.
 
 Provenance reports source/network/generation, `sourceLocalWatermark`,
 `historyFromOffset`, `observedAgeSeconds` and coverage (`bootstrapping`,
@@ -142,3 +143,78 @@ Use `models graphql` for the model SDL and `models typescript` for exact transpo
 interfaces. `/graphql` above retains its generic contract/history schema.
 Model operations use the same independent caller/source checks and no-store policy,
 with a maximum of two model resolvers and 25 rows/page.
+
+
+## Filter and sort models (alpha.4 development)
+
+Discover active bindings with authenticated `GET /v1/models`. It returns
+`{"models": [...]}`. Each entry contains namespace, name, revision, fingerprint,
+`queryField` and output field types/operators. `GET /v1/models/demo/records`
+returns one entry. The GraphQL `models` field exposes the same metadata.
+This is the organization's active catalog; listing a model does not grant access
+to its rows. Definitions, expressions, literal values and source paths stay private.
+
+Query the bound Visibility example through REST:
+
+```bash
+curl --fail-with-body --silent --show-error \
+  'http://127.0.0.1:8080/v1/models/demo/records/query' \
+  --header "Authorization: Bearer $CANTONGRID_CALLER_TOKEN" \
+  --header 'Content-Type: application/json' \
+  --data '{"limit":10,"filters":{"amount":{"gte":"1.20"},"note":{"isNull":false}},"sort":{"field":"amount","direction":"desc"}}'
+```
+
+For GraphQL, replace `MODEL_QUERY_FIELD` below with discovery's `queryField`
+and send the operation to `/models/graphql` using the request packaging above:
+
+```graphql
+query FilteredRecords($cursor: String) {
+  MODEL_QUERY_FIELD(
+    namespace: "demo"
+    limit: 10
+    cursor: $cursor
+    filters: { amount: { gte: "1.20" }, note: { isNull: false } }
+    sort: { field: "amount", direction: desc }
+  ) {
+    visibleTotal
+    nextCursor
+    fingerprint
+    items {
+      contractId
+      values { amount sequence note }
+    }
+  }
+}
+```
+
+`cantongrid models graphql <models.json>` and `cantongrid models typescript
+<models.json>` emit the filter/sort input definitions and TypeScript query
+interfaces. Both transports use these rules:
+
+- At most eight predicates, combined with AND. All scalar fields support `eq`
+  and `ne`; only Int64/Numeric support `gt`, `gte`, `lt`, `lte`.
+- Use `isNull: true` or `false` for optional fields. Other comparisons exclude
+  null rows, including `ne`. Null comparison arguments are rejected.
+- Financial and integer arguments are strings; booleans are JSON/GraphQL booleans.
+  Decimal scale is checked before SQL casts: `1.2` at scale 2 becomes `1.20`,
+  while `1.234` fails. Filter strings are limited to 1,024 UTF-8 bytes.
+- Sort one declared output field, `asc` by default. Nulls come last in either
+  direction; equal values use contract ID ascending. Without a sort field,
+  ordering is contract ID ascending. Numeric ordering uses native PostgreSQL types.
+- Counts include visibility and filters, before pagination. Page sizes remain
+  1–25, default 20. Each request reads one database snapshot; subsequent pages
+  reflect later ingestion and archives rather than retaining that snapshot.
+
+Pass the same filters/sort with the returned cursor. It binds normalized options,
+model revision, namespace, principal, grants, source and expiry. Equivalent decimal
+spellings share a query identity. Matching REST and model GraphQL queries can share
+cursors; changed options, promotions, revoked grants or invalid tokens fail closed.
+Old alpha.2 model cursors are invalid after this upgrade; restart pagination.
+
+REST rejects invalid query input/cursors with 400, unknown bindings with 404,
+invalid callers with 401 and source/schema outages with 503. GraphQL clients must
+also check `errors`. Inputs remain bounded to 16 KiB and responses to 2 MiB;
+large sort keys that cannot fit a 4 KiB internal cursor fail without returning a
+partial page. No migration, new runtime dependency or automatic index creation
+is included. These additions have owned-PostgreSQL and HTTP fixture coverage;
+a fresh LocalNet run for alpha.4 is still pending.

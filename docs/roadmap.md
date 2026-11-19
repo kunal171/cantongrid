@@ -9,7 +9,7 @@
 
 ## Next: finish Phase 4
 
-1. Harden model query filtering/discovery and add a REST model interface.
+1. Verify alpha.4 model filtering, sorting and REST/GraphQL discovery on LocalNet and broaden application acceptance.
 2. Broaden revision/cursor/privacy controls to additional application models.
 3. Extend actual application acceptance beyond the standalone [LocalNet PoC](guide/poc.md).
 4. Define staged rebuilds for datasets above the atomic backfill budget before supporting them.

@@ -2,9 +2,17 @@
 
 ## 0.3.0-alpha.4 — unreleased
 
-### In progress
+### Added
 
-- Validated model filters, deterministic sorting, model discovery and REST query parity.
+- Exact model equality/range/null filters and native sorting with deterministic keysets.
+- Authenticated REST model discovery/query endpoints and matching GraphQL metadata/inputs.
+- Generated filter/sort TypeScript interfaces and GraphQL input definitions.
+
+### Compatibility
+
+- Model cursors now bind normalized filters and sorting; restart older model page sequences.
+- No destination migration, automatic indexes or new runtime dependencies.
+- Owned PostgreSQL and HTTP fixture checks cover these changes; alpha.4 LocalNet acceptance is pending.
 
 ## 0.3.0-alpha.3 — unreleased
 
