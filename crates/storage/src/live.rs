@@ -66,6 +66,7 @@ impl Store {
         self.apply_live_checked(plan, batch, lease, None)
     }
 
+    /// Check lease/plan/checkpoint, then commit canonical events, model changes and rebuild dirty IDs together.
     fn apply_live_checked(
         &mut self,
         plan: &Plan,

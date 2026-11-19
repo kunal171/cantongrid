@@ -22,6 +22,7 @@ pub(super) struct Metadata {
     query_field: String,
     fields: Vec<QueryField>,
 }
+/// Expose field/type metadata for an active binding without serializing its processing expressions.
 pub(super) fn metadata(binding: &BoundModel) -> Result<Metadata, String> {
     Ok(Metadata {
         namespace: binding.namespace.clone(),
@@ -44,13 +45,16 @@ struct Input {
     filters: BTreeMap<String, BTreeMap<Comparison, QueryValue>>,
     sort: Option<Sort>,
 }
+/// Match the default page size used by generic queries and generated GraphQL model roots.
 fn default_limit() -> usize {
     20
 }
 
+/// List the active organization catalog only after caller and source checks.
 pub(in crate::api) async fn list(State(service): State<Service>, headers: HeaderMap) -> Response {
     handle(service, headers, None, None).await
 }
+/// Describe one active namespace/model through the same guarded catalog as list queries.
 pub(in crate::api) async fn describe(
     State(service): State<Service>,
     headers: HeaderMap,
@@ -58,6 +62,7 @@ pub(in crate::api) async fn describe(
 ) -> Response {
     handle(service, headers, Some(path), None).await
 }
+/// Pass a bounded model body to shared validation, scoped SQL and final delivery checks.
 pub(in crate::api) async fn rows(
     State(service): State<Service>,
     headers: HeaderMap,

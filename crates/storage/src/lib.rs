@@ -1,4 +1,4 @@
-//! Owned PostgreSQL persistence for the bounded reference ingestion engine.
+//! Owned PostgreSQL state, lifecycle history, model projections and transactional recovery.
 #![forbid(unsafe_code)]
 mod error;
 mod journal;

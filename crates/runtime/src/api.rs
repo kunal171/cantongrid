@@ -16,16 +16,19 @@ use cantongrid_storage::{PageKind, Store};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
+/// Shared configuration location and resource budgets; each request reloads policy instead of caching grants.
 #[derive(Clone)]
 struct Service {
     path: PathBuf,
     limits: resources::Limits,
 }
+/// One verified request bearer shared by its resolvers; fields cannot supply their own party grants.
 #[derive(Clone)]
 struct RequestContext {
     service: Service,
     token: String,
 }
+/// Generic page arguments only; caller identity and visibility never come from query parameters.
 #[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 struct Filter {
@@ -189,9 +192,11 @@ fn public_event(item: serde_json::Value) -> serde_json::Value {
     })
 }
 
+/// Read-only generic contract/history roots; generated model queries have a separate schema.
 struct QueryRoot;
 #[Object]
 impl QueryRoot {
+    /// Resolve a caller-visible current-state page using the same authorized service path as REST.
     #[graphql(complexity = 50)]
     async fn active_contracts(
         &self,
@@ -217,6 +222,7 @@ impl QueryRoot {
                 async_graphql::Error::new("authorized query unavailable")
             })
     }
+    /// Resolve lifecycle history with its own cursor kind and inherited visibility evidence.
     #[graphql(complexity = 50)]
     async fn lifecycle_events(
         &self,
@@ -287,6 +293,7 @@ fn bearer(headers: &HeaderMap) -> Result<String, StatusCode> {
         .ok_or(StatusCode::UNAUTHORIZED)?;
     Ok(value.into())
 }
+/// Return one bounded public failure shape without source, SQL or private payload diagnostics.
 fn error(status: StatusCode) -> Response {
     (
         status,
@@ -295,6 +302,7 @@ fn error(status: StatusCode) -> Response {
         .into_response()
 }
 
+/// Authenticate a generic REST read and retain its final source lease through response encoding.
 async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKind) -> Response {
     let token = match bearer(&headers) {
         Ok(t) => t,
@@ -320,6 +328,7 @@ async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKi
         }
     }
 }
+/// Expose current contracts through the common REST guard and strict page extractor.
 async fn active(
     State(service): State<Service>,
     headers: HeaderMap,
@@ -327,6 +336,7 @@ async fn active(
 ) -> Response {
     rest(service, headers, filter, PageKind::Active).await
 }
+/// Expose history through the common REST guard, keeping its cursor distinct from active rows.
 async fn history(
     State(service): State<Service>,
     headers: HeaderMap,

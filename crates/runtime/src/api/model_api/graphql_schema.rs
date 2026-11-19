@@ -20,6 +20,7 @@ fn scalar(name: &str, kind: TypeRef) -> Field {
         })
     })
 }
+/// Map booleans natively and exact financial scalars to strings, preserving optional nullability.
 fn field_type(kind: &FieldType) -> TypeRef {
     match kind {
         FieldType::Optional { item } => TypeRef::named(if matches!(**item, FieldType::Bool) {

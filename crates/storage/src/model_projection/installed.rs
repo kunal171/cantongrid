@@ -31,6 +31,7 @@ pub(super) fn read(
     load_checked(tx, namespace, name, revision, true)
 }
 
+/// Recompile stored definitions and verify relation identity/shape under the appropriate read or write lock.
 fn load_checked(
     tx: &mut Transaction<'_>,
     namespace: &str,

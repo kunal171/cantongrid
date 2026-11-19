@@ -166,6 +166,7 @@ fn runtime_checksum(version: i32) -> Option<String> {
     )
 }
 
+/// Compare immutable migration bytes with recorded history; never recompute an applied SQL definition.
 fn progress_checksum() -> String {
     Sha256::digest(PROGRESS.as_bytes())
         .iter()
@@ -173,6 +174,7 @@ fn progress_checksum() -> String {
         .collect()
 }
 
+/// Verify owned schema identity, private object grants and the original migration before opening state.
 fn check_base(client: &mut impl GenericClient) -> Result<(), StoreError> {
     let owned: bool = client.query_one("SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='cantongrid' AND nspowner=(SELECT oid FROM pg_roles WHERE rolname=current_user)) AND to_regclass('cantongrid.schema_version') IS NOT NULL", &[])?.get(0);
     if !owned {
