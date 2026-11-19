@@ -80,6 +80,9 @@ impl Store {
         )?;
         let bound = load_bound(&mut tx, plan, source_revision)?;
         let target = installed::load(&mut tx, namespace, name, revision)?;
+        if super::rebuild::reserved(&mut tx, &key, namespace, name, &target.sql.fingerprint)? {
+            return Err(StoreError::ModelRebuild);
+        }
         if !plan.selects(&target.model.template) {
             return Err(StoreError::ModelBinding);
         }

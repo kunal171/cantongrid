@@ -3,7 +3,9 @@ mod binding;
 mod installed;
 mod query;
 mod query_plan;
+pub(crate) mod rebuild;
 pub use query::{BoundModel, ModelPage};
+pub use rebuild::{RebuildAction, RebuildStatus};
 
 use crate::{StoreError, journal::stream_key};
 pub use binding::ModelBinding;

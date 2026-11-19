@@ -224,6 +224,7 @@ impl Store {
                 }
                 _ => return Err(StoreError::InvalidBatch),
             };
+            model_projection::rebuild::changed(&mut tx, plan, &event.contract, &event.template)?;
             let single = Batch {
                 context: batch.context.clone(),
                 position: batch.position.clone(),
