@@ -322,3 +322,6 @@ impl Store {
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests;
