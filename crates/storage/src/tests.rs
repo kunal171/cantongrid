@@ -26,10 +26,10 @@ struct Scenario {
 impl Scenario {
     fn new() -> Self {
         initialize_env(VARIABLE).unwrap();
-        let text = include_str!("../../../examples/fixtures/visibility/cantongrid.json");
+        let text = include_str!("../assets/fixtures/visibility/cantongrid.json");
         let original = Plan::parse(text).unwrap();
         let fixture = Fixture::parse(
-            include_str!("../../../examples/fixtures/visibility/events.json"),
+            include_str!("../assets/fixtures/visibility/events.json"),
             &original,
         )
         .unwrap();
@@ -191,7 +191,7 @@ fn selection_drift_conflicts_and_bad_payloads_never_advance_the_checkpoint() {
     store.apply(&scenario.plan, &scenario.batches[0]).unwrap();
     let before = store.stats(&scenario.plan).unwrap();
     let mut raw: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../examples/fixtures/visibility/cantongrid.json"
+        "../assets/fixtures/visibility/cantongrid.json"
     ))
     .unwrap();
     raw["source"]["id"] = scenario.plan.context().identity().0.into();

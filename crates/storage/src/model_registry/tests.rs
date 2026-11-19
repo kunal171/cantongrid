@@ -48,7 +48,7 @@ impl Drop for Scenario {
 }
 
 fn visibility() -> Catalog {
-    Catalog::parse(include_str!("../../../../examples/models/visibility.json")).unwrap()
+    Catalog::parse(include_str!("../../assets/models/visibility.json")).unwrap()
 }
 
 /// Build a bounded catalog through the same strict entry point as a developer file.
@@ -162,8 +162,7 @@ fn registration_survives_reopen_and_is_idempotent_per_namespace() {
         Some(original.models()[0].clone())
     );
     assert!(!format!("{}", StoreError::ModelConflict).contains("private-definition"));
-    let outcomia =
-        Catalog::parse(include_str!("../../../../examples/models/outcomia.json")).unwrap();
+    let outcomia = Catalog::parse(include_str!("../../assets/models/outcomia.json")).unwrap();
     assert_eq!(
         store
             .register_models(&first.namespace, &outcomia)
