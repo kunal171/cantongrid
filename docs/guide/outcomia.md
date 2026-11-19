@@ -42,11 +42,10 @@ balance, and operator/name alone is not a globally unique identity.
 
 ## LocalNet demonstration
 
-The 0.3.0-alpha.4 [recorded test](../verification.md#outcomia-model-queries--alpha4-development)
-uses the approved existing DAR. It verifies 25 create/archive identities and seven
-current contracts across isolated Protocol/Draft/Open/Closed lifecycles, plus 60
-model page sequences through REST and generated GraphQL. No funded assets, trades
-or resolutions are created.
+The [recorded alpha.4 run](../verification.md#recorded-localnet-acceptance)
+uses the approved existing DAR and real Protocol/Draft/Open/Closed lifecycles.
+It covers model queries and private/shared scopes without funded assets, trades
+or resolutions.
 
 With permission for local DAR upload and ledger writes, reproduce using:
 

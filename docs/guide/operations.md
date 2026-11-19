@@ -37,6 +37,14 @@ worker/API source token for its exact Ledger user and restart those processes
 with the updated environment. Exporting a variable in another shell does not
 update a running process. Key rotation also invalidates old tokens/cursors.
 
+## PostgreSQL support
+
+The pinned PostgreSQL 14.25 compatibility fixture reached
+[end of support on November 12, 2026](https://www.postgresql.org/support/versioning/).
+It remains LocalNet test evidence, not a supported production database choice.
+Validate PQS and destination behavior on a supported major version using separate
+restored databases before migrating existing volumes.
+
 ## Disk and shutdown
 
 ```bash
