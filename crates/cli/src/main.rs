@@ -22,6 +22,9 @@ Usage:
   cantongrid models preview <models.json> <model-name> <payload.json>
   cantongrid models register <models.json> --namespace <project> --database-env <CANTONGRID_VARIABLE>
   cantongrid models inspect <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
+  cantongrid models rebuild start <runtime.json> <job> <project> <model-name> <revision> [--replace <previous-revision>]
+  cantongrid models rebuild step <runtime.json> <job> [--limit <1..64>]
+  cantongrid models rebuild status|activate|cancel <runtime.json> <job>
   cantongrid models bind <runtime.json> <project> <model-name> <revision> [--replace <previous-revision>]
   cantongrid models install <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
   cantongrid init <new-directory>
@@ -52,6 +55,9 @@ fn main() -> ExitCode {
 
 fn run(args: Vec<String>) -> Result<(), String> {
     match args.as_slice() {
+        [command, subject, action, rest @ ..] if command == "models" && subject == "rebuild" => {
+            commands::model_rebuild::run(action, rest)
+        }
         [] => {
             println!("{HELP}");
             Ok(())

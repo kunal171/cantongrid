@@ -908,6 +908,108 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
         Some(json!({"query":format!("{{{}(namespace:\"missing\"){{visibleTotal}}}}",field)})),
     );
     assert!(unknown.get("errors").is_some());
+    // Every rebuild command is a fresh process: resume from persisted progress and renew source
+    // authority each time. No organization API keys are needed by this destination operator.
+    let mut revision = model.clone();
+    revision.revision = 2;
+    let revision_catalog =
+        Catalog::parse(&json!({"version":1,"models":[revision]}).to_string()).unwrap();
+    store
+        .register_models(&namespace, &revision_catalog)
+        .unwrap();
+    store.install_model(&namespace, &model.name, 2).unwrap();
+    let rebuild = |action: &str, job: &str, extra: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_cantongrid"))
+            .args(["models", "rebuild", action, path.to_str().unwrap(), job])
+            .args(extra)
+            .env("CANTONGRID_TEST_PQS_URL", source_database)
+            .env("CANTONGRID_TEST_SOURCE_TOKEN", &token)
+            .env_remove("CANTONGRID_TEST_API_KEY")
+            .env_remove("CANTONGRID_TEST_CURSOR_KEY")
+            .output()
+            .unwrap()
+    };
+    let progress = |action: &str, job: &str, extra: &[&str]| {
+        let result = rebuild(action, job, extra);
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let output: Json = serde_json::from_slice(&result.stdout).unwrap();
+        assert!(!output.to_string().contains("scan_after"));
+        output["result"].clone()
+    };
+    let finish = |job: &str, expected: &str| {
+        for _ in 0..20 {
+            let result = progress("step", job, &["--limit", "2"]);
+            if result["phase"] == expected {
+                return;
+            }
+        }
+        panic!("CLI rebuild did not reach expected phase");
+    };
+    assert!(
+        !rebuild("step", "missing", &["--limit", "0"])
+            .status
+            .success()
+    );
+    assert_eq!(
+        progress(
+            "start",
+            "cli-v2",
+            &[&namespace, &model.name, "2", "--replace", "1"]
+        )["phase"],
+        "cleaning"
+    );
+    progress("step", "cli-v2", &["--limit", "1"]);
+    assert_eq!(
+        progress("step", "cli-v2", &["--limit", "1"])["scanned"],
+        "1"
+    );
+    healthy.store(false, Ordering::Relaxed);
+    assert!(!rebuild("step", "cli-v2", &[]).status.success());
+    healthy.store(true, Ordering::Relaxed);
+    assert_eq!(progress("status", "cli-v2", &[])["scanned"], "1");
+    let (_, discovered) = request(&rt, &rest_base, Some(&a), None);
+    assert_eq!(discovered["models"][0]["revision"], "1");
+    finish("cli-v2", "ready");
+    allowed.store(false, Ordering::Relaxed);
+    assert!(!rebuild("activate", "cli-v2", &[]).status.success());
+    allowed.store(true, Ordering::Relaxed);
+    assert_eq!(progress("activate", "cli-v2", &[])["phase"], "cleanup");
+    assert_eq!(
+        request(&rt, &endpoint, Some(&a), Some(input.clone())).1["visibleTotal"],
+        "2"
+    );
+    assert_eq!(
+        request(&rt, &endpoint, Some(&a), Some(json!({"cursor":cursor}))).0,
+        400
+    );
+    assert_eq!(
+        request(
+            &rt,
+            &endpoint,
+            Some(&b),
+            Some(json!({"filters":{"amount":{"eq":"1"}}}))
+        )
+        .1["visibleTotal"],
+        "1"
+    );
+    finish("cli-v2", "complete");
+    // A rollback also uses staging; it never runs an unbounded in-place copy or deletion.
+    progress(
+        "start",
+        "cli-rollback",
+        &[&namespace, &model.name, "1", "--replace", "2"],
+    );
+    finish("cli-rollback", "ready");
+    progress("activate", "cli-rollback", &[]);
+    finish("cli-rollback", "complete");
+    assert_eq!(
+        request(&rt, &rest_base, Some(&a), None).1["models"][0]["revision"],
+        "1"
+    );
     healthy.store(false, Ordering::Relaxed);
     assert_eq!(request(&rt, &rest_base, Some(&a), None).0, 503);
     assert_eq!(
@@ -944,6 +1046,8 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
         .batch_execute(&format!("DROP TABLE {relation}"))
         .unwrap();
     for table in [
+        "model_rebuild_dirty",
+        "model_rebuilds",
         "model_bindings",
         "outbox",
         "events",
@@ -970,10 +1074,21 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
             &[&namespace],
         )
         .unwrap();
+    let revision_table = revision.sql_plan().unwrap().table;
     client
-        .execute(
-            "DELETE FROM cantongrid.model_tables WHERE fingerprint=$1",
-            &[&model.fingerprint().unwrap()],
-        )
+        .batch_execute(&format!(
+            "DROP TABLE cantongrid_models.\"{revision_table}\""
+        ))
         .unwrap();
+    for fingerprint in [
+        model.fingerprint().unwrap(),
+        revision.fingerprint().unwrap(),
+    ] {
+        client
+            .execute(
+                "DELETE FROM cantongrid.model_tables WHERE fingerprint=$1",
+                &[&fingerprint],
+            )
+            .unwrap();
+    }
 }
