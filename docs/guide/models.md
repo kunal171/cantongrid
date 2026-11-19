@@ -1,11 +1,10 @@
 # Build a declarative model
 
-Models describe which fields to extract and how to calculate derived values.
-The tools validate definitions, preview a local payload, generate SQL plans and
-register immutable definitions, install their tables and bind them to an indexed
-source. Bindings backfill known active contracts and maintain rows during live
-ingestion. The [PoC](poc.md), available in 0.3.0-alpha.2, uses generated TypeScript and
-GraphQL schema output plus authenticated model queries.
+Models select fields and calculate derived values. Validate and preview a
+mapping, register an immutable revision, install its table, then bind it to an
+indexed source. Live ingestion maintains the projected rows. The [PoC](poc.md)
+shows a complete application; [API usage](api.md#generated-model-queries) covers
+generated TypeScript/GraphQL and caller-scoped queries.
 
 ## Run the complete Visibility example
 
@@ -155,10 +154,8 @@ cantongrid models register examples/models/visibility.json --namespace demo --da
 cantongrid models inspect demo records 1 --database-env CANTONGRID_DESTINATION_URL
 ```
 
-Initialization explicitly applies migrations through 006; older destinations
-fail to open until upgraded. Migrations 001–005 are unchanged. Binaries from
-alpha.4 or earlier reject this migration set; do not downgrade the destination.
-Registration writes the whole catalog atomically. Repeating it returns `inserted: 0` and `unchanged: 1`.
+Run explicit initialization for the [required migration set](../releases.md)
+before opening an older destination. Registration writes the whole catalog atomically. Repeating it returns `inserted: 0` and `unchanged: 1`.
 Changing an existing namespace/name/revision fails; use a new revision. Inspection
 reports registration and fingerprint, without printing stored literals.
 
@@ -252,8 +249,7 @@ no-op even when its `--replace` revision is now stale.
 
 Old rows are removed for this stream only when its last reference to that physical
 revision is replaced. Other namespaces and streams retain their rows. Namespaces
-remain operator labels, not access grants. No unbind command exists. The [PoC guide](poc.md) covers generated model GraphQL
-and client types in 0.3.0-alpha.2.
+remain operator labels, not access grants. No unbind command exists.
 
 ## Rebuild a larger model in stages
 
@@ -328,7 +324,5 @@ Limits and recovery:
   or retired rows, not source contracts or lifecycle history. Automatic job-history
   retention is not implemented.
 
-This path is tested with owned PostgreSQL and a mock source authorization/readiness
-server, including more than 260 contracts and process restarts. A large staged
-LocalNet rebuild has not yet been verified. It does not add missing pre-snapshot
-history, joins, aggregates or reassignment support.
+See [verification](../verification.md#staged-rebuilds) for owned-PostgreSQL and
+mock-source coverage. Large staged LocalNet acceptance remains pending.

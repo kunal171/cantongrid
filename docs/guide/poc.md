@@ -16,6 +16,10 @@ cd cantongrid
 git checkout v0.3.0-alpha.4
 ```
 
+If reusing a destination initialized by alpha.5, keep an alpha.5 checkout instead
+of switching to alpha.4. Older binaries reject migration 006; release-tag
+reproduction needs a separate compatible destination. See [migration compatibility](../releases.md).
+
 ## Prerequisites
 
 Use Linux with Docker/Compose, Python 3.11+, Git, the repository's Rust toolchain
@@ -114,9 +118,7 @@ is `POST /models/graphql`; `/graphql` continues to serve generic contracts/histo
 Model queries require the namespace shown in `.local/poc/state.json` and a valid
 organization bearer. The viewer/helper issues short-lived local fixture bearers
 without printing signing keys. Inspect `support.query` and the generated SDL for
-the complete query. Model API limits: 25 rows/page, two model resolvers/operation,
-depth 8, complexity 100 and a 2 MiB response. Signed cursors bind caller, source,
-grants, namespace and immutable model fingerprint.
+the complete query. See [model API usage](api.md#generated-model-queries) for query and cursor rules.
 
 ## Query acceptance
 
@@ -166,14 +168,12 @@ The default API/viewer ports 18890/18891 must be free.
 
 ## Evidence and boundaries
 
-The checked-in [sanitized evidence](https://github.com/kunal171/cantongrid/blob/main/examples/poc/evidence.json)
-records an actual LocalNet run. Generated TypeScript compiled and Chromium
-rendered the authorized viewer. Separate owned-PostgreSQL tests cover visibility
-before counts/pages, stale revisions, unknown namespaces, explicit null cursors,
-operation limits, caller revocation and source-health/permission failures.
+The [sanitized report](https://github.com/kunal171/cantongrid/blob/main/examples/poc/evidence.json)
+and [verification record](../verification.md#recorded-localnet-acceptance) identify
+the tested commits, query runs and separate viewer evidence.
 
-The contract demonstrates lifecycle indexing. It has no collateral, matching or
-settlement. History is snapshot-forward partial; the indexer cannot recover events
-before its captured snapshot. API keys/users are local fixtures. Public streams,
-joins/aggregates, staged large backfills, remote/TLS, devnet and production acceptance remain later
-work. See [verification](../verification.md) for the earlier Outcomia evidence.
+The contract demonstrates lifecycle indexing without collateral, matching or
+settlement. API identities are local fixtures and history is snapshot-forward.
+This PoC uses atomic model bindings; the unreleased alpha.5 staged rebuild path
+has separate owned-PostgreSQL tests and still needs large LocalNet acceptance.
+See the [current scope and next steps](../README.md#current-scope).

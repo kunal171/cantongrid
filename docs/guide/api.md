@@ -115,9 +115,10 @@ curl --fail-with-body --silent --show-error 'http://127.0.0.1:8080/graphql' \
 ```
 
 Replace `activeContracts` with `lifecycleEvents` for history, using its own cursor.
-`items` and `provenance` are JSON scalars, not nested typed fields. There is no
-`markets`/`records` root yet. Check GraphQL `errors` even on HTTP 200. Mutations,
-subscriptions and introspection are disabled.
+`items` and `provenance` are JSON scalars, not nested typed fields. `/graphql`
+exposes generic roots; use `/models/graphql` for generated model queries below.
+Check GraphQL `errors` even on HTTP 200. Mutations, subscriptions and introspection
+are disabled.
 
 ## Results and pagination
 
@@ -138,14 +139,13 @@ zero ledger lag. Responses are `no-store`; limits and policy are in
 
 ## Generated model queries
 
-Version 0.3.0-alpha.2 provides typed `POST /models/graphql` operations.
+Typed model operations use `POST /models/graphql`.
 Use `models graphql` for the model SDL and `models typescript` for exact transport
 interfaces. `/graphql` above retains its generic contract/history schema.
 Model operations use the same independent caller/source checks and no-store policy,
 with a maximum of two model resolvers and 25 rows/page.
 
-
-## Filter and sort models (0.3.0-alpha.4)
+## Filter and sort models
 
 Discover active bindings with authenticated `GET /v1/models`. It returns
 `{"models": [...]}`. Each entry contains namespace, name, revision, fingerprint,
@@ -209,12 +209,13 @@ Pass the same filters/sort with the returned cursor. It binds normalized options
 model revision, namespace, principal, grants, source and expiry. Equivalent decimal
 spellings share a query identity. Matching REST and model GraphQL queries can share
 cursors; changed options, promotions, revoked grants or invalid tokens fail closed.
-Old alpha.2 model cursors are invalid after this upgrade; restart pagination.
+When upgrading from alpha.2, restart model pagination; the older cursor format
+is invalid.
 
-REST rejects invalid query input/cursors with 400, unknown bindings with 404,
-invalid callers with 401 and source/schema outages with 503. GraphQL clients must
-also check `errors`. Inputs remain bounded to 16 KiB and responses to 2 MiB;
-large sort keys that cannot fit a 4 KiB internal cursor fail without returning a
-partial page. No migration, new runtime dependency or automatic index creation
-is included. These additions have owned-PostgreSQL/HTTP fixture coverage and two recorded
-LocalNet query runs. See the [PoC](poc.md#query-acceptance).
+REST returns 400 for invalid query input/cursors, 404 for unknown bindings,
+401 for invalid callers and 503 for source/schema outages. Overload returns 429;
+the request deadline returns 504. GraphQL clients must also check `errors`.
+[Security](../security.md#tokens-and-limits) lists transport budgets. Sort keys
+that cannot fit the 4 KiB internal cursor fail without a partial page. No
+automatic indexes are created. Recorded query acceptance is in
+[verification](../verification.md#recorded-localnet-acceptance).

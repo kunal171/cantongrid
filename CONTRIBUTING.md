@@ -16,6 +16,7 @@ cargo +1.100.0 fmt --all -- --check
 cargo +1.100.0 clippy --workspace --all-targets --locked -- -D warnings
 cargo +1.100.0 test --workspace --locked
 python3 -m unittest discover -s scripts/tests -v
+python3 -m unittest discover -s examples/poc -p 'test_*.py' -v
 python3 scripts/dev.py release check
 python3 scripts/dev.py check resources
 ```

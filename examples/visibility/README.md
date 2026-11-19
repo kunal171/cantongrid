@@ -11,6 +11,5 @@ cd examples/visibility
 ~/.dpm/bin/dpm build
 ```
 
-The package targets LF 2.1. Generated `.daml/` files are ignored. The source
-fixture alone does not establish live authorization behavior; local deployment
-and scenario evidence are recorded separately as tests are added.
+The package targets LF 2.1. Generated `.daml/` files are ignored. For local deployment and authorization checks, use the [PoC setup](../../docs/guide/poc.md).
+Recorded results are in [verification](../../docs/verification.md).
