@@ -1,7 +1,7 @@
 # Working on CantonGrid
 
 - Current phase: Phase 4 declarative models is in progress,
-  with 0.3.0-alpha.2 released. The first compiler/evaluator/SQL planner and offline CLI
+  with 0.3.0-alpha.2 released and 0.3.0-alpha.3 packaging in progress. The first compiler/evaluator/SQL planner and offline CLI
   commands, persisted registry and guarded projection-table installation exist;
   bounded source-bound backfill/promotion and atomic live lifecycle projections exist.
   Generated model GraphQL, TypeScript transport interfaces and the standalone
@@ -46,3 +46,7 @@
   capture exact versions and minimal nonsecret controls, inspect current upstream
   code and search related issues. Prepare local evidence; do not publish without
   a user instruction authorizing that action.
+
+- crates.io publication is an explicit operator action. Keep package archives
+  self-contained, retain licenses/notices, and run the workspace dry run and
+  archive checks. CI must never upload packages on ordinary pushes or PRs.

@@ -15,6 +15,7 @@ Local generated configuration, tokens and reports stay ignored under `.local/`.
 | `validate-dar <existing.dar>` | Validate without uploading/vetting |
 | `visibility setup` | Upload fixture DAR, provision owned parties/users and seed three records |
 | `security install / check [area]` | Install pinned dev tools; audit/dependencies/secrets/workflows |
+| `packages verify [--directory <path>]` | Inspect clean source archives after a workspace publish dry run; no upload |
 | `release check [--tag <tag>]` | Check version/license/changelog metadata; no publication |
 
 ## Checks and side effects
