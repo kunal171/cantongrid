@@ -3,7 +3,18 @@
 Requirements: Git, Rust/Cargo 1.100.0; Python 3.11+ and Docker/Compose for the
 optional PostgreSQL step. Run commands from the repository root.
 
-## Build
+## Install from crates.io
+
+```bash
+cargo install cantongrid-cli --version 0.3.0-alpha.5 --locked
+cantongrid --version
+cantongrid --help
+```
+
+The binary is named `cantongrid`; Cargo installs it under `~/.cargo/bin` by default.
+The examples below use a repository checkout for configuration and fixture files.
+
+## Build from source
 
 ```bash
 git clone https://github.com/kunal171/cantongrid.git

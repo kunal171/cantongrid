@@ -12,10 +12,15 @@ is the maintained change history; the links below retain each release's original
 | [0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1) | LocalNet ingestion and authenticated generic APIs | 001–002 |
 | [0.1.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.1.0-alpha.1) | Fixtures, owned storage and source checks | 001 |
 
-Alpha.3 introduced crate packaging between source releases. The recorded alpha.4
-registry check found only `cantongrid-core 0.3.0-alpha.3` published. Check the registry
-before uploading or resuming a publication; a GitHub release does not upload crates.
-Build the CLI from source using the [quickstart](guide/quickstart.md).
+The [CLI](https://crates.io/crates/cantongrid-cli/0.3.0-alpha.5) and all seven
+libraries are published at **0.3.0-alpha.5**, with package-specific READMEs.
+Use the [quickstart](guide/quickstart.md) to install the CLI or build from source.
+
+Alpha.3 introduced packaging between source releases. Historical crate packages
+use `release/crates-<version>` branches with crate-local assets and publication
+metadata; the original source tags are unchanged. The alpha.3 packages use the
+same source baseline as its previously published core crate. Check the registry
+before resuming an upload; GitHub releases do not upload crates automatically.
 
 Current source requires explicit `storage init` through migration 006. Earlier
 migration SQL is unchanged; older binaries reject unknown migration sets.
@@ -65,5 +70,6 @@ cargo publish --workspace --locked
 
 Cargo orders dependencies before their consumers. If publication stops partway,
 check each registry version and resume only unpublished packages; versions are
-immutable. Verify CLI installation outside the checkout after a coordinated
+immutable. For HTTP 429, wait until the registry's stated retry time.
+Verify CLI installation outside the checkout after a coordinated
 release. A core-only upload cannot install the CLI.

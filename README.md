@@ -22,8 +22,9 @@ Outcomia is the first application example; the engine is reusable.
 - Remote/devnet/production deployment is unverified.
 
 ```bash
-cargo +1.100.0 build -p cantongrid-cli --locked
-./target/debug/cantongrid fixture run examples/fixtures/visibility/cantongrid.json --party A
+cargo install cantongrid-cli --version 0.3.0-alpha.5 --locked
+cantongrid init ./my-demo
+cantongrid fixture run ./my-demo/cantongrid.json --party A
 ```
 
 See the [quickstart](docs/guide/quickstart.md) for setup and examples, and the
