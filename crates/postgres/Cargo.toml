@@ -5,6 +5,13 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+readme = "README.md"
+description = "Restricted PostgreSQL connections and redacted database errors for CantonGrid."
+categories = ["database"]
 
 [dependencies]
 postgres = { version = "0.19.14", features = ["with-serde_json-1"] }

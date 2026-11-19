@@ -12,10 +12,9 @@ use cantongrid_models::{Catalog, Model};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 pub(super) const VARIABLE: &str = "CANTONGRID_DESTINATION_URL";
-const VISIBILITY: &str = include_str!("../../../../examples/models/visibility.json");
-const OUTCOMIA: &str = include_str!("../../../../examples/models/outcomia.json");
-pub(super) const PAYLOAD: &str =
-    include_str!("../../../../examples/models/visibility-payload.json");
+const VISIBILITY: &str = include_str!("../../assets/models/visibility.json");
+const OUTCOMIA: &str = include_str!("../../assets/models/outcomia.json");
+pub(super) const PAYLOAD: &str = include_str!("../../assets/models/visibility-payload.json");
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
 /// Own every synthetic source/model identity so cleanup never deletes another stream's data.
@@ -234,7 +233,7 @@ fn backfill_and_live_lifecycle_preserve_exact_values_for_both_examples() {
         ),
         (
             OUTCOMIA,
-            include_str!("../../../../examples/models/outcomia-payload.json"),
+            include_str!("../../assets/models/outcomia-payload.json"),
             "priceTickBps",
             "0.0000010000",
         ),

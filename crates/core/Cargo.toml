@@ -5,6 +5,13 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+readme = "README.md"
+description = "Exact values, authorized source scopes and Daml contract lifecycle primitives for CantonGrid."
+categories = ["database"]
 
 [dependencies]
 serde = { version = "1.0.229", features = ["derive"] }

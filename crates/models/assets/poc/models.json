@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "name": "markets",
+      "revision": 1,
+      "template": {
+        "package_id": "0000000000000000000000000000000000000000000000000000000000000000",
+        "module": "Market",
+        "entity": "PredictionMarket"
+      },
+      "fields": {
+        "demoId": {
+          "op": "field",
+          "path": [
+            "demoId"
+          ],
+          "as": {
+            "type": "text"
+          }
+        },
+        "question": {
+          "op": "field",
+          "path": [
+            "question"
+          ],
+          "as": {
+            "type": "text"
+          }
+        },
+        "state": {
+          "op": "field",
+          "path": [
+            "state"
+          ],
+          "as": {
+            "type": "text"
+          }
+        },
+        "priceTick": {
+          "op": "field",
+          "path": [
+            "priceTick"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "quantityLot": {
+          "op": "field",
+          "path": [
+            "quantityLot"
+          ],
+          "as": {
+            "type": "int64"
+          }
+        },
+        "outcome": {
+          "op": "field",
+          "path": [
+            "outcome"
+          ],
+          "as": {
+            "type": "optional",
+            "item": {
+              "type": "bool"
+            }
+          }
+        },
+        "priceTickBps": {
+          "op": "multiply",
+          "left": {
+            "op": "field",
+            "path": [
+              "priceTick"
+            ],
+            "as": {
+              "type": "numeric",
+              "scale": 10
+            }
+          },
+          "right": {
+            "op": "literal",
+            "value": {
+              "type": "int64",
+              "value": "10000"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

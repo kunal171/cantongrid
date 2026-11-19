@@ -5,9 +5,16 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+readme = "README.md"
+description = "Current Canton Ledger API user and party-grant verification for CantonGrid."
+categories = ["database"]
 
 [dependencies]
-cantongrid-core = { path = "../core", version = "=0.3.0-alpha.2" }
+cantongrid-core = { path = "../core", version = "=0.3.0-alpha.3" }
 reqwest = { version = "0.13.5", default-features = false }
 jsonwebtoken = { version = "12.0.0", default-features = false }
 serde = { version = "1.0", features = ["derive"] }

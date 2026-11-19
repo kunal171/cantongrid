@@ -300,7 +300,7 @@ fn declarative_models_validate_plan_and_preview_without_source_credentials() {
     let root = Scratch::new();
     fs::write(
         root.0.join("models.json"),
-        include_str!("../../../examples/models/visibility.json"),
+        include_str!("../assets/models/visibility.json"),
     )
     .unwrap();
     fs::write(root.0.join("payload.json"),r#"{"label":"test","owner":"A","amount":"12345678901234567890.1234567891","sequence":"9223372036854775807","note":null,"state":"Ready"}"#).unwrap();
@@ -389,7 +389,7 @@ fn model_registry_cli_persists_revision_identity_without_printing_literals() {
             .success()
     );
     let mut document: serde_json::Value =
-        serde_json::from_str(include_str!("../../../examples/models/visibility.json")).unwrap();
+        serde_json::from_str(include_str!("../assets/models/visibility.json")).unwrap();
     document["models"][0]["fields"]["privateNote"] = serde_json::json!({
         "op":"literal","value":{"type":"text","value":"REGISTRY_PRIVATE_SENTINEL"}
     });
@@ -472,7 +472,7 @@ fn model_installation_cli_is_explicit_idempotent_and_redacts_schema_failures() {
     );
     let namespace = format!("cli_install_{suffix}");
     let mut document: serde_json::Value =
-        serde_json::from_str(include_str!("../../../examples/models/visibility.json")).unwrap();
+        serde_json::from_str(include_str!("../assets/models/visibility.json")).unwrap();
     document["models"][0]["name"] = format!("record_{suffix}").into();
     document["models"][0]["fields"]["privateNote"] = serde_json::json!({
         "op":"literal", "value":{"type":"text","value":"INSTALLATION_PRIVATE_SENTINEL"}

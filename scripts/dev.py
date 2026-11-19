@@ -12,6 +12,7 @@ ROUTES = {
     'storage': 'storage',
     'security': 'security',
     'release': 'release',
+    'packages': 'packages',
     'validate-dar': 'validate_dar',
     'visibility': 'setup_visibility',
     'check': None,

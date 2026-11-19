@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-alpha.3 — unreleased
+
+### Added
+
+- crates.io package metadata, per-crate license/notice/readme files and self-contained fixture assets.
+- Archive verification and a coordinated workspace publication workflow.
+
 ## 0.3.0-alpha.2 — 2026-11-18
 
 ### Added

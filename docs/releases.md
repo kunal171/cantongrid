@@ -28,4 +28,61 @@ python3 scripts/dev.py release check --tag v0.3.0-alpha.2
 ```
 
 These commands verify metadata only; they do not tag or publish. Binary packaging
-and third-party notices need separate review. Cargo packages remain `publish = false`.
+and third-party notices need separate review. The next alpha prepares crates.io
+packages under the publication checks below.
+
+## crates.io packages (0.3.0-alpha.3 preparation)
+
+The workspace permits publishing only to crates.io. Every package includes its
+README, Apache-2.0 license and notice. Crate-local `assets/` copies make fixture
+and model tests self-contained; the release guard compares them with the
+canonical files under `examples/` and rejects drift.
+
+| Package | Purpose |
+| --- | --- |
+| `cantongrid-core` | Exact values, lifecycle, visibility and lease decisions |
+| `cantongrid-postgres` | Restricted PostgreSQL connections and redacted errors |
+| `cantongrid-ledger` | Current source authorization checks |
+| `cantongrid-models` | Declarative models, evaluation and schema/client generation |
+| `cantongrid-pqs` | Read-only source paging |
+| `cantongrid-storage` | Owned migrations, canonical state and projections |
+| `cantongrid-runtime` | Indexing workers and authenticated APIs |
+| `cantongrid-cli` | The `cantongrid` executable |
+
+Before upload, from a clean commit:
+
+```bash
+python3 scripts/dev.py release check
+cargo publish --workspace --dry-run --locked
+python3 scripts/dev.py packages verify
+```
+
+The dry run packages and builds all workspace members with a temporary registry
+for unpublished internal dependencies. Archive checks reject dirty provenance,
+missing compile-time inputs, unexpected files and changed license/notice content.
+The CI workflow runs these checks without uploading anything.
+
+Upload uses the operator's locally configured crates.io credentials. A first
+publication needs an account with verified email and permission for these names.
+Run `cargo login --registry crates-io` locally; never paste a token into chat or
+commit it. After verification, the explicit operator command is:
+
+```bash
+cargo publish --workspace --locked
+```
+
+Cargo orders the workspace dependencies before their consumers. If publication
+stops partway, check each registry version and resume only unpublished packages.
+Versions are immutable. Do not overwrite release tags or bypass verification.
+After the CLI is available, verify an installation outside the checkout:
+
+```bash
+cargo install cantongrid-cli --version 0.3.0-alpha.3 --locked
+cantongrid --version
+cantongrid init /tmp/cantongrid-installed-example
+cantongrid fixture run /tmp/cantongrid-installed-example/cantongrid.json --party A
+```
+
+The alpha API and the LocalNet/runtime limits still apply. Publishing crates does
+not establish remote deployment or production acceptance. Binary packaging has a
+separate dependency-notice review.

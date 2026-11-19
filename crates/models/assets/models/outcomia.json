@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "name": "markets",
+      "revision": 1,
+      "template": {
+        "package_id": "73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a",
+        "module": "Outcomia.Binary",
+        "entity": "BinaryMarket"
+      },
+      "fields": {
+        "marketId": {
+          "op": "field",
+          "path": [
+            "marketId"
+          ],
+          "as": {
+            "type": "int64"
+          }
+        },
+        "protocolName": {
+          "op": "field",
+          "path": [
+            "protocolName"
+          ],
+          "as": {
+            "type": "text"
+          }
+        },
+        "question": {
+          "op": "field",
+          "path": [
+            "terms",
+            "question"
+          ],
+          "as": {
+            "type": "text"
+          }
+        },
+        "status": {
+          "op": "field",
+          "path": [
+            "status"
+          ],
+          "as": {
+            "type": "text"
+          }
+        },
+        "quantityLot": {
+          "op": "field",
+          "path": [
+            "terms",
+            "quantityLot"
+          ],
+          "as": {
+            "type": "int64"
+          }
+        },
+        "priceTick": {
+          "op": "field",
+          "path": [
+            "terms",
+            "priceTick"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "priceTickBps": {
+          "op": "multiply",
+          "left": {
+            "op": "field",
+            "path": [
+              "terms",
+              "priceTick"
+            ],
+            "as": {
+              "type": "numeric",
+              "scale": 10
+            }
+          },
+          "right": {
+            "op": "literal",
+            "value": {
+              "type": "int64",
+              "value": "10000"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
