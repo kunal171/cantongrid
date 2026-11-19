@@ -1,12 +1,11 @@
 # Releases and publication
 
-Latest GitHub source prerelease: **0.3.0-alpha.4**. The current checkout is
-**0.3.0-alpha.5, unreleased**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest GitHub source prerelease: **0.3.0-alpha.5**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
-| 0.3.0-alpha.5 (unreleased) | Staged model rebuilds and security fixes | 001–006 |
+| [0.3.0-alpha.5](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.5) | Staged model rebuilds and security fixes | 001–006 |
 | [0.3.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.4) | Exact filters, native sorting, discovery and Outcomia query acceptance | 001–005 |
 | [0.3.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.2) | Runnable Daml PoC, generated GraphQL and TypeScript interfaces | 001–005 |
 | [0.3.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.1) | Model compiler, registry, installation and atomic live projections | 001–005 |
@@ -31,7 +30,7 @@ Do not downgrade a destination without a reviewed migration plan.
 4. Merge a focused PR after CI passes, preserving the small commits.
 5. Tag the verified commit and create its GitHub prerelease. Never overwrite tags.
 
-For the current unreleased version, metadata validation is:
+For this source release, metadata validation is:
 
 ```bash
 python3 scripts/dev.py release check --tag v0.3.0-alpha.5

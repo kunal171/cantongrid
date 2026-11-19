@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0-alpha.5 — unreleased
+## 0.3.0-alpha.5 — 2026-11-19
 
 ### Added
 
@@ -24,6 +24,11 @@
 - Reject PQS lease/plan party mismatches; disable local-helper proxies/redirects
   and atomically replace private generated files without following symlinks.
 - Disable persisted checkout credentials and bound the CI verification job.
+
+### Documentation
+
+- Consolidate release history, verification and roadmap pages; remove obsolete drafts.
+- Document PoC lifecycle/visibility, exact calculations, helper side effects and Rust contracts.
 
 ### Compatibility
 

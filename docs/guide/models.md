@@ -224,7 +224,7 @@ The initial atomic backfill supports at most 128 active contracts of the model's
 template and 8 MiB of input/output work. Cleanup is also capped at 128 rows.
 Each stream supports at most 16 bindings, including aliases; live pages share an
 8 MiB projection work budget. For larger datasets, use the staged workflow below
-(available in the unreleased alpha.5 source).
+(available in 0.3.0-alpha.5).
 Backfill covers the known prefix, including partial snapshots; later pages fill
 it forward. It cannot recover missing pre-snapshot history.
 

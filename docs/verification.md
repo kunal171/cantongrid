@@ -18,7 +18,7 @@ PostgreSQL 14's support status and the upgrade requirement are in [operations](g
 
 ## Latest local checks
 
-Recorded 2026-11-19 for unreleased alpha.5, through code commit
+Recorded 2026-11-19 during alpha.5 development, through code commit
 [`0cca1ee`](https://github.com/kunal171/cantongrid/tree/0cca1ee):
 
 | Check | Result |

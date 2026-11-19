@@ -1,8 +1,8 @@
 # Working on CantonGrid
 
-- Current phase: Phase 4 model integration. Latest source release is alpha.4;
-  alpha.5 staged rebuilds and security fixes are unreleased and have owned-
-  PostgreSQL/mock-source coverage. Large staged LocalNet and funded trading
+- Current phase: Phase 4 model integration. Latest source release is alpha.5,
+  including staged rebuilds and security fixes with owned-PostgreSQL/mock-source
+  coverage. Large staged LocalNet and funded trading
   acceptance remain pending. Streams are Phase 5. Use docs/README.md for scope
   and next steps, docs/verification.md for evidence; do not claim full Phase 4.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python

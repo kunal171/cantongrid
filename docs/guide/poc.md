@@ -174,6 +174,6 @@ the tested commits, query runs and separate viewer evidence.
 
 The contract demonstrates lifecycle indexing without collateral, matching or
 settlement. API identities are local fixtures and history is snapshot-forward.
-This PoC uses atomic model bindings; the unreleased alpha.5 staged rebuild path
+This PoC uses atomic model bindings; the alpha.5 staged rebuild path
 has separate owned-PostgreSQL tests and still needs large LocalNet acceptance.
 See the [current scope and next steps](../README.md#current-scope).

@@ -19,10 +19,10 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest GitHub source prerelease is **0.3.0-alpha.4**: LocalNet ingestion,
-model projections, generated TypeScript/GraphQL, filters, sorting and discovery.
-The current checkout is **0.3.0-alpha.5, unreleased**, adding staged rebuilds and
-security fixes with owned-PostgreSQL and mock-source HTTP coverage. See
+The latest GitHub source prerelease is **0.3.0-alpha.5**. It includes LocalNet
+ingestion, model projections, generated TypeScript/GraphQL, filters, sorting and
+discovery. Alpha.5 adds staged rebuilds and security fixes with owned-PostgreSQL
+and mock-source HTTP coverage. See
 [verification](verification.md) for the environments actually tested.
 
 Phase 4 model integration remains in progress. History starts at an active
