@@ -1,20 +1,10 @@
 # Working on CantonGrid
 
-- Current phase: Phase 4 declarative models is in progress,
-  with 0.3.0-alpha.2 released, core alpha.3 published and alpha.4 model queries in the source prerelease. The first compiler/evaluator/SQL planner and offline CLI
-  commands, persisted registry and guarded projection-table installation exist;
-  bounded source-bound backfill/promotion and atomic live lifecycle projections exist.
-  Generated model GraphQL, TypeScript transport interfaces and the standalone
-  LocalNet PoC now exist. See docs/guide/poc.md; bounded filtering/sorting, discovery and REST model queries
-  have owned-PostgreSQL/HTTP coverage and two alpha.4 LocalNet query runs.
-  Actual Outcomia BinaryMarket acceptance now covers 60 page sequences, private
-  scopes, optional-field promotion/rollback and 25 controlled events. Staged
-  rebuilds now have owned-PostgreSQL and mock-source CLI coverage in unreleased
-  alpha.5; large staged LocalNet and funded trading projection acceptance remain pending. See docs/guide/models.md.
-  Phase 3's 0.2.0-alpha.1 LocalNet profile remains
-  verified; preserve source/caller separation, bindings and guarded commits.
-  Streams remain Phase 5. Model declarations never authenticate callers or widen
-  input visibility. Do not claim full Phase 4 from compiler/schema tests.
+- Current phase: Phase 4 model integration. Latest source release is alpha.4;
+  alpha.5 staged rebuilds and security fixes are unreleased and have owned-
+  PostgreSQL/mock-source coverage. Large staged LocalNet and funded trading
+  acceptance remain pending. Streams are Phase 5. Use docs/README.md for scope
+  and next steps, docs/verification.md for evidence; do not claim full Phase 4.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python
   scripts are local development/verification helpers, not the product runtime.
 - Product: general-purpose, Daml-first Canton indexing infrastructure. Outcomia

@@ -27,5 +27,5 @@ cargo +1.100.0 build -p cantongrid-cli --locked
 ```
 
 See the [quickstart](docs/guide/quickstart.md) for setup and examples, and the
-[roadmap](docs/roadmap.md) for remaining work. Runtime code is Rust; Python scripts
+[next steps](docs/README.md#next) for remaining work. Runtime code is Rust; Python scripts
 are local development tools. Licensed under [Apache-2.0](LICENSE).

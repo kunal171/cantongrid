@@ -53,7 +53,7 @@
   actual Outcomia BinaryMarket query acceptance also passes. Staged backfills and
   funded trading projections remain pending.
 
-## 0.3.0-alpha.3 — unreleased
+## 0.3.0-alpha.3 — core crate publication
 
 ### Added
 
@@ -90,9 +90,9 @@
 - GitBook-ready developer guide covering setup, persistence, LocalNet, authentication,
   REST/GraphQL, model examples and operations, with synthetic preview payloads.
 
-### In progress
+### Limits at release
 
-- Phase 4 generated typed APIs, revision-bound cursors and actual LocalNet model acceptance remain incomplete.
+- Generated typed APIs, revision-bound cursors and LocalNet model acceptance were deferred to later alphas.
 - Installation does not ingest contracts, activate live processing or authenticate API callers.
 
 ### Fixed
@@ -107,7 +107,7 @@
   the destination. Migrations 001–004 are unchanged. Older binaries reject unknown
   migration sets; downgrade requires a separate reviewed plan.
 
-## 0.2.0-alpha.1 — unreleased
+## 0.2.0-alpha.1 — 2026-11-17
 
 ### Added
 
@@ -126,7 +126,7 @@
 - Actual Outcomia lifecycle and unrelated Visibility proofs passed on the explicitly authorized LocalNet; no production readiness claim.
 - Generated typed models and real-time delivery remain Phase 4/5.
 
-## 0.1.0-alpha.1 — unreleased
+## 0.1.0-alpha.1 — 2026-11-17
 
 ### Added
 

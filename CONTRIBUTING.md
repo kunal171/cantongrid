@@ -1,7 +1,7 @@
 # Contributing
 
 Read [AGENTS.md](AGENTS.md), [architecture](docs/architecture.md),
-[security](docs/security.md) and the [roadmap](docs/roadmap.md). The current work is
+[security](docs/security.md) and the [next steps](docs/README.md#next). The current work is
 Phase 4 model integration; use [existing examples](docs/guide/models.md) rather
 than adding application-specific branches.
 

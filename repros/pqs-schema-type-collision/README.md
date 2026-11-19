@@ -43,17 +43,12 @@ upstream rules treat merged versioned migrations as immutable. This is a
 confirmed SQL-level defect and tested correction candidate, not a built/tested
 patch to the current PQS executable. The full upstream Scala suite was not run.
 
-Issue/PR searches for schema, namespace, pg_type and __event_type found no exact
-match at this check. [Issue 203](https://github.com/digital-asset/participant-query-store/issues/203)
-is related to non-public schemas but reports a missing procedure rather than
-this deterministic type collision; do not assume they share a cause.
-
 Sources: [exact migration](https://github.com/digital-asset/participant-query-store/blob/3be45e0431be572e5b0426cd4b2670f1873a17e7/modules/postgres/document/resources/db/migration/V001__Create_initial_schema.sql),
 [migration rules](https://github.com/digital-asset/participant-query-store/blob/3be45e0431be572e5b0426cd4b2670f1873a17e7/.claude/rules/sql-and-migrations.md).
 Published on user request:
 
 - [Upstream issue #240](https://github.com/digital-asset/participant-query-store/issues/240).
-- [Fix PR #241](https://github.com/digital-asset/participant-query-store/pull/241), draft.
+- [Fix PR #241](https://github.com/digital-asset/participant-query-store/pull/241); check upstream for current status.
 - [CantonGrid tracking issue #1](https://github.com/kunal171/cantongrid/issues/1); no CantonGrid PR.
 
 The PR bootstraps the original type definitions in `beforeMigrate` only for the
@@ -61,5 +56,4 @@ foreign-type collision, leaving every versioned migration unchanged. PostgreSQL
 14.25 checks passed for all current versioned/repeatable SQL, matching baseline
 schema dumps and repeated callbacks on an initialized store. A functional
 regression test was added and formatted with scalafmt 3.8.3; the full Mill suite
-was not run locally because Nix/Mill are unavailable. The [original draft](issue-draft.md)
-is retained as preparation history; the published issue has the shorter final text.
+was not run locally because Nix/Mill were unavailable.
