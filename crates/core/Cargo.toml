@@ -1,4 +1,11 @@
 [package]
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+description = "Source-neutral exact values, configuration, contract lifecycle and visibility policy primitives."
+readme = "README.md"
+categories = ["database"]
 name = "cantongrid-core"
 version.workspace = true
 edition.workspace = true

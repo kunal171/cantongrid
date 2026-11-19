@@ -83,7 +83,7 @@ mod tests {
     use super::*;
     #[test]
     fn client_contracts_keep_exact_values_nullability_and_revision_identity() {
-        let text = include_str!("../../../examples/poc/models.json");
+        let text = include_str!("../assets/poc/models.json");
         let catalog = Catalog::parse(text).unwrap();
         let ts = catalog.typescript().unwrap();
         let gql = catalog.graphql_schema().unwrap();

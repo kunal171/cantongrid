@@ -1,4 +1,11 @@
 [package]
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+description = "Declarative contract projection definitions, exact typed evaluation and SQL schema planning."
+readme = "README.md"
+categories = ["database"]
 name = "cantongrid-models"
 version.workspace = true
 edition.workspace = true

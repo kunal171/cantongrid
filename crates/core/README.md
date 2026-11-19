@@ -1,36 +1,22 @@
-# CantonGrid core
+# cantongrid-core
 
-The Rust library contains source-neutral configuration, exact fixture values,
-visibility/lease decisions, lifecycle state and deterministic replay. It uses
-Serde/serde_json at the document boundary, with no network or database access.
-See [fixture contracts](../../docs/fixtures.md) and the [CLI](../../docs/cli.md).
+Source-neutral exact values, configuration, contract lifecycle and visibility policy primitives. This library performs no network or database access.
 
-For one input record, an authorized caller may match any verified witness party.
-For a result derived from several inputs, the caller must match every input's
-visibility clause. Joining policies preserves those requirements and rejects
-mixed source/generation bindings. Missing evidence is rejected; identities remain
-opaque and are redacted in Debug output.
+## Usage
 
-`CallerGrants::from_verified` assumes authentication and current grant resolution
-have already happened. The pure policy check is not an authentication provider,
-source-authorization lease, HTTP middleware or data-serving implementation.
-
-Checks, using the tested Rust/Cargo 1.100 toolchain:
-
-```bash
-cargo test --workspace --offline
-cargo clippy --workspace --all-targets --offline -- -D warnings
-cargo fmt --all -- --check
+```toml
+[dependencies]
+cantongrid-core = "=0.3.0-alpha.2"
 ```
 
-`authorization::SourceLease` adds a pure decision gate over source grants and the
-visibility policy. Leases have a positive lifetime of at most 15 seconds, expire
-earlier when the verified credential does, and can be invalidated immediately.
-They are not cloneable/deserializable. Each input requires a party present in
-both the caller's current grants and the source's current grants. Source and
-generation bindings must match, and the expiry boundary is exclusive.
+[Library modules and examples](https://github.com/kunal171/cantongrid/tree/v0.3.0-alpha.2/crates/core/src) describe the API available in this version.
 
-The 15-second value is an initial core policy limit, not a deployed revocation
-SLA. Network grant retrieval, credential verification, lease renewal, broadcast
-invalidation, live ingestion and API integration remain to be built. Verified snapshots
-and the monotonic clock must come from trusted providers, never client input.
+## Release scope
+
+This is the historical 0.3.0-alpha.2 release, packaged for crates.io. Packaging adds
+crate-local assets and metadata; the original source release remains unchanged.
+Prefer the latest release for new integrations. APIs are alpha and may change.
+
+[Versioned repository and setup](https://github.com/kunal171/cantongrid/tree/v0.3.0-alpha.2) · [Current developer guide](https://shady-3.gitbook.io/cantongrid/)
+
+Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.

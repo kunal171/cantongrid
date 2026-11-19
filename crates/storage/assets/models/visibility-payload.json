@@ -1,0 +1,8 @@
+{
+  "label": "example-record",
+  "owner": "A",
+  "amount": "12345678901234567890.1234567891",
+  "sequence": "9223372036854775807",
+  "note": null,
+  "state": "Ready"
+}

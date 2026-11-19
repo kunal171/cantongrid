@@ -1,4 +1,11 @@
 [package]
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+description = "Owned PostgreSQL lifecycle persistence and durable replay checkpoints."
+readme = "README.md"
+categories = ["database"]
 name = "cantongrid-storage"
 version.workspace = true
 edition.workspace = true
