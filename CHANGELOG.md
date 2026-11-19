@@ -9,13 +9,16 @@
 - Generated filter/sort TypeScript interfaces and GraphQL input definitions.
 - Reproducible LocalNet query controls: 54 page sequences, revision rollback,
   grant-bound cursors and fail-closed exporter recovery.
+- Actual Outcomia model acceptance: 60 page sequences, private/shared markets,
+  optional closure-reason promotion/rollback and 25 reconciled lifecycle events.
 
 ### Compatibility
 
 - Model cursors now bind normalized filters and sorting; restart older model page sequences.
 - No destination migration, automatic indexes or new runtime dependencies.
 - Owned PostgreSQL/HTTP checks and two LocalNet query runs cover these changes;
-  broader application acceptance and staged backfills remain pending.
+  actual Outcomia BinaryMarket query acceptance also passes. Staged backfills and
+  funded trading projections remain pending.
 
 ## 0.3.0-alpha.3 — unreleased
 

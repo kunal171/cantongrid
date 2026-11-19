@@ -9,9 +9,14 @@
 
 ## Next: finish Phase 4
 
-1. Extend filtering/revision/cursor/privacy acceptance to actual application models
-   beyond the standalone [LocalNet PoC](guide/poc.md).
-2. Define staged rebuilds for datasets above the atomic backfill budget before supporting them.
+1. Define resumable staged rebuilds for datasets above the atomic backfill budget,
+   including concurrent ingestion, authorization renewal and atomic activation.
+2. Extend application projections beyond the verified BinaryMarket lifecycle only
+   after obtaining funded-asset/trading acceptance authorization.
+
+The [Outcomia model check](guide/outcomia.md#localnet-demonstration) now verifies
+real application choices, exact filters, private scopes, cursors and optional-field
+promotion/rollback. This is bounded LocalNet acceptance, not complete Phase 4.
 
 Add joins and aggregates only after defining retraction and transitive visibility.
 See [models](guide/models.md) for the current vocabulary and limits.
