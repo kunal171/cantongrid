@@ -381,6 +381,9 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .route("/v1/events", get(history))
         .route("/graphql", post(graphql))
         .route("/models/graphql", post(model_api::graphql))
+        .route("/v1/models", get(model_api::list))
+        .route("/v1/models/{namespace}/{name}", get(model_api::describe))
+        .route("/v1/models/{namespace}/{name}/query", post(model_api::rows))
         .layer(axum::middleware::from_fn(no_store))
         .layer(DefaultBodyLimit::max(16384))
         .with_state(service);

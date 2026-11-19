@@ -1,0 +1,149 @@
+//! REST model discovery and queries share the GraphQL catalog, row service and final guards.
+use super::{Project, Service, auth, bearer, catalog, error, finish, query};
+use axum::{
+    body::Bytes,
+    extract::{Path, State},
+    http::{HeaderMap, StatusCode},
+    response::Response,
+};
+use cantongrid_models::{Comparison, QueryField, QueryOptions, QueryValue, Sort};
+use cantongrid_storage::BoundModel;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+
+/// Public organization catalog; definitions, literals and SQL names are deliberately absent.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(super) struct Metadata {
+    namespace: String,
+    name: String,
+    revision: String,
+    fingerprint: String,
+    query_field: String,
+    fields: Vec<QueryField>,
+}
+pub(super) fn metadata(binding: &BoundModel) -> Result<Metadata, String> {
+    Ok(Metadata {
+        namespace: binding.namespace.clone(),
+        name: binding.model.name.clone(),
+        revision: binding.model.revision.to_string(),
+        fingerprint: binding.fingerprint.clone(),
+        query_field: binding.model.api_name().map_err(|e| e.to_string())?,
+        fields: binding.model.query_fields().map_err(|e| e.to_string())?,
+    })
+}
+
+/// Fixed body contract keeps the same filters/sort vocabulary as generated GraphQL inputs.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Input {
+    #[serde(default = "default_limit")]
+    limit: usize,
+    cursor: Option<String>,
+    #[serde(default)]
+    filters: BTreeMap<String, BTreeMap<Comparison, QueryValue>>,
+    sort: Option<Sort>,
+}
+fn default_limit() -> usize {
+    20
+}
+
+pub(in crate::api) async fn list(State(service): State<Service>, headers: HeaderMap) -> Response {
+    handle(service, headers, None, None).await
+}
+pub(in crate::api) async fn describe(
+    State(service): State<Service>,
+    headers: HeaderMap,
+    Path(path): Path<(String, String)>,
+) -> Response {
+    handle(service, headers, Some(path), None).await
+}
+pub(in crate::api) async fn rows(
+    State(service): State<Service>,
+    headers: HeaderMap,
+    Path(path): Path<(String, String)>,
+    body: Bytes,
+) -> Response {
+    handle(service, headers, Some(path), Some(body)).await
+}
+
+/// Authenticate before revealing catalog existence or validating model-specific input fields.
+async fn handle(
+    service: Service,
+    headers: HeaderMap,
+    path: Option<(String, String)>,
+    body: Option<Bytes>,
+) -> Response {
+    let Ok(_permit) = service.permits.clone().try_acquire_owned() else {
+        return error(StatusCode::TOO_MANY_REQUESTS);
+    };
+    let Ok(token) = bearer(&headers) else {
+        return error(StatusCode::UNAUTHORIZED);
+    };
+    let Ok(project) = Project::load(&service.path) else {
+        return error(StatusCode::SERVICE_UNAVAILABLE);
+    };
+    let Ok(identity) = auth::authenticate(&project, &token) else {
+        return error(StatusCode::UNAUTHORIZED);
+    };
+    let Ok(bindings) = catalog(&service, &token).await else {
+        return error(StatusCode::SERVICE_UNAVAILABLE);
+    };
+    let value = if let Some((namespace, name)) = path {
+        let Some(binding) = bindings
+            .iter()
+            .find(|b| b.namespace == namespace && b.model.name == name)
+        else {
+            return error(StatusCode::NOT_FOUND);
+        };
+        if let Some(body) = body {
+            // Strict decoding rejects duplicate keys and floats before serde can lose that evidence.
+            let input = std::str::from_utf8(&body)
+                .ok()
+                .and_then(|s| cantongrid_core::document::parse::<Input>(s).ok());
+            let Some(input) = input else {
+                return error(StatusCode::BAD_REQUEST);
+            };
+            let options = QueryOptions {
+                filters: input.filters,
+                sort: input.sort,
+            };
+            if !(1..=25).contains(&input.limit) || binding.model.validate_query(&options).is_err() {
+                return error(StatusCode::BAD_REQUEST);
+            }
+            // Invalid or expired cursors fail closed; no fallback to an unfiltered first page.
+            match query(
+                &service,
+                &token,
+                binding.clone(),
+                input.limit,
+                input.cursor,
+                options,
+            )
+            .await
+            {
+                Ok(page) => page,
+                Err(super::QueryError::Input) => return error(StatusCode::BAD_REQUEST),
+                Err(super::QueryError::Unavailable) => {
+                    return error(StatusCode::SERVICE_UNAVAILABLE);
+                }
+            }
+        } else {
+            let Ok(metadata) = metadata(binding)
+                .and_then(|m| serde_json::to_value(m).map_err(|_| "metadata unavailable".into()))
+            else {
+                return error(StatusCode::SERVICE_UNAVAILABLE);
+            };
+            metadata
+        }
+    } else {
+        let metadata = bindings.iter().map(metadata).collect::<Result<Vec<_>, _>>();
+        let Ok(value) = metadata
+            .and_then(|m| serde_json::to_value(m).map_err(|_| "metadata unavailable".into()))
+        else {
+            return error(StatusCode::SERVICE_UNAVAILABLE);
+        };
+        serde_json::json!({"models":value})
+    };
+    finish(&service, &token, &identity.binding, &bindings, &value).await
+}
