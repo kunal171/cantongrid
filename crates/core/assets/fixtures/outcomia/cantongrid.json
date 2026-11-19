@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "model_version": 1,
+  "payload_schema_version": 1,
+  "source": {
+    "adapter": "fixture",
+    "id": "outcomia-fixture",
+    "network": "synthetic-fixture",
+    "generation": 1,
+    "parties": [
+      "A",
+      "B"
+    ],
+    "fixture": "events.json"
+  },
+  "selection": {
+    "templates": [
+      {
+        "package_id": "73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a",
+        "module": "Outcomia.Binary",
+        "entity": "Protocol"
+      }
+    ],
+    "events": [
+      "create",
+      "archive"
+    ],
+    "require_complete_history": true
+  }
+}

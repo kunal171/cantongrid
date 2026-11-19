@@ -1,0 +1,153 @@
+{
+  "format_version": 1,
+  "model_version": 1,
+  "payload_schema_version": 1,
+  "source": {
+    "id": "outcomia-fixture",
+    "network": "synthetic-fixture",
+    "generation": 1
+  },
+  "coverage": "complete_from_origin",
+  "batches": [
+    {
+      "position": "revision-0",
+      "events": [
+        {
+          "id": "create-protocol-0",
+          "contract": "protocol-0",
+          "template": {
+            "package_id": "73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a",
+            "module": "Outcomia.Binary",
+            "entity": "Protocol"
+          },
+          "witnesses": [
+            "A",
+            "B"
+          ],
+          "observed_at_micros": 1700000000000000,
+          "ledger_at_micros": 1700000000000000,
+          "action": {
+            "kind": "create",
+            "payload": {
+              "type": "record",
+              "value": {
+                "operator": {
+                  "type": "party",
+                  "value": "A"
+                },
+                "protocolName": {
+                  "type": "text",
+                  "value": "Outcomia"
+                },
+                "admins": {
+                  "type": "list",
+                  "value": [
+                    {
+                      "type": "party",
+                      "value": "A"
+                    },
+                    {
+                      "type": "party",
+                      "value": "B"
+                    }
+                  ]
+                },
+                "nextMarketId": {
+                  "type": "int64",
+                  "value": "1"
+                },
+                "takerFeeBps": {
+                  "type": "int64",
+                  "value": "10"
+                },
+                "feeRevision": {
+                  "type": "int64",
+                  "value": "0"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "position": "revision-1",
+      "events": [
+        {
+          "id": "archive-protocol-0",
+          "contract": "protocol-0",
+          "template": {
+            "package_id": "73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a",
+            "module": "Outcomia.Binary",
+            "entity": "Protocol"
+          },
+          "witnesses": [
+            "A",
+            "B"
+          ],
+          "observed_at_micros": 1700000000000000,
+          "ledger_at_micros": 1700000000000000,
+          "action": {
+            "kind": "archive"
+          }
+        },
+        {
+          "id": "create-protocol-1",
+          "contract": "protocol-1",
+          "template": {
+            "package_id": "73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a",
+            "module": "Outcomia.Binary",
+            "entity": "Protocol"
+          },
+          "witnesses": [
+            "A",
+            "B"
+          ],
+          "observed_at_micros": 1700000000000000,
+          "ledger_at_micros": 1700000000000000,
+          "action": {
+            "kind": "create",
+            "payload": {
+              "type": "record",
+              "value": {
+                "operator": {
+                  "type": "party",
+                  "value": "A"
+                },
+                "protocolName": {
+                  "type": "text",
+                  "value": "Outcomia"
+                },
+                "admins": {
+                  "type": "list",
+                  "value": [
+                    {
+                      "type": "party",
+                      "value": "A"
+                    },
+                    {
+                      "type": "party",
+                      "value": "B"
+                    }
+                  ]
+                },
+                "nextMarketId": {
+                  "type": "int64",
+                  "value": "1"
+                },
+                "takerFeeBps": {
+                  "type": "int64",
+                  "value": "20"
+                },
+                "feeRevision": {
+                  "type": "int64",
+                  "value": "1"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
