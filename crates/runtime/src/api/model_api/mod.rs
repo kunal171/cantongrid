@@ -187,16 +187,8 @@ async fn finish<T: serde::Serialize>(
     let Ok(source) = current_source(&latest).await else {
         return error(StatusCode::SERVICE_UNAVAILABLE);
     };
-    if !source_valid(&source, &latest)
-        || !auth::authenticate(&latest, token).is_ok_and(|id| id.binding == identity_binding)
-    {
-        return error(StatusCode::UNAUTHORIZED);
-    }
-    let response = super::resources::json(value);
-    if !source_valid(&source, &latest)
-        || !auth::authenticate(&latest, token).is_ok_and(|id| id.binding == identity_binding)
-    {
-        return error(StatusCode::UNAUTHORIZED);
-    }
-    response
+    super::resources::guarded_json(value, || {
+        source_valid(&source, &latest)
+            && auth::authenticate(&latest, token).is_ok_and(|id| id.binding == identity_binding)
+    })
 }

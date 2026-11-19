@@ -75,12 +75,28 @@ impl io::Write for Output {
 }
 
 /// Apply the same whole-response limit to REST and both GraphQL endpoints, including errors.
-pub(super) fn json(value: &impl serde::Serialize) -> Response {
+fn json(value: &impl serde::Serialize) -> Response {
     let mut output = Output(Vec::new());
     if serde_json::to_writer(&mut output, value).is_err() {
         return error(StatusCode::SERVICE_UNAVAILABLE);
     }
     ([(CONTENT_TYPE, "application/json")], output.0).into_response()
+}
+
+/// Encoding consumes time too. Discard the entire body if grants or a source lease change.
+/// Both checks are synchronous: no response body escapes before the final authorization check.
+pub(super) fn guarded_json(
+    value: &impl serde::Serialize,
+    authorized: impl Fn() -> bool,
+) -> Response {
+    if !authorized() {
+        return error(StatusCode::UNAUTHORIZED);
+    }
+    let response = json(value);
+    if !authorized() {
+        return error(StatusCode::UNAUTHORIZED);
+    }
+    response
 }
 
 #[cfg(test)]

@@ -91,3 +91,52 @@ fn slow_request_bodies_are_admitted_before_extraction_and_expire() {
         server.abort();
     });
 }
+
+/// Revocation during serialization must replace the complete encoded body with a denial.
+#[test]
+fn delivery_checks_authorization_before_and_after_json_encoding() {
+    use std::cell::Cell;
+    struct Revoking<'a> {
+        authorized: &'a Cell<bool>,
+        encodings: &'a Cell<usize>,
+    }
+    impl serde::Serialize for Revoking<'_> {
+        fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            self.encodings.set(self.encodings.get() + 1);
+            self.authorized.set(false);
+            serializer.serialize_str("private response")
+        }
+    }
+    let authorized = Cell::new(true);
+    let encodings = Cell::new(0);
+    let value = Revoking {
+        authorized: &authorized,
+        encodings: &encodings,
+    };
+    let denied = guarded_json(&value, || authorized.get());
+    assert_eq!(denied.status(), StatusCode::UNAUTHORIZED);
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .unwrap();
+    let body = runtime
+        .block_on(axum::body::to_bytes(denied.into_body(), 1024))
+        .unwrap();
+    assert_eq!(
+        serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+        serde_json::json!({"error":"request unavailable"})
+    );
+    assert_eq!(
+        encodings.get(),
+        1,
+        "denial must occur after actual encoding"
+    );
+    assert_eq!(
+        guarded_json(&value, || authorized.get()).status(),
+        StatusCode::UNAUTHORIZED
+    );
+    assert_eq!(
+        encodings.get(),
+        1,
+        "already-revoked requests must not encode private data"
+    );
+}

@@ -43,10 +43,34 @@ struct Page {
     provenance: async_graphql::Json<serde_json::Value>,
 }
 
+/// Keep the final verified source lease alive through REST encoding. GraphQL resolvers extract
+/// only the page and use a fresh operation-wide guard after all roots have completed.
+struct AuthorizedPage {
+    page: Page,
+    project: Project,
+    source: SourceAuthorization,
+    binding: String,
+}
+impl AuthorizedPage {
+    /// Recheck both authorities after the bounded body has been fully encoded.
+    fn response(&self, token: &str) -> Response {
+        resources::guarded_json(&self.page, || {
+            source_valid(&self.source, &self.project)
+                && auth::authenticate(&self.project, token)
+                    .is_ok_and(|id| id.binding == self.binding)
+        })
+    }
+}
+
 impl Service {
     /// Revalidate caller and source before the blocking read, then revalidate caller again
     /// afterward. Source lease checks occur inside Store before/after SQL as well.
-    async fn query(&self, token: &str, kind: PageKind, filter: Filter) -> Result<Page, String> {
+    async fn query(
+        &self,
+        token: &str,
+        kind: PageKind,
+        filter: Filter,
+    ) -> Result<AuthorizedPage, String> {
         let project = Project::load(&self.path)?;
         let identity = auth::authenticate(&project, token)?;
         let limit = filter.limit.unwrap_or(20);
@@ -92,7 +116,7 @@ impl Service {
             .await
             .map_err(|_| "query worker failed")??;
         let project = Project::load(&path)?;
-        let _source = current_source(&project).await?;
+        let source_authorization = current_source(&project).await?;
         let current = auth::authenticate(&project, token)?;
         if current.binding != binding {
             return Err("authorization changed".into());
@@ -136,12 +160,17 @@ impl Service {
                 "payloadEncoding":"raw_json","archiveEvidence":"prior_create_dependency"
             })),
         };
-        if !source_valid(&_source, &project)
+        if !source_valid(&source_authorization, &project)
             || auth::authenticate(&project, token)?.binding != binding
         {
             return Err("authorization expired or changed before delivery".into());
         }
-        Ok(result)
+        Ok(AuthorizedPage {
+            page: result,
+            project,
+            source: source_authorization,
+            binding,
+        })
     }
 }
 
@@ -182,6 +211,7 @@ impl QueryRoot {
                 },
             )
             .await
+            .map(|result| result.page)
             .map_err(|reason| {
                 eprintln!("CantonGrid query: {reason}");
                 async_graphql::Error::new("authorized query unavailable")
@@ -206,6 +236,7 @@ impl QueryRoot {
                 },
             )
             .await
+            .map(|result| result.page)
             .map_err(|reason| {
                 eprintln!("CantonGrid query: {reason}");
                 async_graphql::Error::new("authorized query unavailable")
@@ -276,7 +307,7 @@ async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKi
         return error(StatusCode::UNAUTHORIZED);
     }
     match service.query(&token, kind, filter).await {
-        Ok(page) => resources::json(&page),
+        Ok(page) => page.response(&token),
         Err(reason) => {
             eprintln!("CantonGrid query: {reason}");
             error(
@@ -338,18 +369,11 @@ async fn graphql(
     let Ok(_source) = current_source(&latest_project).await else {
         return error(StatusCode::SERVICE_UNAVAILABLE);
     };
-    let current = auth::authenticate(&latest_project, &token);
-    if !current.is_ok_and(|id| id.binding == identity.binding) {
-        return error(StatusCode::UNAUTHORIZED);
-    }
-    let response = resources::json(&response);
-    if !source_valid(&_source, &latest_project)
-        || !auth::authenticate(&latest_project, &token)
-            .is_ok_and(|id| id.binding == identity.binding)
-    {
-        return error(StatusCode::UNAUTHORIZED);
-    }
-    response
+    resources::guarded_json(&response, || {
+        source_valid(&_source, &latest_project)
+            && auth::authenticate(&latest_project, &token)
+                .is_ok_and(|id| id.binding == identity.binding)
+    })
 }
 
 /// Bind only configured loopback addresses, cap request bodies and bound concurrent DB work.
