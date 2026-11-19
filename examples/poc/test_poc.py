@@ -75,5 +75,14 @@ class QuerySafetyTests(unittest.TestCase):
             self.assertEqual(calls[-1][5:], (1, '--replace', 2))
 
 
+class RebuildOptInTests(unittest.TestCase):
+    def test_rebuild_requires_explicit_ledger_write_opt_in(self):
+        import demo
+        with patch('sys.argv', ['demo.py', 'rebuild']), patch('sys.stderr'):
+            with self.assertRaises(SystemExit) as stopped:
+                demo.main()
+        self.assertEqual(stopped.exception.code, 2)
+
+
 if __name__ == '__main__':
     unittest.main()
