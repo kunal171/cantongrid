@@ -1,9 +1,11 @@
 //! Read projected current state through canonical contract visibility, before counts and paging.
 use super::installed;
+use super::query_plan::QueryPlan;
 use crate::{Store, StoreError, journal::stream_key};
 use cantongrid_core::{authorization::SourceLease, config::Plan, visibility::CallerGrants};
-use cantongrid_models::Model;
+use cantongrid_models::{Model, QueryOptions};
 use cantongrid_postgres::postgres::IsolationLevel;
+use cantongrid_postgres::postgres::types::ToSql;
 use serde::Serialize;
 use std::time::Instant;
 
@@ -84,6 +86,30 @@ impl Store {
         after: Option<&str>,
         limit: usize,
     ) -> Result<ModelPage, StoreError> {
+        self.read_model_query(
+            plan,
+            caller,
+            lease,
+            binding,
+            &QueryOptions::default(),
+            after,
+            limit,
+        )
+    }
+
+    /// Apply bounded typed predicates and native sorting after canonical visibility. Counts share
+    /// the same filtered snapshot; pagination keys are bound to normalized query semantics.
+    #[allow(clippy::too_many_arguments)]
+    pub fn read_model_query(
+        &mut self,
+        plan: &Plan,
+        caller: &CallerGrants,
+        lease: &SourceLease,
+        binding: &BoundModel,
+        options: &QueryOptions,
+        after: Option<&str>,
+        limit: usize,
+    ) -> Result<ModelPage, StoreError> {
         let scope = plan.context().binding();
         let parties: Vec<_> = lease
             .read_parties(&scope, caller, Instant::now())
@@ -120,6 +146,11 @@ impl Store {
         if model.sql.fingerprint != binding.fingerprint || !plan.selects(&model.model.template) {
             return Err(StoreError::ModelBinding);
         }
+        let validated = model
+            .model
+            .validate_query(options)
+            .map_err(|_| StoreError::ModelQuery)?;
+        let compiled = QueryPlan::new(&model.model, validated, after)?;
         let fields = model
             .model
             .sql_columns()
@@ -147,26 +178,48 @@ impl Store {
             "FROM {} m JOIN cantongrid.contracts c ON c.stream_key=m.\"_cg_stream_key\" AND c.contract_id=m.\"_cg_contract_id\" WHERE c.stream_key=$1 AND c.active AND c.witnesses && $2::text[] AND c.template=$3",
             model.relation()
         );
+        // Count excludes keyset predicates but includes every caller-visible filter.
+        let mut parameters: Vec<&(dyn ToSql + Sync)> = vec![&key, &parties, &template];
+        let filter_count: usize = options
+            .filters
+            .values()
+            .map(|ops| {
+                ops.keys()
+                    .filter(|op| **op != cantongrid_models::Comparison::IsNull)
+                    .count()
+            })
+            .sum();
+        parameters.extend(
+            compiled.parameters[..filter_count]
+                .iter()
+                .map(|s| s as &(dyn ToSql + Sync)),
+        );
         let total: i64 = tx
             .query_one(
-                &format!("SELECT count(*) {from}"),
-                &[&key, &parties, &template],
+                &format!("SELECT count(*) {from}{}", compiled.filters),
+                &parameters,
             )?
             .get(0);
-        let rows = tx.query(&format!("SELECT c.contract_id,jsonb_build_object('contractId',c.contract_id,'values',jsonb_build_object({fields})) {from} AND ($4::text IS NULL OR c.contract_id>$4) ORDER BY c.contract_id LIMIT $5"), &[&key,&parties,&template,&after,&(limit as i64+1)])?;
+        parameters.truncate(3);
+        parameters.extend(compiled.parameters.iter().map(|s| s as &(dyn ToSql + Sync)));
+        let fetch = limit as i64 + 1;
+        parameters.push(&fetch);
+        let rows = tx.query(&format!("SELECT jsonb_build_object('contractId',c.contract_id,'values',jsonb_build_object({fields})) {from}{}{} ORDER BY {} LIMIT ${}", compiled.filters, compiled.page, compiled.order, parameters.len()), &parameters)?;
         let more = rows.len() > limit;
         let mut items = Vec::new();
         let mut last = None;
         let mut bytes = 0;
         for row in rows.into_iter().take(limit) {
-            let value: serde_json::Value = row.get(1);
+            let value: serde_json::Value = row.get(0);
             bytes += serde_json::to_vec(&value)
                 .map_err(|_| StoreError::ModelCorrupt)?
                 .len();
             if bytes > 2 * 1024 * 1024 {
                 return Err(StoreError::Limit);
             }
-            last = Some(row.get::<_, String>(0));
+            if more {
+                last = Some(compiled.key(&value)?);
+            }
             items.push(value);
         }
         tx.commit()?;

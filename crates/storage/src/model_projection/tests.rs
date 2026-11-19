@@ -465,3 +465,127 @@ fn model_pages_authorize_before_counts_and_reject_stale_revisions() {
         Err(StoreError::ModelBinding)
     ));
 }
+
+/// Native numeric ordering, null placement and tie breakers must survive every page boundary.
+#[test]
+#[ignore = "requires separately owned disposable PostgreSQL destination"]
+fn model_filters_sort_and_query_bound_keysets() {
+    use cantongrid_core::visibility::CallerGrants;
+    use cantongrid_models::QueryOptions;
+    let s = Scenario::visibility();
+    let mut store = s.open();
+    let source = s.lease();
+    let mut batch = s.create("snapshot", "a", PAYLOAD);
+    batch.events.clear();
+    for (contract, amount, note) in [
+        ("a", "10.0", Some("same")),
+        ("b", "2.0", None),
+        ("c", "10.0", Some("same")),
+        ("d", "10000000000000000000.0", None),
+    ] {
+        let mut payload: serde_json::Value = serde_json::from_str(PAYLOAD).unwrap();
+        payload["amount"] = amount.into();
+        payload["note"] = serde_json::json!(note);
+        batch.events.push(
+            s.create("unused", contract, &payload.to_string())
+                .events
+                .remove(0),
+        );
+    }
+    store
+        .apply_authorized(&s.plans[0], &batch, &source)
+        .unwrap();
+    s.bind(1, None).unwrap();
+    let caller =
+        CallerGrants::from_verified(s.plans[0].context().binding(), [PartyId::new("A").unwrap()]);
+    let binding = store
+        .bound_models(&s.plans[0], &caller, &source)
+        .unwrap()
+        .remove(0);
+    let options = |value| serde_json::from_value::<QueryOptions>(value).unwrap();
+    let query = options(
+        serde_json::json!({"filters":{"amount":{"gte":"2.00","lt":"10000000000000000000.0"}},"sort":{"field":"amount"}}),
+    );
+    let first = store
+        .read_model_query(&s.plans[0], &caller, &source, &binding, &query, None, 1)
+        .unwrap();
+    assert_eq!(first.visible_total, "3");
+    assert_eq!(first.items[0]["contractId"], "b");
+    let second = store
+        .read_model_query(
+            &s.plans[0],
+            &caller,
+            &source,
+            &binding,
+            &query,
+            first.next_after.as_deref(),
+            1,
+        )
+        .unwrap();
+    assert_eq!(second.items[0]["contractId"], "a");
+    let third = store
+        .read_model_query(
+            &s.plans[0],
+            &caller,
+            &source,
+            &binding,
+            &query,
+            second.next_after.as_deref(),
+            1,
+        )
+        .unwrap();
+    assert_eq!(third.items[0]["contractId"], "c");
+    assert!(third.next_after.is_none());
+    let changed = options(serde_json::json!({"sort":{"field":"amount","direction":"desc"}}));
+    assert!(matches!(
+        store.read_model_query(
+            &s.plans[0],
+            &caller,
+            &source,
+            &binding,
+            &changed,
+            first.next_after.as_deref(),
+            1
+        ),
+        Err(StoreError::ModelQuery)
+    ));
+    let page = store
+        .read_model_query(&s.plans[0], &caller, &source, &binding, &changed, None, 4)
+        .unwrap();
+    assert_eq!(
+        page.items
+            .iter()
+            .map(|r| r["contractId"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["d", "a", "c", "b"]
+    );
+    for direction in ["asc", "desc"] {
+        let query = options(serde_json::json!({"sort":{"field":"note","direction":direction}}));
+        let mut after = None;
+        let mut ids = vec![];
+        loop {
+            let page = store
+                .read_model_query(
+                    &s.plans[0],
+                    &caller,
+                    &source,
+                    &binding,
+                    &query,
+                    after.as_deref(),
+                    1,
+                )
+                .unwrap();
+            ids.push(page.items[0]["contractId"].as_str().unwrap().to_owned());
+            after = page.next_after;
+            if after.is_none() {
+                break;
+            }
+        }
+        assert_eq!(ids, ["a", "c", "b", "d"]);
+    }
+    let nulls = options(serde_json::json!({"filters":{"note":{"isNull":true}}}));
+    let page = store
+        .read_model_query(&s.plans[0], &caller, &source, &binding, &nulls, None, 4)
+        .unwrap();
+    assert_eq!(page.visible_total, "2");
+}

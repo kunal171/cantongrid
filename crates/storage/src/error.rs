@@ -21,6 +21,7 @@ pub enum StoreError {
     ModelMissing,
     ModelSchema,
     ModelBinding,
+    ModelQuery,
     ModelProjection,
 }
 impl fmt::Display for StoreError {
@@ -41,6 +42,7 @@ impl fmt::Display for StoreError {
                 Self::ModelConflict => "model revision already has another definition; register a new revision",
                 Self::ModelCorrupt => "stored model revision is invalid or its fingerprint differs; review registry integrity",
                 Self::ModelMissing => "model revision is not registered in this namespace",
+                Self::ModelQuery => "invalid model query or cursor",
                 Self::ModelBinding => "model binding requires an indexed physical source, a selected template and the expected previous revision",
                 Self::ModelProjection => "model projection failed; canonical data, projections and checkpoint were not advanced",
                 Self::ModelSchema => "model schema or installation metadata differs from the compiled plan; review without automatic repair",

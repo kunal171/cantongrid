@@ -156,6 +156,9 @@ impl Model {
                         return Err(ModelError::Query);
                     }
                 } else {
+                    if matches!(value, QueryValue::Text(s) if s.len() > 1024) {
+                        return Err(ModelError::Query);
+                    }
                     *value = normalize(kind.query_scalar().0, value)?;
                 }
             }
@@ -223,9 +226,6 @@ impl Model {
 
 /// Reuse the projection decoder's exact type/scale checks rather than accepting SQL's rounding.
 fn normalize(kind: &FieldType, value: &QueryValue) -> Result<QueryValue, ModelError> {
-    if matches!(value,QueryValue::Text(s) if s.len()>1024) {
-        return Err(ModelError::Query);
-    }
     let json = serde_json::to_value(value).map_err(|_| ModelError::Query)?;
     match crate::evaluate::convert(kind, Some(&json)).map_err(|_| ModelError::Query)? {
         Value::Text(s) | Value::Party(s) | Value::Int64(s) => Ok(QueryValue::Text(s)),
