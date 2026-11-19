@@ -17,6 +17,7 @@ See [storage behavior](../architecture.md#destination-and-recovery).
 | Runtime JSON fails fixture validation | Use `index`/`serve`; configuration schemas differ |
 | Indexing pauses | Check token expiry, exact rights, PQS readiness and destination connectivity |
 | API denies a bearer | Check issuer/audience/lifetime, source health, principal status and party subset |
+| Canonical count is slow | Exact totals still scan visibility evidence and are subject to the five-second SQL timeout; payload encoding is limited to the requested page. |
 | Old cursor fails | Restart pagination after expiry or grant changes |
 | Unexpected empty result | Check exact template/package, caller scope and coverage; do not broaden access |
 | Binding/checkpoint conflict | Review source identity/scope/generation; do not force another source's offsets |

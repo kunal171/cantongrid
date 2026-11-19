@@ -239,3 +239,18 @@ RustSec, dependency license/bans/source policy, full-history and eligible-tree
 secret scans, actionlint, formatting, Clippy, release metadata and container
 retention checks passed. See [findings and remaining boundaries](security.md#repository-security-review--2026-11-19).
 Existing source-dependent PQS and LocalNet application scenarios were not rerun.
+
+
+### Follow-up review
+
+The second pass fixed canonical REST authorization after encoding and prevented
+canonical active/history counts from building all visible payloads before LIMIT.
+A PostgreSQL evaluation counter failed on the old query and passed with both
+rewritten queries. A serializer that revokes access during encoding returns only
+the denial body. Failed-ingestion controls preserve a ready rebuild's dirty queue,
+canonical/model rows and checkpoint through later activation.
+
+All 64 credential-free Rust tests, 57 owned-PostgreSQL/HTTP checks and 27 Python
+tests passed. Formatting, Clippy and security scans passed. The PostgreSQL 14
+support-status follow-up is recorded in [security](security.md); source-dependent
+PQS and large staged LocalNet acceptance were not rerun.

@@ -15,6 +15,10 @@
 
 - Reject nonowner schema, relation, sequence and column grants in the private
   destination; verify projection column ACLs as well as table grants.
+- Keep source/caller guards through canonical REST encoding; share the final
+  before/after encoding guard across private transports.
+- Build canonical response JSON only after authorized pagination, rather than
+  spooling full payloads for visible-total counts.
 - Admit HTTP requests before body extraction, enforce a 30-second deadline,
   retain database slots across cancellation and cap complete JSON responses at 2 MiB.
 - Reject PQS lease/plan party mismatches; disable local-helper proxies/redirects

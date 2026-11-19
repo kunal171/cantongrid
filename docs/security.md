@@ -83,6 +83,8 @@ or a production security certification. Fixes are in unreleased alpha.5.
 | Incomplete destination ACL checks | Public schema/table/sequence and column grants could escape the intended private-database boundary. Reopen/initialization now reject nonowner privileges on destination objects; projection checks also inspect column ACLs. |
 | Admission after body extraction | Incomplete bodies could bypass the handler semaphore. Middleware now admits at most 16 requests before extraction and imposes a 30-second deadline. |
 | Cancellation released capacity early | SQL work could outlive its HTTP permit. A separate permit now stays inside each blocking database task until it ends. |
+| Canonical REST encoding guard | The final lease was discarded before REST encoding. Canonical REST now retains it, and every private transport checks source/caller authorization before and after encoding through one shared guard. |
+| Canonical query payload spooling | Counts previously materialized JSON for every visible row before pagination. Queries now count/select authorized identities and encode only the bounded page. Exact counts still require a visibility scan. |
 | Generic GraphQL aggregate size | Multiple individually valid pages could exceed the advertised 2 MiB limit. All transports now share a bounded serialization writer for the whole response. |
 | Broader PQS lease accepted | Library callers could supply a lease wider than the plan's configured parties. The reader now rejects any party-set mismatch before connecting. The runtime checker already required exact grants. |
 | Local helper transport/file behavior | Default redirects/proxies could forward fixture bearers; in-place writes could follow links or leave partial grant files. Helpers now use numeric loopback without redirects/proxies and atomic 0600 file replacement, rejecting symlink destinations. |
@@ -110,3 +112,14 @@ load testing, exhaustive fuzzing, or independent audit. Large staged LocalNet
 acceptance remains pending. Remote revocation has the lease boundary described
 above. The trusted database owner and local operator can alter stored data,
 configuration and ACLs; private files must stay in operator-controlled directories.
+
+The follow-up pass also tested a creation/archive followed by a bad event while a
+rebuild was ready: canonical/model state, checkpoint and dirty IDs all rolled
+back, and activation retained the original contract. A PostgreSQL evaluation
+counter reproduced the old all-row encoding and verifies page-only encoding now.
+
+The pinned PostgreSQL 14.25 compatibility fixture is now an infrastructure
+follow-up: PostgreSQL 14 [reached end of support on November 12, 2026](https://www.postgresql.org/support/versioning/).
+Validate PQS and destination behavior on a supported major version using separate
+restored databases before migrating existing volumes. The current LocalNet pin
+is compatibility evidence, not a supported production database recommendation.
