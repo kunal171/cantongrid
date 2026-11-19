@@ -10,6 +10,7 @@ from urllib.error import HTTPError
 
 import support as s
 import lifecycle
+import queries
 
 
 def current(stage):
@@ -51,6 +52,7 @@ def verify():
     grants = json.loads(grants_path.read_text())
     try:
         denied = json.loads(json.dumps(grants)); denied['principals']['b']['enabled'] = False
+        denied['epoch'] = grants['epoch'] + 1
         s.write_private(grants_path, denied)
         try:
             s.query('b')
@@ -60,7 +62,7 @@ def verify():
         else:
             raise ValueError('Disabled API principal retained access')
     finally:
-        s.write_private(grants_path, grants)
+        s.write_private(grants_path, {**grants, 'epoch': grants['epoch'] + 2})
     if not expected.issubset({r['contractId'] for r in s.pages()}):
         raise ValueError('Restored grants did not restore the expected authorized view')
     return len(data['expectedEvents'])
@@ -88,6 +90,7 @@ def run():
     s.cli('models', 'register', s.DIRECTORY / 'models.json', '--namespace', data['namespace'], '--database-env', 'CANTONGRID_DESTINATION_URL')
     s.cli('models', 'install', data['namespace'], 'markets', 1, '--database-env', 'CANTONGRID_DESTINATION_URL')
     s.cli('models', 'bind', s.DIRECTORY / 'runtime.json', data['namespace'], 'markets', 1)
+    queries.seed()
     print('Model installed and bound; starting Rust worker and APIs')
     with s.process('serve'):
         with s.process('index'):
@@ -100,6 +103,7 @@ def run():
         with s.process('index'):
             s.wait(lambda: current('Resolved'), 'Restart missed Resolve')
             event_count = verify()
+            query_report = queries.verify(revisions=True, outage=True)
         after = s.metrics()
         if int(after['events']) <= int(before['events']):
             raise ValueError('Offline transaction did not advance durable history')
@@ -116,9 +120,10 @@ def run():
         'typedGraphql': True, 'exactValues': True, 'partyPrivacy': True, 'cursorIsolation': True,
         'callerRevocation': True, 'offlineCatchup': True, 'restartWithoutDuplicates': True,
         'history': 'snapshot_forward_partial', 'environment': 'disposable LocalNet',
-        'fundedAssetsOrTrades': False})
+        'fundedAssetsOrTrades': False, 'modelQueries': query_report})
     print('PASS: real Daml lifecycle -> PQS -> Rust indexer -> exact PostgreSQL projections -> typed GraphQL')
     print('PASS: party privacy, cursor isolation, revocation, offline catch-up and restart without duplicates')
+    print('PASS: 54 filtered page sequences, REST/GraphQL parity, revision rollback and exporter recovery')
     print('Evidence: .local/poc/report.json; generated client contracts: .local/poc/generated/')
 
 
@@ -138,7 +143,9 @@ def main():
         else: parser.error('transact requires --choice')
         print('Submitted local test choice; the running Rust worker will index its events')
     elif args.command == 'verify':
-        verify(); print('PASS: current API state/history and privacy controls')
+        verify()
+        if s.state().get('queryContracts'): queries.verify()
+        print('PASS: current API state/history, model queries and privacy controls')
     else:
         from dashboard import serve
         with s.process('index'), s.process('serve'):

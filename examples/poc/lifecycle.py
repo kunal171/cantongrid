@@ -31,7 +31,10 @@ def configure():
         'api': {'bind': '127.0.0.1:18890', 'issuer': 'cantongrid-local-check', 'audience': 'cantongrid-api-check',
                 'token_key_env': 'CANTONGRID_POC_API_KEY', 'cursor_key_env': 'CANTONGRID_POC_CURSOR_KEY', 'grants_file': 'grants.json'}}
     write_private(DIRECTORY / 'runtime.json', config)
-    write_private(DIRECTORY / 'grants.json', {'version': 1, 'epoch': 1, 'principals': {
+    grants_path = DIRECTORY / 'grants.json'
+    # Reconfiguration must not revive cursors issued before an earlier acceptance run.
+    epoch = json.loads(grants_path.read_text())['epoch'] + 1 if grants_path.exists() else 1
+    write_private(grants_path, {'version': 1, 'epoch': epoch, 'principals': {
         name: {'enabled': True, 'parties': selected if name == 'ab' else [parties[name]]} for name in ('a', 'b', 'ab')}})
     models = json.loads((ROOT / 'examples/poc/models.json').read_text())
     models['models'][0]['template']['package_id'] = package
