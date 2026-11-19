@@ -46,7 +46,8 @@ are outside its scope.
    including security and package verification. Source-dependent checks need matching infrastructure.
 3. Review dependency notices, configuration/schema changes and migration checksums.
 4. Merge a focused PR after CI passes, preserving the small commits.
-5. Tag the verified commit and create its GitHub prerelease. Never overwrite tags.
+5. Tag the verified commit and publish its GitHub release. Mark alpha/beta builds
+   as prereleases; regular releases use the reviewed release scope. Never overwrite tags.
 
 For this source release, metadata validation is:
 

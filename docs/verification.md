@@ -26,10 +26,14 @@ profile above. Implementation and runner commit:
   983 application-table row counts/hashes. Original PostgreSQL 14 volumes remain
   intact; no in-place major upgrade was attempted.
 - 57 owned-PostgreSQL/mock-source checks passed on 17.12, alongside 64
-  credential-free Rust checks, formatting, Clippy and the security suite.
+  credential-free Rust checks, 29 Python/helper controls, formatting, Clippy and
+  the security suite. Generated TypeScript compiled with strict checking.
 - The full standalone PoC passed again: 35 accumulated controlled event identities,
   54 filtered page sequences, exact values, caller isolation/revocation, offline
   catch-up, revision rollback and exporter recovery.
+- Outcomia passed 25 controlled lifecycle identities and 60 filtered page sequences
+  on PostgreSQL 17.12, including private/shared scopes, caller revocation and
+  optional-field promotion/rollback. No funded assets or trades were created.
 - The [large rebuild](../examples/poc/rebuild-evidence.json) used 261 initial real
   contracts, fresh-process resume, actual source revocation, concurrent creates
   and an archive, stale-activation rejection and staged promotion/rollback.
@@ -74,7 +78,7 @@ rolls back dirty IDs and checkpoints before a ready model can activate.
 CLI checks use separate processes and a mock authorization/readiness server for
 outage, revocation, promotion, cursor invalidation, cleanup and rollback.
 Migration controls verify explicit 005→006 upgrade, unchanged earlier SQL and
-rejection of checksum/privilege drift. Large staged LocalNet acceptance is pending.
+rejection of checksum/privilege drift. The 0.3.0 checks above add large LocalNet acceptance.
 
 ### Security regressions
 
