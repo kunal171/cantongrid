@@ -5,12 +5,19 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+include.workspace = true
+readme = "README.md"
+description = "Declarative Daml contract projections, exact calculations, SQL and client type generation."
+categories = ["database"]
 
 [dependencies]
-cantongrid-core = { path = "../core", version = "=0.3.0-alpha.2" }
+cantongrid-core = { path = "../core", version = "=0.3.0-alpha.3" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.11.1"
 
 [dev-dependencies]
-cantongrid-postgres = { path = "../postgres", version = "=0.3.0-alpha.2" }
+cantongrid-postgres = { path = "../postgres", version = "=0.3.0-alpha.3" }

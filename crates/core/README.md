@@ -3,7 +3,7 @@
 The Rust library contains source-neutral configuration, exact fixture values,
 visibility/lease decisions, lifecycle state and deterministic replay. It uses
 Serde/serde_json at the document boundary, with no network or database access.
-See [fixture contracts](../../docs/fixtures.md) and the [CLI](../../docs/cli.md).
+See [fixture contracts](https://github.com/kunal171/cantongrid/blob/main/docs/fixtures.md) and the [CLI](https://github.com/kunal171/cantongrid/blob/main/docs/cli.md).
 
 For one input record, an authorized caller may match any verified witness party.
 For a result derived from several inputs, the caller must match every input's
@@ -31,6 +31,8 @@ both the caller's current grants and the source's current grants. Source and
 generation bindings must match, and the expiry boundary is exclusive.
 
 The 15-second value is an initial core policy limit, not a deployed revocation
-SLA. Network grant retrieval, credential verification, lease renewal, broadcast
-invalidation, live ingestion and API integration remain to be built. Verified snapshots
-and the monotonic clock must come from trusted providers, never client input.
+SLA. The separate ledger/runtime crates perform network grant retrieval, credential
+verification, renewal, ingestion and API integration. Verified snapshots and the
+monotonic clock must come from trusted providers, never client input.
+
+Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
