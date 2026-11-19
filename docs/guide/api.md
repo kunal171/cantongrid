@@ -145,7 +145,7 @@ Model operations use the same independent caller/source checks and no-store poli
 with a maximum of two model resolvers and 25 rows/page.
 
 
-## Filter and sort models (alpha.4 development)
+## Filter and sort models (0.3.0-alpha.4)
 
 Discover active bindings with authenticated `GET /v1/models`. It returns
 `{"models": [...]}`. Each entry contains namespace, name, revision, fingerprint,
@@ -217,4 +217,4 @@ also check `errors`. Inputs remain bounded to 16 KiB and responses to 2 MiB;
 large sort keys that cannot fit a 4 KiB internal cursor fail without returning a
 partial page. No migration, new runtime dependency or automatic index creation
 is included. These additions have owned-PostgreSQL/HTTP fixture coverage and two recorded
-LocalNet query runs. See the [PoC](poc.md#query-acceptance-in-alpha4-development).
+LocalNet query runs. See the [PoC](poc.md#query-acceptance).

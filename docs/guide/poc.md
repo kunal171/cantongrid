@@ -4,7 +4,8 @@ This example builds a small Daml prediction-market contract, uploads its DAR,
 submits real choices and verifies their indexed state through generated GraphQL.
 A local viewer shows current markets, lifecycle events, checkpoint and freshness.
 
-Available in [0.3.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.2).
+Use [0.3.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.4)
+for the query, revision and recovery checks described here.
 The example and current documentation are maintained on
 [`main`](https://github.com/kunal171/cantongrid/tree/main/examples/poc).
 Use the release tag for a reproducible review:
@@ -12,7 +13,7 @@ Use the release tag for a reproducible review:
 ```bash
 git clone https://github.com/kunal171/cantongrid.git
 cd cantongrid
-git checkout v0.3.0-alpha.2
+git checkout v0.3.0-alpha.4
 ```
 
 ## Prerequisites
@@ -117,7 +118,7 @@ the complete query. Model API limits: 25 rows/page, two model resolvers/operatio
 depth 8, complexity 100 and a 2 MiB response. Signed cursors bind caller, source,
 grants, namespace and immutable model fingerprint.
 
-## Query acceptance in alpha.4 development
+## Query acceptance
 
 `queries.py` submits four real contracts through the local writer. Prices 1, 2
 and 10 expose string-based numeric sorting errors; quantities above 2^53 expose

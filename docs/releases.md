@@ -1,5 +1,7 @@
 # Releases
 
+Latest source prerelease: [0.3.0-alpha.4](releases/0.3.0-alpha.4.md).
+
 | Version | Scope |
 | --- | --- |
 | [0.1.0-alpha.1](releases/0.1.0-alpha.1.md) | Source prerelease: fixture/storage foundations and source checks |
@@ -57,6 +59,10 @@ cargo publish --workspace --dry-run --locked
 python3 scripts/dev.py packages verify
 ```
 
+As checked for alpha.4, only `cantongrid-core 0.3.0-alpha.3` is published on
+crates.io. Build the CLI from source using the [quickstart](guide/quickstart.md);
+this GitHub source release does not upload crates or include prebuilt binaries.
+
 The dry run packages and builds all workspace members with a temporary registry
 for unpublished internal dependencies. Archive checks reject dirty provenance,
 missing compile-time inputs, unexpected files and changed license/notice content.
@@ -74,14 +80,8 @@ cargo publish --workspace --locked
 Cargo orders the workspace dependencies before their consumers. If publication
 stops partway, check each registry version and resume only unpublished packages.
 Versions are immutable. Do not overwrite release tags or bypass verification.
-After the CLI is available, verify an installation outside the checkout:
-
-```bash
-cargo install cantongrid-cli --version 0.3.0-alpha.3 --locked
-cantongrid --version
-cantongrid init /tmp/cantongrid-installed-example
-cantongrid fixture run /tmp/cantongrid-installed-example/cantongrid.json --party A
-```
+Verify installed CLI behavior outside the checkout when a coordinated CLI crate
+release becomes available. The alpha.3 core upload alone cannot install the CLI.
 
 The alpha API and the LocalNet/runtime limits still apply. Publishing crates does
 not establish remote deployment or production acceptance. Binary packaging has a
