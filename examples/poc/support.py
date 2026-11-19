@@ -63,37 +63,63 @@ def cli(*args):
     return result.stdout
 
 
-def query(subject='ab', *, typed=True, limit=25, cursor=None):
-    """The local UI chooses fixture identities; the actual API verifies independent signed bearers."""
+def api(subject, path, body=None):
+    """Send fixture-authenticated requests without printing bearers or private response bodies."""
     data = state()
+    payload = None if body is None else json.dumps(body).encode()
+    with urlopen(Request(API + path, data=payload, headers={
+            'Authorization': 'Bearer ' + application_token(subject, data['apiKey']),
+            'Content-Type': 'application/json'}), timeout=20) as response:
+        result = json.load(response)
+        if response.headers.get('Cache-Control') != 'no-store':
+            raise ValueError('Private API response must not be cacheable')
+    return result
+
+
+def query(subject='ab', *, typed=True, limit=25, cursor=None,
+          filters=None, sort=None, transport='graphql'):
+    """Exercise independent API authentication; exact numbers stay strings in either transport."""
+    data = state()
+    if typed and transport == 'rest':
+        body = {'limit': limit, 'cursor': cursor, 'filters': filters or {}}
+        if sort is not None:
+            body['sort'] = sort
+        return api(subject, f"/v1/models/{data['namespace']}/markets/query", body)
+    if transport != 'graphql':
+        raise ValueError('History supports GraphQL only in this local helper')
     if typed:
         field = data['field']
-        text = f'''query($namespace:String!,$limit:Int!,$cursor:String) {{
-          {field}(namespace:$namespace,limit:$limit,cursor:$cursor) {{
+        # The validated declaration fingerprint names both generated inputs and the served schema.
+        stem = 'Model_' + field.rsplit('_', 1)[1]
+        text = f'''query(
+          $namespace: String!, $limit: Int!, $cursor: String,
+          $filters: {stem}Filter, $sort: {stem}Sort
+        ) {{
+          {field}(namespace: $namespace, limit: $limit, cursor: $cursor,
+                  filters: $filters, sort: $sort) {{
             visibleTotal nextCursor fingerprint
             items {{ contractId values {{ demoId question state outcome priceTick priceTickBps quantityLot }} }}
           }}
         }}'''
         path = '/models/graphql'
-        body = {'query': text, 'variables': {'namespace': data['namespace'], 'limit': limit, 'cursor': cursor}}
+        body = {'query': text, 'variables': {'namespace': data['namespace'], 'limit': limit,
+                'cursor': cursor, 'filters': filters, 'sort': sort}}
     else:
+        if filters is not None or sort is not None:
+            raise ValueError('Model filters cannot be applied to generic history')
         path = '/graphql'
         body = {'query': 'query($cursor:String){lifecycleEvents(limit:25,cursor:$cursor){visibleTotal nextCursor items provenance}}', 'variables': {'cursor': cursor}}
-    bearer = application_token(subject, data['apiKey'])
-    with urlopen(Request(API + path, data=json.dumps(body).encode(), headers={
-            'Authorization': 'Bearer ' + bearer, 'Content-Type': 'application/json'}), timeout=20) as response:
-        result = json.load(response)
-        if response.headers.get('Cache-Control') != 'no-store':
-            raise ValueError('Private API response must not be cacheable')
+    result = api(subject, path, body)
     if result.get('errors'):
         raise ValueError('GraphQL operation failed')
     return result['data'][data['field'] if typed else 'lifecycleEvents']
 
 
-def pages(subject='ab', *, typed=True):
+def pages(subject='ab', *, typed=True, **options):
+    """Follow at most 100 pages while retaining the exact same query semantics."""
     result = []; cursor = None
     for _ in range(100):
-        page = query(subject, typed=typed, cursor=cursor)
+        page = query(subject, typed=typed, cursor=cursor, **options)
         result.extend(page['items'])
         cursor = page['nextCursor']
         if not cursor:
