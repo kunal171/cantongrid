@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-from .common import ROOT
+from .common import ROOT, write_private
 CHECKOUT = ROOT / '.local/cn-quickstart'
 REVISION = '8b898ed3ccb15e243b22ee8d0ed3573fb91ee6b9'
 PROJECT = 'cantongrid-localnet'
@@ -75,8 +75,7 @@ def render():
             '-f', str(module / 'resource-constraints.yaml'), *PROFILES]
     config = json.loads(subprocess.check_output([*base, 'config', '--format', 'json'], env=env))
     apply_local_defaults(config)
-    CONFIG.write_text(json.dumps(config, indent=2) + '\n')
-    CONFIG.chmod(0o600)
+    write_private(CONFIG, config)
     return ['docker', 'compose', '--progress', 'plain', '-p', PROJECT, '-f', str(CONFIG), *PROFILES]
 
 

@@ -7,11 +7,12 @@ import sys
 import time
 from contextlib import contextmanager
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
+from devtools.http import open_local  # noqa: E402
 from devtools.common import write_private, compose, ENV  # noqa: E402
 from devtools.ledger import request, get, token  # noqa: E402
 from devtools.visibility import BASE, WRITER, USERS, context  # noqa: E402
@@ -67,7 +68,7 @@ def api(subject, path, body=None):
     """Send fixture-authenticated requests without printing bearers or private response bodies."""
     data = state()
     payload = None if body is None else json.dumps(body).encode()
-    with urlopen(Request(API + path, data=payload, headers={
+    with open_local(Request(API + path, data=payload, headers={
             'Authorization': 'Bearer ' + application_token(subject, data['apiKey']),
             'Content-Type': 'application/json'}), timeout=20) as response:
         result = json.load(response)

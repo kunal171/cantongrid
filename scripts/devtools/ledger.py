@@ -4,7 +4,8 @@ import hashlib
 import hmac
 import json
 import time
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from .http import open_local
 
 
 def token(subject='ledger-api-user', lifetime=300):
@@ -31,7 +32,7 @@ def request(base, path, bearer=None, *, body=None, method=None,
         headers['Content-Type'] = content_type
         if not isinstance(body, bytes):
             body = json.dumps(body).encode()
-    with urlopen(Request(base + path, data=body, headers=headers, method=method), timeout=timeout) as response:
+    with open_local(Request(base + path, data=body, headers=headers, method=method), timeout=timeout) as response:
         payload = response.read()
         return json.loads(payload) if read_json and payload else None
 

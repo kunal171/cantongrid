@@ -9,7 +9,8 @@ import secrets
 import subprocess
 import time
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from ..http import open_local
 
 from ..common import ENV, ROOT, compose, write_private, wait_source
 from ..ledger import token
@@ -81,7 +82,7 @@ def main():
         if body is not None:
             headers['Content-Type'] = 'application/json'
         request = Request(base + path, data=json.dumps(body).encode() if body else None, headers=headers)
-        with urlopen(request, timeout=15) as response:
+        with open_local(request, timeout=15) as response:
             if response.headers.get('Cache-Control') != 'no-store':
                 raise ValueError('Private API response permits caching')
             return json.load(response)

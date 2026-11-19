@@ -1,5 +1,6 @@
 """Helper regressions with no Docker, HTTP calls, credentials or ledger writes."""
 import json
+import os
 from pathlib import Path
 import stat
 import sys
@@ -58,6 +59,29 @@ class DevelopmentToolsTests(unittest.TestCase):
             path.chmod(0o644)
             common.write_private(path, {'replacement': True})
             self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+            self.assertEqual(json.loads(path.read_text()), {'replacement': True})
+
+    def test_private_files_preserve_old_data_on_encoding_failure_and_refuse_symlinks(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'state.json'
+            common.write_private(path, {'old': True})
+            with self.assertRaises(TypeError):
+                common.write_private(path, {'bad': object()})
+            self.assertEqual(json.loads(path.read_text()), {'old': True})
+            link = Path(temporary) / 'linked.json'
+            link.symlink_to(path)
+            with self.assertRaises(ValueError):
+                common.write_private(link, {'overwritten': True})
+            self.assertEqual(json.loads(path.read_text()), {'old': True})
+
+    def test_private_file_replacement_does_not_modify_a_hard_link_target(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            original = Path(temporary) / 'original.json'
+            path = Path(temporary) / 'state.json'
+            common.write_private(original, {'original': True})
+            os.link(original, path)
+            common.write_private(path, {'replacement': True})
+            self.assertEqual(json.loads(original.read_text()), {'original': True})
             self.assertEqual(json.loads(path.read_text()), {'replacement': True})
 
     @patch.object(pqs, 'token', return_value='synthetic-dev-token')

@@ -9,7 +9,8 @@ import subprocess
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from ..http import open_local
 from zipfile import ZipFile
 
 from ..common import ROOT, ENV, compose, write_private, source_ready
@@ -147,7 +148,7 @@ def main(argv=None):
         headers = {'Authorization': 'Bearer ' + application_token(subject, key)}
         if body is not None:
             headers['Content-Type'] = 'application/json'
-        with urlopen(Request(base + path, data=json.dumps(body).encode() if body is not None else None, headers=headers), timeout=15) as response:
+        with open_local(Request(base + path, data=json.dumps(body).encode() if body is not None else None, headers=headers), timeout=15) as response:
             if response.headers.get('Cache-Control') != 'no-store':
                 raise ValueError('Private Outcomia API response permits caching')
             return json.load(response)

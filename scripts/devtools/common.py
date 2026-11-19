@@ -1,6 +1,7 @@
 """Shared local Docker/PostgreSQL plumbing and owner-only generated files."""
 import json
 import os
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,19 +30,29 @@ def pg_command(database='pqs', *, reader=False, sqlstate=False, tuples=True):
 
 
 def write_private(path, value):
-    """Create restrictive permissions before writing; retain them on rewrites."""
+    """Atomically replace a 0600 file; never truncate or follow a linked destination."""
+    payload = json.dumps(value, indent=2) + '\n'
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    os.fchmod(fd, 0o600)
-    with os.fdopen(fd, 'w') as output:
-        output.write(json.dumps(value, indent=2) + '\n')
+    if path.is_symlink():
+        raise ValueError('Private generated files must not be symbolic links')
+    fd, temporary = tempfile.mkstemp(prefix=f'.{path.name}-', dir=path.parent)
+    try:
+        with os.fdopen(fd, 'w') as output:
+            output.write(payload)
+            output.flush()
+            os.fsync(output.fileno())
+        # Replace the directory entry, so a hard link or a racing symlink cannot redirect writes.
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
 
 def source_ready(visibility=False):
-    from urllib.request import urlopen
+    from .http import open_local
     port = 18081 if visibility else 18080
     try:
-        with urlopen(f'http://127.0.0.1:{port}/readyz', timeout=3) as response:
+        with open_local(f'http://127.0.0.1:{port}/readyz', timeout=3) as response:
             data = json.load(response)
         return data.get('status') == 'ok' and all(data.get(key) is True for key in
                                                 ('grpc_up', 'jdbc_connection_pool_up', 'stream_up'))
