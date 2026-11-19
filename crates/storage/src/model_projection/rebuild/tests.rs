@@ -526,3 +526,70 @@ fn initial_activation_is_atomic_and_uses_the_canonical_writer_lock() {
     add(&s, "after-initial", "after-initial");
     assert_eq!(s.count(0, &s.plans[0]), 2);
 }
+
+/// A later bad event must roll back earlier dirty IDs, including an archive of a staged row.
+#[test]
+#[ignore = "requires owned PostgreSQL; run serially"]
+fn failed_ingestion_cannot_publish_dirty_ids_or_change_a_ready_rebuild() {
+    let mut s = Scenario::visibility();
+    s.seed();
+    s.bind(1, None).unwrap();
+    revision(&mut s);
+    s.open()
+        .start_model_rebuild(
+            &s.plans[0],
+            &s.lease(),
+            "rollback-queue",
+            &s.namespace,
+            &s.models[0].name,
+            2,
+            Some(1),
+        )
+        .unwrap();
+    let ready = until(&s, "rollback-queue", "ready");
+    let checkpoint = s.open().checkpoint(&s.plans[0]).unwrap();
+    for archive_first in [false, true] {
+        let mut batch = s.create(
+            "failed-page",
+            if archive_first { "first" } else { "transient" },
+            PAYLOAD,
+        );
+        if archive_first {
+            batch.events[0].id = "archive-first".into();
+            batch.events[0].witnesses.clear();
+            batch.events[0].action = Action::ArchiveByPriorContract;
+            let mut duplicate = batch.events[0].clone();
+            duplicate.id = "archive-again".into();
+            batch.events.push(duplicate);
+        } else {
+            batch
+                .events
+                .extend(s.create("unused", "first", PAYLOAD).events);
+        }
+        assert!(
+            s.open()
+                .apply_authorized(&s.plans[0], &batch, &s.lease())
+                .is_err()
+        );
+        assert_eq!(s.open().checkpoint(&s.plans[0]).unwrap(), checkpoint);
+        let status = step(&s, "rollback-queue", RebuildAction::Status, 1).unwrap();
+        assert!(!status.has_pending);
+        assert_eq!(status.phase, "ready");
+        assert_eq!(status.source_revision, ready.source_revision);
+        assert_eq!(s.count(0, &s.plans[0]), 1);
+        assert_eq!(s.count(1, &s.plans[0]), 1);
+    }
+    step(&s, "rollback-queue", RebuildAction::Activate, 1).unwrap();
+    until(&s, "rollback-queue", "complete");
+    let binding = s
+        .open()
+        .bound_models(&s.plans[0], &caller(&s), &s.lease())
+        .unwrap()
+        .remove(0);
+    let page = s
+        .open()
+        .read_model(&s.plans[0], &caller(&s), &s.lease(), &binding, None, 10)
+        .unwrap();
+    assert_eq!(page.visible_total, "1");
+    assert_eq!(page.items[0]["contractId"], "first");
+}
