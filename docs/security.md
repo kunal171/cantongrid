@@ -42,7 +42,11 @@ reauthorized on read; automatic erasure is not implemented.
 - Counts/pages and public event provenance omit operator witness sets and internal
   source keys. Responses use `Cache-Control: no-store` and bounded public errors.
 - API limits: pages 1–25, request body 16 KiB, result page 2 MiB, GraphQL depth 8,
-  complexity 100, concurrent requests 16. No mutations, subscriptions or introspection.
+  complexity 100, concurrent requests 16 and concurrent database tasks 16. Admission
+  precedes body extraction; a 30-second deadline includes body reads and resolution.
+  Cancelling a request does not release a running database task's slot. The 2 MiB
+  cap applies to the complete encoded response, including multiple GraphQL roots.
+  No mutations, subscriptions or introspection.
 - Model registry commands are operator-only database operations, not HTTP endpoints.
   Registration/inspection summaries omit literals; definitions grant no data access.
 - Table installation is also operator-only. It verifies schema/table ownership and
@@ -65,3 +69,44 @@ immutable.
 
 [Verification](verification.md) records LocalNet controls and remaining limits.
 Report vulnerabilities through [SECURITY.md](https://github.com/kunal171/cantongrid/blob/main/SECURITY.md).
+
+
+## Repository security review — 2026-11-19
+
+This code review and regression pass covers the Rust runtime, authorization,
+PQS reader, model compiler/queries/rebuilds, destination guards, CLI, local helpers,
+package policy and GitHub workflows. It is not an independent penetration test
+or a production security certification. Fixes are in unreleased alpha.5.
+
+| Finding | Impact and fix |
+| --- | --- |
+| Incomplete destination ACL checks | Public schema/table/sequence and column grants could escape the intended private-database boundary. Reopen/initialization now reject nonowner privileges on destination objects; projection checks also inspect column ACLs. |
+| Admission after body extraction | Incomplete bodies could bypass the handler semaphore. Middleware now admits at most 16 requests before extraction and imposes a 30-second deadline. |
+| Cancellation released capacity early | SQL work could outlive its HTTP permit. A separate permit now stays inside each blocking database task until it ends. |
+| Generic GraphQL aggregate size | Multiple individually valid pages could exceed the advertised 2 MiB limit. All transports now share a bounded serialization writer for the whole response. |
+| Broader PQS lease accepted | Library callers could supply a lease wider than the plan's configured parties. The reader now rejects any party-set mismatch before connecting. The runtime checker already required exact grants. |
+| Local helper transport/file behavior | Default redirects/proxies could forward fixture bearers; in-place writes could follow links or leave partial grant files. Helpers now use numeric loopback without redirects/proxies and atomic 0600 file replacement, rejecting symlink destinations. |
+
+The ACL findings required operator SQL privilege changes; no unprivileged HTTP
+caller was shown to obtain another caller's records. Validation detects unsafe
+ACL drift; it cannot undo access already granted outside CantonGrid. Review and
+revoke unintended database grants before restarting. No applied migration was
+changed and no new runtime dependency was introduced.
+
+Controls include real PostgreSQL grant changes rolled back after each check,
+real HTTP slow-body admission/timeout checks, cancelled blocking-task controls,
+aggregate/escaped JSON limits and helper link/transport regressions. Existing
+caller isolation, signed-cursor, revocation, source-outage and rebuild tests pass.
+The blocking-task lifetime follows [Tokio's documented cancellation behavior](https://docs.rs/tokio/1.54.1/tokio/task/fn.spawn_blocking.html).
+
+RustSec scanned 249 locked dependencies against 1,550 fetched advisories with no
+findings. License/source/bans policy, redacted full-history and eligible-tree
+secret scans, and actionlint passed. Duplicate-version notices for `base64`, `syn`
+and `wasi` remain dependency-tree notices, not reported vulnerabilities. These
+results are point-in-time checks; scheduled CI continues scanning.
+
+Remaining boundaries: numeric-loopback LocalNet only; no remote/TLS or production
+load testing, exhaustive fuzzing, or independent audit. Large staged LocalNet
+acceptance remains pending. Remote revocation has the lease boundary described
+above. The trusted database owner and local operator can alter stored data,
+configuration and ACLs; private files must stay in operator-controlled directories.

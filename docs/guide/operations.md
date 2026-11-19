@@ -27,6 +27,8 @@ See [storage behavior](../architecture.md#destination-and-recovery).
 | Rebuild is ready but activation refuses | Check `has_pending`; step again after new ingestion, then retry activation |
 | Rebuild reservation blocks another job | Finish cleanup or cancel and step until cancelled; retain the same source plan |
 | Model projection failure | Correct payload/mapping or reviewed schema drift; retry without moving the checkpoint |
+| API returns 429 / 504 | Admission is capped at 16 and includes body reads; requests have a 30-second deadline. Retry after checking source/destination latency. |
+| Destination ACL validation fails | Review schema, table, sequence and column grants; remove unintended access explicitly. Startup does not revoke grants for you. |
 | Schema mismatch | Explicitly migrate only the owned destination; never edit applied migration checksums |
 
 Refresh local PQS credentials using the matching `pqs up` helper. Renew the

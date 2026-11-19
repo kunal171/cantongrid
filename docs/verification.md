@@ -226,3 +226,16 @@ All 59 credential-free Rust tests and 53 owned-PostgreSQL/HTTP tests passed, plu
 19 development-helper and four PoC helper tests. Formatting, Clippy, release
 metadata and container log-retention checks passed. Source-dependent PQS tests
 and the existing LocalNet application scenarios were not rerun for this change.
+
+
+## Security regression pass — alpha.5 development
+
+Verified 2026-11-19: 63 credential-free Rust tests, 55 owned-PostgreSQL/HTTP tests,
+23 development-helper tests and four PoC helper tests passed. Two ACL controls
+first failed against the previous implementation and passed after the fix.
+Transport controls use a loopback test server; no Ledger writes occurred.
+
+RustSec, dependency license/bans/source policy, full-history and eligible-tree
+secret scans, actionlint, formatting, Clippy, release metadata and container
+retention checks passed. See [findings and remaining boundaries](security.md#repository-security-review--2026-11-19).
+Existing source-dependent PQS and LocalNet application scenarios were not rerun.

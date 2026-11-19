@@ -11,6 +11,16 @@
 - Owned-PostgreSQL recovery/privacy controls and CLI process-restart, source-outage,
   revocation and rollback tests. Large staged LocalNet acceptance remains pending.
 
+### Security
+
+- Reject nonowner schema, relation, sequence and column grants in the private
+  destination; verify projection column ACLs as well as table grants.
+- Admit HTTP requests before body extraction, enforce a 30-second deadline,
+  retain database slots across cancellation and cap complete JSON responses at 2 MiB.
+- Reject PQS lease/plan party mismatches; disable local-helper proxies/redirects
+  and atomically replace private generated files without following symlinks.
+- Disable persisted checkout credentials and bound the CI verification job.
+
 ### Compatibility
 
 - Explicit `storage init` applies migration 006; migrations 001–005 are unchanged.
