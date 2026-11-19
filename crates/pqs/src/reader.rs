@@ -45,6 +45,14 @@ pub fn page_env(
         .iter()
         .map(|p| p.as_str().to_owned())
         .collect();
+    // A valid broader lease must not widen this plan's configured SQL selection.
+    let expected: Vec<_> = plan
+        .source_parties()
+        .map(|p| p.as_str().to_owned())
+        .collect();
+    if parties != expected {
+        return Err(InspectError::Authorization);
+    }
     let mut client = connect_env(variable)?;
     let mut tx = client
         .build_transaction()
@@ -99,6 +107,7 @@ pub fn page_env(
             &(limit as i64 + 1),
         ],
     )?;
+    // The extra row answers has-more without acknowledging an event not returned in this page.
     let more = rows.len() > limit;
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -156,6 +165,7 @@ pub fn page_env(
         cursor.offset = offset;
         cursor.pk = pk;
     }
+    // Advance the interval boundary only after all same-offset/event-key ties were emitted.
     if !more {
         cursor.snapshot = false;
         cursor.boundary = cursor.through;
@@ -202,6 +212,40 @@ fn validate_cursor(
 #[cfg(test)]
 mod tests {
     use super::*;
+    /// Reject wider/narrower leases before even opening SQL, not just at destination commit.
+    #[test]
+    fn source_lease_must_match_the_exact_selected_party_set() {
+        use cantongrid_core::{authorization::MAX_SOURCE_LEASE, config::SourceContext};
+        use std::time::Duration;
+        let party = |name: &str| PartyId::new(name).unwrap();
+        let plan = Plan::pqs(
+            SourceContext::new("scope-check".into(), "synthetic".into(), 1).unwrap(),
+            [party("A"), party("B")].into(),
+            [TemplateId {
+                package_id: "0".repeat(64),
+                module: "Example".into(),
+                entity: "Record".into(),
+            }]
+            .into(),
+        )
+        .unwrap()
+        .with_source_binding("a".repeat(64));
+        for names in [vec!["A"], vec!["A", "B", "C"], vec!["C"]] {
+            let lease = SourceLease::from_verified(
+                plan.context().binding(),
+                names.into_iter().map(party),
+                Instant::now(),
+                MAX_SOURCE_LEASE,
+                Instant::now() + Duration::from_secs(10),
+            )
+            .unwrap();
+            assert!(matches!(
+                page_env("CANTONGRID_UNUSED_AUDIT_SOURCE", &plan, &lease, None, 1),
+                Err(InspectError::Authorization)
+            ));
+        }
+    }
+
     #[test]
     fn cursor_keeps_same_offset_ties_and_fails_on_pruning_or_regression() {
         let c = Cursor {

@@ -8,6 +8,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Untrusted runtime wire configuration; credentials are environment references, not stored values.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Document {
@@ -74,6 +75,7 @@ fn default_page_size() -> usize {
 }
 
 impl Project {
+    /// Validate policies, scope and local endpoints before deriving the physical source plan.
     pub fn load(path: &Path) -> Result<Self, String> {
         let doc: Document = cantongrid_core::document::parse(
             std::str::from_utf8(&read(path, 65536)?)

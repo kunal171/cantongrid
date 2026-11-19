@@ -1,7 +1,7 @@
 # Contributing
 
 Read [AGENTS.md](AGENTS.md), [architecture](docs/architecture.md),
-[security](docs/security.md) and the [roadmap](docs/roadmap.md). The current work is
+[security](docs/security.md) and the [next steps](docs/README.md#next). The current work is
 Phase 4 model integration; use [existing examples](docs/guide/models.md) rather
 than adding application-specific branches.
 
@@ -16,6 +16,7 @@ cargo +1.100.0 fmt --all -- --check
 cargo +1.100.0 clippy --workspace --all-targets --locked -- -D warnings
 cargo +1.100.0 test --workspace --locked
 python3 -m unittest discover -s scripts/tests -v
+python3 -m unittest discover -s examples/poc -p 'test_*.py' -v
 python3 scripts/dev.py release check
 python3 scripts/dev.py check resources
 ```

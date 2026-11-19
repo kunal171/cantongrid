@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.3.0-alpha.5 — 2026-11-19
+
+### Added
+
+- Resumable, source-authorized model rebuild jobs with bounded backfill, dirty-ID
+  reconciliation, explicit atomic activation, retirement cleanup and cancellation.
+- Operator `models rebuild start|step|status|activate|cancel` commands; staged rows
+  remain private while the existing revision serves.
+- Owned-PostgreSQL recovery/privacy controls and CLI process-restart, source-outage,
+  revocation and rollback tests. Large staged LocalNet acceptance remains pending.
+
+### Security
+
+- Reject nonowner schema, relation, sequence and column grants in the private
+  destination; verify projection column ACLs as well as table grants.
+- Keep source/caller guards through canonical REST encoding; share the final
+  before/after encoding guard across private transports.
+- Build canonical response JSON only after authorized pagination, rather than
+  spooling full payloads for visible-total counts.
+- Admit HTTP requests before body extraction, enforce a 30-second deadline,
+  retain database slots across cancellation and cap complete JSON responses at 2 MiB.
+- Reject PQS lease/plan party mismatches; disable local-helper proxies/redirects
+  and atomically replace private generated files without following symlinks.
+- Disable persisted checkout credentials and bound the CI verification job.
+
+### Documentation
+
+- Consolidate release history, verification and roadmap pages; remove obsolete drafts.
+- Document PoC lifecycle/visibility, exact calculations, helper side effects and Rust contracts.
+
+### Compatibility
+
+- Explicit `storage init` applies migration 006; migrations 001–005 are unchanged.
+  Older binaries reject the new migration set. No automatic downgrade or new
+  external runtime dependency.
+- Atomic `models bind` retains its 128-row cap. Staged steps use 1–64 rows
+  (default 32) and an 8 MiB evaluation budget. Activation invalidates old model cursors.
+
 ## 0.3.0-alpha.4 — 2026-11-19
 
 ### Added
@@ -20,7 +58,7 @@
   actual Outcomia BinaryMarket query acceptance also passes. Staged backfills and
   funded trading projections remain pending.
 
-## 0.3.0-alpha.3 — unreleased
+## 0.3.0-alpha.3 — core crate publication
 
 ### Added
 
@@ -57,9 +95,9 @@
 - GitBook-ready developer guide covering setup, persistence, LocalNet, authentication,
   REST/GraphQL, model examples and operations, with synthetic preview payloads.
 
-### In progress
+### Limits at release
 
-- Phase 4 generated typed APIs, revision-bound cursors and actual LocalNet model acceptance remain incomplete.
+- Generated typed APIs, revision-bound cursors and LocalNet model acceptance were deferred to later alphas.
 - Installation does not ingest contracts, activate live processing or authenticate API callers.
 
 ### Fixed
@@ -74,7 +112,7 @@
   the destination. Migrations 001–004 are unchanged. Older binaries reject unknown
   migration sets; downgrade requires a separate reviewed plan.
 
-## 0.2.0-alpha.1 — unreleased
+## 0.2.0-alpha.1 — 2026-11-17
 
 ### Added
 
@@ -93,7 +131,7 @@
 - Actual Outcomia lifecycle and unrelated Visibility proofs passed on the explicitly authorized LocalNet; no production readiness claim.
 - Generated typed models and real-time delivery remain Phase 4/5.
 
-## 0.1.0-alpha.1 — unreleased
+## 0.1.0-alpha.1 — 2026-11-17
 
 ### Added
 

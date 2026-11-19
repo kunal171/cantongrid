@@ -24,6 +24,7 @@ CHECKS['outcomia-pipeline'] = 'outcomia_pipeline'
 
 
 def main():
+    """Route helper commands without confusing fixture, live-source and write-enabled workflows."""
     parser = argparse.ArgumentParser(description=__doc__, epilog=(
         'localnet prepare|up|status|stop|logs|images; pqs up|stop|status|reader [--visibility]; '
         'storage up|status|stop; validate-dar <dar>; visibility setup; check ledger|pqs|reader|visibility|visibility-pqs'))

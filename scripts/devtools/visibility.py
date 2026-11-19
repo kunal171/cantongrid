@@ -17,15 +17,18 @@ SEQUENCE = '9223372036854775807'
 
 
 def right(kind, party):
+    """Build one explicit Ledger right for an already selected party."""
     return {'kind': {kind: {'value': {'party': party}}}}
 
 
 def rights_equal(actual, expected):
+    """Compare complete rights independently of response ordering, without dropping duplicates."""
     return sorted(json.dumps(r, sort_keys=True) for r in actual) == sorted(
         json.dumps(r, sort_keys=True) for r in expected)
 
 
 def ensure_user(name, rights, primary=''):
+    """Create an absent owned fixture user; reject existing scope drift instead of rewriting rights."""
     admin = token()
     try:
         user = get(BASE, '/v2/users/' + name, admin)['user']
@@ -42,6 +45,7 @@ def ensure_user(name, rights, primary=''):
 
 
 def acs(subject, parties, bearer=None):
+    """Read the selected fixture snapshot and reject unsupported reassignment entries."""
     offset = get(BASE, '/v2/state/ledger-end', token())['offset']
     selection = {'cumulative': [{'identifierFilter': {
         'TemplateFilter': {'value': {'templateId': TEMPLATE}}}}]}
@@ -59,6 +63,7 @@ def acs(subject, parties, bearer=None):
 
 
 def package_id():
+    """Resolve the actual main package from the built DAR, folding manifest continuation lines."""
     with ZipFile(DAR) as archive:
         lines = []
         for line in archive.read('META-INF/MANIFEST.MF').decode().splitlines():
@@ -71,6 +76,7 @@ def package_id():
 
 
 def context():
+    """Load saved fixture identities only when their package matches the current built DAR."""
     data = json.loads((DIRECTORY / 'context.json').read_text())
     if data['packageId'] != package_id():
         raise ValueError('Built fixture package differs from saved scope; review before reusing it')

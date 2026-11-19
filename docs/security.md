@@ -3,65 +3,69 @@
 ## Source and caller access
 
 The Ledger credential authorizes ingestion. A separate organization HS256 bearer
-identifies an API caller; the current grants file maps that principal to a
-nonempty subset of source parties. Tokens and request filters cannot add rights.
-The supported deployment is one organization on numeric loopback, using the default
-identity provider. See [setup](guide/api.md).
+identifies an API caller; its current grants must be a nonempty subset of the
+configured source parties. Tokens, filters and model definitions cannot add rights.
+The current profile is one organization on numeric loopback with the default
+identity provider. See [API setup](guide/api.md).
 
-Source checks verify the active user and exact CanReadAs set. Leases last at most
-15 seconds and cannot outlive the source credential. Failed renewal drops cached
-authorization. Unknown rights or unhealthy PQS deny copying and serving even when
-rows remain in SQL. Remote revocation is not instantaneous during disconnection.
-Grant content is compared directly; the tested Ledger resourceVersion does not
-change when rights are granted/revoked.
+The source checker requires an active user and the exact configured CanReadAs set.
+Leases last at most 15 seconds and cannot outlive the credential. Failed renewal
+clears cached authorization. Unknown rights or unhealthy PQS deny copying and
+serving even when SQL still contains rows. Remote revocation is not instantaneous
+during disconnection. Rights are compared directly; the tested Ledger
+resourceVersion did not change when rights changed.
 
-## Visibility
+## Visibility and delivery
 
-Source/caller intersection is applied in SQL before counts and pagination.
-Queries recheck source and caller access before delivery, including after a
-complete GraphQL operation. Local grants reload on each request. Disabling a
-principal denies its existing bearer on the next request.
+SQL applies source/caller visibility before counts and pagination. All private
+transports check current source/caller authorization before and after response
+encoding; a failed final guard discards the whole body. Local grants reload for
+each request; removing or disabling a principal denies its existing bearer.
 
-A joint contract visible to A or B differs from a derived row combining A-only
-and B-only inputs: that row requires access to both inputs. Future joins,
-aggregates and streams must retain these dependencies. Public schemas, errors,
-counts, caches and cursor handling must not reveal inaccessible records.
+A shared A-or-B contract differs from a row combining A-only and B-only inputs:
+the latter requires both permissions. Future joins, aggregates and streams must
+preserve every input's visibility dependencies.
 
-Schema041 archives retain their empty source witness evidence. The supported
-prior-create policy requires an observed matching creation and current rights.
-Revocation, pruning and absence do not fabricate an archive. Retained history is
-reauthorized on read; automatic erasure is not implemented.
+Schema041 archives have empty witnesses. The prior-create policy requires an
+observed matching creation and current rights; absence, pruning or revocation
+never fabricates an archive. History is reauthorized on read. Automatic erasure
+is not implemented.
 
-## Tokens, cursors and responses
+## Tokens and limits
 
-- API and cursor keys are separate, at least 32 bytes, and differ from the source
-  credential. Issuer/audience are exact; bearer lifetime is at most one hour.
-- Signed cursors bind principal, source/plan, grant fingerprint, query kind and
-  expiry. They last at most 60 seconds and no longer than the bearer. They are
-  opaque API tokens, not encryption; do not transfer them between callers.
-- Counts/pages and public event provenance omit operator witness sets and internal
-  source keys. Responses use `Cache-Control: no-store` and bounded public errors.
-- API limits: pages 1–25, request body 16 KiB, result page 2 MiB, GraphQL depth 8,
-  complexity 100, concurrent requests 16. No mutations, subscriptions or introspection.
-- Model registry commands are operator-only database operations, not HTTP endpoints.
-  Registration/inspection summaries omit literals; definitions grant no data access.
-- Table installation is also operator-only. It verifies schema/table ownership and
-  rejects nonowner grants or schema drift. Parent-contract foreign keys preserve
-  identity, not permission. Model reads join canonical witnesses
-  before counts/pages, preserve exact numeric strings and revalidate bindings/grants
-  before delivery. Namespace labels never grant access.
+- API and cursor keys are distinct, at least 32 bytes and different from the source
+  credential. Issuer/audience match exactly; bearer lifetime is at most one hour.
+- Signed cursors bind principal, source/plan, grants, query and expiry; model cursors
+  also bind namespace, revision and normalized filters/sort. They last at most
+  60 seconds and no longer than the bearer. They are signed, not encrypted.
+- Responses use `Cache-Control: no-store`. Public records/errors omit operator
+  witness sets, persistence envelopes and internal source keys.
+- Pages contain 1–25 rows; requests are limited to 16 KiB and complete encoded
+  responses to 2 MiB. GraphQL depth is 8, complexity 100; model operations have at
+  most two row resolvers. Mutations, subscriptions and introspection are disabled.
+- Admission occurs before body extraction: at most 16 concurrent requests with a
+  30-second deadline, plus at most 16 database tasks. Cancellation does not release
+  a database slot until its blocking task ends.
 
-- Activation requires a verified physical source plan and exact current source-party lease.
-  Backfill and live model writes share the canonical writer lock/transaction; failed
-  evaluation, drift or expired leases stop progress. Bindings never grant API access.
+## Operator boundary
 
-## Operations
+Registration, installation and rebuild commands require the owned database role;
+there are no public registry/job mutation APIs. Namespaces and parent-contract
+foreign keys preserve identity, not permission. Model reads join canonical
+witnesses; staged rows remain private until guarded activation.
 
-Keep source SQL SELECT-only and separate from the owned destination. Do not log
-credentials, private payloads or party IDs, or put them in metrics labels and
-public fixtures. Never fall back to broader/unfiltered source reads. Review scope
-and generation changes before reusing a destination. Applied migrations are
-immutable.
+Destination checks reject nonowner schema, relation, sequence and column grants.
+Projection checks also verify the compiled physical schema. Activation and model
+writes share the canonical source lock; failed evaluation, drift or expired
+leases roll back progress. Applied migrations are immutable.
 
-[Verification](verification.md) records LocalNet controls and remaining limits.
-Report vulnerabilities through [SECURITY.md](https://github.com/kunal171/cantongrid/blob/main/SECURITY.md).
+The database owner and local operator remain trusted and can alter SQL/configuration.
+Keep source SQL SELECT-only and separate from the destination. Store credentials
+and generated state in operator-controlled directories; never log credentials,
+private payloads or party IDs. Helpers use loopback without proxies/redirects and
+atomic 0600 file replacement. Never broaden source access to recover availability.
+
+[Verification](verification.md#security-regressions) records the review findings,
+controls and limitations. PostgreSQL support is tracked in
+[operations](guide/operations.md#postgresql-support).
+Report vulnerabilities through [private reporting](https://github.com/kunal171/cantongrid/blob/main/SECURITY.md).

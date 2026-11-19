@@ -563,3 +563,26 @@ fn conflicting_physical_identity_and_wrong_revision_links_fail_without_creating_
         .unwrap();
     assert_eq!(result, Err(StoreError::ModelSchema));
 }
+
+/// Column ACLs can expose values without any table-level ACL entry.
+#[test]
+#[ignore = "requires owned PostgreSQL; run serially"]
+fn column_privileges_are_rejected_without_repair() {
+    let scenario = Scenario::visibility();
+    scenario.install().unwrap();
+    let mut store = scenario.open();
+    let mut tx = store.client.transaction().unwrap();
+    tx.batch_execute(&format!(
+        "GRANT SELECT(amount) ON {} TO PUBLIC",
+        scenario.relation()
+    ))
+    .unwrap();
+    let plan = scenario.model.sql_plan().unwrap();
+    let columns = scenario.model.sql_columns().unwrap();
+    assert_eq!(
+        schema::verify_table(&mut tx, &plan, &columns),
+        Err(StoreError::ModelSchema)
+    );
+    tx.rollback().unwrap();
+    assert!(!scenario.install().unwrap().created);
+}

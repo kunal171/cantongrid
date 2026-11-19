@@ -9,6 +9,7 @@ use crate::{
 use serde::Deserialize;
 use std::{collections::BTreeSet, fmt, time::Instant};
 
+/// Synthetic complete-history input; wire values do not become trusted grants or persisted policies.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Document {
@@ -19,11 +20,13 @@ struct Document {
     source: Source,
     batches: Vec<RawBatch>,
 }
+/// Fixture replay requires origin-complete history so an archive has an observed creation.
 #[derive(Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum Coverage {
     CompleteFromOrigin,
 }
+/// Wire identity that must match the plan before batches enter the reference engine.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Source {
@@ -31,12 +34,14 @@ struct Source {
     network: String,
     generation: u64,
 }
+/// Ordered fixture delivery with an opaque position; lexical position order has no meaning.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawBatch {
     position: String,
     events: Vec<RawEvent>,
 }
+/// Untrusted lifecycle evidence validated while converting witnesses and actions.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawEvent {
@@ -48,6 +53,7 @@ struct RawEvent {
     ledger_at_micros: Option<i64>,
     action: RawAction,
 }
+/// Fixture actions intentionally exclude snapshot/prior-create archive policies used by the live adapter.
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum RawAction {
@@ -55,10 +61,12 @@ enum RawAction {
     Archive,
 }
 
+/// Normalized deliveries shared by the in-memory example and bounded PostgreSQL fixture path.
 pub struct Fixture {
     batches: Vec<Batch>,
 }
 impl Fixture {
+    /// Reject ambiguous versions, mismatched source context and duplicate witness entries before replay.
     pub fn parse(text: &str, plan: &Plan) -> Result<Self, FixtureError> {
         let document: Document =
             crate::document::parse(text).map_err(|_| FixtureError::Document)?;
@@ -117,6 +125,7 @@ impl Fixture {
         &self.batches
     }
 
+    /// Apply batches in declared delivery order and count only newly acknowledged deliveries.
     pub fn replay_into(&self, engine: &mut Engine) -> Result<usize, FixtureError> {
         let mut applied = 0;
         for batch in &self.batches {
@@ -161,6 +170,7 @@ impl Fixture {
     }
 }
 
+/// Public fixture counters only; no contract payloads or party identifiers are emitted.
 #[derive(Debug, serde::Serialize)]
 pub struct Summary {
     pub applied_batches: usize,
@@ -169,6 +179,7 @@ pub struct Summary {
     pub visible_history: usize,
     pub has_checkpoint: bool,
 }
+/// Stable redacted fixture failures, including a non-idempotent replay or invalid simulated caller.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FixtureError {
     Document,

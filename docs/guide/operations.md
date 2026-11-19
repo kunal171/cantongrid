@@ -17,20 +17,33 @@ See [storage behavior](../architecture.md#destination-and-recovery).
 | Runtime JSON fails fixture validation | Use `index`/`serve`; configuration schemas differ |
 | Indexing pauses | Check token expiry, exact rights, PQS readiness and destination connectivity |
 | API denies a bearer | Check issuer/audience/lifetime, source health, principal status and party subset |
+| Canonical count is slow | Exact totals still scan visibility evidence and are subject to the five-second SQL timeout; payload encoding is limited to the requested page. |
 | Old cursor fails | Restart pagination after expiry or grant changes |
 | Unexpected empty result | Check exact template/package, caller scope and coverage; do not broaden access |
 | Binding/checkpoint conflict | Review source identity/scope/generation; do not force another source's offsets |
 | Source gap | Review retention/boundaries; do not skip data or claim complete history |
 | Numeric error | Use exact decimal strings, supported operators and declared scale |
 | Model binding refuses a replacement | Register/install the new revision and supply the expected old revision with `--replace` |
-| Model backfill/work limit | Atomic backfill is capped at 128 rows/8 MiB; staged rebuilds are not available; do not skip contracts |
+| Model backfill/work limit | Use [staged rebuilds](models.md#rebuild-a-larger-model-in-stages) above the 128-row atomic cap; lower the step limit for the 8 MiB work budget |
+| Rebuild is ready but activation refuses | Check `has_pending`; step again after new ingestion, then retry activation |
+| Rebuild reservation blocks another job | Finish cleanup or cancel and step until cancelled; retain the same source plan |
 | Model projection failure | Correct payload/mapping or reviewed schema drift; retry without moving the checkpoint |
+| API returns 429 / 504 | Admission is capped at 16 and includes body reads; requests have a 30-second deadline. Retry after checking source/destination latency. |
+| Destination ACL validation fails | Review schema, table, sequence and column grants; remove unintended access explicitly. Startup does not revoke grants for you. |
 | Schema mismatch | Explicitly migrate only the owned destination; never edit applied migration checksums |
 
 Refresh local PQS credentials using the matching `pqs up` helper. Renew the
 worker/API source token for its exact Ledger user and restart those processes
 with the updated environment. Exporting a variable in another shell does not
 update a running process. Key rotation also invalidates old tokens/cursors.
+
+## PostgreSQL support
+
+The pinned PostgreSQL 14.25 compatibility fixture reached
+[end of support on November 12, 2026](https://www.postgresql.org/support/versioning/).
+It remains LocalNet test evidence, not a supported production database choice.
+Validate PQS and destination behavior on a supported major version using separate
+restored databases before migrating existing volumes.
 
 ## Disk and shutdown
 

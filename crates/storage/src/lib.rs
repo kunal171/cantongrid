@@ -1,4 +1,4 @@
-//! Owned PostgreSQL persistence for the bounded reference ingestion engine.
+//! Owned PostgreSQL state, lifecycle history, model projections and transactional recovery.
 #![forbid(unsafe_code)]
 mod error;
 mod journal;
@@ -11,7 +11,7 @@ pub use model_registry::ModelRegistration;
 mod model_installation;
 pub use model_installation::ModelInstallation;
 mod model_projection;
-pub use model_projection::{BoundModel, ModelBinding, ModelPage};
+pub use model_projection::{BoundModel, ModelBinding, ModelPage, RebuildAction, RebuildStatus};
 mod store;
 pub use error::StoreError;
 pub use migration::initialize_env;

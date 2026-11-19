@@ -62,6 +62,7 @@ impl Store {
         self.apply_guarded(plan, batch, inject_failure, None)
     }
 
+    /// Stage bounded fixture replay under its writer lock and recheck any supplied lease before commit.
     fn apply_guarded(
         &mut self,
         plan: &Plan,

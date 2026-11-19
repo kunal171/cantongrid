@@ -1,5 +1,6 @@
 //! REST and GraphQL share one authorized SQL query path; neither transport supplies party grants.
 mod model_api;
+mod resources;
 
 use crate::{auth, config::Project, index::ready};
 use async_graphql::{Context, EmptyMutation, EmptySubscription, Object, Schema, SimpleObject};
@@ -13,21 +14,21 @@ use axum::{
 use cantongrid_ledger::SourceAuthorization;
 use cantongrid_storage::{PageKind, Store};
 use serde::{Deserialize, Serialize};
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::path::{Path, PathBuf};
 
+/// Shared configuration location and resource budgets; each request reloads policy instead of caching grants.
 #[derive(Clone)]
 struct Service {
     path: PathBuf,
-    permits: Arc<tokio::sync::Semaphore>,
+    limits: resources::Limits,
 }
+/// One verified request bearer shared by its resolvers; fields cannot supply their own party grants.
 #[derive(Clone)]
 struct RequestContext {
     service: Service,
     token: String,
 }
+/// Generic page arguments only; caller identity and visibility never come from query parameters.
 #[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 struct Filter {
@@ -45,10 +46,34 @@ struct Page {
     provenance: async_graphql::Json<serde_json::Value>,
 }
 
+/// Keep the final verified source lease alive through REST encoding. GraphQL resolvers extract
+/// only the page and use a fresh operation-wide guard after all roots have completed.
+struct AuthorizedPage {
+    page: Page,
+    project: Project,
+    source: SourceAuthorization,
+    binding: String,
+}
+impl AuthorizedPage {
+    /// Recheck both authorities after the bounded body has been fully encoded.
+    fn response(&self, token: &str) -> Response {
+        resources::guarded_json(&self.page, || {
+            source_valid(&self.source, &self.project)
+                && auth::authenticate(&self.project, token)
+                    .is_ok_and(|id| id.binding == self.binding)
+        })
+    }
+}
+
 impl Service {
     /// Revalidate caller and source before the blocking read, then revalidate caller again
     /// afterward. Source lease checks occur inside Store before/after SQL as well.
-    async fn query(&self, token: &str, kind: PageKind, filter: Filter) -> Result<Page, String> {
+    async fn query(
+        &self,
+        token: &str,
+        kind: PageKind,
+        filter: Filter,
+    ) -> Result<AuthorizedPage, String> {
         let project = Project::load(&self.path)?;
         let identity = auth::authenticate(&project, token)?;
         let limit = filter.limit.unwrap_or(20);
@@ -78,21 +103,23 @@ impl Service {
         let caller = identity.caller.clone();
         let binding = identity.binding.clone();
         let path = self.path.clone();
-        let mut page = tokio::task::spawn_blocking(move || {
-            let lease = authorization
-                .lease()
-                .ok_or("source authorization unavailable")?;
-            let mut store = Store::open_env(&project.destination_database_env)
-                .map_err(|_| "destination unavailable")?;
-            let page = store
-                .read_page(&project.plan, &caller, lease, kind, after.as_deref(), limit)
-                .map_err(|e| format!("authorized query unavailable: {e}"))?;
-            Ok::<_, String>(page)
-        })
-        .await
-        .map_err(|_| "query worker failed")??;
+        let mut page = self
+            .limits
+            .blocking(move || {
+                let lease = authorization
+                    .lease()
+                    .ok_or("source authorization unavailable")?;
+                let mut store = Store::open_env(&project.destination_database_env)
+                    .map_err(|_| "destination unavailable")?;
+                let page = store
+                    .read_page(&project.plan, &caller, lease, kind, after.as_deref(), limit)
+                    .map_err(|e| format!("authorized query unavailable: {e}"))?;
+                Ok::<_, String>(page)
+            })
+            .await
+            .map_err(|_| "query worker failed")??;
         let project = Project::load(&path)?;
-        let _source = current_source(&project).await?;
+        let source_authorization = current_source(&project).await?;
         let current = auth::authenticate(&project, token)?;
         if current.binding != binding {
             return Err("authorization changed".into());
@@ -136,19 +163,17 @@ impl Service {
                 "payloadEncoding":"raw_json","archiveEvidence":"prior_create_dependency"
             })),
         };
-        if serde_json::to_vec(&result)
-            .map_err(|_| "query encoding failed")?
-            .len()
-            > 2 * 1024 * 1024
-        {
-            return Err("query response exceeds limit".into());
-        }
-        if !source_valid(&_source, &project)
+        if !source_valid(&source_authorization, &project)
             || auth::authenticate(&project, token)?.binding != binding
         {
             return Err("authorization expired or changed before delivery".into());
         }
-        Ok(result)
+        Ok(AuthorizedPage {
+            page: result,
+            project,
+            source: source_authorization,
+            binding,
+        })
     }
 }
 
@@ -167,9 +192,11 @@ fn public_event(item: serde_json::Value) -> serde_json::Value {
     })
 }
 
+/// Read-only generic contract/history roots; generated model queries have a separate schema.
 struct QueryRoot;
 #[Object]
 impl QueryRoot {
+    /// Resolve a caller-visible current-state page using the same authorized service path as REST.
     #[graphql(complexity = 50)]
     async fn active_contracts(
         &self,
@@ -189,11 +216,13 @@ impl QueryRoot {
                 },
             )
             .await
+            .map(|result| result.page)
             .map_err(|reason| {
                 eprintln!("CantonGrid query: {reason}");
                 async_graphql::Error::new("authorized query unavailable")
             })
     }
+    /// Resolve lifecycle history with its own cursor kind and inherited visibility evidence.
     #[graphql(complexity = 50)]
     async fn lifecycle_events(
         &self,
@@ -213,6 +242,7 @@ impl QueryRoot {
                 },
             )
             .await
+            .map(|result| result.page)
             .map_err(|reason| {
                 eprintln!("CantonGrid query: {reason}");
                 async_graphql::Error::new("authorized query unavailable")
@@ -263,6 +293,7 @@ fn bearer(headers: &HeaderMap) -> Result<String, StatusCode> {
         .ok_or(StatusCode::UNAUTHORIZED)?;
     Ok(value.into())
 }
+/// Return one bounded public failure shape without source, SQL or private payload diagnostics.
 fn error(status: StatusCode) -> Response {
     (
         status,
@@ -271,10 +302,8 @@ fn error(status: StatusCode) -> Response {
         .into_response()
 }
 
+/// Authenticate a generic REST read and retain its final source lease through response encoding.
 async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKind) -> Response {
-    let Ok(_permit) = service.permits.clone().try_acquire_owned() else {
-        return error(StatusCode::TOO_MANY_REQUESTS);
-    };
     let token = match bearer(&headers) {
         Ok(t) => t,
         Err(r) => return error(r),
@@ -286,7 +315,7 @@ async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKi
         return error(StatusCode::UNAUTHORIZED);
     }
     match service.query(&token, kind, filter).await {
-        Ok(page) => Json(page).into_response(),
+        Ok(page) => page.response(&token),
         Err(reason) => {
             eprintln!("CantonGrid query: {reason}");
             error(
@@ -299,6 +328,7 @@ async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKi
         }
     }
 }
+/// Expose current contracts through the common REST guard and strict page extractor.
 async fn active(
     State(service): State<Service>,
     headers: HeaderMap,
@@ -306,6 +336,7 @@ async fn active(
 ) -> Response {
     rest(service, headers, filter, PageKind::Active).await
 }
+/// Expose history through the common REST guard, keeping its cursor distinct from active rows.
 async fn history(
     State(service): State<Service>,
     headers: HeaderMap,
@@ -321,9 +352,6 @@ async fn graphql(
     headers: HeaderMap,
     Json(request): Json<async_graphql::Request>,
 ) -> Response {
-    let Ok(_permit) = service.permits.clone().try_acquire_owned() else {
-        return error(StatusCode::TOO_MANY_REQUESTS);
-    };
     let token = match bearer(&headers) {
         Ok(t) => t,
         Err(r) => return error(r),
@@ -351,18 +379,11 @@ async fn graphql(
     let Ok(_source) = current_source(&latest_project).await else {
         return error(StatusCode::SERVICE_UNAVAILABLE);
     };
-    let current = auth::authenticate(&latest_project, &token);
-    if !current.is_ok_and(|id| id.binding == identity.binding) {
-        return error(StatusCode::UNAUTHORIZED);
-    }
-    let response = Json(response).into_response();
-    if !source_valid(&_source, &latest_project)
-        || !auth::authenticate(&latest_project, &token)
-            .is_ok_and(|id| id.binding == identity.binding)
-    {
-        return error(StatusCode::UNAUTHORIZED);
-    }
-    response
+    resources::guarded_json(&response, || {
+        source_valid(&_source, &latest_project)
+            && auth::authenticate(&latest_project, &token)
+                .is_ok_and(|id| id.binding == identity.binding)
+    })
 }
 
 /// Bind only configured loopback addresses, cap request bodies and bound concurrent DB work.
@@ -374,7 +395,7 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .map_err(|_| "cannot bind API listener")?;
     let service = Service {
         path: path.to_owned(),
-        permits: Arc::new(tokio::sync::Semaphore::new(16)),
+        limits: resources::Limits::default(),
     };
     let router = Router::new()
         .route("/v1/contracts", get(active))
@@ -384,8 +405,12 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .route("/v1/models", get(model_api::list))
         .route("/v1/models/{namespace}/{name}", get(model_api::describe))
         .route("/v1/models/{namespace}/{name}/query", post(model_api::rows))
-        .layer(axum::middleware::from_fn(no_store))
         .layer(DefaultBodyLimit::max(16384))
+        .layer(axum::middleware::from_fn_with_state(
+            service.limits.clone(),
+            resources::admit,
+        ))
+        .layer(axum::middleware::from_fn(no_store))
         .with_state(service);
     axum::serve(listener, router)
         .with_graceful_shutdown(async {

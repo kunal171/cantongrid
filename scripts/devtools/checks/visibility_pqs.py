@@ -14,6 +14,7 @@ DATABASE = pg_command('cantongrid_visibility')
 
 
 def cached():
+    """Inspect the isolated AB cache without treating retained SQL rows as current permission."""
     sql = '''BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
 SELECT json_agg(json_build_object('payload', payload, 'witnesses', witnesses))
 FROM active('Visibility:Record');
@@ -23,10 +24,12 @@ COMMIT;'''
 
 
 def ready():
+    """Check the AB exporter rather than the unrelated provider profile."""
     return source_ready(visibility=True)
 
 
 def main():
+    """Observe cache retention and readiness after revocation, then restore rights and renew the source."""
     parties = context()['parties']
     if not ready():
         raise ValueError('Start the dedicated AB source and wait for readiness before this test')

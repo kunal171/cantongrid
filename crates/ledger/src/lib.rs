@@ -48,6 +48,7 @@ pub struct SourceAuthorization {
 }
 
 impl SourceAuthorization {
+    /// Start without a lease; only a successful current grant check can authorize later reads.
     pub fn new(checker: GrantChecker) -> Self {
         Self {
             checker,
@@ -106,10 +107,12 @@ struct CredentialBounds {
     exp: u64,
 }
 
+/// Pinned JSON Ledger user response; HTTP success alone is not proof of the expected user.
 #[derive(Deserialize)]
 struct UserResponse {
     user: User,
 }
+/// User status and identity-provider fields checked on both sides of the rights request.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct User {
@@ -119,25 +122,30 @@ struct User {
     #[serde(default)]
     identity_provider_id: String,
 }
+/// Source rights as returned by Ledger; an empty or unsupported set cannot produce a lease.
 #[derive(Deserialize)]
 struct RightsResponse {
     #[serde(default)]
     rights: Vec<Right>,
 }
+/// One strictly decoded Ledger right; extra or unknown right shapes are rejected.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Right {
     kind: Kind,
 }
+/// Only exact CanReadAs rights are supported; ActAs/admin/wildcard variants must fail closed.
 #[derive(Deserialize)]
 enum Kind {
     CanReadAs(ReadAs),
 }
+/// Pinned wrapper around the granted party, not a query-supplied visibility override.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ReadAs {
     value: Party,
 }
+/// Wire party field validated into a redacted PartyId before comparing the complete right set.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Party {

@@ -9,7 +9,8 @@ import subprocess
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from ..http import open_local
 from zipfile import ZipFile
 
 from ..common import ROOT, ENV, compose, write_private, source_ready
@@ -19,6 +20,7 @@ from .pipeline import application_token
 
 
 def main(argv=None):
+    """Run the explicitly write-enabled Outcomia lifecycle against isolated LocalNet test state."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dar', type=Path, required=True)
     parser.add_argument('--allow-ledger-writes', action='store_true', required=True,
@@ -47,6 +49,7 @@ def main(argv=None):
     market_template = '#outcomia-markets:Outcomia.Binary:BinaryMarket'
 
     def active(template):
+        """Read existing contracts at the captured Ledger boundary with the selected event format."""
         offset = get(BASE, '/v2/state/ledger-end', token())['offset']
         selection = {'cumulative': [{'identifierFilter': {'TemplateFilter': {'value': {'templateId': template}}}}]}
         rows = request(BASE, '/v2/state/active-contracts?limit=100', token(WRITER), body={
@@ -62,6 +65,7 @@ def main(argv=None):
     expected_events = set()
 
     def submit(command, suffix):
+        """Submit one owned fixture command and collect real transaction events for reconciliation."""
         response = request(BASE, '/v2/commands/submit-and-wait-for-transaction', token(WRITER), body={
             'commands': {'commandId': identifier + suffix, 'userId': WRITER,
                          'actAs': selected, 'packageIdSelectionPreference': [package], 'commands': [command]}}, timeout=120)
@@ -74,6 +78,7 @@ def main(argv=None):
         return created
 
     def exercise(template, contract, choice, arguments, suffix):
+        """Consume the current contract and return the created successor used by later choices."""
         return submit({'ExerciseCommand': {'templateId': template, 'contractId': contract,
                                    'choice': choice, 'choiceArgument': arguments}}, suffix)
 
@@ -144,10 +149,11 @@ def main(argv=None):
     base = 'http://127.0.0.1:18889'
 
     def query(path, subject, body=None):
+        """Read the child API with the selected fixture principal and enforce no-store responses."""
         headers = {'Authorization': 'Bearer ' + application_token(subject, key)}
         if body is not None:
             headers['Content-Type'] = 'application/json'
-        with urlopen(Request(base + path, data=json.dumps(body).encode() if body is not None else None, headers=headers), timeout=15) as response:
+        with open_local(Request(base + path, data=json.dumps(body).encode() if body is not None else None, headers=headers), timeout=15) as response:
             if response.headers.get('Cache-Control') != 'no-store':
                 raise ValueError('Private Outcomia API response permits caching')
             return json.load(response)

@@ -10,3 +10,6 @@ pub use api::serve;
 
 mod model_binding;
 pub use model_binding::bind_model;
+
+mod model_rebuild;
+pub use model_rebuild::{RebuildOperation, rebuild};

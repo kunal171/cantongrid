@@ -1,18 +1,27 @@
 -- Local demonstration only: no collateral, custody, trades or real-world outcome claims.
 module Market where
 
+-- | Lifecycle values projected by the model; choices exercise Draft -> Open -> Resolved.
 data MarketState = Draft | Open | Resolved
   deriving (Eq, Show)
 
+-- | An immutable demo revision. Consuming choices emit archive/create events for the indexer.
+-- The operator authorizes writes; readers receive visibility without choice control.
 template PredictionMarket
   with
+    -- The only signatory and controller of the explicit lifecycle choices.
     operator : Party
+    -- Observers model shared visibility; they do not receive operator authority.
     readers : [Party]
+    -- Identifies one cycle across contract revisions; the runner scopes it to a local run.
     demoId : Text
     question : Text
+    -- Exact scale 10: tick 0.0000000001 projects to 0.0000010000 basis points.
     priceTick : Numeric 10
+    -- Int64 transport is tested with 9223372036854775807, encoded as a string by the API.
     quantityLot : Int
     state : MarketState
+    -- None differs from Some False; both optional states are query acceptance controls.
     outcome : Optional Bool
   where
     signatory operator
@@ -20,12 +29,14 @@ template PredictionMarket
     ensure demoId /= "" && question /= "" && priceTick > 0.0 && quantityLot > 0
 
     -- Consuming choices archive the old contract and create its next immutable revision.
+    -- | Archive this draft and create its open successor, retaining terms and visibility.
     choice Publish : ContractId PredictionMarket
       controller operator
       do
         assertMsg "Only a draft can be published" (state == Draft)
         create this with state = Open
 
+    -- | Archive the open revision and record the operator-supplied fixture result.
     choice Resolve : ContractId PredictionMarket
       with result : Bool
       controller operator

@@ -1,4 +1,4 @@
-//! Read-only inspection of the verified schema-041 profile. This is not live contract ingestion.
+//! Read-only schema-041 inspection, retained-window checks and authorized contract paging.
 #![forbid(unsafe_code)]
 use cantongrid_postgres::{DatabaseError, connect_env, postgres::IsolationLevel};
 use std::fmt;

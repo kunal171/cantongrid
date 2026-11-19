@@ -33,12 +33,14 @@ TOOLS = {
 
 
 def verify(data, expected):
+    """Reject downloaded or cached bytes before execution when their pinned digest differs."""
     if hashlib.sha256(data).hexdigest() != expected:
         raise ValueError('Security tool checksum mismatch; refusing installation/execution')
 
 
 def extract_binary(archive, name):
     # Read only the selected regular file; never extract archive paths or links into the workspace.
+    """Read one bounded regular executable from the archive without extracting paths or links."""
     with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as source:
         matches = [member for member in source.getmembers()
                    if member.isfile() and Path(member.name).name == name]
@@ -48,6 +50,7 @@ def extract_binary(archive, name):
 
 
 def binary(name):
+    """Recheck the cached executable checksum on every requested security-tool invocation."""
     path = DIRECTORY / name
     if not path.is_file():
         raise ValueError('Install the pinned security tools before checking')
@@ -56,6 +59,7 @@ def binary(name):
 
 
 def install():
+    """Download only the pinned development tools and verify archive and executable digests."""
     if platform.system() != 'Linux' or platform.machine() not in ('x86_64', 'amd64'):
         raise ValueError('Pinned binary helper supports Linux x86_64; see contributing security commands')
     DIRECTORY.mkdir(parents=True, exist_ok=True)
@@ -76,6 +80,7 @@ def install():
 def secrets():
     # Explicit defaults prevent local GITLEAKS_CONFIG or committed ignore files from silently
     # changing CI's coverage. Scoped exceptions require a reviewed policy change here.
+    """Scan history and eligible files with redaction and an explicit, unmodified scanner policy."""
     with tempfile.TemporaryDirectory(prefix='cantongrid-secret-check-') as directory:
         root = Path(directory)
         config = root / 'default.toml'
@@ -100,6 +105,7 @@ def secrets():
 
 
 def main(argv=None):
+    """Run the selected security checks using verified local binaries; never accept private service keys."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['install', 'check'])
     parser.add_argument('area', choices=['all', 'audit', 'dependencies', 'secrets', 'workflows'], nargs='?', default='all')

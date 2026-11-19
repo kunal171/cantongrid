@@ -180,6 +180,8 @@ impl Drop for Scenario {
                     )?;
                 }
                 for table in [
+                    "model_rebuild_dirty",
+                    "model_rebuilds",
                     "model_bindings",
                     "outbox",
                     "events",

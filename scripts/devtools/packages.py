@@ -64,6 +64,7 @@ def verify(directory):
 
 
 def main(argv=None):
+    """Inspect the selected Cargo archive directory after a dry run; never upload packages."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['verify'])
     parser.add_argument('--directory', type=Path,

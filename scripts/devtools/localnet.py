@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-from .common import ROOT
+from .common import ROOT, write_private
 CHECKOUT = ROOT / '.local/cn-quickstart'
 REVISION = '8b898ed3ccb15e243b22ee8d0ed3573fb91ee6b9'
 PROJECT = 'cantongrid-localnet'
@@ -13,10 +13,12 @@ CONFIG = ROOT / '.local/localnet.compose.json'
 
 
 def run(args, **kwargs):
+    """Stop the helper immediately when an owned infrastructure command fails."""
     return subprocess.run(args, check=True, **kwargs)
 
 
 def prepare():
+    """Reuse only the pinned, clean upstream checkout before rendering its Compose configuration."""
     CHECKOUT.parent.mkdir(parents=True, exist_ok=True)
     if not CHECKOUT.exists():
         run(['git', 'clone', '--no-checkout', 'https://github.com/digital-asset/cn-quickstart.git', str(CHECKOUT)])
@@ -47,6 +49,7 @@ def apply_local_defaults(config):
 
 
 def render():
+    """Render pinned Compose inputs with disposable settings, loopback ports and bounded logs."""
     quickstart = prepare()
     module = quickstart / 'docker/modules/localnet'
     pins = dict(line.split('=', 1) for line in (quickstart / '.env').read_text().splitlines()
@@ -75,12 +78,12 @@ def render():
             '-f', str(module / 'resource-constraints.yaml'), *PROFILES]
     config = json.loads(subprocess.check_output([*base, 'config', '--format', 'json'], env=env))
     apply_local_defaults(config)
-    CONFIG.write_text(json.dumps(config, indent=2) + '\n')
-    CONFIG.chmod(0o600)
+    write_private(CONFIG, config)
     return ['docker', 'compose', '--progress', 'plain', '-p', PROJECT, '-f', str(CONFIG), *PROFILES]
 
 
 def main(argv=None):
+    """Operate only the isolated LocalNet project; stopping retains named database volumes."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['prepare', 'up', 'status', 'stop', 'logs', 'images'])
     args = parser.parse_args(argv)

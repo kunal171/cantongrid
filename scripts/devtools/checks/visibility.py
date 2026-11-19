@@ -7,6 +7,7 @@ from ..visibility import (
 
 
 def check_rows(events, expected):
+    """Check expected fixture labels and exact values rather than relying on row counts alone."""
     if len(events) != len(expected) or {r['createArgument']['label'] for r in events} != expected:
         raise ValueError('Ledger visibility returned unexpected fixture records')
     for event in events:
@@ -17,6 +18,7 @@ def check_rows(events, expected):
 
 
 def expect_forbidden(subject, parties, bearer=None):
+    """Require a permission denial for a party selection outside the verified source scope."""
     try:
         acs(subject, parties, bearer)
     except HTTPError as exc:
@@ -27,6 +29,7 @@ def expect_forbidden(subject, parties, bearer=None):
 
 
 def main():
+    """Exercise owned A/B/AB reads, then revoke and restore AB rights in a finally block."""
     data = context()
     parties = data['parties']
     expected = {'a': {'a-only', 'joint'}, 'b': {'b-only', 'joint'},

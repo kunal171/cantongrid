@@ -46,6 +46,7 @@ pub enum Expression {
     },
 }
 
+/// Optional equality against one projected field, checked using that field's exact output type.
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Filter {
@@ -65,6 +66,7 @@ pub struct Model {
     pub filter: Option<Filter>,
 }
 
+/// Strict versioned model catalog input; compiled plans cannot be supplied through this document.
 #[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Document {
@@ -166,6 +168,7 @@ impl Model {
 }
 
 impl FieldType {
+    /// Validate the scalar/optional vocabulary and supported Numeric scale before planning expressions.
     pub fn validate(&self) -> Result<(), ModelError> {
         match self {
             Self::Numeric { scale } if *scale > 37 => Err(ModelError::Type),
@@ -200,9 +203,11 @@ impl FieldType {
 }
 
 impl Expression {
+    /// Infer and validate expression types under the same node/depth budgets used by model validation.
     pub fn output_type(&self) -> Result<FieldType, ModelError> {
         self.output_type_at(0, &mut 0)
     }
+    /// Count expression work while rejecting unsupported arithmetic pairs and excessive recursion.
     fn output_type_at(&self, depth: usize, nodes: &mut usize) -> Result<FieldType, ModelError> {
         *nodes += 1;
         if depth > 16 || *nodes > 256 {
@@ -273,12 +278,14 @@ fn identifier(name: &str) -> bool {
         ]
         .contains(&name)
 }
+/// Bound source-object path segments and reject characters PostgreSQL text cannot represent.
 fn path_identifier(name: &str) -> bool {
     !name.is_empty()
         && name.len() <= 64
         && name.as_bytes()[0].is_ascii_alphabetic()
         && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
 }
+/// Hash canonical definition text for identity/drift detection, never as an authorization capability.
 fn digest(text: &str) -> String {
     Sha256::digest(text.as_bytes())
         .iter()

@@ -13,6 +13,7 @@ BASE = 'http://127.0.0.1:3975'
 
 def source_config(subject, parties, metadata, database):
     # JSON objects must be nested: quoted dotted keys would be literal HOCON keys.
+    """Build the nested Scribe profile with exact numeric strings and a one-hour fixture token."""
     return {
         'source': {'ledger': {'host': 'canton', 'port': 3901, 'auth': 'OAuth'}},
         'pipeline': {'oauth': {'accessToken': token(subject, 3600)},
@@ -26,6 +27,7 @@ def source_config(subject, parties, metadata, database):
 
 
 def prepare_provider():
+    """Verify the provider party and exact existing read-only rights before writing its profile."""
     admin = token()
     party = get(BASE, '/v2/users/ledger-api-user', admin)['user'].get('primaryParty')
     if not party:
@@ -49,6 +51,7 @@ def prepare_provider():
 
 
 def prepare_visibility():
+    """Prepare the separate AB source database/profile without widening the provider reader."""
     data = context()
     ensure_user(USERS['ab'], [right('CanReadAs', p) for p in data['parties'].values()])
     write_private(DIRECTORY / 'source.conf', source_config(USERS['ab'], '*', '!*', 'cantongrid_visibility'))
@@ -64,6 +67,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 
 def up(*, visibility=False, quiet=False):
+    """Renew the selected profile, recreate its exporter and wait for healthy streaming."""
     if visibility:
         prepare_visibility()
     else:
@@ -78,6 +82,7 @@ def up(*, visibility=False, quiet=False):
 
 
 def main(argv=None):
+    """Dispatch source setup, read-only-role installation, status or volume-preserving shutdown."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['up', 'stop', 'status', 'reader'])
     parser.add_argument('--visibility', action='store_true', help='Use the isolated AB visibility source')

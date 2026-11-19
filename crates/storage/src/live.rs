@@ -66,6 +66,7 @@ impl Store {
         self.apply_live_checked(plan, batch, lease, None)
     }
 
+    /// Check lease/plan/checkpoint, then commit canonical events, model changes and rebuild dirty IDs together.
     fn apply_live_checked(
         &mut self,
         plan: &Plan,
@@ -224,6 +225,7 @@ impl Store {
                 }
                 _ => return Err(StoreError::InvalidBatch),
             };
+            model_projection::rebuild::changed(&mut tx, plan, &event.contract, &event.template)?;
             let single = Batch {
                 context: batch.context.clone(),
                 position: batch.position.clone(),

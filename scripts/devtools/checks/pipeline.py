@@ -9,7 +9,8 @@ import secrets
 import subprocess
 import time
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from ..http import open_local
 
 from ..common import ENV, ROOT, compose, write_private, wait_source
 from ..ledger import token
@@ -19,6 +20,7 @@ from ..visibility import AMOUNT, SEQUENCE, USERS, context
 def application_token(subject, key):
     """Issue an ephemeral organization test token, separate from LocalNet source auth."""
     def encode(value):
+        """Encode compact JWT segments for the fixture organization bearer."""
         return base64.urlsafe_b64encode(json.dumps(value).encode()).rstrip(b'=')
     now = int(time.time())
     message = b'.'.join([encode({'alg': 'HS256', 'typ': 'JWT'}), encode({
@@ -77,11 +79,12 @@ def main():
     base = 'http://127.0.0.1:18889'
 
     def query(path, subject='ab', body=None):
+        """Call the child Rust API with an independently signed fixture caller identity."""
         headers = {'Authorization': 'Bearer ' + application_token(subject, key)}
         if body is not None:
             headers['Content-Type'] = 'application/json'
         request = Request(base + path, data=json.dumps(body).encode() if body else None, headers=headers)
-        with urlopen(request, timeout=15) as response:
+        with open_local(request, timeout=15) as response:
             if response.headers.get('Cache-Control') != 'no-store':
                 raise ValueError('Private API response permits caching')
             return json.load(response)

@@ -7,6 +7,7 @@ from .ledger import request, token
 
 
 def main(argv=None):
+    """Validate DAR bytes through LocalNet without uploading or submitting contract commands."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('dar', type=Path)
     args = parser.parse_args(argv)

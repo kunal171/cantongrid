@@ -42,6 +42,7 @@ class Probe:
     selected: dict | None = None
 
     def cli(self, *args):
+        """Run an operator model command with private credentials kept in the child environment."""
         result = subprocess.run([str(self.binary), *map(str, args)], env=self.env,
                                 capture_output=True, text=True)
         if result.returncode:
@@ -69,6 +70,7 @@ class Probe:
         return entry
 
     def path(self):
+        """Build the REST route for this probe's namespace and markets model."""
         return '/v1/models/' + self.namespace + '/markets'
 
     def read(self, principal='ab', transport='rest', **options):

@@ -7,6 +7,7 @@ from .common import ROOT
 
 
 def check(root=ROOT, tag=None):
+    """Verify version, license and packaged-asset consistency without tagging or publishing."""
     workspace = tomllib.loads((root / 'Cargo.toml').read_text())['workspace']['package']
     version = workspace['version']
     if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?', version):
@@ -57,6 +58,7 @@ def check(root=ROOT, tag=None):
 
 
 def main(argv=None):
+    """Validate the intended release tag against source metadata; perform no publication."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['check'])
     parser.add_argument('--tag', help='Validate an intended tag without creating it')

@@ -62,6 +62,7 @@ pub async fn index(path: &Path, once: bool) -> Result<(), String> {
     }
 }
 
+/// Renew source authority, read one bounded page and commit only against the checkpoint used to read it.
 async fn cycle(path: &Path) -> Result<(), String> {
     let project = Project::load(path)?;
     let mut auth =

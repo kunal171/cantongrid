@@ -9,6 +9,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+/// Reloadable organization policy; epoch/content changes invalidate previously issued cursors.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Grants {
@@ -16,12 +17,14 @@ struct Grants {
     epoch: u64,
     principals: BTreeMap<String, Principal>,
 }
+/// Local access mapping for one bearer subject, independent from its Canton party identifiers.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Principal {
     enabled: bool,
     parties: Vec<String>,
 }
+/// Organization bearer claims; signature, issuer, audience and bounded lifetime are checked separately.
 #[derive(Deserialize, Serialize)]
 struct Claims {
     sub: String,
@@ -40,6 +43,7 @@ pub(crate) struct Identity {
     pub caller: CallerGrants,
 }
 
+/// Signed page position bound to caller, query and current policy; contents are not encrypted.
 #[derive(Serialize, Deserialize)]
 struct Cursor {
     sub: String,
@@ -51,6 +55,7 @@ struct Cursor {
     after: String,
 }
 
+/// Read Unix seconds for token expiry; an invalid clock fails authorization rather than extending it.
 pub(crate) fn now() -> Result<u64, String> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -77,6 +82,7 @@ fn keys(project: &Project) -> Result<(String, String), String> {
     Ok((token, cursor))
 }
 
+/// Pin HS256, exact issuer/audience and zero expiry leeway for both bearer and cursor verification.
 fn validation(project: &Project) -> Validation {
     let mut v = Validation::new(Algorithm::HS256);
     v.leeway = 0;
@@ -102,6 +108,7 @@ pub(crate) fn authenticate(project: &Project, token: &str) -> Result<Identity, S
     .map_err(|_| "unauthorized")?
     .claims;
     let time = now()?;
+    // A valid signature does not permit future-issued or arbitrarily long-lived bearer claims.
     if claims.iat > time || claims.exp <= time || claims.exp.saturating_sub(claims.iat) > 3600 {
         return Err("unauthorized".into());
     }
@@ -150,6 +157,7 @@ pub(crate) fn authenticate(project: &Project, token: &str) -> Result<Identity, S
     })
 }
 
+/// Sign a short-lived page position without exceeding the caller bearer lifetime or resume size limit.
 pub(crate) fn cursor(
     project: &Project,
     id: &Identity,

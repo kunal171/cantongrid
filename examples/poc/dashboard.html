@@ -15,9 +15,13 @@ body{font:16px system-ui,sans-serif;color:#dce8f5;background:#101a28;max-width:1
 <div class="scroll"><table><thead><tr><th>Demo</th><th>State</th><th>Outcome</th><th>Price tick</th><th>Basis points</th><th>Quantity lot</th></tr></thead><tbody id="markets"></tbody></table></div>
 <h2>Lifecycle history</h2><pre id="history"></pre>
 <h2>Source progress</h2><pre id="progress"></pre>
+<!-- The proxy holds fixture keys; the browser receives only already-authorized API data. -->
 <script>
+// One request runs at a time. Each identity change invalidates any older in-flight response.
 let loading=false;let generation=0;
+/** Remove the old identity's view immediately, before its replacement request completes. */
 function clearData(){document.getElementById('markets').replaceChildren();document.getElementById('history').textContent='';document.getElementById('progress').textContent='';}
+/** Fetch one fixture-scoped view; stale generations and failed reads must never retain data. */
 async function refresh(){
  if(loading)return;loading=true;const requestGeneration=generation;
  const status=document.getElementById('status');
@@ -25,11 +29,13 @@ async function refresh(){
   const response=await fetch('/data?user='+encodeURIComponent(document.getElementById('user').value),{cache:'no-store'});
   if(!response.ok)throw new Error('API unavailable; displayed data cleared');
   const data=await response.json();
+  // A response started for Alice must not render after the selector changed to Bob.
   if(requestGeneration!==generation)return;
   const body=document.getElementById('markets');body.replaceChildren();
   for(const item of data.model.items){
    const tr=document.createElement('tr');
    for(const key of ['demoId','state','outcome','priceTick','priceTickBps','quantityLot']){
+    // textContent avoids interpreting ledger text as HTML; strings retain exact financial digits.
     const td=document.createElement('td');td.textContent=item.values[key]===null?'—':String(item.values[key]);tr.append(td);
    }
    body.append(tr);
@@ -41,6 +47,7 @@ async function refresh(){
   if(requestGeneration!==generation)return;
   document.getElementById('markets').replaceChildren();document.getElementById('history').textContent='';document.getElementById('progress').textContent='';
   status.className='error';status.textContent=e.message;
+ // If selection changed while loading, run a fresh request after releasing the in-flight flag.
  }finally{loading=false;if(requestGeneration!==generation)refresh();}
 }
 document.getElementById('refresh').onclick=refresh;document.getElementById('user').onchange=()=>{generation++;clearData();document.getElementById('status').textContent='Loading selected identity…';refresh();};setInterval(refresh,2000);refresh();

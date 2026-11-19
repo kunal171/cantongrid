@@ -59,6 +59,7 @@ fn fixed(coefficient: i128, scale: u8) -> Result<Decimal, ModelError> {
     Ok(value)
 }
 
+/// Convert validated fixed-scale text to its integer coefficient; `1.20` becomes `120`.
 fn coefficient(decimal: &Decimal) -> Result<i128, ModelError> {
     decimal
         .decimal
@@ -67,6 +68,7 @@ fn coefficient(decimal: &Decimal) -> Result<i128, ModelError> {
         .map_err(|_| ModelError::Overflow)
 }
 
+/// Closed arithmetic set; Numeric multiplication is supported only with an Int64 multiplier.
 #[derive(Clone, Copy)]
 pub(crate) enum Operation {
     Add,

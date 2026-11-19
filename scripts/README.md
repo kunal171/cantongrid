@@ -47,7 +47,6 @@ it restores grants/services and stops the child. It still writes the owned
 indexer destination. The Outcomia command and its separate write opt-in are in
 [the example guide](../docs/guide/outcomia.md).
 
-Stop AB PQS before provider PQS, then LocalNet. All stop helpers retain named
-volumes. Keep logs at INFO with 10 MiB × 3-file rotation; never globally prune data.
+For shutdown order, volume retention and log limits, see [operations](../docs/guide/operations.md).
 See [setup](../docs/guide/localnet-source.md), [operations](../docs/guide/operations.md)
 and [verification](../docs/verification.md).

@@ -1,4 +1,4 @@
-//! Shared authorized database reads for future transports; no caller identity is accepted from filters.
+//! Shared REST/GraphQL database reads; caller identity is never accepted from query filters.
 use crate::{Store, StoreError, journal::stream_key};
 use cantongrid_core::{authorization::SourceLease, config::Plan, visibility::CallerGrants};
 use cantongrid_postgres::postgres::IsolationLevel;

@@ -1,4 +1,4 @@
-//! Local fixture persistence and read-only source inspection. Live ingestion/APIs remain gated.
+//! CLI entrypoints for fixtures, source checks, model operations and authorized live indexing/APIs.
 #![forbid(unsafe_code)]
 mod commands;
 
@@ -22,6 +22,9 @@ Usage:
   cantongrid models preview <models.json> <model-name> <payload.json>
   cantongrid models register <models.json> --namespace <project> --database-env <CANTONGRID_VARIABLE>
   cantongrid models inspect <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
+  cantongrid models rebuild start <runtime.json> <job> <project> <model-name> <revision> [--replace <previous-revision>]
+  cantongrid models rebuild step <runtime.json> <job> [--limit <1..64>]
+  cantongrid models rebuild status|activate|cancel <runtime.json> <job>
   cantongrid models bind <runtime.json> <project> <model-name> <revision> [--replace <previous-revision>]
   cantongrid models install <project> <model-name> <revision> --database-env <CANTONGRID_VARIABLE>
   cantongrid init <new-directory>
@@ -40,6 +43,7 @@ Fixture caller grants are simulated. Source inspection is read-only metadata, no
 No fixture parties means no visible records. Live index/serve require explicit runtime policy and credentials; dev remains planned.";
 const MAX_DOCUMENT_BYTES: u64 = 8 * 1024 * 1024;
 
+/// Emit a redacted operator result or failure and choose the corresponding process exit status.
 fn main() -> ExitCode {
     match run(std::env::args().skip(1).collect()) {
         Ok(()) => ExitCode::SUCCESS,
@@ -50,8 +54,12 @@ fn main() -> ExitCode {
     }
 }
 
+/// Accept exact command shapes before dispatching fixture, source or operator actions.
 fn run(args: Vec<String>) -> Result<(), String> {
     match args.as_slice() {
+        [command, subject, action, rest @ ..] if command == "models" && subject == "rebuild" => {
+            commands::model_rebuild::run(action, rest)
+        }
         [] => {
             println!("{HELP}");
             Ok(())
@@ -201,10 +209,12 @@ fn run(args: Vec<String>) -> Result<(), String> {
     }
 }
 
+/// Load only the fixture schema; live worker/API commands use runtime configuration instead.
 fn load_plan(path: &Path) -> Result<Plan, String> {
     Plan::parse(&read_document(path)?).map_err(|error| error.to_string())
 }
 
+/// Bound a regular input file before parsing and omit its path/content from failures.
 fn read_document(path: &Path) -> Result<String, String> {
     // Reject directories/devices/FIFOs before opening (a FIFO open could otherwise block).
     if !fs::metadata(path)
@@ -231,6 +241,7 @@ fn read_document(path: &Path) -> Result<String, String> {
     String::from_utf8(bytes).map_err(|_| "input document must be UTF-8".into())
 }
 
+/// Scaffold a new fixture directory only; refuse overwriting existing local work.
 fn init(directory: &Path) -> Result<(), String> {
     fs::create_dir(directory).map_err(
         |_| "init requires a new directory under an existing parent; no files were overwritten",

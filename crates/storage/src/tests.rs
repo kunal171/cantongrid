@@ -384,3 +384,67 @@ fn history_sql_preserves_all_dependencies_and_denies_empty_evidence() {
         0
     );
 }
+
+/// Count payload evaluations rather than timing: requesting one row must not encode every
+/// visible contract/event just to compute the authorized total.
+#[test]
+#[ignore = "requires owned PostgreSQL; run serially"]
+fn canonical_queries_only_build_payloads_for_the_requested_page() {
+    let scenario = Scenario::new();
+    let mut store = scenario.open();
+    for batch in &scenario.batches {
+        store.apply(&scenario.plan, batch).unwrap();
+    }
+    let mut tx = store.client.transaction().unwrap();
+    tx.batch_execute(
+        "CREATE TEMP TABLE encoded_values (calls integer NOT NULL) ON COMMIT DROP;
+         INSERT INTO encoded_values VALUES (0);
+         CREATE FUNCTION pg_temp.observe_value(value jsonb) RETURNS jsonb
+         LANGUAGE plpgsql VOLATILE AS $$ BEGIN
+             UPDATE pg_temp.encoded_values SET calls=calls+1;
+             RETURN value;
+         END $$;",
+    )
+    .unwrap();
+    let key = stream_key(&scenario.plan).0;
+    let parties = vec!["A".to_owned(), "B".to_owned()];
+    for (sql, needle, replacement, total) in [
+        (
+            include_str!("query_active.sql"),
+            "'payload',payload",
+            "'payload',pg_temp.observe_value(payload)",
+            3_i64,
+        ),
+        (
+            include_str!("query_history.sql"),
+            "'envelope',envelope",
+            "'envelope',pg_temp.observe_value(envelope)",
+            5_i64,
+        ),
+    ] {
+        assert!(
+            sql.contains(needle),
+            "the payload evaluation probe must be installed"
+        );
+        tx.execute("UPDATE pg_temp.encoded_values SET calls=0", &[])
+            .unwrap();
+        let row = tx
+            .query_one(
+                &sql.replace(needle, replacement),
+                &[&key, &parties, &None::<String>, &1_i64],
+            )
+            .unwrap();
+        assert_eq!(row.get::<_, i64>(0), total);
+        assert_eq!(
+            row.get::<_, serde_json::Value>(1).as_array().unwrap().len(),
+            1
+        );
+        assert_eq!(
+            tx.query_one("SELECT calls FROM pg_temp.encoded_values", &[])
+                .unwrap()
+                .get::<_, i32>(0),
+            1
+        );
+    }
+    tx.rollback().unwrap();
+}

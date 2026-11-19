@@ -7,3 +7,5 @@ pub mod model_registry;
 pub mod models;
 
 pub mod model_binding;
+
+pub mod model_rebuild;

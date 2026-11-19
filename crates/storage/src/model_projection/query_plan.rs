@@ -23,6 +23,7 @@ pub(super) struct QueryPlan {
     query: ValidatedQuery,
 }
 impl QueryPlan {
+    /// Compile validated fields/operators into SQL fragments while binding every query/cursor value as a parameter.
     pub fn new(
         model: &Model,
         query: ValidatedQuery,
