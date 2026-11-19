@@ -10,6 +10,7 @@ pub enum ModelError {
     Missing,
     Overflow,
     Limit,
+    Query,
 }
 impl fmt::Display for ModelError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -20,6 +21,7 @@ impl fmt::Display for ModelError {
             Self::Path=>"model paths require bounded object-field identifiers",
             Self::Missing=>"required model input is missing or null",
             Self::Overflow=>"model arithmetic exceeds the exact declared precision or integer range",
+            Self::Query=>"invalid model query: check fields, exact scalar values, operators, ordering and limits",
             Self::Limit=>"model document, expression or payload exceeds its supported bound",
         })
     }

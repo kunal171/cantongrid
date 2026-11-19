@@ -15,3 +15,8 @@ pub use sql::{SqlColumn, SqlPlan};
 mod tests;
 
 mod client;
+
+mod query;
+pub use query::{
+    Comparison, Direction, QueryField, QueryOptions, QueryValue, Sort, ValidatedQuery,
+};
