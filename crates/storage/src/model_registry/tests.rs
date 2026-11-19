@@ -162,8 +162,7 @@ fn registration_survives_reopen_and_is_idempotent_per_namespace() {
         Some(original.models()[0].clone())
     );
     assert!(!format!("{}", StoreError::ModelConflict).contains("private-definition"));
-    let outcomia =
-        Catalog::parse(include_str!("../../assets/models/outcomia.json")).unwrap();
+    let outcomia = Catalog::parse(include_str!("../../assets/models/outcomia.json")).unwrap();
     assert_eq!(
         store
             .register_models(&first.namespace, &outcomia)
