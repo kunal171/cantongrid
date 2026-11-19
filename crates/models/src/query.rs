@@ -163,10 +163,10 @@ impl Model {
                 }
             }
         }
-        if let Some(sort) = &normalized.sort {
-            if !self.fields.contains_key(&sort.field) {
-                return Err(ModelError::Query);
-            }
+        if let Some(sort) = &normalized.sort
+            && !self.fields.contains_key(&sort.field)
+        {
+            return Err(ModelError::Query);
         }
         let document = serde_json::json!(["cantongrid-model-query-v1", normalized]);
         let fingerprint = Sha256::digest(document.to_string().as_bytes())
@@ -270,6 +270,15 @@ mod tests {
         assert!(
             serde_json::from_str::<QueryOptions>(r#"{"filters":{"note":{"eq":null}}}"#).is_err()
         );
+        let too_many = parse(
+            r#"{"filters":{"amount":{"eq":"1","ne":"2","gt":"0","gte":"0","lt":"3","lte":"3"},"sequence":{"eq":"1","ne":"2","gt":"0"}}}"#,
+        );
+        assert!(model.validate_query(&too_many).is_err());
+        let too_long: QueryOptions = serde_json::from_value(
+            serde_json::json!({"filters":{"label":{"eq":"x".repeat(1025)}}}),
+        )
+        .unwrap();
+        assert!(model.validate_query(&too_long).is_err());
         let fields = serde_json::to_value(model.query_fields().unwrap()).unwrap();
         assert!(fields.to_string().contains("isNull"));
         assert!(!fields.to_string().contains("path"));

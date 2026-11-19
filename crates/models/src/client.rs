@@ -1,5 +1,5 @@
 //! Deterministic client contracts for model APIs; financial values never become JS numbers.
-use crate::{Catalog, FieldType, Model, ModelError};
+use crate::{Catalog, Comparison, FieldType, Model, ModelError};
 
 impl Model {
     /// Fingerprints avoid collisions across namespaces, revisions and overlapping model names.
@@ -22,7 +22,8 @@ impl Catalog {
         let mut result = String::from(
             "# Exact Int64/Numeric values are strings. Access requires current source and caller grants.\n",
         );
-        let mut root = String::from("type Query {\n");
+        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]! }\n");
+        let mut root = String::from("type Query {\n  models: [CgModel!]!\n");
         for model in self.models() {
             let stem = model.api_type()?;
             result.push_str(&format!("type {stem}Values {{\n"));
@@ -33,8 +34,28 @@ impl Catalog {
                 ));
             }
             result.push_str(&format!("}}\ntype {stem}Row {{ contractId: String!, values: {stem}Values! }}\ntype {stem}Page {{ items: [{stem}Row!]!, visibleTotal: String!, nextCursor: String, fingerprint: String! }}\n"));
+            result.push_str(&format!("input {stem}Sort {{ field: String!, direction: CgSortDirection }}\ninput {stem}Filter {{\n"));
+            for name in model.fields.keys() {
+                result.push_str(&format!("  {name}: {stem}_{name}Predicate\n"));
+            }
+            result.push_str("}\n");
+            for (name, expression) in &model.fields {
+                let kind = expression.output_type()?;
+                result.push_str(&format!("input {stem}_{name}Predicate {{\n"));
+                for op in kind.query_operators() {
+                    let input = if op == Comparison::IsNull
+                        || matches!(kind.query_scalar().0, FieldType::Bool)
+                    {
+                        "Boolean"
+                    } else {
+                        "String"
+                    };
+                    result.push_str(&format!("  {}: {input}\n", op.name()));
+                }
+                result.push_str("}\n");
+            }
             root.push_str(&format!(
-                "  {}(namespace: String!, limit: Int, cursor: String): {stem}Page!\n",
+                "  {}(namespace: String!, limit: Int, cursor: String, filters: {stem}Filter, sort: {stem}Sort): {stem}Page!\n",
                 model.api_name()?
             ));
         }
@@ -56,6 +77,27 @@ impl Catalog {
                     typescript_type(&expression.output_type()?)
                 ));
             }
+            result.push_str(&format!("}}\nexport interface {stem}Filter {{\n"));
+            for (name, expression) in &model.fields {
+                let kind = expression.output_type()?;
+                let ops = kind
+                    .query_operators()
+                    .into_iter()
+                    .map(|op| {
+                        let ty = if op == Comparison::IsNull
+                            || matches!(kind.query_scalar().0, FieldType::Bool)
+                        {
+                            "boolean"
+                        } else {
+                            "string"
+                        };
+                        format!("readonly {}?: {ty}", op.name())
+                    })
+                    .collect::<Vec<_>>()
+                    .join("; ");
+                result.push_str(&format!("  readonly {name}?: {{ {ops} }};\n"));
+            }
+            result.push_str(&format!("}}\nexport interface {stem}Query {{\n  readonly namespace: string;\n  readonly limit?: number;\n  readonly cursor?: string;\n  readonly filters?: {stem}Filter;\n  readonly sort?: {{ readonly field: keyof {stem}Values; readonly direction?: \"asc\" | \"desc\" }};\n"));
             result.push_str(&format!("}}\nexport interface {stem}Row {{ readonly contractId: string; readonly values: {stem}Values; }}\nexport interface {stem}Page {{ readonly items: readonly {stem}Row[]; readonly visibleTotal: string; readonly nextCursor: string | null; readonly fingerprint: string; }}\nexport const {} = {{ field: \"{}\", fingerprint: \"{}\" }} as const;\n", model.api_name()?, model.api_name()?, model.fingerprint()?));
         }
         Ok(result)
