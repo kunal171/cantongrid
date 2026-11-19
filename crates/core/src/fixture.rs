@@ -218,10 +218,8 @@ mod tests {
             assert_eq!(result.replay_applied_batches, 0);
             assert!(result.has_checkpoint);
         }
-        let plan = Plan::parse(include_str!(
-            "../assets/fixtures/outcomia/cantongrid.json"
-        ))
-        .unwrap();
+        let plan =
+            Plan::parse(include_str!("../assets/fixtures/outcomia/cantongrid.json")).unwrap();
         let fixture = Fixture::parse(
             include_str!("../assets/fixtures/outcomia/events.json"),
             &plan,
