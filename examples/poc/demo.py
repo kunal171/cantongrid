@@ -14,6 +14,7 @@ import queries
 
 
 def current(stage):
+    """Check the saved shared revision and its projected state after a real choice."""
     data = s.state()
     return any(row['contractId'] == data['contracts']['shared'] and row['values']['state'] == stage for row in s.pages())
 
@@ -22,6 +23,7 @@ def verify():
     """Compare real transaction identities and values, not screenshots or unscoped global counts."""
     data = s.state()
     expected = set(data['contracts'].values())
+    # Expected scopes come from submitted fixtures, independently of the indexer's totals.
     for principal, roles in [('a', ('a', 'shared')), ('b', ('b', 'shared')), ('ab', ('a', 'b', 'shared'))]:
         own = [r for r in s.pages(principal) if r['values']['demoId'].startswith(data['source'])]
         if {r['contractId'] for r in own} != {data['contracts'][role] for role in roles}:
@@ -32,6 +34,8 @@ def verify():
                 expected_outcome = True if data['stage'] == 'Resolved' else None
                 if values['state'] != data['stage'] or values['outcome'] != expected_outcome:
                     raise ValueError('Projected lifecycle state or optional resolution outcome changed')
+            # Numeric 10 stays exact: 0.0000000001 × 10000 = 0.0000010000.
+            # Int64 max also remains a string, beyond JavaScript's exact integer range.
             if values['quantityLot'] != '9223372036854775807' or values['priceTick'] != '0.0000000001' or values['priceTickBps'] != '0.0000010000':
                 raise ValueError('Exact projected values changed')
     events = s.pages(typed=False)
@@ -62,6 +66,7 @@ def verify():
         else:
             raise ValueError('Disabled API principal retained access')
     finally:
+        # Restore access with a newer epoch; restoring the old file would revive old cursors.
         s.write_private(grants_path, {**grants, 'epoch': grants['epoch'] + 2})
     if not expected.issubset({r['contractId'] for r in s.pages()}):
         raise ValueError('Restored grants did not restore the expected authorized view')
@@ -80,6 +85,7 @@ def run():
     # Complete a bounded snapshot prefix. Exporter/package startup can briefly pause
     # indexing after DAR upload; retry without acknowledging failed pages.
     def snapshot_complete():
+        """Retry one source page and inspect its persisted cursor until snapshot paging ends."""
         try:
             s.cli('index', s.DIRECTORY / 'runtime.json', '--once')
             checkpoint = s.metrics()['checkpoint']
@@ -112,6 +118,8 @@ def run():
             s.cli('index', s.DIRECTORY / 'runtime.json', '--once')
         if s.metrics() != after:
             raise ValueError('Restart/re-observation duplicated data or moved the acknowledged cursor')
+    # Export assertions and artifact identity, leaving tokens and live contract IDs
+    # in private state rather than the report intended for review.
     s.write_private(s.DIRECTORY / 'report.json', {
         'result': 'passed', 'darSha256': s.state()['darSha256'], 'packageId': s.state()['package'],
         'contract': 'Market:PredictionMarket', 'stages': ['Draft', 'Open', 'Resolved'],
@@ -128,6 +136,7 @@ def run():
 
 
 def main():
+    """Dispatch local demo actions; require explicit opt-in before any ledger write."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['run', 'serve', 'transact', 'verify'])
     parser.add_argument('--allow-ledger-writes', action='store_true')

@@ -18,6 +18,7 @@ from devtools.ledger import request, get, token  # noqa: E402
 from devtools.visibility import BASE, WRITER, USERS, context  # noqa: E402
 from devtools.checks.pipeline import application_token  # noqa: E402
 
+# Runtime state and generated artifacts are owned by this demo and ignored by git.
 DIRECTORY = ROOT / '.local/poc'
 DAR = ROOT / 'examples/poc/.daml/dist/cantongrid-poc-0.1.0.dar'
 API = 'http://127.0.0.1:18890'
@@ -31,6 +32,7 @@ def state():
 
 
 def save(data):
+    """Atomically persist owned fixture state, including keys and real ledger identities."""
     write_private(DIRECTORY / 'state.json', data)
 
 
@@ -39,6 +41,7 @@ def package_id():
     with ZipFile(DAR) as archive:
         lines = []
         for line in archive.read('META-INF/MANIFEST.MF').decode().splitlines():
+            # Manifest continuation lines are folded before reading the Main-Dalf entry.
             if line.startswith(' '):
                 lines[-1] += line[1:]
             else:
@@ -48,6 +51,7 @@ def package_id():
 
 
 def environment():
+    """Give Rust children the read-only source scope and separate organization/cursor keys."""
     data = state()
     return {**os.environ,
             'CANTONGRID_SOURCE_TOKEN': token(USERS['ab'], 3600),
@@ -119,6 +123,7 @@ def query(subject='ab', *, typed=True, limit=25, cursor=None,
 def pages(subject='ab', *, typed=True, **options):
     """Follow at most 100 pages while retaining the exact same query semantics."""
     result = []; cursor = None
+    # The same filters/sort travel with every cursor; changing them starts a new query.
     for _ in range(100):
         page = query(subject, typed=typed, cursor=cursor, **options)
         result.extend(page['items'])
@@ -160,6 +165,8 @@ def process(command):
 def metrics():
     """Read only test-owned destination counts, to verify restart/idempotence without raw data dumps."""
     data = state()
+    # Counts are scoped to the saved source and exclude changing freshness timestamps,
+    # so an unchanged result after restart proves no durable data/cursor movement.
     sql = """SELECT json_build_object('batches',(SELECT count(*) FROM cantongrid.batches b WHERE b.stream_key=s.stream_key),
         'events',(SELECT count(*) FROM cantongrid.events e WHERE e.stream_key=s.stream_key),
         'contracts',(SELECT count(*) FROM cantongrid.contracts c WHERE c.stream_key=s.stream_key),

@@ -18,6 +18,7 @@ class Case:
     readers: tuple[str, ...]
     price: str
     quantity: str
+    # None is unresolved; False is a real resolved outcome, never a missing value.
     outcome: bool | None
 
 
@@ -58,6 +59,7 @@ def filters():
 
 
 def endpoint():
+    """Address this run's model namespace so discovery cannot select another run."""
     return '/v1/models/' + s.state()['namespace'] + '/markets'
 
 
@@ -165,6 +167,8 @@ def verify(*, revisions=False, outage=False):
     before = metadata()
     base = filters()
     page_checks = 0
+    # 3 principals × 2 transports × (2 price sorts + 5 predicates + 2 null sorts)
+    # gives 54 independent page sequences, each checked against submitted contracts.
     for principal in ('a', 'b', 'ab'):
         visible = [case for case in CASES if principal == 'ab' or principal in (case.owner, *case.readers)]
         by_id = lambda case: data['queryContracts'][case.name]
@@ -184,11 +188,14 @@ def verify(*, revisions=False, outage=False):
                 check_rows(principal, transport, sorted(expected, key=by_id), filters={**base, **predicate})
                 page_checks += 1
             for direction in ('asc', 'desc'):
+                # Null sorts last in both directions. Reverse only the non-null value;
+                # equal values still use ascending IDs, e.g. False < True < None.
                 ordered = sorted(visible, key=lambda c: (c.outcome is None, (1 if direction == 'asc' else -1) * int(c.outcome or False), by_id(c)))
                 check_rows(principal, transport, ordered, filters=base, sort={'field': 'outcome', 'direction': direction})
                 page_checks += 1
     options = {'filters': {**base, 'priceTick': {'gte': '1'}}, 'sort': {'field': 'priceTick'}}
     cursor = s.query('ab', transport='rest', limit=1, **options)['nextCursor']
+    # A scale-normalized decimal must preserve query identity across REST and GraphQL.
     normalized = {**options, 'filters': {**base, 'priceTick': {'gte': '1.0000000000'}}}
     if not cursor or s.query('ab', cursor=cursor, **normalized)['items'] != s.query('ab', transport='rest', cursor=cursor, **options)['items']:
         raise ValueError('Equivalent REST/GraphQL queries could not share their cursor')

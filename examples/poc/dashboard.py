@@ -9,12 +9,17 @@ import support as s
 def serve():
     """Keep signing keys server-side and proxy only the two fixed read-only API operations."""
     class Handler(BaseHTTPRequestHandler):
+        """Serve only the viewer and fixed fixture queries; never expose signing keys."""
         def log_message(self, *_):
+            """Suppress request logging because URLs and responses can identify private contracts."""
             pass  # Never log tokens, query strings or indexed contract data.
 
         def do_GET(self):
+            """Validate the local host and fixture identity before proxying authorized reads."""
             route = urlparse(self.path)
             host = self.headers.get('Host', '')
+            # Reject other Host names to keep a browser's DNS alias from reaching
+            # this fixture-identity proxy through a rebound domain.
             if host not in ('127.0.0.1:18891', 'localhost:18891'):
                 self.send_error(403); return
             try:
@@ -24,6 +29,8 @@ def serve():
                     subject = parse_qs(route.query).get('user', ['a'])[0]
                     if subject not in ('a', 'b', 'ab'):
                         self.send_error(400); return
+                    # Both calls use the selected fixture principal; its bearer is
+                    # minted server-side and never returned to browser JavaScript.
                     body = json.dumps({'model': s.query(subject), 'history': s.query(subject, typed=False)}).encode()
                     kind = 'application/json'
                 else:

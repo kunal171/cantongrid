@@ -8,6 +8,8 @@ from support import (ROOT, DIRECTORY, DAR, BASE, WRITER, USERS, TEMPLATE, packag
 
 def configure():
     """Reuse verified fixture parties/users, but use a separate source identity and model namespace."""
+    # Saved state ties source/model identity to the DAR and party scope. It also holds
+    # private API keys, the latest contract IDs and the expected create/archive history.
     data = state() if (DIRECTORY / 'state.json').exists() else {
         'source': 'poc-' + secrets.token_hex(6), 'namespace': 'poc_' + secrets.token_hex(6),
         'apiKey': secrets.token_hex(32), 'cursorKey': secrets.token_hex(32),
@@ -15,11 +17,13 @@ def configure():
     package = package_id()
     digest = hashlib.sha256(DAR.read_bytes()).hexdigest()
     parties = context()['parties']
+    # Reusing an old checkpoint with a different package or scope would mix two sources.
     if data.get('darSha256', digest) != digest or data.get('parties', parties) != parties:
         raise ValueError('Saved demo uses a different DAR or party scope; use a reviewed new demo directory')
     data.update(package=package, darSha256=digest, parties=parties)
     save(data)
     selected = list(parties.values())
+    # One-event pages force the acceptance run to exercise durable cursor handoff.
     config = {'version': 1, 'authorization': {'endpoint': BASE, 'user': USERS['ab'],
         'source': data['source'], 'network': 'localnet', 'generation': 1,
         'parties': selected, 'credential_env': 'CANTONGRID_SOURCE_TOKEN'},
@@ -44,6 +48,7 @@ def configure():
     for command, filename in [('typescript', 'models.ts'), ('graphql', 'schema.graphql'), ('plan', 'schema-plan.json')]:
         (generated / filename).write_text(cli('models', command, DIRECTORY / 'models.json'))
     plan = json.loads((generated / 'schema-plan.json').read_text())['plans'][0]
+    # This suffix matches the compiler's generated root; it changes with model revision.
     data['field'] = 'model_markets_' + plan['fingerprint'][:16]
     save(data)
 
@@ -63,6 +68,8 @@ def deploy():
 def submit(command, marker, expected_creates=1):
     """Persist the actual ledger event identities for verification against indexed API history."""
     data = state()
+    # Source + marker keeps command identity scoped to this saved run/cycle. A lost
+    # response needs ledger inspection before retrying; local state is not ledger truth.
     response = request(BASE, '/v2/commands/submit-and-wait-for-transaction', token(WRITER), body={
         'commands': {'commandId': data['source'] + '-' + marker, 'userId': WRITER,
                      'actAs': list(data['parties'].values()), 'packageIdSelectionPreference': [data['package']],
@@ -72,6 +79,8 @@ def submit(command, marker, expected_creates=1):
         for tag, kind in [('CreatedEvent', 'create'), ('ArchivedEvent', 'archive')]:
             if tag in event:
                 cid = event[tag]['contractId']
+                # An immutable revision has one create and later one archive with the
+                # same contract ID, so the event kind is part of the expected identity.
                 data['expectedEvents'].append([kind, cid])
                 if kind == 'create':
                     created.append(cid)
@@ -82,6 +91,7 @@ def submit(command, marker, expected_creates=1):
 
 
 def create(role='shared'):
+    """Create one fixture market; retire the resolved shared revision before a new cycle."""
     data = state()
     if role == 'shared':
         if data['stage'] == 'Resolved':
@@ -106,12 +116,14 @@ def create(role='shared'):
 
 
 def exercise(choice):
+    """Consume the current shared revision and save the successor returned by the choice."""
     data = state()
     expected = 'Draft' if choice == 'Publish' else 'Open'
     if data['stage'] != expected:
         raise ValueError('Choice does not match the saved market stage')
     cid = submit({'ExerciseCommand': {'templateId': TEMPLATE, 'contractId': data['contracts']['shared'],
         'choice': choice, 'choiceArgument': {} if choice == 'Publish' else {'result': True}}}, choice.lower() + '-' + str(data['cycle']))
+    # Consuming choices return a new contract ID; keep polls and later choices on it.
     data = state(); data['contracts']['shared'] = cid
     data['stage'] = 'Open' if choice == 'Publish' else 'Resolved'
     save(data)
