@@ -49,10 +49,10 @@ are outside its scope.
 5. Tag the verified commit and publish its GitHub release. Mark alpha/beta builds
    as prereleases; regular releases use the reviewed release scope. Never overwrite tags.
 
-For this source release, metadata validation is:
+For the current checkout, metadata validation is:
 
 ```bash
-python3 scripts/dev.py release check --tag v0.3.0
+python3 scripts/dev.py release check
 ```
 
 This does not create a tag, release or deployment. Binary distribution needs a

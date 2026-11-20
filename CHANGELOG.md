@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0-alpha.1 — unreleased
 
 - Declarative grouped counts and exact sums over maintained model contributions,
   with generated REST/GraphQL/TypeScript and separate signed cursor domains.
