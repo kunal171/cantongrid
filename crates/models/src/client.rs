@@ -1,4 +1,5 @@
 //! Deterministic client contracts for model APIs; financial values never become JS numbers.
+mod aggregates;
 use crate::{Catalog, Comparison, FieldType, Model, ModelError};
 
 impl Model {
@@ -22,7 +23,7 @@ impl Catalog {
         let mut result = String::from(
             "# Exact Int64/Numeric values are strings. Access requires current source and caller grants.\n",
         );
-        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]! }\n");
+        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]!, aggregateQueryField: String, aggregateFields: [CgModelField!] }\n");
         let mut root = String::from("type Query {\n  models: [CgModel!]!\n");
         for model in self.models() {
             let stem = model.api_type()?;
@@ -53,6 +54,11 @@ impl Catalog {
                     result.push_str(&format!("  {}: {input}\n", op.name()));
                 }
                 result.push_str("}\n");
+            }
+            if model.aggregation.is_some() {
+                let (types, field) = aggregates::graphql(model)?;
+                result.push_str(&types);
+                root.push_str(&field);
             }
             root.push_str(&format!(
                 "  {}(namespace: String!, limit: Int, cursor: String, filters: {stem}Filter, sort: {stem}Sort): {stem}Page!\n",
@@ -99,6 +105,9 @@ impl Catalog {
             }
             result.push_str(&format!("}}\nexport interface {stem}Query {{\n  readonly namespace: string;\n  readonly limit?: number;\n  readonly cursor?: string;\n  readonly filters?: {stem}Filter;\n  readonly sort?: {{ readonly field: keyof {stem}Values; readonly direction?: \"asc\" | \"desc\" }};\n"));
             result.push_str(&format!("}}\nexport interface {stem}Row {{ readonly contractId: string; readonly values: {stem}Values; }}\nexport interface {stem}Page {{ readonly items: readonly {stem}Row[]; readonly visibleTotal: string; readonly nextCursor: string | null; readonly fingerprint: string; }}\nexport const {} = {{ field: \"{}\", fingerprint: \"{}\" }} as const;\n", model.api_name()?, model.api_name()?, model.fingerprint()?));
+        }
+        for model in self.models().iter().filter(|m| m.aggregation.is_some()) {
+            result.push_str(&aggregates::typescript(model)?);
         }
         Ok(result)
     }

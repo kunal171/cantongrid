@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0-alpha.1 — 2026-11-20
+
+- Declarative grouped counts and exact sums over maintained model contributions,
+  with generated REST/GraphQL/TypeScript and separate signed cursor domains.
+- Data-independent full-source aggregate access; whole-group witness checks and
+  explicit all-or-nothing model GraphQL failures. Existing row queries keep their scopes.
+- Outcomia/Visibility examples and read-only LocalNet comparison with a Ledger snapshot.
+- Optional aggregate declarations preserve existing model fingerprints; no new migration
+  or runtime dependency. Totals are calculated at read time, not separately materialized.
+
 ## 0.3.0 — 2026-11-20
 
 - Regular release of the verified LocalNet contracts/indexing/model API profile.

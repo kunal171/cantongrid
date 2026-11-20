@@ -14,7 +14,9 @@ pub use sql::{SqlColumn, SqlPlan};
 #[cfg(test)]
 mod tests;
 
+mod aggregation;
 mod client;
+pub use aggregation::{AggregatePlan, Aggregation, Measure};
 
 mod query;
 pub use query::{

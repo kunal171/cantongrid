@@ -125,21 +125,23 @@ def check_rows(principal, transport, expected, **options):
 
 
 @contextmanager
-def promoted():
+def promoted(revision=2, aggregation=None):
     """Always restore revision 1, including after assertions or an ambiguous promotion response."""
     data = s.state()
     definition = json.loads((s.DIRECTORY / 'models.json').read_text())
-    definition['models'][0]['revision'] = 2
-    path = s.DIRECTORY / 'query-revision2.json'
+    definition['models'][0]['revision'] = revision
+    if aggregation is not None:
+        definition['models'][0]['aggregation'] = aggregation
+    path = s.DIRECTORY / f'query-revision{revision}.json'
     s.write_private(path, definition)
     s.cli('models', 'register', path, '--namespace', data['namespace'], '--database-env', 'CANTONGRID_DESTINATION_URL')
-    s.cli('models', 'install', data['namespace'], 'markets', 2, '--database-env', 'CANTONGRID_DESTINATION_URL')
+    s.cli('models', 'install', data['namespace'], 'markets', revision, '--database-env', 'CANTONGRID_DESTINATION_URL')
     try:
-        s.cli('models', 'bind', s.DIRECTORY / 'runtime.json', data['namespace'], 'markets', 2, '--replace', 1)
-        yield
+        s.cli('models', 'bind', s.DIRECTORY / 'runtime.json', data['namespace'], 'markets', revision, '--replace', 1)
+        yield definition
     finally:
         # bind is compare-and-replace and an idempotent retry if revision 1 never changed.
-        s.cli('models', 'bind', s.DIRECTORY / 'runtime.json', data['namespace'], 'markets', 1, '--replace', 2)
+        s.cli('models', 'bind', s.DIRECTORY / 'runtime.json', data['namespace'], 'markets', 1, '--replace', revision)
 
 
 def source_outage():

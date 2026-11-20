@@ -1,4 +1,5 @@
 //! Private current-state projections. Canonical lifecycle, model rows and progress share a commit.
+mod aggregate;
 mod binding;
 mod installed;
 mod query;

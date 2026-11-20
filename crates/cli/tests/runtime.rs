@@ -1,5 +1,7 @@
 //! Owned-Postgres end-to-end privacy controls with a synthetic read-only source authority.
 //! No Canton party, ledger transaction or upstream database mutation occurs in this test.
+#[path = "runtime/aggregates.rs"]
+mod aggregates;
 use cantongrid_core::{
     authorization::{MAX_SOURCE_LEASE, SourceLease},
     config::{Plan, SourceContext, TemplateId},
@@ -134,11 +136,13 @@ fn request(
             .unwrap();
         let mut request = if let Some(body) = query {
             client
-                .post(if address.ends_with("/query") {
-                    address.to_owned()
-                } else {
-                    format!("{address}/graphql")
-                })
+                .post(
+                    if address.ends_with("/query") || address.ends_with("/aggregate") {
+                        address.to_owned()
+                    } else {
+                        format!("{address}/graphql")
+                    },
+                )
                 .header("content-type", "application/json")
                 .body(body.to_string())
         } else {

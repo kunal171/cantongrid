@@ -75,6 +75,28 @@ class QuerySafetyTests(unittest.TestCase):
             self.assertEqual(calls[-1][5:], (1, '--replace', 2))
 
 
+class AggregateRevisionTests(unittest.TestCase):
+    def test_aggregate_revision_restores_after_lost_activation_acknowledgement(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        import queries
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'models.json').write_text(json.dumps({'version':1,'models':[{'revision':1}]}))
+            calls=[]
+            def cli(*args):
+                calls.append(args)
+                if args[:2]==('models','bind') and args[5]==4:
+                    raise ValueError('activation acknowledgement lost')
+            aggregation={'group_by':['state'],'measures':{'contracts':{'op':'count'}}}
+            with patch.object(queries.s,'DIRECTORY',root),patch.object(queries.s,'state',return_value={'namespace':'owned'}),patch.object(queries.s,'cli',side_effect=cli):
+                with self.assertRaisesRegex(ValueError,'acknowledgement'):
+                    with queries.promoted(revision=4,aggregation=aggregation):
+                        self.fail('ambiguous activation must not enter acceptance body')
+            self.assertEqual(calls[-1][5:],(1,'--replace',4))
+            self.assertEqual(json.loads((root/'query-revision4.json').read_text())['models'][0]['aggregation'],aggregation)
+
+
 class RebuildOptInTests(unittest.TestCase):
     def test_negative_control_accepts_only_an_actual_cli_rejection(self):
         import rebuilds

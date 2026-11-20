@@ -2,9 +2,13 @@
 
 - Current phase: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
-  acceptance. Funded trading, joins/aggregates and streams remain later work.
+  acceptance. Funded trading, joins and streams remain later work.
   Use docs/README.md for scope and docs/verification.md for dated evidence;
   do not claim full Phase 4 or production acceptance.
+- Aggregate reads require callers to cover the complete configured source-party
+  scope before any group read. Hiding groups from partial-scope callers can reveal
+  hidden membership through disappearance; do not replace this guard with row filtering.
+  See docs/guide/aggregates.md for the implemented count/sum slice and evidence.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python
   scripts are local development/verification helpers, not the product runtime.
 - Product: general-purpose, Daml-first Canton indexing infrastructure. Outcomia
