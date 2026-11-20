@@ -64,6 +64,9 @@ pub struct Model {
     pub fields: BTreeMap<String, Expression>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filter: Option<Filter>,
+    /// Optional grouped query over maintained contributions; absence preserves old fingerprints.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aggregation: Option<crate::Aggregation>,
 }
 
 /// Strict versioned model catalog input; compiled plans cannot be supplied through this document.
@@ -150,11 +153,14 @@ impl Model {
             if !identifier(name) {
                 return Err(ModelError::Definition);
             }
-            types.insert(name, expression.output_type_at(0, &mut nodes)?);
+            types.insert(name.clone(), expression.output_type_at(0, &mut nodes)?);
         }
         if let Some(filter) = &self.filter {
             let kind = types.get(&filter.field).ok_or(ModelError::Definition)?;
             kind.accepts(&filter.equals)?;
+        }
+        if let Some(aggregation) = &self.aggregation {
+            aggregation.validate(&types)?;
         }
         Ok(())
     }
@@ -263,7 +269,7 @@ impl Expression {
 }
 
 /// Output names are used by SQL/GraphQL generators. Path segments have a separate policy.
-fn identifier(name: &str) -> bool {
+pub(crate) fn identifier(name: &str) -> bool {
     path_identifier(name)
         && name.len() <= 48
         && ![
