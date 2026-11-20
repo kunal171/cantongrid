@@ -1,0 +1,53 @@
+# Aggregate models — implementation contract
+
+Unreleased Phase 4 work. The published 0.3.0 CLI does not support this extension.
+
+A model may declare `aggregation` with `group_by` (one to four distinct projected
+field names) and `measures` (one to eight named `count`/`sum` operations). Count
+counts active matching contracts; sum names a required Int64 or Numeric field.
+Optional grouping/sum fields and name collisions are rejected. Other models keep
+their existing declaration fingerprints and APIs.
+
+```json
+{
+  "aggregation": {
+    "group_by": ["status"],
+    "measures": {
+      "markets": {"op": "count"},
+      "total": {"op": "sum", "field": "amount"}
+    }
+  }
+}
+```
+
+The engine maintains native projection rows as contributions in the same
+transaction as canonical state and checkpoints. Queries calculate grouped results
+from those current rows in PostgreSQL. This first slice does not store a second
+mutable totals cache. Creates contribute once; archives retract; replay leaves
+totals unchanged. Atomic/staged model binding selects the same committed revision
+for row and aggregate reads.
+
+Visibility is the AND of all contributing contracts' witness clauses, with OR
+within each clause. For example, inputs visible only to A and only to B produce a
+group visible only to AB. A shared input may satisfy its clause through either
+party. Hidden contributors are never removed to calculate a caller-specific
+partial total. Group counts, pagination and output encoding occur after this
+whole-group check. Empty groups disappear. No witness evidence is returned.
+
+Count is an exact string. Int64 sums widen to Numeric(38,0); Numeric sums retain
+scale with at most 38 digits. Overflow fails the visible query without rounding.
+Optional/null arithmetic is unsupported. Group keys encode ordered typed values;
+byte ordering and signed cursors bind pagination to the source, caller, grants,
+active definition and aggregate query domain. Each page uses one repeatable-read
+snapshot; live pagination does not freeze all pages at a historical watermark.
+
+Generated aggregate GraphQL/TypeScript and a dedicated REST query expose only the
+active declaration. Initial requests support bounded limit/cursor pagination;
+input filters, aggregate filters, custom sorting, joins and global empty-key
+aggregates are deferred. Existing row queries remain available.
+
+Acceptance: Outcomia market counts by status and an unrelated exact-sum model;
+A/B/AB and shared visibility; hidden-group counts/overflow; create/archive/replay;
+failed-batch rollback; binding/rebuild changes; cursor isolation/revocation;
+strict declarations and source/caller checks. Label owned-PostgreSQL and LocalNet
+evidence separately. No new runtime dependency is planned.
