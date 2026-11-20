@@ -34,14 +34,15 @@ cargo +1.100.0 test -p cantongrid-models --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-cli --test workflow durable_cli --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-cli --test workflow model_registry --locked -- --ignored
 cargo +1.100.0 test -p cantongrid-cli --test workflow model_installation --locked -- --ignored
-cargo +1.100.0 test -p cantongrid-cli --test runtime --locked -- --ignored
+cargo +1.100.0 test -p cantongrid-cli --test runtime --locked -- --ignored --test-threads=1
 cargo +1.100.0 test -p cantongrid-pqs destination_owner_cannot_be_used_as_a_source_reader --locked -- --ignored
 python3 scripts/dev.py storage stop
 ```
 
 These are public disposable database defaults. Stop preserves data. Storage
 schema tests run serially because upgrade controls temporarily change schema
-state inside a rollback-only transaction. LocalNet
+state inside a rollback-only transaction. Runtime integration tests also run
+serially because they share the destination's installation lock. LocalNet
 checks need their own matching credentials and setup; see [tools](scripts/README.md).
 An ignored test is not a passing test until executed.
 
