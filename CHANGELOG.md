@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 — 2026-11-19
+## 0.3.0 — 2026-11-20
 
 - Regular release of the verified LocalNet contracts/indexing/model API profile.
 - Digest-pinned PostgreSQL 17.12 source and destination fixtures in separate new
