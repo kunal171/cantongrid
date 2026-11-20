@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "name": "records_by_state",
+      "revision": 1,
+      "template": {
+        "package_id": "05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111",
+        "module": "Visibility",
+        "entity": "Record"
+      },
+      "fields": {
+        "label": {
+          "op": "field",
+          "path": [
+            "label"
+          ],
+          "as": {
+            "type": "text"
+          }
+        },
+        "owner": {
+          "op": "field",
+          "path": [
+            "owner"
+          ],
+          "as": {
+            "type": "party"
+          }
+        },
+        "amount": {
+          "op": "field",
+          "path": [
+            "amount"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "sequence": {
+          "op": "field",
+          "path": [
+            "sequence"
+          ],
+          "as": {
+            "type": "int64"
+          }
+        },
+        "note": {
+          "op": "field",
+          "path": [
+            "note"
+          ],
+          "as": {
+            "type": "optional",
+            "item": {
+              "type": "text"
+            }
+          }
+        },
+        "state": {
+          "op": "field",
+          "path": [
+            "state"
+          ],
+          "as": {
+            "type": "text"
+          }
+        }
+      },
+      "filter": {
+        "field": "state",
+        "equals": {
+          "type": "text",
+          "value": "Ready"
+        }
+      },
+      "aggregation": {
+        "group_by": [
+          "state"
+        ],
+        "measures": {
+          "contracts": {
+            "op": "count"
+          },
+          "totalAmount": {
+            "op": "sum",
+            "field": "amount"
+          },
+          "totalSequence": {
+            "op": "sum",
+            "field": "sequence"
+          }
+        }
+      }
+    }
+  ]
+}

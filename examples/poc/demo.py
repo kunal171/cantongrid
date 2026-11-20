@@ -138,7 +138,7 @@ def run():
 def main():
     """Dispatch local demo actions; require explicit opt-in before any ledger write."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['run', 'serve', 'transact', 'verify', 'rebuild'])
+    parser.add_argument('command', choices=['run', 'serve', 'transact', 'verify', 'rebuild', 'aggregate-check'])
     parser.add_argument('--allow-ledger-writes', action='store_true')
     parser.add_argument('--rebuild-journal', type=Path, help='Resume verified initial rebuild fixture setup')
     parser.add_argument('--choice', choices=['create', 'publish', 'resolve'])
@@ -147,6 +147,9 @@ def main():
         parser.error('run/transact/rebuild requires --allow-ledger-writes for the disposable LocalNet')
     if args.command == 'run':
         run()
+    elif args.command == 'aggregate-check':
+        import aggregates
+        aggregates.run()
     elif args.command == 'rebuild':
         import rebuilds
         with s.process('serve'):
