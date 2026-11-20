@@ -22,6 +22,7 @@ pub enum Measure {
 
 /// SQL compiled from strict definitions, never accepted from serialized operator plans.
 /// `values` is evaluated only after whole-group visibility; sums widen before bounded casting.
+#[derive(Serialize)]
 pub struct AggregatePlan {
     pub groups: String,
     pub columns: String,
@@ -49,13 +50,13 @@ impl Aggregation {
             if !identifier(name) || types.contains_key(name) {
                 return Err(ModelError::Definition);
             }
-            if let Measure::Sum { field } = measure {
-                if !matches!(
+            if let Measure::Sum { field } = measure
+                && !matches!(
                     types.get(field),
                     Some(FieldType::Int64 | FieldType::Numeric { .. })
-                ) {
-                    return Err(ModelError::Type);
-                }
+                )
+            {
+                return Err(ModelError::Type);
             }
         }
         Ok(())
@@ -84,6 +85,30 @@ impl Model {
             fields.insert(name.clone(), kind);
         }
         Ok(fields)
+    }
+
+    /// Discovery describes aggregate outputs, with no input/metric filter operators in this slice.
+    pub fn aggregate_query_fields(&self) -> Result<Vec<crate::QueryField>, ModelError> {
+        self.aggregate_fields()?
+            .into_iter()
+            .map(|(name, kind)| {
+                let (label, scale) = match kind {
+                    FieldType::Text => ("text", None),
+                    FieldType::Party => ("party", None),
+                    FieldType::Bool => ("bool", None),
+                    FieldType::Int64 => ("int64", None),
+                    FieldType::Numeric { scale } => ("numeric", Some(scale)),
+                    _ => return Err(ModelError::Type),
+                };
+                Ok(crate::QueryField {
+                    name,
+                    kind: label,
+                    nullable: false,
+                    scale,
+                    operators: vec![],
+                })
+            })
+            .collect()
     }
 
     /// Cursor domains/type names are disjoint from ordinary contract-row model queries.

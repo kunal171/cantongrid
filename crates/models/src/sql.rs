@@ -26,6 +26,9 @@ pub struct SqlPlan {
     pub fingerprint: String,
     pub table: String,
     pub create_sql: String,
+    /// Trusted grouped query fragments over the managed contribution table.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aggregation: Option<crate::AggregatePlan>,
 }
 impl Model {
     /// Preserve column order, native type/scale and nullability for exact schema checks.
@@ -95,6 +98,11 @@ impl Model {
             fingerprint,
             table,
             create_sql,
+            aggregation: self
+                .aggregation
+                .as_ref()
+                .map(|_| self.aggregate_plan())
+                .transpose()?,
         })
     }
 }
