@@ -6,7 +6,7 @@ Current Canton Ledger API user and party-grant verification for CantonGrid.
 
 ```toml
 [dependencies]
-cantongrid-ledger = "=0.3.0-alpha.5"
+cantongrid-ledger = "=0.3.0"
 ```
 
 Use `GrantChecker` with the configured source scope and wrap it in
@@ -23,7 +23,7 @@ for endpoint, user and scope configuration.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
-Alpha API: the tested live profile is loopback-only, with authorized node-local
+Supported profile: the tested live profile is loopback-only, with authorized node-local
 PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 

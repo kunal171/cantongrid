@@ -6,7 +6,7 @@ optional PostgreSQL step. Run commands from the repository root.
 ## Install from crates.io
 
 ```bash
-cargo install cantongrid-cli --version 0.3.0-alpha.5 --locked
+cargo install cantongrid-cli --version 0.3.0 --locked
 cantongrid --version
 cantongrid --help
 ```

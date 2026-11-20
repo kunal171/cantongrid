@@ -6,7 +6,7 @@ Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections 
 
 ```toml
 [dependencies]
-cantongrid-storage = "=0.3.0-alpha.5"
+cantongrid-storage = "=0.3.0"
 ```
 
 `initialize_env` applies destination migrations explicitly. `Store` manages
@@ -29,7 +29,7 @@ See the [PostgreSQL quickstart](https://github.com/kunal171/cantongrid/blob/main
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
-Alpha API: the tested live profile is loopback-only, with authorized node-local
+Supported profile: the tested live profile is loopback-only, with authorized node-local
 PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 

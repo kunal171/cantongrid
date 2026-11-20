@@ -2,7 +2,7 @@
 name: cantongrid-pqs
 services:
   pqs-postgres:
-    image: postgres:14
+    image: postgres@sha256:b60e90042aa6b8dbecd58e224b3e36114dbf8ad754465264c2476ad58a86e45c
     # Bound retained container output to about 30 MB per service.
     logging:
       driver: json-file
@@ -16,7 +16,7 @@ services:
     ports:
       - 127.0.0.1:5441:5432
     volumes:
-      - pqs-data:/var/lib/postgresql/data
+      - pqs-data-pg17:/var/lib/postgresql/data
     healthcheck:
       test: [CMD-SHELL, pg_isready -U pqs_owner -d pqs]
       interval: 3s
@@ -46,7 +46,7 @@ services:
         condition: service_healthy
     mem_limit: 1g
 volumes:
-  pqs-data:
+  pqs-data-pg17:
 networks:
   localnet:
     external: true

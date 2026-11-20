@@ -2,7 +2,7 @@
 name: cantongrid-storage
 services:
   postgres:
-    image: postgres@sha256:c0e9c0e9bac7e4c1834b698217a03ee5c708de30d313c84a506972de0e24b059
+    image: postgres@sha256:b60e90042aa6b8dbecd58e224b3e36114dbf8ad754465264c2476ad58a86e45c
     # Bound retained container output to about 30 MB per service.
     logging:
       driver: json-file
@@ -16,7 +16,7 @@ services:
     ports:
       - 127.0.0.1:5442:5432
     volumes:
-      - storage-data:/var/lib/postgresql/data
+      - storage-data-pg17:/var/lib/postgresql/data
       - ./storage-init.sql:/docker-entrypoint-initdb.d/001-cantongrid.sql:ro
     healthcheck:
       test: [CMD-SHELL, pg_isready -U postgres -d postgres]
@@ -25,4 +25,4 @@ services:
       retries: 30
     mem_limit: 512m
 volumes:
-  storage-data:
+  storage-data-pg17:

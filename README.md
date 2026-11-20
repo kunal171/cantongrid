@@ -7,7 +7,7 @@ Outcomia is the first application example; the engine is reusable.
 [Runnable PoC](docs/guide/poc.md) · [Developer guide](docs/README.md) · [Architecture](docs/architecture.md) ·
 [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-[Latest source prerelease: 0.3.0-alpha.5](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.5)
+[Latest release: 0.3.0](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0)
 
 ## Current status
 
@@ -17,12 +17,13 @@ Outcomia is the first application example; the engine is reusable.
 - Bounded model backfill/promotion and atomic live projections have owned-Postgres tests.
 - Generated REST/GraphQL model queries support exact filters, sorting, discovery
   and query-bound cursors, verified on LocalNet with the standalone PoC and Outcomia.
-- Alpha.5 adds resumable staged rebuilds with owned-Postgres/HTTP coverage;
-  large staged LocalNet acceptance is pending. Durable streams remain planned.
+- Staged rebuilds passed 261-contract LocalNet acceptance with source revocation,
+  concurrent events, promotion and rollback. PQS/destination fixtures use PostgreSQL 17.12.
+- Durable streams remain planned.
 - Remote/devnet/production deployment is unverified.
 
 ```bash
-cargo install cantongrid-cli --version 0.3.0-alpha.5 --locked
+cargo install cantongrid-cli --version 0.3.0 --locked
 cantongrid init ./my-demo
 cantongrid fixture run ./my-demo/cantongrid.json --party A
 ```

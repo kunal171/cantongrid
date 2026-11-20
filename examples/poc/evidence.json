@@ -61,5 +61,46 @@
       13
     ],
     "chromiumViewer": true
+  },
+  "postgres17Acceptance": {
+    "result": "passed",
+    "darSha256": "b53ccaa76903e755581b1c1ff03da39044c879b437ee57b7996b712447d83f85",
+    "packageId": "730711263d9ca88f4ee397a7428ef775dff14ee144216dc08053f955f3cb357e",
+    "contract": "Market:PredictionMarket",
+    "stages": [
+      "Draft",
+      "Open",
+      "Resolved"
+    ],
+    "controlledEventIdentitiesMatched": 35,
+    "source": "authorized node-local PQS",
+    "generated": [
+      "PostgreSQL schema",
+      "TypeScript transport interfaces",
+      "GraphQL schema"
+    ],
+    "typedGraphql": true,
+    "exactValues": true,
+    "partyPrivacy": true,
+    "cursorIsolation": true,
+    "callerRevocation": true,
+    "offlineCatchup": true,
+    "restartWithoutDuplicates": true,
+    "history": "snapshot_forward_partial",
+    "environment": "disposable LocalNet",
+    "fundedAssetsOrTrades": false,
+    "modelQueries": {
+      "filteredPageSequences": 54,
+      "modelDiscoveryParity": true,
+      "modelRestGraphqlParity": true,
+      "numericAndNullableSorting": true,
+      "queryCursorBinding": true,
+      "grantEpochCursorInvalidation": true,
+      "revisionPromotionRollback": true,
+      "modelSourceOutageRecovery": true
+    },
+    "recordedAt": "2026-11-19",
+    "postgresVersion": "17.12",
+    "implementationCommit": "8ff178cda4fd5ef135cc797a2957b4dfc8f29cbb"
   }
 }

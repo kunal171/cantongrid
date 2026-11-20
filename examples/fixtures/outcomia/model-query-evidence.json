@@ -47,5 +47,32 @@
     "scribe": "3.5.4/schema041",
     "postgres": "14.25"
   },
-  "typescript_compilation": true
+  "typescript_compilation": true,
+  "postgres17Acceptance": {
+    "recordedAt": "2026-11-19",
+    "postgresVersion": "17.12",
+    "controlledLifecycleEvents": 25,
+    "eventIdentitiesMatched": true,
+    "fundedAssetsOrTrades": false,
+    "modelQueries": {
+      "result": "passed",
+      "filtered_page_sequences": 60,
+      "real_application_choices": true,
+      "party_scopes": [
+        "A-only",
+        "B-only",
+        "shared"
+      ],
+      "exact_values_and_derived_filters": true,
+      "discovery_and_transport_parity": true,
+      "cursor_principal_filter_sort_revision_binding": true,
+      "caller_revocation_and_epoch": true,
+      "optional_field_promotion_and_rollback": true,
+      "model_revisions": [
+        1,
+        2,
+        1
+      ]
+    }
+  }
 }

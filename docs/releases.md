@@ -1,10 +1,11 @@
 # Releases and publication
 
-Latest GitHub source prerelease: **0.3.0-alpha.5**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest GitHub release: **0.3.0**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.3.0](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0) | PostgreSQL 17.12 compatibility and large LocalNet staged rebuild acceptance | 001–006 |
 | [0.3.0-alpha.5](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.5) | Staged model rebuilds and security fixes | 001–006 |
 | [0.3.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.4) | Exact filters, native sorting, discovery and Outcomia query acceptance | 001–005 |
 | [0.3.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.2) | Runnable Daml PoC, generated GraphQL and TypeScript interfaces | 001–005 |
@@ -12,8 +13,8 @@ is the maintained change history; the links below retain each release's original
 | [0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1) | LocalNet ingestion and authenticated generic APIs | 001–002 |
 | [0.1.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.1.0-alpha.1) | Fixtures, owned storage and source checks | 001 |
 
-The [CLI](https://crates.io/crates/cantongrid-cli/0.3.0-alpha.5) and all seven
-libraries are published at **0.3.0-alpha.5**, with package-specific READMEs.
+The [CLI](https://crates.io/crates/cantongrid-cli/0.3.0) and all seven
+libraries are published at **0.3.0**, with package-specific READMEs.
 Use the [quickstart](guide/quickstart.md) to install the CLI or build from source.
 
 Alpha.3 introduced packaging between source releases. Historical crate packages
@@ -26,6 +27,18 @@ Current source requires explicit `storage init` through migration 006. Earlier
 migration SQL is unchanged; older binaries reject unknown migration sets.
 Do not downgrade a destination without a reviewed migration plan.
 
+## 0.3.0 compatibility
+
+The runtime API and migrations remain the alpha.5 contract; migrations 001–006
+are unchanged. Local fixture images move to pinned PostgreSQL 17.12 and new volume
+names. Existing PostgreSQL 14 volumes need an explicit logical restore into those
+new volumes; `up` does not migrate data. Read the [upgrade procedure](guide/operations.md#postgresql-support)
+before restarting an existing setup.
+
+This regular release covers the verified loopback LocalNet contracts profile.
+Funded trading, joins/aggregates, streams, remote/TLS and production acceptance
+are outside its scope.
+
 ## Cut a source release
 
 1. Update the changelog with delivered scope, compatibility, evidence and limits.
@@ -33,12 +46,13 @@ Do not downgrade a destination without a reviewed migration plan.
    including security and package verification. Source-dependent checks need matching infrastructure.
 3. Review dependency notices, configuration/schema changes and migration checksums.
 4. Merge a focused PR after CI passes, preserving the small commits.
-5. Tag the verified commit and create its GitHub prerelease. Never overwrite tags.
+5. Tag the verified commit and publish its GitHub release. Mark alpha/beta builds
+   as prereleases; regular releases use the reviewed release scope. Never overwrite tags.
 
 For this source release, metadata validation is:
 
 ```bash
-python3 scripts/dev.py release check --tag v0.3.0-alpha.5
+python3 scripts/dev.py release check --tag v0.3.0
 ```
 
 This does not create a tag, release or deployment. Binary distribution needs a
