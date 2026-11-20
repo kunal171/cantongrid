@@ -9,7 +9,7 @@
 * [LocalNet ingestion](guide/localnet-source.md)
 * [Authentication and API](guide/api.md)
 * [Declarative models](guide/models.md)
-* [Aggregate models — unreleased](guide/aggregates.md)
+* [Aggregate models](guide/aggregates.md)
 * [Outcomia example](guide/outcomia.md)
 * [Operations](guide/operations.md)
 

@@ -16,7 +16,7 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
-## Unreleased grouped aggregates
+## 0.4.0-alpha.1 grouped aggregates
 
 Recorded 2026-11-20 on the LocalNet profile above. The development workspace is
 `0.4.0-alpha.1`; these changes have not been released or published to crates.io.
@@ -170,4 +170,4 @@ CantonGrid processing. Check upstream for current issue/PR status.
 Fixture and mock-source tests do not establish LocalNet behavior. No devnet,
 remote/TLS, production load, complete pre-snapshot history, interface/reassignment,
 join or durable-stream acceptance is claimed. Aggregate evidence is limited to the
-unreleased slice above. See [next steps](README.md#next).
+alpha.1 slice above. See [next steps](README.md#next).

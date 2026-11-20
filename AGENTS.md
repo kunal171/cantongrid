@@ -5,7 +5,7 @@
   acceptance. Funded trading, joins and streams remain later work.
   Use docs/README.md for scope and docs/verification.md for dated evidence;
   do not claim full Phase 4 or production acceptance.
-- Unreleased aggregates require callers to cover the complete configured source-party
+- Aggregate reads require callers to cover the complete configured source-party
   scope before any group read. Hiding groups from partial-scope callers can reveal
   hidden membership through disappearance; do not replace this guard with row filtering.
   See docs/guide/aggregates.md for the implemented count/sum slice and evidence.

@@ -10,7 +10,7 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [LocalNet ingestion](guide/localnet-source.md) | Source setup, runtime configuration and worker |
 | [API](guide/api.md) | Caller authentication, queries, filtering and pagination |
 | [Models](guide/models.md) | Definitions, exact calculations, installation and rebuilds |
-| [Aggregates — unreleased](guide/aggregates.md) | Grouped counts/sums with full-source authorization |
+| [Aggregates](guide/aggregates.md) | Grouped counts/sums with full-source authorization |
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
 | [Operations](guide/operations.md) | Recovery, troubleshooting and disk usage |
 
@@ -20,12 +20,13 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest release is **0.3.0**. It includes LocalNet ingestion, model projections,
+The latest stable release is **0.3.0**; the source prerelease **0.4.0-alpha.1**
+adds grouped aggregates. Stable 0.3.0 It includes LocalNet ingestion, model projections,
 generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
 PostgreSQL 17.12 compatibility and large real-ledger rebuild acceptance pass.
 See [verification](verification.md) for the exact environments and checks.
 
-The unreleased [aggregate slice](guide/aggregates.md) adds count/sum queries over
+The [aggregate slice](guide/aggregates.md) adds count/sum queries over
 maintained projections, generated APIs and complete-source access checks.
 
 Phase 4 model integration remains in progress. History starts at an active

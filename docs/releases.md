@@ -1,10 +1,11 @@
 # Releases and publication
 
-Latest GitHub release: **0.3.0**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.3.0**. Source prerelease: **0.4.0-alpha.1**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.4.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.1) | Grouped counts/exact sums, generated APIs and full-source scope checks | 001–006 |
 | [0.3.0](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0) | PostgreSQL 17.12 compatibility and large LocalNet staged rebuild acceptance | 001–006 |
 | [0.3.0-alpha.5](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.5) | Staged model rebuilds and security fixes | 001–006 |
 | [0.3.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0-alpha.4) | Exact filters, native sorting, discovery and Outcomia query acceptance | 001–005 |
@@ -26,6 +27,16 @@ before resuming an upload; GitHub releases do not upload crates automatically.
 Current source requires explicit `storage init` through migration 006. Earlier
 migration SQL is unchanged; older binaries reject unknown migration sets.
 Do not downgrade a destination without a reviewed migration plan.
+
+## 0.4.0-alpha.1 compatibility
+
+This source prerelease adds optional aggregate declarations. Upgrade all workers
+and API instances before activating one; 0.3.0 rejects these declarations.
+Existing declarations retain their fingerprints. Migrations 001–006 are unchanged.
+Aggregate reads require the complete configured source-party scope; totals are
+computed over maintained contributions at read time. See the [guide](guide/aggregates.md)
+and [verification](verification.md) for precision, tested scope and limits.
+Crates.io remains at 0.3.0; this source release does not upload packages.
 
 ## 0.3.0 compatibility
 
