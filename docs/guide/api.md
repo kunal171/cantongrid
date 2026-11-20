@@ -219,3 +219,6 @@ the request deadline returns 504. GraphQL clients must also check `errors`.
 that cannot fit the 4 KiB internal cursor fail without a partial page. No
 automatic indexes are created. Recorded query acceptance is in
 [verification](../verification.md#recorded-localnet-acceptance).
+
+The unreleased [aggregate API](aggregates.md#query) uses separate roots/cursors
+and requires the full configured source-party scope, including for single groups.

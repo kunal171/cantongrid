@@ -197,3 +197,6 @@ resubmit ambiguous ledger commands or overwrite an active job. The public
 [rebuild evidence](https://github.com/kunal171/cantongrid/blob/main/examples/poc/rebuild-evidence.json)
 contains counts and checks, without party/contract IDs or credentials.
 See the [current scope and next steps](../README.md#current-scope).
+
+The unreleased read-only [`aggregate-check`](aggregates.md#localnet-check) compares
+grouped results against an independent Ledger snapshot and restores its model revision.

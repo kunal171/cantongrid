@@ -326,3 +326,5 @@ Limits and recovery:
 
 See [verification](../verification.md#staged-rebuilds) for owned-PostgreSQL and
 mock-source coverage and the 261-contract [LocalNet acceptance](poc.md#evidence-and-boundaries).
+
+Unreleased grouped count/sum declarations are documented in [aggregate models](aggregates.md).

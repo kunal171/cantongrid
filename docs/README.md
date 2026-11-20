@@ -10,6 +10,7 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [LocalNet ingestion](guide/localnet-source.md) | Source setup, runtime configuration and worker |
 | [API](guide/api.md) | Caller authentication, queries, filtering and pagination |
 | [Models](guide/models.md) | Definitions, exact calculations, installation and rebuilds |
+| [Aggregates — unreleased](guide/aggregates.md) | Grouped counts/sums with full-source authorization |
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
 | [Operations](guide/operations.md) | Recovery, troubleshooting and disk usage |
 
@@ -24,16 +25,19 @@ generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
 PostgreSQL 17.12 compatibility and large real-ledger rebuild acceptance pass.
 See [verification](verification.md) for the exact environments and checks.
 
+The unreleased [aggregate slice](guide/aggregates.md) adds count/sum queries over
+maintained projections, generated APIs and complete-source access checks.
+
 Phase 4 model integration remains in progress. History starts at an active
-snapshot and continues forward. Joins, aggregates, interfaces/reassignments,
+snapshot and continues forward. Published 0.3.0 does not include aggregates. Joins, interfaces/reassignments,
 Scan, hosted multi-tenancy and arbitrary processing plugins are not implemented.
 Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
 1. Extend Outcomia projections to funded assets/trading after separate authorization.
-2. Define joins/aggregates with retraction and visibility for every input before
-   implementation. Phase 5 then adds authenticated resumable streams, retention-gap
+2. Define joins and broader aggregate operations with retraction and visibility
+   for every input before implementation. Phase 5 then adds authenticated resumable streams, retention-gap
    handling and reauthorization; existing outbox rows are not a public stream.
 
 ## Publishing

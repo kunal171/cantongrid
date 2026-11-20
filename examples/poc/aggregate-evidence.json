@@ -1,0 +1,18 @@
+{
+  "result": "passed",
+  "source": "authorized Ledger snapshot and LocalNet PQS",
+  "inputContracts": 7,
+  "groups": 2,
+  "exactCountAndSum": true,
+  "restGraphqlParity": true,
+  "crossTransportCursors": true,
+  "rowCursorIsolation": true,
+  "narrowScopesDenied": true,
+  "originalRevisionRestored": true,
+  "ledgerWrites": false,
+  "recordedAt": "2026-11-20",
+  "implementationCommit": "76eb35371f8f089fade226815bdef32a25c587d3",
+  "postgresVersion": "17.12",
+  "requiredCallerScope": "all_configured_source_parties",
+  "aggregationMode": "read_time_over_maintained_contributions"
+}

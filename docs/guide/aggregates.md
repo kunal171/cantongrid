@@ -1,6 +1,7 @@
-# Aggregate models — implementation contract
+# Aggregate models (unreleased)
 
-Unreleased Phase 4 work. The published 0.3.0 CLI does not support this extension.
+Phase 4 implementation on `feat/declarative-aggregates`. The published 0.3.0 CLI
+does not support this extension; build the feature checkout from source.
 
 A model may declare `aggregation` with `group_by` (one to four distinct projected
 field names) and `measures` (one to eight named `count`/`sum` operations). Count
@@ -60,3 +61,74 @@ evidence separately. No new runtime dependency is planned.
 
 Any model GraphQL resolver error clears the complete operation data, including
 errors in mixed row/aggregate aliases.
+
+## Run the examples
+
+The complete declarations are [Outcomia counts](../../examples/models/aggregate-outcomia.json)
+and [Visibility count/sums](../../examples/models/aggregate-visibility.json).
+Their selectors and contribution expressions use the ordinary model format.
+
+```bash
+cargo build -p cantongrid-cli --locked
+export CANTONGRID_BIN="$PWD/target/debug/cantongrid"
+"$CANTONGRID_BIN" models validate examples/models/aggregate-outcomia.json
+"$CANTONGRID_BIN" models plan examples/models/aggregate-visibility.json
+"$CANTONGRID_BIN" models typescript examples/models/aggregate-visibility.json
+"$CANTONGRID_BIN" models graphql examples/models/aggregate-outcomia.json
+```
+
+Register, install and bind an aggregate declaration with the existing
+[model lifecycle](models.md). Adding aggregation changes the definition fingerprint:
+use a new revision rather than changing an installed revision. Contribution preview
+still evaluates one contract; aggregate results require an active source binding.
+Upgrade every worker/API handling that binding before activating the new declaration;
+0.3.0 rejects it. Migrations 001–006 remain unchanged.
+
+## Query
+
+`GET /v1/models` and model description include `aggregateQueryField` and
+`aggregateFields` only for aggregate-enabled bindings. GraphQL discovery exposes
+these as nullable fields:
+
+```graphql
+query AggregateCatalog {
+  models {
+    namespace
+    name
+    revision
+    aggregateQueryField
+    aggregateFields {
+      name
+      kind
+      scale
+    }
+  }
+}
+```
+
+POST `/v1/models/{namespace}/{name}/aggregate` with `{"limit":20,"cursor":null}`.
+Each item has an opaque `groupKey` string and typed `values`. `visibleTotal`
+counts groups. The generated GraphQL field accepts `namespace`, `limit`, `cursor`
+and returns the same page; select `items { groupKey values { status markets } }`
+for the Outcomia example. REST/GraphQL cursors interoperate for the same aggregate.
+Row cursors, different callers, revoked grants and old revisions cannot reuse them.
+
+No caller-provided input filters/grouping/sorting are accepted. Bad inputs/cursors
+return REST 400; insufficient aggregate scope returns 403; caller authentication
+and source failures retain the existing 401/503 behavior. Always check GraphQL
+`errors`; any resolver failure clears the operation's complete `data`.
+
+## LocalNet check
+
+After completing the normal [PoC](poc.md) with this source checkout:
+
+```bash
+python3 examples/poc/demo.py aggregate-check
+```
+
+The runner reads a bounded authorized Ledger snapshot, temporarily installs/binds
+revision 4, compares exact totals and one-group pages in REST/GraphQL, checks narrow
+scope denial and row-cursor isolation, then restores revision 1 even after an
+ambiguous activation failure. It makes no ledger writes. Private results stay in
+`.local/poc/aggregate-report.json`; [public evidence](../../examples/poc/aggregate-evidence.json)
+contains counts/checks and no party or contract IDs.
