@@ -1,7 +1,12 @@
 # Aggregate models
 
-Available in the `0.4.0-alpha.1` source prerelease. The crates.io 0.3.0 CLI
-does not support this extension; build tag `v0.4.0-alpha.1` or `main` from source.
+Available in `0.4.0-alpha.1`. Install the prerelease explicitly; the stable
+0.3.0 CLI does not support this extension. Tag `v0.4.0-alpha.1` and `main`
+are also available for source builds.
+
+```bash
+cargo install cantongrid-cli --version 0.4.0-alpha.1 --locked
+```
 
 A model may declare `aggregation` with `group_by` (one to four distinct projected
 field names) and `measures` (one to eight named `count`/`sum` operations). Count

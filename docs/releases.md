@@ -1,6 +1,6 @@
 # Releases and publication
 
-Latest stable release: **0.3.0**. Source prerelease: **0.4.0-alpha.1**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.1**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
 | Version | Delivered scope | Destination migrations |
@@ -14,8 +14,9 @@ is the maintained change history; the links below retain each release's original
 | [0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1) | LocalNet ingestion and authenticated generic APIs | 001–002 |
 | [0.1.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.1.0-alpha.1) | Fixtures, owned storage and source checks | 001 |
 
-The [CLI](https://crates.io/crates/cantongrid-cli/0.3.0) and all seven
-libraries are published at **0.3.0**, with package-specific READMEs.
+The [CLI](https://crates.io/crates/cantongrid-cli/0.4.0-alpha.1) and all seven
+libraries are published at **0.4.0-alpha.1**, with package-specific READMEs.
+Stable **0.3.0** remains available.
 Use the [quickstart](guide/quickstart.md) to install the CLI or build from source.
 
 Alpha.3 introduced packaging between source releases. Historical crate packages
@@ -30,13 +31,17 @@ Do not downgrade a destination without a reviewed migration plan.
 
 ## 0.4.0-alpha.1 compatibility
 
-This source prerelease adds optional aggregate declarations. Upgrade all workers
+This prerelease adds optional aggregate declarations. Upgrade all workers
 and API instances before activating one; 0.3.0 rejects these declarations.
 Existing declarations retain their fingerprints. Migrations 001–006 are unchanged.
 Aggregate reads require the complete configured source-party scope; totals are
 computed over maintained contributions at read time. See the [guide](guide/aggregates.md)
 and [verification](verification.md) for precision, tested scope and limits.
-Crates.io remains at 0.3.0; this source release does not upload packages.
+Install the prerelease explicitly:
+
+```bash
+cargo install cantongrid-cli --version 0.4.0-alpha.1 --locked
+```
 
 ## 0.3.0 compatibility
 
