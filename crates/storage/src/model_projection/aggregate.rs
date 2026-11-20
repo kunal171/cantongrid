@@ -28,14 +28,13 @@ impl Store {
             .iter()
             .map(|p| p.as_str().to_owned())
             .collect();
+        // Authorization must not depend on group membership: otherwise a hidden input
+        // could make a previously visible group disappear and become an existence oracle.
+        if parties.len() != plan.source_parties().count() {
+            return Err(StoreError::Authorization);
+        }
         if !(1..=25).contains(&limit) {
             return Err(StoreError::Limit);
-        }
-        if let Some(key) = after {
-            binding
-                .model
-                .validate_aggregate_key(key)
-                .map_err(|_| StoreError::ModelQuery)?;
         }
         let mut tx = self
             .client
@@ -60,6 +59,12 @@ impl Store {
         )?;
         if model.sql.fingerprint != binding.fingerprint || !plan.selects(&model.model.template) {
             return Err(StoreError::ModelBinding);
+        }
+        if let Some(key) = after {
+            binding
+                .model
+                .validate_aggregate_key(key)
+                .map_err(|_| StoreError::ModelQuery)?;
         }
         let compiled = model
             .model

@@ -27,7 +27,13 @@ mutable totals cache. Creates contribute once; archives retract; replay leaves
 totals unchanged. Atomic/staged model binding selects the same committed revision
 for row and aggregate reads.
 
-Visibility is the AND of all contributing contracts' witness clauses, with OR
+Aggregate access first requires every configured source party, independently of
+stored data. A valid request from a narrower caller receives denial (REST 403), including when
+a group happens to contain only its own inputs. This prevents hidden inputs from
+turning group disappearance into a membership oracle. Single-party aggregates use
+single-party source views; caller-visible partial totals are not this contract.
+
+Visibility is also the AND of all contributing contracts' witness clauses, with OR
 within each clause. For example, inputs visible only to A and only to B produce a
 group visible only to AB. A shared input may satisfy its clause through either
 party. Hidden contributors are never removed to calculate a caller-specific
@@ -47,7 +53,10 @@ input filters, aggregate filters, custom sorting, joins and global empty-key
 aggregates are deferred. Existing row queries remain available.
 
 Acceptance: Outcomia market counts by status and an unrelated exact-sum model;
-A/B/AB and shared visibility; hidden-group counts/overflow; create/archive/replay;
+full-scope access, narrow-scope denial invariant under membership changes, and shared visibility; hidden-group counts/overflow; create/archive/replay;
 failed-batch rollback; binding/rebuild changes; cursor isolation/revocation;
 strict declarations and source/caller checks. Label owned-PostgreSQL and LocalNet
 evidence separately. No new runtime dependency is planned.
+
+Any model GraphQL resolver error clears the complete operation data, including
+errors in mixed row/aggregate aliases.

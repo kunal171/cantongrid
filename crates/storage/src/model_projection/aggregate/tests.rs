@@ -84,12 +84,19 @@ fn aggregates_require_every_contributor_and_retract_without_replay_effects() {
     add(&s, "3", "alone", "alone", "0.1000000000", &["A"]);
     add(&s, "4", "shared", "shared", "-0.1000000000", &["A", "B"]);
     bind(&s);
-    let a = read(&s, &["A"], None, 25);
-    assert_eq!(a.visible_total, "2");
-    assert!(a.items.iter().all(|r| r["values"]["label"] != "mixed"));
-    let b = read(&s, &["B"], None, 25);
-    assert_eq!(b.visible_total, "1");
-    assert_eq!(b.items[0]["values"]["label"], "shared");
+    for parties in [&["A"][..], &["B"][..]] {
+        assert!(matches!(
+            s.open().read_aggregate(
+                &s.plans[0],
+                &caller(&s, parties),
+                &source(&s),
+                &binding(&s),
+                None,
+                25
+            ),
+            Err(StoreError::Authorization)
+        ));
+    }
     let ab = read(&s, &["A", "B"], None, 25);
     assert_eq!(ab.visible_total, "3");
     let mixed = &ab
@@ -115,7 +122,18 @@ fn aggregates_require_every_contributor_and_retract_without_replay_effects() {
             .apply_authorized(&s.plans[0], &retired, &source(&s))
             .unwrap()
     );
-    let now = read(&s, &["A"], None, 25);
+    assert!(matches!(
+        s.open().read_aggregate(
+            &s.plans[0],
+            &caller(&s, &["A"]),
+            &source(&s),
+            &binding(&s),
+            None,
+            25
+        ),
+        Err(StoreError::Authorization)
+    ));
+    let now = read(&s, &["A", "B"], None, 25);
     assert_eq!(now.visible_total, "3");
     let mixed = &now
         .items
@@ -150,9 +168,18 @@ fn hidden_overflow_never_poisoned_visible_groups_and_sums_never_round() {
     add(&s, "2", "secret2", "secret", max, &["B"]);
     add(&s, "3", "visible", "visible", "0.0000000001", &["A"]);
     bind(&s);
-    let a = read(&s, &["A"], None, 25);
-    assert_eq!(a.visible_total, "1");
-    assert_eq!(a.items[0]["values"]["total"], "0.0000000001");
+    // Narrow callers are denied before looking at the dataset, even for overflow.
+    assert!(matches!(
+        s.open().read_aggregate(
+            &s.plans[0],
+            &caller(&s, &["A"]),
+            &source(&s),
+            &binding(&s),
+            None,
+            25
+        ),
+        Err(StoreError::Authorization)
+    ));
     assert!(
         s.open()
             .read_aggregate(
@@ -165,7 +192,15 @@ fn hidden_overflow_never_poisoned_visible_groups_and_sums_never_round() {
             )
             .is_err()
     );
-    assert_eq!(a.items, read(&s, &["A"], None, 25).items);
+    // Simulate unusable visibility evidence in an owned database. The secondary
+    // whole-group guard must hide that group before casting its overflowing sum.
+    let mut client = cantongrid_postgres::connect_env("CANTONGRID_DESTINATION_URL").unwrap();
+    let mut tx = client.transaction().unwrap();
+    tx.execute("UPDATE cantongrid.contracts SET witnesses=ARRAY['C']::text[] WHERE stream_key=$1 AND contract_id IN ('secret1','secret2')",&[&crate::journal::stream_key(&s.plans[0]).0]).unwrap();
+    tx.commit().unwrap();
+    let full = read(&s, &["A", "B"], None, 25);
+    assert_eq!(full.visible_total, "1");
+    assert_eq!(full.items[0]["values"]["total"], "0.0000000001");
 }
 
 #[test]
@@ -254,4 +289,51 @@ fn aggregate_binding_changes_atomically_and_scope_mismatches_fail_closed() {
         "5.0000000000"
     );
     finish("complete");
+}
+
+#[test]
+#[ignore = "requires owned PostgreSQL; synthetic grants; run serially"]
+fn unrelated_outcomia_counts_use_the_same_engine_in_a_single_party_view() {
+    let mut document: serde_json::Value =
+        serde_json::from_str(include_str!("../../../assets/models/outcomia.json")).unwrap();
+    document["models"][0]["aggregation"] =
+        json!({"group_by":["status"],"measures":{"markets":{"op":"count"}}});
+    let s = Scenario::new(&document.to_string());
+    let payload = include_str!("../../../assets/models/outcomia-payload.json");
+    for (position, id, status) in [
+        ("1", "closed1", "Closed"),
+        ("2", "closed2", "Closed"),
+        ("3", "open", "Open"),
+    ] {
+        let mut value: serde_json::Value = serde_json::from_str(payload).unwrap();
+        value["status"] = status.into();
+        s.open()
+            .apply_authorized(
+                &s.plans[0],
+                &s.create(position, id, &value.to_string()),
+                &s.lease(),
+            )
+            .unwrap();
+    }
+    s.bind(1, None).unwrap();
+    let caller =
+        CallerGrants::from_verified(s.plans[0].context().binding(), [PartyId::new("A").unwrap()]);
+    let binding = s
+        .open()
+        .bound_models(&s.plans[0], &caller, &s.lease())
+        .unwrap()
+        .remove(0);
+    let page = s
+        .open()
+        .read_aggregate(&s.plans[0], &caller, &s.lease(), &binding, None, 25)
+        .unwrap();
+    assert_eq!(page.visible_total, "2");
+    assert_eq!(
+        page.items[0]["values"],
+        json!({"status":"Closed","markets":"2"})
+    );
+    assert_eq!(
+        page.items[1]["values"],
+        json!({"status":"Open","markets":"1"})
+    );
 }
