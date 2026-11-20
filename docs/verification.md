@@ -18,8 +18,8 @@ PostgreSQL 14's support status and the upgrade requirement are in [operations](g
 
 ## 0.4.0-alpha.1 grouped aggregates
 
-Recorded 2026-11-20 on the LocalNet profile above. The development workspace is
-`0.4.0-alpha.1`; these changes have not been released or published to crates.io.
+Recorded 2026-11-20 on the LocalNet profile above for source prerelease
+`0.4.0-alpha.1`. Crates.io remains at 0.3.0.
 
 - 67 credential-free Rust tests and 62 owned-PostgreSQL/mock-source checks passed.
   Coverage includes exact counts/sums, archive/replay, rollback, staged activation,

@@ -198,5 +198,6 @@ resubmit ambiguous ledger commands or overwrite an active job. The public
 contains counts and checks, without party/contract IDs or credentials.
 See the [current scope and next steps](../README.md#current-scope).
 
-The unreleased read-only [`aggregate-check`](aggregates.md#localnet-check) compares
+On `v0.4.0-alpha.1` or `main`, the read-only
+[`aggregate-check`](aggregates.md#localnet-check) compares
 grouped results against an independent Ledger snapshot and restores its model revision.
