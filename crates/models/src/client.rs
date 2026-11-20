@@ -23,7 +23,7 @@ impl Catalog {
         let mut result = String::from(
             "# Exact Int64/Numeric values are strings. Access requires current source and caller grants.\n",
         );
-        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]! }\n");
+        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]!, aggregateQueryField: String, aggregateFields: [CgModelField!] }\n");
         let mut root = String::from("type Query {\n  models: [CgModel!]!\n");
         for model in self.models() {
             let stem = model.api_type()?;

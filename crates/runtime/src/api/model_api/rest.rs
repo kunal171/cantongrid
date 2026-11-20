@@ -21,6 +21,10 @@ pub(super) struct Metadata {
     fingerprint: String,
     query_field: String,
     fields: Vec<QueryField>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    aggregate_query_field: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    aggregate_fields: Option<Vec<QueryField>>,
 }
 /// Expose field/type metadata for an active binding without serializing its processing expressions.
 pub(super) fn metadata(binding: &BoundModel) -> Result<Metadata, String> {
@@ -31,6 +35,20 @@ pub(super) fn metadata(binding: &BoundModel) -> Result<Metadata, String> {
         fingerprint: binding.fingerprint.clone(),
         query_field: binding.model.api_name().map_err(|e| e.to_string())?,
         fields: binding.model.query_fields().map_err(|e| e.to_string())?,
+        aggregate_query_field: binding
+            .model
+            .aggregation
+            .as_ref()
+            .map(|_| binding.model.aggregate_api_name())
+            .transpose()
+            .map_err(|e| e.to_string())?,
+        aggregate_fields: binding
+            .model
+            .aggregation
+            .as_ref()
+            .map(|_| binding.model.aggregate_query_fields())
+            .transpose()
+            .map_err(|e| e.to_string())?,
     })
 }
 
@@ -45,6 +63,25 @@ struct Input {
     filters: BTreeMap<String, BTreeMap<Comparison, QueryValue>>,
     sort: Option<Sort>,
 }
+/// Aggregate queries never accept contribution filters or request-supplied grouping fields.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AggregateInput {
+    #[serde(default = "default_limit")]
+    limit: usize,
+    cursor: Option<String>,
+}
+
+/// Query whole authorized groups through the same delivery guard as row reads.
+pub(in crate::api) async fn aggregates(
+    State(service): State<Service>,
+    headers: HeaderMap,
+    Path(path): Path<(String, String)>,
+    body: Bytes,
+) -> Response {
+    handle(service, headers, Some(path), Some(body), true).await
+}
+
 /// Match the default page size used by generic queries and generated GraphQL model roots.
 fn default_limit() -> usize {
     20
@@ -52,7 +89,7 @@ fn default_limit() -> usize {
 
 /// List the active organization catalog only after caller and source checks.
 pub(in crate::api) async fn list(State(service): State<Service>, headers: HeaderMap) -> Response {
-    handle(service, headers, None, None).await
+    handle(service, headers, None, None, false).await
 }
 /// Describe one active namespace/model through the same guarded catalog as list queries.
 pub(in crate::api) async fn describe(
@@ -60,7 +97,7 @@ pub(in crate::api) async fn describe(
     headers: HeaderMap,
     Path(path): Path<(String, String)>,
 ) -> Response {
-    handle(service, headers, Some(path), None).await
+    handle(service, headers, Some(path), None, false).await
 }
 /// Pass a bounded model body to shared validation, scoped SQL and final delivery checks.
 pub(in crate::api) async fn rows(
@@ -69,7 +106,7 @@ pub(in crate::api) async fn rows(
     Path(path): Path<(String, String)>,
     body: Bytes,
 ) -> Response {
-    handle(service, headers, Some(path), Some(body)).await
+    handle(service, headers, Some(path), Some(body), false).await
 }
 
 /// Authenticate before revealing catalog existence or validating model-specific input fields.
@@ -78,6 +115,7 @@ async fn handle(
     headers: HeaderMap,
     path: Option<(String, String)>,
     body: Option<Bytes>,
+    aggregate_mode: bool,
 ) -> Response {
     let Ok(token) = bearer(&headers) else {
         return error(StatusCode::UNAUTHORIZED);
@@ -100,9 +138,23 @@ async fn handle(
         };
         if let Some(body) = body {
             // Strict decoding rejects duplicate keys and floats before serde can lose that evidence.
-            let input = std::str::from_utf8(&body)
-                .ok()
-                .and_then(|s| cantongrid_core::document::parse::<Input>(s).ok());
+            let input = std::str::from_utf8(&body).ok().and_then(|text| {
+                if aggregate_mode {
+                    cantongrid_core::document::parse::<AggregateInput>(text)
+                        .ok()
+                        .map(|input| Input {
+                            limit: input.limit,
+                            cursor: input.cursor,
+                            filters: BTreeMap::new(),
+                            sort: None,
+                        })
+                } else {
+                    cantongrid_core::document::parse::<Input>(text).ok()
+                }
+            });
+            if aggregate_mode && binding.model.aggregation.is_none() {
+                return error(StatusCode::BAD_REQUEST);
+            }
             let Some(input) = input else {
                 return error(StatusCode::BAD_REQUEST);
             };
@@ -114,18 +166,24 @@ async fn handle(
                 return error(StatusCode::BAD_REQUEST);
             }
             // Invalid or expired cursors fail closed; no fallback to an unfiltered first page.
-            match query(
-                &service,
-                &token,
-                binding.clone(),
-                input.limit,
-                input.cursor,
-                options,
-            )
-            .await
-            {
+            let result = if aggregate_mode {
+                super::aggregate_query(&service, &token, binding.clone(), input.limit, input.cursor)
+                    .await
+            } else {
+                query(
+                    &service,
+                    &token,
+                    binding.clone(),
+                    input.limit,
+                    input.cursor,
+                    options,
+                )
+                .await
+            };
+            match result {
                 Ok(page) => page,
                 Err(super::QueryError::Input) => return error(StatusCode::BAD_REQUEST),
+                Err(super::QueryError::Forbidden) => return error(StatusCode::FORBIDDEN),
                 Err(super::QueryError::Unavailable) => {
                     return error(StatusCode::SERVICE_UNAVAILABLE);
                 }

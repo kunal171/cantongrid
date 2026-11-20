@@ -405,6 +405,10 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .route("/v1/models", get(model_api::list))
         .route("/v1/models/{namespace}/{name}", get(model_api::describe))
         .route("/v1/models/{namespace}/{name}/query", post(model_api::rows))
+        .route(
+            "/v1/models/{namespace}/{name}/aggregate",
+            post(model_api::aggregates),
+        )
         .layer(DefaultBodyLimit::max(16384))
         .layer(axum::middleware::from_fn_with_state(
             service.limits.clone(),

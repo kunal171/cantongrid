@@ -8,7 +8,7 @@ use cantongrid_models::{Comparison, FieldType, QueryOptions};
 use cantongrid_storage::BoundModel;
 use std::{collections::BTreeMap, sync::atomic::Ordering};
 /// Resolve primitive output fields from exact JSON strings/bools, without numeric conversions.
-fn scalar(name: &str, kind: TypeRef) -> Field {
+pub(super) fn scalar(name: &str, kind: TypeRef) -> Field {
     let key = name.to_owned();
     Field::new(name, kind, move |ctx| {
         let key = key.clone();
@@ -21,7 +21,7 @@ fn scalar(name: &str, kind: TypeRef) -> Field {
     })
 }
 /// Map booleans natively and exact financial scalars to strings, preserving optional nullability.
-fn field_type(kind: &FieldType) -> TypeRef {
+pub(super) fn field_type(kind: &FieldType) -> TypeRef {
     match kind {
         FieldType::Optional { item } => TypeRef::named(if matches!(**item, FieldType::Bool) {
             "Boolean"
@@ -73,6 +73,22 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
     for name in ["namespace", "name", "revision", "fingerprint", "queryField"] {
         model_metadata = model_metadata.field(scalar(name, TypeRef::named_nn("String")));
     }
+    model_metadata = model_metadata.field(scalar("aggregateQueryField", TypeRef::named("String")));
+    model_metadata = model_metadata.field(Field::new(
+        "aggregateFields",
+        TypeRef::named_nn_list("CgModelField"),
+        |ctx| {
+            FieldFuture::new(async move {
+                let parent = ctx.parent_value.try_downcast_ref::<serde_json::Value>()?;
+                Ok(parent
+                    .get("aggregateFields")
+                    .and_then(|v| v.as_array())
+                    .map(|items| {
+                        FieldValue::list(items.iter().cloned().map(FieldValue::owned_any))
+                    }))
+            })
+        },
+    ));
     model_metadata = model_metadata.field(Field::new(
         "fields",
         TypeRef::named_nn_list_nn("CgModelField"),
@@ -248,6 +264,14 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
             )),
         );
         builder = builder.register(values).register(row).register(page);
+        if model.aggregation.is_some() {
+            let choices = bindings
+                .iter()
+                .filter(|b| b.model == model)
+                .cloned()
+                .collect();
+            (builder, root) = super::aggregate_schema::register(builder, root, &model, choices)?;
+        }
     }
     builder
         .register(root)
@@ -345,6 +369,33 @@ mod tests {
                 actual.get(&name),
                 Some(&expected),
                 "schema mismatch: {name}"
+            );
+        }
+    }
+    #[test]
+    fn aggregate_generated_outputs_match_served_schema_and_aliases() {
+        let mut doc = serde_json::json!({"version":1,"models":[{"name":"records","revision":1,
+            "template":{"package_id":"0".repeat(64),"module":"Example","entity":"Record"},
+            "fields":{"state":{"op":"field","path":["state"],"as":{"type":"text"}},
+                "amount":{"op":"field","path":["amount"],"as":{"type":"numeric","scale":10}},
+                "sequence":{"op":"field","path":["sequence"],"as":{"type":"int64"}}}}]});
+        doc["models"][0]["aggregation"] = serde_json::json!({"group_by":["state"],"measures":{
+            "contracts":{"op":"count"},"total":{"op":"sum","field":"amount"},"units":{"op":"sum","field":"sequence"}}});
+        let catalog = Catalog::parse(&doc.to_string()).unwrap();
+        let model = catalog.models()[0].clone();
+        let binding = BoundModel {
+            namespace: "aggregate".into(),
+            fingerprint: model.fingerprint().unwrap(),
+            model,
+        };
+        let mut alias = binding.clone();
+        alias.namespace = "alias".into();
+        let actual = signatures(&schema(&[binding, alias]).unwrap().sdl());
+        for (name, expected) in signatures(&catalog.graphql_schema().unwrap()) {
+            assert_eq!(
+                actual.get(&name),
+                Some(&expected),
+                "aggregate schema mismatch: {name}"
             );
         }
     }
