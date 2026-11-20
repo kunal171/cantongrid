@@ -21,7 +21,7 @@ Reference: [architecture](architecture.md), [security](security.md),
 ## Current scope
 
 The latest stable release is **0.3.0**; the source prerelease **0.4.0-alpha.1**
-adds grouped aggregates. Stable 0.3.0 It includes LocalNet ingestion, model projections,
+adds grouped aggregates. Stable 0.3.0 includes LocalNet ingestion, model projections,
 generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
 PostgreSQL 17.12 compatibility and large real-ledger rebuild acceptance pass.
 See [verification](verification.md) for the exact environments and checks.
