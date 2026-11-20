@@ -39,6 +39,11 @@ computed at read time over maintained contribution rows; partial-scope aggregate
 joins and independently maintained aggregate caches are not implemented.
 See the [aggregate guide](guide/aggregates.md) for declarations and limits.
 
+All eight `0.4.0-alpha.1` crates were published on 2026-11-20. Downloaded archives
+contain nonempty READMEs and clean provenance at release commit `1f1e64b`.
+Registry installation outside the checkout passed fixture init/validation/replay
+and aggregate model validation, GraphQL generation and TypeScript generation.
+
 ## 0.3.0 release acceptance
 
 Recorded 2026-11-19 on PostgreSQL **17.12**, using the same pinned Canton/PQS
