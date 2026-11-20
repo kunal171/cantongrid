@@ -16,6 +16,29 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## Unreleased grouped aggregates
+
+Recorded 2026-11-20 on the LocalNet profile above. The development workspace is
+`0.4.0-alpha.1`; these changes have not been released or published to crates.io.
+
+- 67 credential-free Rust tests and 62 owned-PostgreSQL/mock-source checks passed.
+  Coverage includes exact counts/sums, archive/replay, rollback, staged activation,
+  caller/source revocation, cursor isolation and shared REST/GraphQL query limits.
+- 30 Python helper controls, strict generated TypeScript compilation, formatting,
+  Clippy and the security suite passed. All eight source archives passed the
+  workspace publication dry run and package-content checks; no crates were uploaded.
+- The read-only [LocalNet check](../examples/poc/aggregate-evidence.json) matched
+  an independent authorized Ledger snapshot: seven existing PoC contracts in two
+  groups. REST/GraphQL exact totals, pagination and narrow-scope denial passed;
+  the original model revision was restored and no ledger transactions were sent.
+- Outcomia status counts passed owned-PostgreSQL tests. This is not a live-ledger
+  Outcomia aggregate acceptance run.
+
+Aggregate reads require the complete configured source-party scope. Totals are
+computed at read time over maintained contribution rows; partial-scope aggregates,
+joins and independently maintained aggregate caches are not implemented.
+See the [aggregate guide](guide/aggregates.md) for declarations and limits.
+
 ## 0.3.0 release acceptance
 
 Recorded 2026-11-19 on PostgreSQL **17.12**, using the same pinned Canton/PQS
@@ -146,4 +169,5 @@ CantonGrid processing. Check upstream for current issue/PR status.
 
 Fixture and mock-source tests do not establish LocalNet behavior. No devnet,
 remote/TLS, production load, complete pre-snapshot history, interface/reassignment,
-join/aggregate or durable-stream acceptance is claimed. See [next steps](README.md#next).
+join or durable-stream acceptance is claimed. Aggregate evidence is limited to the
+unreleased slice above. See [next steps](README.md#next).
