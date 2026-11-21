@@ -1,10 +1,9 @@
 # Working on CantonGrid
 
-- Active milestone: M1 internal exercise receipts, authorized by “continue next”.
-  Follow docs/design/exercise-ingestion.md and the verified M0 source evidence.
-  M1's pinned LocalNet slice is verified; keep further changes within its scope
-  unless the user separately requests M2 or another milestone.
-  No public exercise/lineage API or Outcomia changes in this milestone.
+- Active milestone: M2 privacy-safe direct lineage, authorized by “continue” on
+  feat/privacy-safe-lineage. Follow docs/design/lineage.md and verified M0/M1 evidence.
+  No declared links, joins, transitive traversal, Outcomia changes or publication
+  without a separate instruction. Existing aggregate scope guards stay intact.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading, joins and streams remain later work.
