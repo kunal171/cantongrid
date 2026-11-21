@@ -1,5 +1,5 @@
 //! Strict positional parsing for read-only planning versus explicit owned-destination application.
-use cantongrid_runtime::{UpgradeFiles, apply_upgrade, plan_upgrade};
+use cantongrid_runtime::{UpgradeFiles, apply_upgrade, plan_upgrade, upgrade_job};
 use std::path::Path;
 
 /// Build one short-lived operator runtime; no credentials are accepted as command-line arguments.
@@ -17,6 +17,10 @@ pub fn run(action: &str, args: &[String]) -> Result<(), String> {
         ("apply", [manifest,before,after,dar,models]) => {
             let files = UpgradeFiles { before:Path::new(before),after:Path::new(after),dar:Path::new(dar),models:Path::new(models) };
             crate::print_json(&serde_json::json!(runtime.block_on(apply_upgrade(files,Path::new(manifest)))?))
+        }
+        (action, [manifest,before,after,dar,models]) if ["start","step","status","activate","cancel"].contains(&action) => {
+            let files = UpgradeFiles { before:Path::new(before),after:Path::new(after),dar:Path::new(dar),models:Path::new(models) };
+            crate::print_json(&serde_json::json!(runtime.block_on(upgrade_job(files,Path::new(manifest),action))?))
         }
         _ => Err("expected upgrade plan <old-runtime> <new-runtime> <dar> <models> <namespace> or upgrade apply <manifest> <old-runtime> <new-runtime> <dar> <models>".into()),
     }

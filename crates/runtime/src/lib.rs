@@ -15,4 +15,4 @@ mod model_rebuild;
 pub use model_rebuild::{RebuildOperation, rebuild};
 
 mod selection_upgrade;
-pub use selection_upgrade::{UpgradeFiles, apply_upgrade, plan_upgrade};
+pub use selection_upgrade::{UpgradeFiles, apply_upgrade, plan_upgrade, upgrade_job};

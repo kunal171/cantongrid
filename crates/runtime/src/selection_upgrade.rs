@@ -111,7 +111,7 @@ pub async fn plan_upgrade(
             .iter()
             .map(|m| (namespace.clone(), m.name.clone(), m.revision))
             .collect();
-        Store::open_env(&prepared.before.destination_database_env)
+        let manifest = Store::open_env(&prepared.before.destination_database_env)
             .map_err(|e| e.to_string())?
             .plan_selection_upgrade(
                 &prepared.before.plan,
@@ -120,7 +120,9 @@ pub async fn plan_upgrade(
                 &prepared.artifact,
                 &targets,
             )
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        verify_manifest(&prepared, &manifest)?;
+        Ok(manifest)
     })
     .await
     .map_err(|_| "upgrade planning worker failed")?
@@ -133,19 +135,6 @@ fn baseline(
     manifest: &UpgradeManifest,
 ) -> Result<Batch, String> {
     let boundary = upgrade_boundary(&manifest.checkpoint).map_err(|e| e.to_string())?;
-    let selected = prepared
-        .after
-        .plan
-        .templates()
-        .filter(|t| !prepared.before.plan.selects(t))
-        .cloned()
-        .collect();
-    let plan = Plan::pqs(
-        prepared.before.plan.context().clone(),
-        prepared.before.plan.source_parties().cloned().collect(),
-        selected,
-    )
-    .map_err(|_| "invalid added-template plan")?;
     let cursor = cantongrid_pqs::Cursor {
         snapshot: true,
         boundary,
@@ -154,15 +143,7 @@ fn baseline(
         pk: 0,
     };
     let checkpoint = serde_json::to_string(&cursor).map_err(|_| "invalid upgrade boundary")?;
-    let batch = cantongrid_pqs::page_env(
-        &prepared.before.source_database_env,
-        &plan,
-        auth.lease().ok_or("source lease unavailable")?,
-        Some(&checkpoint),
-        64,
-    )
-    .map_err(|e| e.to_string())?
-    .ok_or("upgrade baseline unavailable")?;
+    let batch = baseline_page(prepared, auth, &checkpoint)?;
     let cursor: cantongrid_pqs::Cursor =
         serde_json::from_str(&batch.position).map_err(|_| "invalid upgrade baseline")?;
     if cursor.snapshot || cursor.boundary != boundary {
@@ -181,18 +162,7 @@ pub async fn apply_upgrade(
             .map_err(|_| "invalid upgrade manifest")?,
     )
     .map_err(|_| "invalid upgrade manifest")?;
-    if manifest.artifact_sha256 != prepared.artifact
-        || manifest.bindings.len() != prepared.catalog.models().len()
-        || prepared.catalog.models().iter().any(|m| {
-            !manifest.bindings.iter().any(|b| {
-                b.name == m.name
-                    && b.revision == m.revision
-                    && m.sql_plan().is_ok_and(|s| s.fingerprint == b.fingerprint)
-            })
-        })
-    {
-        return Err("upgrade artifacts differ from reviewed manifest".into());
-    }
+    verify_manifest(&prepared, &manifest)?;
     let auth = authorize(&prepared).await?;
     tokio::task::spawn_blocking(move || {
         let mut store = Store::open_env(&prepared.before.destination_database_env)
@@ -222,4 +192,116 @@ pub async fn apply_upgrade(
     })
     .await
     .map_err(|_| "upgrade application worker failed")?
+}
+
+/// Reuse the normal restricted PQS reader with an exact fixed-boundary snapshot cursor.
+fn baseline_page(
+    prepared: &Prepared,
+    auth: &SourceAuthorization,
+    checkpoint: &str,
+) -> Result<Batch, String> {
+    let selected = prepared
+        .after
+        .plan
+        .templates()
+        .filter(|t| !prepared.before.plan.selects(t))
+        .cloned()
+        .collect();
+    let plan = Plan::pqs(
+        prepared.before.plan.context().clone(),
+        prepared.before.plan.source_parties().cloned().collect(),
+        selected,
+    )
+    .map_err(|_| "invalid added-template plan")?;
+    cantongrid_pqs::page_env(
+        &prepared.before.source_database_env,
+        &plan,
+        auth.lease().ok_or("source lease unavailable")?,
+        Some(checkpoint),
+        64,
+    )
+    .map_err(|e| e.to_string())?
+    .ok_or("upgrade source page unavailable".into())
+}
+
+/// Execute one durable operator transition. Re-running step/status reconstructs progress from SQL;
+/// no in-memory cursor or saved authorization lease is trusted across processes.
+pub async fn upgrade_job(
+    files: UpgradeFiles<'_>,
+    manifest_path: &Path,
+    action: &str,
+) -> Result<cantongrid_storage::UpgradeStatus, String> {
+    if !["start", "step", "status", "activate", "cancel"].contains(&action) {
+        return Err("unsupported upgrade action".into());
+    }
+    let prepared = prepare(&files)?;
+    let manifest: UpgradeManifest = cantongrid_core::document::parse(
+        std::str::from_utf8(&read(manifest_path, 65536)?)
+            .map_err(|_| "invalid upgrade manifest")?,
+    )
+    .map_err(|_| "invalid upgrade manifest")?;
+    verify_manifest(&prepared, &manifest)?;
+    let auth = authorize(&prepared).await?;
+    let action = action.to_owned();
+    tokio::task::spawn_blocking(move || {
+        let mut store = Store::open_env(&prepared.before.destination_database_env)
+            .map_err(|e| e.to_string())?;
+        let before = &prepared.before.plan;
+        let after = &prepared.after.plan;
+        let lease = auth.lease().ok_or("source lease unavailable")?;
+        let result = match action.as_str() {
+            "start" => store.start_selection_upgrade(before, after, lease, &manifest),
+            "status" => store.selection_upgrade_status(before, lease, &manifest),
+            "cancel" => store.cancel_selection_upgrade(before, lease, &manifest),
+            other => {
+                let state = store
+                    .selection_upgrade_status(before, lease, &manifest)
+                    .map_err(|e| e.to_string())?;
+                if other == "step" && state.phase == "snapshot" {
+                    let batch = baseline_page(&prepared, &auth, &state.source_cursor)?;
+                    store.stage_selection_upgrade(
+                        before,
+                        lease,
+                        &manifest,
+                        &state.source_cursor,
+                        &batch,
+                    )
+                } else {
+                    // Re-probe the acknowledged boundary before publication. Pruned/regressed
+                    // history fails explicitly; never resume by substituting the current head.
+                    if other == "activate" || state.phase == "publishing" {
+                        baseline_page(&prepared, &auth, &manifest.checkpoint)?;
+                    }
+                    if other == "activate" {
+                        store.activate_selection_upgrade(before, after, lease, &manifest)
+                    } else {
+                        store.step_selection_upgrade(before, after, lease, &manifest)
+                    }
+                }
+            }
+        };
+        result.map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|_| "upgrade job worker failed")?
+}
+
+/// The reviewed artifact, selections and each model fingerprint must match the supplied inputs.
+fn verify_manifest(prepared: &Prepared, manifest: &UpgradeManifest) -> Result<(), String> {
+    if manifest.format_version != 1
+        || manifest.before != prepared.before.plan.definition()
+        || manifest.after != prepared.after.plan.definition()
+        || manifest.artifact_sha256 != prepared.artifact
+        || manifest.bindings.len() != prepared.catalog.models().len()
+        || prepared.catalog.models().iter().any(|m| {
+            !manifest.bindings.iter().any(|b| {
+                b.name == m.name
+                    && b.revision == m.revision
+                    && m.sql_plan().is_ok_and(|s| s.fingerprint == b.fingerprint)
+            })
+        })
+    {
+        return Err("upgrade artifacts differ from reviewed manifest".into());
+    }
+    Ok(())
 }
