@@ -1,6 +1,7 @@
 # Exercise source feasibility (M0)
 
-Status: in progress. Baseline: `bd8d0f15f8ac632b4fbfcc0f481ff8a350bf09f9`.
+Status: M0 verified on the pinned LocalNet fixture, 2026-11-21.
+Baseline: `bd8d0f15f8ac632b4fbfcc0f481ff8a350bf09f9`.
 Scope: the 2026-11-21 technical roadmap's M0 only. This RFC records evidence and
 source decisions; it does not introduce canonical exercise events, destination
 migrations, graph APIs or Outcomia changes. M1 needs a separate instruction.
@@ -21,14 +22,14 @@ of running exporter configuration or authorized event coverage.
 
 | Question | Required control | Status |
 | --- | --- | --- |
-| Exercise selection | Exact `exercises` overloads, columns and choice-filter configuration | Retained schema041 catalog inspected; tree-mode selection still needs pinned live acceptance |
-| Stable paging | Offset plus stable event/node tie breaker; overlapping pages | Structured `(offset, node_id)` found; overlap/restart controls pending |
-| Exercise visibility | Actual consuming/nonconsuming witness semantics and redaction | Catalog has `witnesses text[]`; populated values/redaction unverified |
-| Descendant evidence | Source node identity and valid subtree bounds | Catalog has `last_descendant_node_id`; upstream migration default is `-1`; running values unverified |
-| Transient contracts | Create/consume within one committed transaction | Generic IDE-ledger fixture passes; exporter handling pending |
-| Coverage | Retained offsets, pruning, source regression and filtered nodes | Pending |
-| Lifecycle reconciliation | One canonical archive per consuming exercise/ACS delta | Design decision pending evidence |
-| Ledger Effects comparison | Same authorized participant/scope and transaction identities | Pending |
+| Exercise selection | Exact `exercises` overloads, columns and choice-filter configuration | Pinned Scribe tree mode works with explicit party filters and template wildcard; no separate choice-name filter needed |
+| Stable paging | Offset plus stable event/node tie breaker; overlapping pages | One-row `(offset, node_id)` pages and overlapping replay match after exporter restarts |
+| Exercise visibility | Actual consuming/nonconsuming witness semantics and redaction | Four scoped views match Ledger Effects witnesses; redaction unsupported/unverified |
+| Descendant evidence | Source node identity and valid subtree bounds | Live bounds match Ledger Effects; hidden exercises prevent general direct-parent proof; `-1` remains unsupported |
+| Transient contracts | Create/consume within one committed transaction | Relay and temporary Child receipts retained; all three consuming exercises match archive IDs |
+| Coverage | Retained offsets, pruning, source regression and filtered nodes | Fixed retained window verified; future end rejected; pruning/regression and pre-snapshot completeness unverified |
+| Lifecycle reconciliation | One canonical archive per consuming exercise/ACS delta | Three matching archive identities; propose existing archive ownership, exercise receipts carry evidence only |
+| Ledger Effects comparison | Same authorized participant/scope and transaction identities | Operator, A, B and AB match identities/payloads/witnesses/controllers/bounds |
 
 A filtered subtree may prove ancestry without identifying the immediate parent.
 Do not elevate the nearest visible exercise to a direct-parent claim. Negative
@@ -71,7 +72,46 @@ The existing CantonGrid fixture profiles omit `pipeline.datasource`; do not
 assume their retained databases contain exercises. A separately approved tree-mode
 experiment must not repurpose an existing ACS-delta checkpoint or database.
 
-## Proposed M1 decisions, pending live evidence
+## LocalNet results
+
+The approved experiment used three new synthetic parties, exact source users,
+isolated databases and restricted SQL readers. Five transactions committed;
+unauthorized choice and rollback controls were rejected. Both IDE scripts pass.
+See [reproduction](../../examples/exercises/README.md) and
+[public evidence](../../examples/exercises/evidence.json).
+
+| Source view | Creates | Exercises | Archives |
+| --- | ---: | ---: | ---: |
+| Operator | 9 | 5 | 3 |
+| A | 7 | 3 | 3 |
+| B | 8 | 3 | 3 |
+| AB | 9 | 3 | 3 |
+
+Every view matches authorized Ledger Effects at the same transaction identities.
+Exercise payload/result, controllers, witnesses and descendant bounds match;
+creates also match payload/stakeholders/witnesses. Archive comparison covers
+event and contract identities only, not independent archive-witness authority.
+PQS FQNs use package names: comparison must restore the concrete `package_id`
+before comparing Ledger template IDs. A matching package-name alias is insufficient.
+
+A/B see the pair's children without seeing its nonconsuming factory exercise.
+The shared pair exposes one child to AB; it does not expose its operator-only
+sibling. Conversely, both observers see all seven nodes of the consuming nested
+transaction through inherited informees, including the child whose stakeholder
+list names only A. Event witnesses and ACS stakeholders are different boundaries.
+The forged child has a matching declared factory reference and no factory event.
+
+PQS rejects a query end after its latest observed offset. Each comparison clips
+to its observed boundary and records the unverified tail; a hidden final
+transaction need not advance every scoped exporter. Never label this complete
+global history. No pruning, redaction, cross-participant or upgrade experiment ran.
+
+Decision: PQS tree mode is sufficient for the M1 internal exercise-receipt slice
+on this profile. A second ingestion adapter is not justified by this experiment.
+Neither source can recover an exercise hidden from the same authorized view;
+general immediate-parent provenance remains unsupported. No graph API is enabled.
+
+## Proposed M1 contract, pending implementation review
 
 - Scope event keys by source/network/generation plus transaction offset/node ID;
   never expose database-local PKs as portable identities. Confirm replay stability
@@ -79,9 +119,11 @@ experiment must not repurpose an existing ACS-delta checkpoint or database.
 - Keep committed transaction boundaries intact. Explicitly bound transaction
   size; refuse an oversized transaction without advancing its checkpoint. Test
   pages containing several events at one offset and overlapping restart pages.
-- Retain existing archive ownership until a reviewed reconciliation rule proves
-  how consuming exercises and archive rows represent one lifecycle transition.
-  Merely observing both must not apply model/outbox effects twice.
+- Retain `archives()` as owner of existing lifecycle/model/outbox effects.
+  Store exercises as separate evidence, linking consuming receipts by observed
+  source identity without applying another archive. The fixture's three matching
+  receipts support this choice; filtered/divulged and upgraded cases still need
+  implementation controls. Preserve existing `divulged_only` guards.
 - Preserve exercise witnesses separately from contract stakeholders/controllers.
   A visible factory exercise cannot authorize disclosure of every child.
 - Treat subtree bounds as ancestry evidence only when identity, scope and
@@ -119,9 +161,9 @@ Ledger Effects source only for demonstrated gaps and a reviewed reconciliation
 contract. Do not independently advance two representations of the same lifecycle.
 Keep existing create/archive API responses, counts and cursor semantics intact.
 
-M0 is complete only when another developer can reproduce the versioned evidence,
-including a deliberately restricted view. If fixture deployment is not authorized
-or source visibility is not provable, record the gap and leave acceptance open.
+M0's pinned fixture is reproducible, including deliberately restricted views and
+explicit unsupported relationships. This is source-feasibility evidence, not
+production acceptance or proof of complete history.
 M1 then adds internal exercise receipts and replay/storage tests; M2 adds guarded
 lineage queries. Joins, temporal queries, inspectors, streams and reconciliation
 remain later milestones. Reuse metadata/sync for later impact analysis.

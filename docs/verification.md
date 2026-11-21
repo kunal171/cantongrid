@@ -16,6 +16,28 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M0 exercise-source feasibility — 2026-11-21
+
+The [source RFC](design/exercise-source.md#localnet-results) records the capability
+matrix and decisions; [fixture evidence](../examples/exercises/evidence.json)
+contains versions and nonsecret counts. The approved LocalNet experiment used
+new synthetic parties/users and isolated PQS databases with restricted SQL readers.
+Five transactions committed and two intended failures were rejected. Four scoped
+views match Ledger Effects payloads, witnesses, transaction update IDs and node
+bounds; one-row pages and overlapping replay pass after exporter restarts.
+
+The two IDE-ledger Daml scripts, 35 helper tests and seven existing PoC tests pass.
+Rust formatting, release metadata, secret scans and container log checks pass. Runtime Rust,
+migrations and APIs are unchanged; a full Rust suite was not rerun for this scope.
+SDK 3.7.1 selects damlc/daml-script 3.7.0. The helper uses a temporary source copy
+to avoid an observed DPM 1.1.0 percent-encoded space in local DAR dependency paths;
+this is a tooling workaround, not a classified upstream defect.
+
+No general direct-parent proof, pruning, redaction, upgrade lineage or production
+acceptance is claimed. Existing create/archive profiles were not converted to
+tree mode. Raw payloads and identities remain private under ignored `.local/`.
+Owned fixture services were stopped after verification; database volumes remain.
+
 ## Unreleased 0.4.0-alpha.2 offline metadata
 
 Recorded 2026-11-21 without starting LocalNet or changing Ledger state. The CLI

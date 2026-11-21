@@ -47,17 +47,40 @@ functions or contract rows. It saves owner-only evidence under ignored
 `.local/exercise-source/` and prints schema facts. It does not start services,
 grant rights or claim current source authorization.
 
-## LocalNet experiment awaiting approval
+## Opt-in LocalNet experiment
 
-Proposed writes are limited to the disposable LocalNet: upload these two DARs,
-allocate three dedicated synthetic parties, provision exact operator/Alice/Bob
-users, create the factory and submit the controls above. Separate PQS source
-profiles must use exact party subsets and isolated databases, with no broadening
-of existing source grants. Each deployment runner must require an explicit
-`--allow-ledger-writes` opt-in; no deployment runner is shipped yet.
+Run only after the maintainer authorizes fixture writes. The experiment uploads
+the contracts DAR, allocates three synthetic parties, provisions a writer and
+four exact read-only source users, and submits the controls above. It creates
+isolated PQS databases and SQL readers; existing source profiles stay intact.
 
-Compare the same committed transactions through authorized Ledger Effects and
-PQS tree mode, then repeat under partial party scopes. Keep raw payloads, tokens,
-party IDs and contract IDs private. Publish only schema/version facts, coverage
-results and synthetic expectations. Missing exercises or descendants mean
-incomplete evidence, never an inferred parent. M0 remains open until this runs.
+```bash
+python3 scripts/dev.py localnet up
+docker compose -p cantongrid-pqs -f dev/pqs.compose.yaml up -d --no-deps --wait pqs-postgres
+(cd examples/exercises/contracts && dpm build)
+python3 scripts/dev.py check exercises --localnet --allow-ledger-writes
+```
+
+The exporter runs in `TransactionTreeStream` mode. Operator, Alice, Bob and
+Alice+Bob sources run sequentially, each in its own database with exact party
+filters and `CanReadAs` grants. Every event SELECT uses that database's restricted
+reader; setup uses owner rights only to provision these new fixture databases.
+Health and source rights are checked; failures do not fall back to owner reads.
+
+Results stay in `.local/exercise-source/runs/cg-m0-<id>/`. If source setup fails
+after the controls commit, resume without allocating parties or resubmitting:
+
+```bash
+# Replace this example ID with the run_id in the saved summary/directory name.
+python3 scripts/dev.py check exercises --localnet --allow-ledger-writes --resume cg-m0-01234567
+```
+
+The helper stops its exporter on success/failure. Named databases, parties and
+users remain for inspection. Stop LocalNet and the fixture PostgreSQL separately
+when finished; preserve their volumes. Logs rotate at 10 MB × 3 per service.
+
+The recorded [evidence](evidence.json) compares all five committed transactions
+through authorized Ledger Effects and PQS, including partial-party views, one-row
+keyset pages and overlapping replay. Keep raw payloads, tokens, party IDs and
+contract IDs private. Missing exercises or descendants mean incomplete evidence,
+never an inferred parent. This fixture does not verify pruning or redaction.

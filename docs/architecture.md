@@ -174,8 +174,9 @@ or provider is inferred from an endpoint hostname.
 
 ## Next event foundation milestone
 
-[M0 exercise-source feasibility](design/exercise-source.md) is the active scope.
-It evaluates the existing schema041 exercise interface before adding another
-source path. M0 introduces no production event variant, schema migration or
-public API. Witness semantics, partial ancestry and authoritative lifecycle
-reconciliation must be demonstrated before M1 implementation.
+[M0 exercise-source feasibility](design/exercise-source.md) is verified on the
+pinned LocalNet. PQS tree-mode receipts match authorized Ledger Effects in four
+party scopes. Partial views can disclose children without their factory exercise;
+general immediate-parent proof remains unsupported. M1 should extend the existing
+PQS adapter with internal exercise receipts while preserving archive ownership.
+M0 adds no production event variant, destination migration or public API.

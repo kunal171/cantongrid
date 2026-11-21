@@ -1,0 +1,148 @@
+{
+  "recorded_on": "2026-11-21",
+  "environment": "disposable_localnet",
+  "versions": {
+    "canton": "3.5.7",
+    "scribe": "3.5.4",
+    "pqs_schema": "041",
+    "postgresql": "17.12",
+    "daml_sdk": "3.7.1",
+    "damlc_component": "3.7.0",
+    "daml_lf": "2.1"
+  },
+  "source_mode": "TransactionTreeStream",
+  "committed_controls": 5,
+  "rejected_controls": 2,
+  "scopes": {
+    "operator": {
+      "creates": {
+        "ledger": 9,
+        "pqs": 9,
+        "identities_match": true,
+        "values_match": true
+      },
+      "exercises": {
+        "ledger": 5,
+        "pqs": 5,
+        "identities_match": true,
+        "values_match": true
+      },
+      "archives": {
+        "ledger": 3,
+        "pqs": 3,
+        "identities_match": true,
+        "values_match": true
+      },
+      "paging": {
+        "page_size": 1,
+        "receipts": 5,
+        "overlap_exact": true,
+        "complete_at_observed_boundary": true
+      },
+      "transactions": {
+        "receipts": 4,
+        "update_ids_match": true
+      }
+    },
+    "a": {
+      "creates": {
+        "ledger": 7,
+        "pqs": 7,
+        "identities_match": true,
+        "values_match": true
+      },
+      "exercises": {
+        "ledger": 3,
+        "pqs": 3,
+        "identities_match": true,
+        "values_match": true
+      },
+      "archives": {
+        "ledger": 3,
+        "pqs": 3,
+        "identities_match": true,
+        "values_match": true
+      },
+      "paging": {
+        "page_size": 1,
+        "receipts": 3,
+        "overlap_exact": true,
+        "complete_at_observed_boundary": true
+      },
+      "transactions": {
+        "receipts": 4,
+        "update_ids_match": true
+      }
+    },
+    "b": {
+      "creates": {
+        "ledger": 8,
+        "pqs": 8,
+        "identities_match": true,
+        "values_match": true
+      },
+      "exercises": {
+        "ledger": 3,
+        "pqs": 3,
+        "identities_match": true,
+        "values_match": true
+      },
+      "archives": {
+        "ledger": 3,
+        "pqs": 3,
+        "identities_match": true,
+        "values_match": true
+      },
+      "paging": {
+        "page_size": 1,
+        "receipts": 3,
+        "overlap_exact": true,
+        "complete_at_observed_boundary": true
+      },
+      "transactions": {
+        "receipts": 5,
+        "update_ids_match": true
+      }
+    },
+    "ab": {
+      "creates": {
+        "ledger": 9,
+        "pqs": 9,
+        "identities_match": true,
+        "values_match": true
+      },
+      "exercises": {
+        "ledger": 3,
+        "pqs": 3,
+        "identities_match": true,
+        "values_match": true
+      },
+      "archives": {
+        "ledger": 3,
+        "pqs": 3,
+        "identities_match": true,
+        "values_match": true
+      },
+      "paging": {
+        "page_size": 1,
+        "receipts": 3,
+        "overlap_exact": true,
+        "complete_at_observed_boundary": true
+      },
+      "transactions": {
+        "receipts": 5,
+        "update_ids_match": true
+      }
+    }
+  },
+  "archive_comparison": "event identity and contract ID only; no independent archive witness claim",
+  "unsupported": [
+    "general_immediate_parent_proof",
+    "pruned_history",
+    "redacted_payloads",
+    "cross_participant_identity",
+    "package_upgrade_lineage"
+  ],
+  "lineage_api_enabled": false,
+  "runtime_exercise_ingestion": false
+}
