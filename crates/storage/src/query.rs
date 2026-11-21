@@ -58,6 +58,7 @@ impl Store {
             .isolation_level(IsolationLevel::RepeatableRead)
             .read_only(true)
             .start()?;
+        crate::selection_upgrade::jobs::available(&mut tx, plan)?;
         let key = stream_key(plan).0;
         let definition = tx.query_opt(
             "SELECT definition,checkpoint,GREATEST(0,extract(epoch FROM now()-observed_at)::bigint),(SELECT position FROM cantongrid.batches WHERE stream_key=$1 ORDER BY revision LIMIT 1) FROM cantongrid.streams WHERE stream_key=$1",

@@ -154,3 +154,6 @@ impl Store {
 mod apply;
 #[cfg(test)]
 mod tests;
+
+pub(crate) mod jobs;
+pub use jobs::UpgradeStatus;

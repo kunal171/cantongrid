@@ -182,6 +182,8 @@ impl Drop for Scenario {
                 for table in [
                     "model_rebuild_dirty",
                     "model_rebuilds",
+                    "selection_upgrade_pages",
+                    "selection_upgrade_jobs",
                     "selection_upgrades",
                     "model_bindings",
                     "outbox",

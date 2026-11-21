@@ -64,6 +64,7 @@ impl Store {
             if !models::authorized(after,lease) { return Err(StoreError::Authorization); }
             return Ok(UpgradeResult { changed:false, baseline_contracts:0, fingerprint });
         }
+        if tx.query_one("SELECT EXISTS(SELECT 1 FROM cantongrid.selection_upgrade_jobs WHERE stream_key=$1 AND phase NOT IN ('complete','cancelled'))", &[&key])?.get::<_,bool>(0) { return Err(StoreError::Busy); }
         let (revision, checkpoint) =
             live::prefix(&mut tx, before)?.ok_or(StoreError::ModelBinding)?;
         if checkpoint.as_deref() != Some(&manifest.checkpoint) {

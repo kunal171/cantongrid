@@ -21,4 +21,6 @@ pub use store::{Stats, Store};
 mod tests;
 
 mod selection_upgrade;
-pub use selection_upgrade::{UpgradeBinding, UpgradeManifest, UpgradeResult, upgrade_boundary};
+pub use selection_upgrade::{
+    UpgradeBinding, UpgradeManifest, UpgradeResult, UpgradeStatus, upgrade_boundary,
+};

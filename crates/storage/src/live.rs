@@ -104,6 +104,7 @@ impl Store {
         {
             return Err(StoreError::Busy);
         }
+        crate::selection_upgrade::jobs::available(&mut tx, plan)?;
         let existing = tx.query_opt(
             "SELECT definition,revision,checkpoint FROM cantongrid.streams WHERE stream_key=$1",
             &[&key],
@@ -151,6 +152,15 @@ impl Store {
 /// Verify a source prefix within either the operator's writer transaction or a checkpoint read.
 /// No artificial revision-zero stream can be used to activate projections before ingestion.
 pub(crate) fn prefix(
+    client: &mut impl GenericClient,
+    plan: &Plan,
+) -> Result<Option<(i64, Option<String>)>, StoreError> {
+    crate::selection_upgrade::jobs::available(client, plan)?;
+    prefix_unblocked(client, plan)
+}
+
+/// Upgrade operators already hold the writer lock and validate their job before using this prefix.
+pub(crate) fn prefix_unblocked(
     client: &mut impl GenericClient,
     plan: &Plan,
 ) -> Result<Option<(i64, Option<String>)>, StoreError> {
