@@ -269,7 +269,9 @@ pub async fn upgrade_job(
                 } else {
                     // Re-probe the acknowledged boundary before publication. Pruned/regressed
                     // history fails explicitly; never resume by substituting the current head.
-                    if other == "activate" || state.phase == "publishing" {
+                    if (other == "activate" && state.phase == "ready")
+                        || state.phase == "publishing"
+                    {
                         baseline_page(&prepared, &auth, &manifest.checkpoint)?;
                     }
                     if other == "activate" {

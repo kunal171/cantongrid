@@ -83,6 +83,25 @@ fn targets(
 ) -> Result<Vec<Installed>, StoreError> {
     let key = stream_key(before).0;
     if tx.query_one("SELECT EXISTS(SELECT 1 FROM cantongrid.model_rebuilds WHERE stream_key=$1 AND phase NOT IN ('complete','cancelled'))", &[&key])?.get::<_,bool>(0) { return Err(StoreError::ModelRebuild); }
+    let revision = anchor(tx, before, manifest)?;
+    models::load_bound(tx, before, revision)?;
+    let mut prospective: BTreeSet<(String, String)> = tx
+        .query(
+            "SELECT namespace,name FROM cantongrid.model_bindings WHERE stream_key=$1",
+            &[&key],
+        )?
+        .into_iter()
+        .map(|r| (r.get(0), r.get(1)))
+        .collect();
+    prospective.extend(
+        manifest
+            .bindings
+            .iter()
+            .map(|b| (b.namespace.clone(), b.name.clone())),
+    );
+    if prospective.len() > 16 {
+        return Err(StoreError::Limit);
+    }
     let mut result = std::collections::BTreeMap::new();
     let mut aliases = BTreeSet::new();
     if manifest.bindings.is_empty() || manifest.bindings.len() > 16 {

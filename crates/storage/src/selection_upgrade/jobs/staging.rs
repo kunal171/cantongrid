@@ -29,6 +29,17 @@ impl Store {
             let cursor=serde_json::json!({"snapshot":true,"boundary":boundary,"through":boundary,"offset":boundary,"pk":0}).to_string();
             tx.execute("INSERT INTO cantongrid.selection_upgrade_jobs(stream_key,fingerprint,manifest,phase,source_cursor) VALUES($1,$2,$3,'snapshot',$4)", &[&key,&fp,&serde_json::to_value(manifest).map_err(|_|StoreError::ModelDefinition)?,&cursor])?;
         }
+        let prior = status(&mut tx, &key, manifest)?;
+        if prior.phase == "cancelled" {
+            if prior.retained_pages != 0 {
+                return Err(StoreError::CorruptJournal);
+            }
+            anchor(&mut tx, before, manifest)?;
+            targets(&mut tx, before, after, manifest, true)?;
+            let boundary = upgrade_boundary(&manifest.checkpoint)?;
+            let cursor=serde_json::json!({"snapshot":true,"boundary":boundary,"through":boundary,"offset":boundary,"pk":0}).to_string();
+            tx.execute("UPDATE cantongrid.selection_upgrade_jobs SET phase='snapshot',source_cursor=$3,pages=0,applied=0,contracts=0,staged_bytes=0,cleanup_after=0 WHERE stream_key=$1 AND fingerprint=$2", &[&key,&fp,&cursor])?;
+        }
         let state = status(&mut tx, &key, manifest)?;
         authority(before, lease)?;
         tx.commit().map_err(|_| StoreError::CommitUnknown)?;

@@ -78,7 +78,7 @@ impl Store {
                     tx.execute("UPDATE cantongrid.selection_upgrade_jobs SET phase='cancelled' WHERE stream_key=$1 AND fingerprint=$2", &[&key,&fp])?;
                 }
             }
-            "cancelled" => {}
+            "ready" | "cancelled" => {}
             _ => return Err(StoreError::ModelBinding),
         }
         let state = status(&mut tx, &key, manifest)?;

@@ -437,3 +437,45 @@ fn staged_upgrade_failure_and_cancellation_restore_the_old_public_prefix() {
         1
     );
 }
+
+/// A fully undone job can be explicitly restarted at the same frozen anchor without stale pages.
+#[test]
+#[ignore = "requires separately owned disposable PostgreSQL destination"]
+fn cancelled_staging_can_restart_without_reusing_old_source_progress() {
+    let (s, after) = scenario();
+    let manifest = plan(&s, &after);
+    let initial = s
+        .open()
+        .start_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    s.open()
+        .stage_selection_upgrade(
+            &s.plans[0],
+            &s.lease(),
+            &manifest,
+            &initial.source_cursor,
+            &staged_page(&s, &after, 0, 1, true),
+        )
+        .unwrap();
+    s.open()
+        .cancel_selection_upgrade(&s.plans[0], &s.lease(), &manifest)
+        .unwrap();
+    s.open()
+        .step_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    let restart = s
+        .open()
+        .start_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    assert_eq!(restart.phase, "snapshot");
+    assert_eq!(restart.pages, 0);
+    assert_eq!(restart.source_cursor, initial.source_cursor);
+    s.open()
+        .cancel_selection_upgrade(&s.plans[0], &s.lease(), &manifest)
+        .unwrap();
+    let done = s
+        .open()
+        .step_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    assert_eq!(done.phase, "cancelled");
+}
