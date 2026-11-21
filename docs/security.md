@@ -69,3 +69,15 @@ atomic 0600 file replacement. Never broaden source access to recover availabilit
 controls and limitations. PostgreSQL support is tracked in
 [operations](guide/operations.md#postgresql-support).
 Report vulnerabilities through [private reporting](https://github.com/kunal171/cantongrid/blob/main/SECURITY.md).
+
+## Package upgrade staging
+
+Upgrade manifests bind the exact source/party selection, completed checkpoint,
+artifact and installed model fingerprints. Source operations remain read-only.
+Private staged pages require current source authorization and never supply caller
+grants. During publication/cancellation, generic reads, discovery, model queries
+and ingestion are gated for that stream. Each page is bounded; the final transaction
+promotes the complete selection and model aliases. Cancellation removes only
+unpublished rows. Completed upgrades retain canonical history and use model
+rebuilds for rollback. Outbox entries remain private; future stream delivery must
+respect this gate before exposing staged events.

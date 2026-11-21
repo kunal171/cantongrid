@@ -222,3 +222,28 @@ automatic indexes are created. Recorded query acceptance is in
 
 The [aggregate API](aggregates.md#query) uses separate roots/cursors
 and requires the full configured source-party scope, including for single groups.
+
+## Compound row sorting (unreleased alpha.2)
+
+REST `sort` accepts the existing object or an ordered list of one to four keys:
+
+```json
+{
+  "sort": [
+    {"field": "price", "direction": "desc"},
+    {"field": "orderId", "direction": "asc"}
+  ]
+}
+```
+
+GraphQL keeps `sort: {field: "price", direction: desc}` and adds
+`orderBy: [{field: "price", direction: desc}, {field: "orderId", direction: asc}]`.
+Use one argument per query. Generated TypeScript describes the REST object/list
+union; generated SDL includes both GraphQL arguments.
+
+Duplicate/unknown keys and lists longer than four fail validation. Each key uses
+native exact ordering and NULLS LAST in either direction; contract ID ascending
+breaks the final tie. Pagination binds the whole ordered tuple, directions, filters,
+principal and model/plan identity. A one-element array and its legacy object produce
+the same normalized query. Start fresh pages after upgrading from older binaries:
+old internal row-key formats are rejected rather than misread.

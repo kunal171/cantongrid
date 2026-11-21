@@ -63,8 +63,8 @@ Limits are fixed in this version; errors omit untrusted archive contents and pat
 
 Run inspection against the new DAR to obtain its package IDs and signatures.
 This command does not update model configuration, generate models from metadata,
-apply SQL, upload DARs or activate an ingestion revision. Existing `models plan`,
+apply SQL, upload DARs or activate an ingestion revision. [Reviewed upgrades](upgrades.md)
+consume explicit model definitions separately. Existing `models plan`,
 `models graphql` and `models typescript` still consume developer-authored model
 JSON. Command-driven synchronization is tracked in
-[#24](https://github.com/kunal171/cantongrid/issues/24), with coordinated package
-activation in [#25](https://github.com/kunal171/cantongrid/issues/25).
+[#24](https://github.com/kunal171/cantongrid/issues/24), with reviewed additive activation implemented in [package upgrades](upgrades.md).

@@ -15,6 +15,7 @@ const HELP: &str = "CantonGrid — local ingestion and storage reference
 Usage:
   cantongrid metadata inspect <artifact.dar>
   cantongrid upgrade plan <old-runtime> <new-runtime> <dar> <models> <namespace>
+  cantongrid upgrade start|step|status|activate|cancel <manifest> <old-runtime> <new-runtime> <dar> <models>
   cantongrid upgrade apply <manifest> <old-runtime> <new-runtime> <dar> <models>
   cantongrid index <runtime.json> [--once]
   cantongrid serve <runtime.json>
