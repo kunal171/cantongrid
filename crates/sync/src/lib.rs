@@ -1,6 +1,14 @@
 //! Offline deterministic schema synchronization. Developer expressions remain explicit;
 //! no Ledger connection, database migration or executable LF interpretation occurs here.
 #![forbid(unsafe_code)]
+mod bundle;
+mod compare;
+pub use bundle::Bundle;
+mod plan;
+mod resolve;
+pub use compare::Change;
+pub use plan::{Diagnostic, Report, SyncPlan, plan};
+
 use serde::Serialize;
 
 /// Safe operator diagnostics omit source literals, parser internals and input file paths.
