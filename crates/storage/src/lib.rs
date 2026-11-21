@@ -3,6 +3,8 @@
 mod error;
 mod exercise;
 mod journal;
+mod lineage;
+pub use lineage::{LineageDirection, LineageQuery};
 mod live;
 mod query;
 pub use query::{PageKind, ReadPage};
