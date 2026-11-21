@@ -13,6 +13,7 @@ use std::{
 const HELP: &str = "CantonGrid — local ingestion and storage reference
 
 Usage:
+  cantongrid metadata inspect <artifact.dar>
   cantongrid index <runtime.json> [--once]
   cantongrid serve <runtime.json>
   cantongrid models typescript <models.json>
@@ -57,6 +58,12 @@ fn main() -> ExitCode {
 /// Accept exact command shapes before dispatching fixture, source or operator actions.
 fn run(args: Vec<String>) -> Result<(), String> {
     match args.as_slice() {
+        [command, action, path] if command == "metadata" && action == "inspect" => {
+            let metadata =
+                cantongrid_metadata::inspect_file(Path::new(path)).map_err(|e| e.to_string())?;
+            println!("{}", metadata.to_json().map_err(|e| e.to_string())?);
+            Ok(())
+        }
         [command, subject, action, rest @ ..] if command == "models" && subject == "rebuild" => {
             commands::model_rebuild::run(action, rest)
         }
