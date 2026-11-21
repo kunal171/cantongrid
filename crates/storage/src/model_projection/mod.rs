@@ -156,4 +156,4 @@ pub(crate) fn apply(
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

@@ -66,9 +66,12 @@ impl Store {
         let checkpoint = definition
             .as_ref()
             .and_then(|r| r.get::<_, Option<String>>(1));
-        let first_checkpoint = definition
+        let mut first_checkpoint = definition
             .as_ref()
             .and_then(|r| r.get::<_, Option<String>>(3));
+        if let Some(row) = tx.query_opt("SELECT manifest->>'checkpoint' FROM cantongrid.selection_upgrades WHERE stream_key=$1 ORDER BY ((manifest->>'checkpoint')::jsonb->>'boundary')::bigint DESC LIMIT 1", &[&key])? {
+            first_checkpoint = Some(row.get(0));
+        }
         let observed_age_seconds = definition.as_ref().map(|r| r.get::<_, i64>(2));
         if let Some(row) = definition
             && row.get::<_, serde_json::Value>(0) != plan.definition()
