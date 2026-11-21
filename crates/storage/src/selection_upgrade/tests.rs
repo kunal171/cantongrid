@@ -239,3 +239,201 @@ fn failed_upgrade_never_publishes_partial_baselines_or_rewinds_progress() {
     ));
     assert_eq!(s.open().checkpoint(&s.plans[0]).unwrap(), Some(cursor(11)));
 }
+
+/// Build one deterministic source page; only the final page acknowledges the complete boundary.
+fn staged_page(s: &Scenario, after: &Plan, start: usize, end: usize, last: bool) -> Batch {
+    let mut batch = snapshot(s, after, "unused");
+    batch.events = (start..end)
+        .map(|i| snapshot(s, after, &format!("staged-{i}")).events.remove(0))
+        .collect();
+    batch.position = if last {
+        cursor(10)
+    } else {
+        serde_json::json!({"snapshot":true,"boundary":10,"through":10,"offset":10,"pk":end})
+            .to_string()
+    };
+    batch
+}
+/// More than one source page stays private until the whole baseline/model revision is ready.
+/// Reopened connections simulate independent CLI processes at every durable transition.
+#[test]
+#[ignore = "requires separately owned disposable PostgreSQL destination"]
+fn staged_upgrade_resumes_129_contracts_without_exposing_partial_state() {
+    let (s, after) = scenario();
+    let manifest = plan(&s, &after);
+    let mut state = s
+        .open()
+        .start_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    for (start, end, last) in [(0, 64, false), (64, 128, false), (128, 129, true)] {
+        state = s
+            .open()
+            .stage_selection_upgrade(
+                &s.plans[0],
+                &s.lease(),
+                &manifest,
+                &state.source_cursor,
+                &staged_page(&s, &after, start, end, last),
+            )
+            .unwrap();
+    }
+    assert_eq!(state.phase, "ready");
+    assert_eq!(state.contracts, 129);
+    assert_eq!(s.count(1, &after), 0);
+    let caller =
+        CallerGrants::from_verified(after.context().binding(), [PartyId::new("A").unwrap()]);
+    assert_eq!(
+        s.open()
+            .read_page(
+                &s.plans[0],
+                &caller,
+                &s.lease(),
+                crate::PageKind::Active,
+                None,
+                25
+            )
+            .unwrap()
+            .visible_total,
+        1
+    );
+    s.open()
+        .activate_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    for n in 1..=3 {
+        state = s
+            .open()
+            .step_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+            .unwrap();
+        if n < 3 {
+            assert!(
+                s.open()
+                    .read_page(
+                        &s.plans[0],
+                        &caller,
+                        &s.lease(),
+                        crate::PageKind::Active,
+                        None,
+                        25
+                    )
+                    .is_err()
+            );
+            assert!(s.open().checkpoint(&s.plans[0]).is_err());
+            assert!(matches!(
+                s.open().apply_page(
+                    &s.plans[0],
+                    &s.create(&cursor(11), "stale-worker", PAYLOAD),
+                    &s.lease(),
+                    Some(&cursor(10))
+                ),
+                Err(StoreError::Busy)
+            ));
+        }
+    }
+    assert_eq!(state.phase, "complete");
+    assert_eq!(s.count(1, &after), 129);
+    assert_eq!(s.open().checkpoint(&after).unwrap(), Some(cursor(10)));
+    assert_eq!(
+        s.open()
+            .read_page(
+                &after,
+                &caller,
+                &s.lease(),
+                crate::PageKind::Active,
+                None,
+                25
+            )
+            .unwrap()
+            .visible_total,
+        130
+    );
+    for _ in 0..3 {
+        state = s
+            .open()
+            .step_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+            .unwrap();
+    }
+    assert_eq!(state.retained_pages, 0);
+    assert_eq!(s.count(1, &after), 129);
+}
+/// Failure after a previously published private page is recoverable: cancellation removes only
+/// this unpublished baseline, retaining the original canonical contracts/checkpoint/model binding.
+#[test]
+#[ignore = "requires separately owned disposable PostgreSQL destination"]
+fn staged_upgrade_failure_and_cancellation_restore_the_old_public_prefix() {
+    let (s, after) = scenario();
+    let manifest = plan(&s, &after);
+    let state = s
+        .open()
+        .start_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    let state = s
+        .open()
+        .stage_selection_upgrade(
+            &s.plans[0],
+            &s.lease(),
+            &manifest,
+            &state.source_cursor,
+            &staged_page(&s, &after, 0, 2, false),
+        )
+        .unwrap();
+    let mut bad = staged_page(&s, &after, 2, 3, true);
+    bad.events[0].action = Action::Create(cantongrid_core::value::Value::RawJson("{}".into()));
+    s.open()
+        .stage_selection_upgrade(
+            &s.plans[0],
+            &s.lease(),
+            &manifest,
+            &state.source_cursor,
+            &bad,
+        )
+        .unwrap();
+    s.open()
+        .activate_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    s.open()
+        .step_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+        .unwrap();
+    assert!(
+        s.open()
+            .step_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+            .is_err()
+    );
+    assert_eq!(s.count(1, &after), 2);
+    let state = s
+        .open()
+        .selection_upgrade_status(&s.plans[0], &s.lease(), &manifest)
+        .unwrap();
+    assert_eq!(state.applied, 1);
+    s.open()
+        .cancel_selection_upgrade(&s.plans[0], &s.lease(), &manifest)
+        .unwrap();
+    for _ in 0..2 {
+        s.open()
+            .step_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
+            .unwrap();
+    }
+    let state = s
+        .open()
+        .selection_upgrade_status(&s.plans[0], &s.lease(), &manifest)
+        .unwrap();
+    assert_eq!(state.phase, "cancelled");
+    assert_eq!(state.retained_pages, 0);
+    assert_eq!(s.count(1, &after), 0);
+    assert_eq!(s.open().checkpoint(&s.plans[0]).unwrap(), Some(cursor(10)));
+    let caller =
+        CallerGrants::from_verified(after.context().binding(), [PartyId::new("A").unwrap()]);
+    assert_eq!(
+        s.open()
+            .read_page(
+                &s.plans[0],
+                &caller,
+                &s.lease(),
+                crate::PageKind::Active,
+                None,
+                25
+            )
+            .unwrap()
+            .visible_total,
+        1
+    );
+}
