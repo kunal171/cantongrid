@@ -1,5 +1,6 @@
 //! Synthetic HTTP controls never contact a ledger or alter source permissions.
 use super::*;
+mod https;
 use cantongrid_core::visibility::CallerGrants;
 use std::{
     io::{Read, Write},
@@ -32,6 +33,14 @@ fn runtime() -> tokio::runtime::Runtime {
 /// Serve a finite sequence, enforce GET path order and cap request input. The bearer
 /// is checked for presence only and is never included in assertion diagnostics.
 fn server(replies: Vec<(u16, String)>) -> (String, thread::JoinHandle<()>) {
+    server_paths(replies, None)
+}
+
+/// Check exact endpoint/query paths when exercising a non-default identity provider.
+fn server_paths(
+    replies: Vec<(u16, String)>,
+    paths: Option<Vec<String>>,
+) -> (String, thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let endpoint = format!("http://{}", listener.local_addr().unwrap());
     let package_run = replies.len() == 7 || replies.len() == 4;
@@ -52,7 +61,9 @@ fn server(replies: Vec<(u16, String)>) -> (String, thread::JoinHandle<()>) {
                 }
             }
             let text = String::from_utf8(input).unwrap();
-            let path = if package_run && index == 3 {
+            let path = if let Some(paths) = &paths {
+                paths[index].as_str()
+            } else if package_run && index == 3 {
                 "/v2/packages"
             } else if index == 1 || (package_run && index == 5) {
                 "/v2/users/source-reader/rights"
@@ -266,4 +277,61 @@ fn upgrade_packages_must_exist_on_the_authorized_participant() {
         );
         server.join().unwrap();
     }
+}
+
+/// Provider and issuer must both match; the issuer claim alone never grants read authority.
+#[test]
+fn configured_identity_provider_and_issuer_are_checked_around_current_rights() {
+    const ISSUER_TOKEN: &str = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzb3VyY2UtcmVhZGVyIiwiZXhwIjo0MTAyNDQ0ODAwLCJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIn0.synthetic";
+    let user =
+        r#"{"user":{"id":"source-reader","isDeactivated":false,"identityProviderId":"org-1"}}"#;
+    let path = "/v2/users/source-reader?identity-provider-id=org-1".to_string();
+    let (endpoint, server) = server_paths(
+        vec![(200, user.into()), (200, RIGHTS.into()), (200, user.into())],
+        Some(vec![
+            path.clone(),
+            "/v2/users/source-reader/rights".into(),
+            path,
+        ]),
+    );
+    let checker = GrantChecker::configured(
+        &endpoint,
+        USER,
+        scope(),
+        [party()],
+        TransportPolicy::LocalnetHttp,
+        "org-1",
+        Some("https://issuer.example"),
+    )
+    .unwrap();
+    assert!(runtime().block_on(checker.check(ISSUER_TOKEN)).is_ok());
+    server.join().unwrap();
+    for token in [TOKEN, ISSUER_TOKEN] {
+        let checker = GrantChecker::configured(
+            "http://127.0.0.1:9/",
+            USER,
+            scope(),
+            [party()],
+            TransportPolicy::LocalnetHttp,
+            "org-1",
+            Some("https://different-issuer.example"),
+        )
+        .unwrap();
+        assert!(matches!(
+            runtime().block_on(checker.check(token)),
+            Err(GrantError::Credential)
+        ));
+    }
+    assert!(
+        GrantChecker::configured(
+            "http://127.0.0.1:9/",
+            USER,
+            scope(),
+            [party()],
+            TransportPolicy::LocalnetHttp,
+            "org-1",
+            None
+        )
+        .is_err()
+    );
 }
