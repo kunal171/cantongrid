@@ -38,9 +38,8 @@ Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
-Offline DAR inspection is implemented on the `feat/dar-metadata` branch targeting
-0.4.0-alpha.2. Compound sorting and [reviewed package upgrades](guide/upgrades.md) are also
-implemented on this branch. Command-driven schema synchronization
+The source checkout targeting 0.4.0-alpha.2 includes offline DAR inspection,
+compound sorting and [reviewed package upgrades](guide/upgrades.md). Command-driven schema synchronization
 ([#24](https://github.com/kunal171/cantongrid/issues/24)) remains planned.
 
 1. Extend Outcomia projections to funded assets/trading after separate authorization.
