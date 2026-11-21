@@ -851,6 +851,16 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
         "{gql_second}"
     );
     assert_eq!(gql_second["data"][&field]["visibleTotal"], "2");
+    // REST array sorting and GraphQL orderBy share normalized semantics and signed cursors.
+    let compound = json!({"limit":1,"filters":{"amount":{"gte":"0","lt":"20"}},"sort":[{"field":"amount"},{"field":"sequence","direction":"desc"}]});
+    let (status, page) = request(&rt, &endpoint, Some(&a), Some(compound));
+    assert_eq!(status, 200, "{page}");
+    let compound_operation = json!({"query":format!("query($cursor:String){{{field}(namespace:\"{namespace}\",limit:1,cursor:$cursor,filters:{{amount:{{gte:\"0\",lt:\"20\"}}}},orderBy:[{{field:\"amount\"}},{{field:\"sequence\",direction:desc}}]){{items{{contractId}}}}}}"),"variables":{"cursor":page["nextCursor"]}});
+    let (_, page) = request(&rt, &base, Some(&a), Some(compound_operation));
+    assert_eq!(
+        page["data"][&field]["items"][0]["contractId"], "third",
+        "{page}"
+    );
     assert_eq!(request(&rt, &endpoint, Some(&b), Some(next.clone())).0, 400);
     next["sort"]["direction"] = "desc".into();
     assert_eq!(request(&rt, &endpoint, Some(&a), Some(next)).0, 400);
