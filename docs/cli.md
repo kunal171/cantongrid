@@ -5,6 +5,7 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 
 | Command | Purpose |
 | --- | --- |
+| `metadata inspect <artifact.dar>` | Offline LF 2.1 signatures as bounded JSON; source-only alpha.2 |
 | `init <new-directory>` | Scaffold a synthetic Visibility fixture; refuses an existing directory |
 | `validate <project.json>` | Validate fixture configuration without reading events or connecting |
 | `fixture run <project.json> [--party A]...` | In-memory fixture replay with simulated grants |

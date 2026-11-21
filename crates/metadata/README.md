@@ -8,7 +8,19 @@ authorize access, prove deployment, validate contract execution or apply migrati
 cantongrid-metadata = "=0.4.0-alpha.2"
 ```
 
-The supported format, limits and command are documented in the repository guide.
+```rust,no_run
+let metadata = cantongrid_metadata::inspect_file(std::path::Path::new("application.dar"))?;
+println!("{}", metadata.to_json()?);
+# Ok::<(), cantongrid_metadata::MetadataError>(())
+```
+
+Or run `cantongrid metadata inspect application.dar` using the CLI.
+Only LF 2.1 is supported. Qualified records, aliases, templates/choices and
+interfaces retain exact package identities and type arguments. The parser checks
+ZIP safety, payload hashes, signature references and fixed resource bounds.
+
+See the [metadata guide](https://github.com/kunal171/cantongrid/blob/feat/dar-metadata/docs/guide/metadata.md)
+for the output contract, limits and unsupported operations.
 This development version is unreleased; use a source checkout until publication.
 
 Licensed under Apache-2.0; see LICENSE and NOTICE.

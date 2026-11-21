@@ -16,6 +16,25 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## Unreleased 0.4.0-alpha.2 offline metadata
+
+Recorded 2026-11-21 without starting LocalNet or changing Ledger state. The CLI
+extracted LF 2.1 metadata from existing local DARs; all package IDs, names and
+versions matched independent `damlc inspect-dar --json` output (installed damlc
+3.7.0, example manifests declare SDK 3.7.1).
+
+| Artifact | Packages | Templates | Interfaces | Main package ID |
+| --- | --- | --- | --- | --- |
+| PoC | 31 | 1 | 0 | `730711263d9ca88f4ee397a7428ef775dff14ee144216dc08053f955f3cb357e` |
+| Visibility | 31 | 1 | 0 | `05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111` |
+| Outcomia | 39 | 15 | 5 | `73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a` |
+
+Counts include dependency packages. Compiler comparison covers package inventory,
+not every field signature. Synthetic tests cover qualified/generic/recursive types,
+Numeric scales, interface wire tags, archive corruption, missing references,
+unsupported versions and resource limits. This does not verify ingestion upgrades
+or generated models from DAR metadata; those remain #24–#25.
+
 ## 0.4.0-alpha.1 grouped aggregates
 
 Recorded 2026-11-20 on the LocalNet profile above for source prerelease

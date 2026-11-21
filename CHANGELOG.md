@@ -2,8 +2,10 @@
 
 ## 0.4.0-alpha.2 — unreleased
 
-- Offline DAR metadata extraction (in development); schema synchronization and
-  coordinated package activation remain planned in issues #24–#25.
+- Offline LF 2.1 DAR metadata inspection with verified payload hashes, qualified
+  type/contract signatures and bounded archive traversal. New `cantongrid-metadata`
+  crate and `metadata inspect` command; no Ledger or database writes.
+- Schema synchronization and coordinated package activation remain planned in #24–#25.
 
 ## 0.4.0-alpha.1 — 2026-11-20
 

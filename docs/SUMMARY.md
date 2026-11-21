@@ -8,6 +8,7 @@
 * [Quickstart and PostgreSQL](guide/quickstart.md)
 * [LocalNet ingestion](guide/localnet-source.md)
 * [Authentication and API](guide/api.md)
+* [Offline DAR metadata](guide/metadata.md)
 * [Declarative models](guide/models.md)
 * [Aggregate models](guide/aggregates.md)
 * [Outcomia example](guide/outcomia.md)
