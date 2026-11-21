@@ -1,13 +1,13 @@
 # Releases and publication
 
-Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.2**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.3**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
-Source preparation: **0.4.0-alpha.3** adds private exercise receipts and destination
-migration 009. No tag, GitHub release or crate upload was performed for this work.
+Release **0.4.0-alpha.3** adds private exercise receipts and destination migration 009.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.4.0-alpha.3](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.3) | Atomic private exercise receipts, scoped source evidence and LocalNet worker controls | 001–009 |
 | [0.4.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.2) | DAR metadata, compound sorting, package upgrades, remote HTTPS and schema sync | 001–008 |
 | [0.4.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.1) | Grouped counts/exact sums, generated APIs and full-source scope checks | 001–006 |
 | [0.3.0](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0) | PostgreSQL 17.12 compatibility and large LocalNet staged rebuild acceptance | 001–006 |
@@ -18,20 +18,28 @@ migration 009. No tag, GitHub release or crate upload was performed for this wor
 | [0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1) | LocalNet ingestion and authenticated generic APIs | 001–002 |
 | [0.1.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.1.0-alpha.1) | Fixtures, owned storage and source checks | 001 |
 
-The [CLI](https://crates.io/crates/cantongrid-cli/0.4.0-alpha.1) and all seven
-libraries are published at **0.4.0-alpha.1**, with package-specific READMEs.
-Stable **0.3.0** remains available.
-Use the [quickstart](guide/quickstart.md) to install the CLI or build from source.
+The CLI and nine libraries form the coordinated **0.4.0-alpha.3** release, with
+package-specific READMEs. Use the [quickstart](guide/quickstart.md) or install the
+prerelease explicitly:
 
-Alpha.3 introduced packaging between source releases. Historical crate packages
-use `release/crates-<version>` branches with crate-local assets and publication
-metadata; the original source tags are unchanged. The alpha.3 packages use the
-same source baseline as its previously published core crate. Check the registry
-before resuming an upload; GitHub releases do not upload crates automatically.
+```bash
+cargo install cantongrid-cli --version 0.4.0-alpha.3 --locked
+```
 
-Current source requires explicit `storage init` through migration 006. Earlier
-migration SQL is unchanged; older binaries reject unknown migration sets.
-Do not downgrade a destination without a reviewed migration plan.
+Historical `release/crates-<version>` branches contain publication packaging for
+older source releases. GitHub releases do not upload crates automatically.
+
+## 0.4.0-alpha.3 compatibility
+
+Run explicit `storage init` through migration 009 before opening the new binary.
+Migrations 001–008 remain unchanged. Older binaries reject the new migration set;
+rollback requires a pre-upgrade destination backup and the previous binary.
+
+Exercise ingestion is opt-in with `exercise_source: "pqs041_ledger_effects"` and
+requires a separately prepared tree-mode source and new explicit generation.
+Legacy configurations retain create/archive polling. Package handoff for receipt
+streams and public exercise/lineage APIs remain unsupported. See the
+[receipt contract](design/exercise-ingestion.md) for bounds, evidence and rollout.
 
 ## 0.4.0-alpha.1 compatibility
 

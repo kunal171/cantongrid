@@ -19,7 +19,7 @@ PostgreSQL 14's support status and the upgrade requirement are in [operations](g
 ## M1 internal exercise receipts — 2026-11-21
 
 The [receipt contract](design/exercise-ingestion.md) is implemented in this
-unreleased checkout. Migration 009 was applied explicitly to the owned
+0.4.0-alpha.3 checkout. Migration 009 was applied explicitly to the owned
 PostgreSQL 17.12 destination; earlier migration checksums remain unchanged.
 
 | Check | Result |
@@ -48,10 +48,10 @@ no destructive pruning experiment ran. No public exercise API, package handoff
 for receipt streams, interface-choice support, redaction, pre-snapshot history,
 general lineage proof or remote production acceptance is claimed.
 
-The checkout is prepared as `0.4.0-alpha.3`. The first dry run at the reused
+Release validation targets `0.4.0-alpha.3`. The first dry run at the reused
 alpha.2 version resolved published dependencies without the new receipt APIs;
 incrementing the workspace and internal dependency versions fixed verification.
-No third-party dependency changed and no release/tag/publication was performed.
+No third-party dependency changed. Publication is a separate operator action.
 
 ## M0 exercise-source feasibility — 2026-11-21
 

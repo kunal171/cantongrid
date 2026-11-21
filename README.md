@@ -11,10 +11,10 @@ Outcomia is the first application example; the engine is reusable.
 
 ## Current status
 
-The source checkout targets **0.4.0-alpha.3**, adding opt-in internal exercise
+The **0.4.0-alpha.3** prerelease adds opt-in internal exercise
 receipts and atomic transaction ingestion, verified on the pinned LocalNet.
 See the [receipt profile](docs/design/exercise-ingestion.md) for migration 009,
-rollout and unsupported cases. This release preparation has not been published.
+rollout and unsupported cases.
 
 - LocalNet PQS snapshot/update ingestion, atomic checkpoints and authenticated
   generic APIs are verified for the [tested profile](docs/verification.md).

@@ -1,7 +1,7 @@
 # Internal exercise receipts (M1)
 
 Status: implemented in the source checkout; pinned LocalNet verification passed.
-Branch builds on M0 commit `b4f8da5`. This is unreleased work.
+Included in 0.4.0-alpha.3. Branch builds on M0 commit `b4f8da5`.
 Source decisions and scoped LocalNet evidence: [M0](exercise-source.md).
 
 ## Contract
