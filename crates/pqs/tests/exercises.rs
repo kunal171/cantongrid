@@ -8,6 +8,57 @@ use cantongrid_pqs::{Cursor, exercise_page_env};
 use std::{path::PathBuf, time::Instant};
 
 #[test]
+#[ignore = "requires owned PostgreSQL destination; executes read-only SQL probes, no source mutation"]
+fn visibility_gate_rejects_unknown_offsets_witnesses_and_authorized_redaction() {
+    // Run the real gate predicate over bound synthetic metadata instead of altering PQS.
+    // Supplying a known outside-scope witness must not be confused with unknown visibility.
+    let query=include_str!("../src/exercise_gate.sql")
+        .replace("WITH selected AS (", "WITH probe AS (SELECT $7::bigint AS exercised_at_offset, $8::text[] AS witnesses, $9::text AS redaction_id, repeat('0',64) AS package_id, 'pkg:M:T'::text AS template_fqn WHERE $1::bigint<=$2::bigint), selected AS (")
+        .replace("FROM public.exercises(NULL,$1,$2) e","FROM probe e");
+    let mut client = cantongrid_postgres::connect_env("CANTONGRID_DESTINATION_URL").unwrap();
+    let mut tx = client.build_transaction().read_only(true).start().unwrap();
+    let cases = [
+        (Some(10_i64), Some(vec!["A".to_owned()]), None, false),
+        (None, Some(vec!["A".to_owned()]), None, true),
+        (Some(10), None, None, true),
+        (Some(10), Some(vec![]), None, true),
+        (
+            Some(10),
+            Some(vec!["A".to_owned()]),
+            Some("redacted".to_owned()),
+            true,
+        ),
+        (
+            Some(10),
+            Some(vec!["B".to_owned()]),
+            Some("redacted".to_owned()),
+            false,
+        ),
+        (Some(0), None, None, false),
+    ];
+    for (offset, witnesses, redaction, rejected) in cases {
+        let actual: bool = tx
+            .query_one(
+                &query,
+                &[
+                    &0_i64,
+                    &20_i64,
+                    &vec!["A".to_owned()],
+                    &vec!["0".repeat(64)],
+                    &vec!["M".to_owned()],
+                    &vec!["T".to_owned()],
+                    &offset,
+                    &witnesses,
+                    &redaction,
+                ],
+            )
+            .unwrap()
+            .get(0);
+        assert_eq!(actual, rejected);
+    }
+}
+
+#[test]
 #[ignore = "requires retained M0 LocalNet source databases and CANTONGRID_M0_RUN_DIR; no Ledger writes"]
 fn retained_scoped_sources_preserve_atomic_transactions_and_receipt_replay() {
     let directory = PathBuf::from(std::env::var("CANTONGRID_M0_RUN_DIR").unwrap());

@@ -30,9 +30,11 @@ PostgreSQL 17.12 destination; earlier migration checksums remain unchanged.
 | CLI API PostgreSQL suite, serial `--ignored` | 3 passed: REST/GraphQL scopes, revocation and outages |
 | Other CI PostgreSQL controls | 5 passed: models, durable CLI, registry/install and source owner rejection |
 | Read-only retained M0 source integration | Pass: four scopes, one-row snapshot pages, complete forward transactions and overlap |
+| Visibility gate, owned PostgreSQL metadata probes | Pass: unknown offsets/witnesses reject; authorized redaction rejects; known outside-scope witnesses do not widen reads |
 | Real LocalNet Rust worker | Four receipts/outbox entries, three consuming, two unindexed targets, one lifecycle archive; idle restart unchanged |
 | Python helpers / existing PoC | 35 / 7 passed |
 | Formatting, strict workspace Clippy, secret/log/release checks | Pass |
+| Workspace package dry run and archive inspection | All ten `0.4.0-alpha.3` packages pass; no uploads |
 
 The source integration test uses synthetic leases against real retained PQS;
 it does not establish current grants. The separate worker check uses real Ledger
@@ -45,6 +47,11 @@ Source pruning/regression and transaction budget failures have synthetic control
 no destructive pruning experiment ran. No public exercise API, package handoff
 for receipt streams, interface-choice support, redaction, pre-snapshot history,
 general lineage proof or remote production acceptance is claimed.
+
+The checkout is prepared as `0.4.0-alpha.3`. The first dry run at the reused
+alpha.2 version resolved published dependencies without the new receipt APIs;
+incrementing the workspace and internal dependency versions fixed verification.
+No third-party dependency changed and no release/tag/publication was performed.
 
 ## M0 exercise-source feasibility — 2026-11-21
 
