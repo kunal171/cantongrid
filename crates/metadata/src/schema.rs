@@ -38,14 +38,33 @@ pub struct TypeId {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Type {
-    Builtin { name: String, arguments: Vec<Type> },
-    Reference { target: TypeId, arguments: Vec<Type> },
-    Synonym { target: TypeId, arguments: Vec<Type> },
-    Variable { name: String, arguments: Vec<Type> },
+    Builtin {
+        name: String,
+        arguments: Vec<Type>,
+    },
+    Reference {
+        target: TypeId,
+        arguments: Vec<Type>,
+    },
+    Synonym {
+        target: TypeId,
+        arguments: Vec<Type>,
+    },
+    Variable {
+        name: String,
+        arguments: Vec<Type>,
+    },
     /// Numeric scale parameters remain integers, e.g. Numeric 10 is a builtin with Nat(10).
-    Nat { value: u8 },
-    Struct { fields: Vec<Field> },
-    Forall { parameters: Vec<Parameter>, body: Box<Type> },
+    Nat {
+        value: u8,
+    },
+    Struct {
+        fields: Vec<Field>,
+    },
+    Forall {
+        parameters: Vec<Parameter>,
+        body: Box<Type>,
+    },
 }
 
 /// Ordered record fields and variant constructors share a named type representation.
@@ -68,7 +87,10 @@ pub struct Parameter {
 pub enum Kind {
     Star,
     Nat,
-    Arrow { parameters: Vec<Kind>, result: Box<Kind> },
+    Arrow {
+        parameters: Vec<Kind>,
+        result: Box<Kind>,
+    },
 }
 
 /// A named declaration retains serializability and formal parameters without expanding recursion.

@@ -24,7 +24,9 @@ impl fmt::Display for MetadataError {
             Self::Archive => "invalid or unsupported DAR container",
             Self::Manifest => "invalid or ambiguous DAR manifest",
             Self::Hash => "DALF payload does not match its declared SHA-256 identity",
-            Self::UnsupportedVersion => "unsupported Daml-LF version; this extractor accepts LF 2.1 only",
+            Self::UnsupportedVersion => {
+                "unsupported Daml-LF version; this extractor accepts LF 2.1 only"
+            }
             Self::Protobuf => "invalid metadata protobuf structure",
             Self::Reference => "invalid or unresolved metadata reference",
             Self::Definition => "invalid or ambiguous metadata declaration",
