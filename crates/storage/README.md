@@ -6,7 +6,7 @@ Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections 
 
 ```toml
 [dependencies]
-cantongrid-storage = "=0.4.0-alpha.1"
+cantongrid-storage = "=0.4.0-alpha.2"
 ```
 
 `initialize_env` applies destination migrations explicitly. `Store` manages

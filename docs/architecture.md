@@ -118,9 +118,9 @@ Dependency review (2026-11-21):
 | `prost` 0.14.6 | Proposed new runtime dependency for standard protobuf decoding. Verify the declared SHA-256 against original payload bytes before interpreting metadata. |
 | `serde`, `serde_json`, `sha2` | Reuse existing workspace versions. No SDK/JVM/protoc executable required at runtime. |
 
-New dependencies await approval under the supplied build spec's interoperable
-components rule. Independent work may define the JSON contract, limits and tests;
-do not modify Cargo dependencies until approval arrives.
+The user approved both new runtime dependencies on 2026-11-21 under the supplied
+build spec’s interoperable-components rule. No SDK/JVM/protoc runtime dependency
+or scanner exception is introduced.
 
 Limits must cover input bytes, entry count, individual/total expanded bytes,
 manifest length, protobuf/type depth and emitted metadata. Reject encrypted entries,

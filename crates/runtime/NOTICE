@@ -3,3 +3,7 @@ Copyright 2026 CantonGrid contributors
 
 Licensed under the Apache License, Version 2.0. See LICENSE.
 Third-party dependencies retain their respective licenses and notices.
+
+The metadata-only LF protobuf projection follows Digital Asset's Apache-2.0
+Daml-LF archive schemas. Copyright 2026 Digital Asset (Switzerland) GmbH and/or
+its affiliates. Schema provenance is recorded in crates/metadata/src/wire.rs.
