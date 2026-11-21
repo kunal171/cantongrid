@@ -164,6 +164,7 @@ fn read_page(
             for row in source.iter().take_while(|r| r.get::<_, i64>(0) == target) {
                 if row.get::<_, Option<String>>(16).is_some()
                     || row.get::<_, Option<i64>>(15) != Some(target)
+                    || row.try_get::<_, Option<bool>>(17)? != Some(true)
                 {
                     return Err(InspectError::Bounds);
                 }

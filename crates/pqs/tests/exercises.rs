@@ -57,6 +57,9 @@ fn retained_scoped_sources_preserve_atomic_transactions_and_receipt_replay() {
         })
         .unwrap();
         let expected = read(&format!("pqs-{scope}.json"));
+        let retained_end = read(&format!("coverage-{scope}.json"))["query_end"]
+            .as_i64()
+            .unwrap();
         let mut receipts = vec![];
         let mut baseline = 0;
         for _ in 0..32 {
@@ -64,6 +67,12 @@ fn retained_scoped_sources_preserve_atomic_transactions_and_receipt_replay() {
             else {
                 break;
             };
+            // Later approved worker checks may append to the same source. Compare only
+            // the captured M0 window, without pretending the database stopped advancing.
+            let after: Cursor = serde_json::from_str(&page.batch.position).unwrap();
+            if !after.snapshot && after.boundary > retained_end {
+                break;
+            }
             // Restart at the previous acknowledged cursor: source receipts must be identical.
             let retry = exercise_page_env(&variable, &plan, &lease, Some(&cursor), 1)
                 .unwrap()

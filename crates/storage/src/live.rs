@@ -145,6 +145,19 @@ impl Store {
         } else {
             0
         };
+        // Recheck inside the writer lock: a checkpoint read before source polling
+        // cannot protect against delivery-evidence corruption during that interval.
+        if plan.includes_exercises()
+            && revision > 0
+            && tx
+                .query_opt(
+                    "SELECT 1 FROM cantongrid.exercise_pages WHERE stream_key=$1 AND revision=$2",
+                    &[&key, &revision],
+                )?
+                .is_none()
+        {
+            return Err(StoreError::CorruptJournal);
+        }
         if let Some(row) = tx.query_opt(
             "SELECT envelope FROM cantongrid.batches WHERE stream_key=$1 AND position=$2",
             &[&key, &batch.position],

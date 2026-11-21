@@ -145,6 +145,7 @@ mod tests {
     fn exercise_journal_replay_conflicts_and_contract_effects_are_atomic() {
         use crate::model_projection::tests::{PAYLOAD, Scenario};
         let mut s = Scenario::visibility();
+        let legacy = s.plans[0].clone();
         s.plans[0] = s.plans[0].clone().with_exercises().unwrap();
         let plan = &s.plans[0];
         let mut store = s.open();
@@ -159,6 +160,38 @@ mod tests {
         };
         store
             .apply_exercise_page(plan, &initial, &lease, None)
+            .unwrap();
+        assert_eq!(store.checkpoint(&legacy), Err(StoreError::PlanChanged));
+        // Missing delivery evidence is corruption, not permission to continue past the head.
+        let key = crate::journal::stream_key(plan).0;
+        let mut tx = store.client.transaction().unwrap();
+        tx.execute(
+            "DELETE FROM cantongrid.exercise_pages WHERE stream_key=$1",
+            &[&key],
+        )
+        .unwrap();
+        assert_eq!(
+            crate::live::prefix(&mut tx, plan),
+            Err(StoreError::CorruptJournal)
+        );
+        tx.rollback().unwrap();
+        store
+            .client
+            .execute(
+                "DELETE FROM cantongrid.exercise_pages WHERE stream_key=$1",
+                &[&key],
+            )
+            .unwrap();
+        assert_eq!(
+            store.apply_exercise_page(plan, &initial, &lease, Some("snapshot")),
+            Err(StoreError::CorruptJournal)
+        );
+        store
+            .client
+            .execute(
+                "INSERT INTO cantongrid.exercise_pages VALUES($1,1,'[]'::jsonb)",
+                &[&key],
+            )
             .unwrap();
         s.bind(1, None).unwrap();
         let mut batch = s.create("one", "child", PAYLOAD);

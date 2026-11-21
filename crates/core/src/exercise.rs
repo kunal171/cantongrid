@@ -49,7 +49,9 @@ impl Exercise {
         let parties = |values: &BTreeSet<String>| {
             !values.is_empty()
                 && values.len() <= 256
-                && values.iter().all(|p| PartyId::new(p.clone()).is_ok())
+                && values
+                    .iter()
+                    .all(|p| text(p) && PartyId::new(p.clone()).is_ok())
         };
         self.version == 1
             && plan.is_live()
