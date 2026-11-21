@@ -271,8 +271,6 @@ impl<'a> Resolver<'a> {
                     16 => "arrow",
                     17 => "update",
                     18 => "failure_category",
-                    1002 => "big_numeric",
-                    1003 => "rounding_mode",
                     19 => "text_map",
                     _ => return Err(Error::UnsupportedType),
                 };
