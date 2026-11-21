@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0-alpha.2 — unreleased
+## 0.4.0-alpha.2 — 2026-11-21
 
 - Offline LF 2.1 DAR metadata inspection with verified payload hashes, qualified
   type/contract signatures and bounded archive traversal. New `cantongrid-metadata`
