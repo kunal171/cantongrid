@@ -52,7 +52,25 @@ impl Store {
         expected: Option<&str>,
     ) -> Result<bool, StoreError> {
         let expected = expected.map(str::to_owned);
-        self.apply_live_checked(plan, batch, lease, Some(&expected))
+        self.apply_live_checked(plan, batch, lease, Some(&expected), None)
+    }
+
+    /// Stage internal evidence in the same transaction as contract effects and the durable cursor.
+    pub fn apply_exercise_page(
+        &mut self,
+        plan: &Plan,
+        page: &cantongrid_core::exercise::ExercisePage,
+        lease: &SourceLease,
+        expected: Option<&str>,
+    ) -> Result<bool, StoreError> {
+        let expected = expected.map(str::to_owned);
+        self.apply_live_checked(
+            plan,
+            &page.batch,
+            lease,
+            Some(&expected),
+            Some(&page.exercises),
+        )
     }
 
     /// Unlike the bounded fixture reference, live state uses row-level lifecycle checks. The
@@ -63,7 +81,7 @@ impl Store {
         batch: &Batch,
         lease: &SourceLease,
     ) -> Result<bool, StoreError> {
-        self.apply_live_checked(plan, batch, lease, None)
+        self.apply_live_checked(plan, batch, lease, None, None)
     }
 
     /// Check lease/plan/checkpoint, then commit canonical events, model changes and rebuild dirty IDs together.
@@ -73,6 +91,7 @@ impl Store {
         batch: &Batch,
         lease: &SourceLease,
         expected_cursor: Option<&Option<String>>,
+        exercises: Option<&Vec<cantongrid_core::exercise::Exercise>>,
     ) -> Result<bool, StoreError> {
         let scope = plan.context().binding();
         let expected: BTreeSet<_> = plan.source_parties().cloned().collect();
@@ -90,8 +109,9 @@ impl Store {
         {
             return Err(StoreError::InvalidBatch);
         }
+        let receipts = crate::exercise::validate(plan, batch, exercises)?;
         let encoded = batch.encode().map_err(|_| StoreError::InvalidBatch)?;
-        if encoded.len() > 1024 * 1024 {
+        if encoded.len() + receipts.as_ref().map_or(0, |r| r.to_string().len()) > 1024 * 1024 {
             return Err(StoreError::Limit);
         }
         let document: serde_json::Value =
@@ -129,7 +149,8 @@ impl Store {
             "SELECT envelope FROM cantongrid.batches WHERE stream_key=$1 AND position=$2",
             &[&key, &batch.position],
         )? {
-            return if row.get::<_, serde_json::Value>(0) == document {
+            let prior = tx.query_opt("SELECT p.envelope FROM cantongrid.exercise_pages p JOIN cantongrid.batches b USING(stream_key,revision) WHERE b.stream_key=$1 AND b.position=$2", &[&key,&batch.position])?.map(|r|r.get::<_,serde_json::Value>(0));
+            return if row.get::<_, serde_json::Value>(0) == document && prior == receipts {
                 Ok(false)
             } else {
                 Err(StoreError::InvalidBatch)
@@ -140,6 +161,9 @@ impl Store {
         persist_events(&mut tx, plan, batch, &models)?;
         let next = revision.checked_add(1).ok_or(StoreError::Limit)?;
         tx.execute("INSERT INTO cantongrid.batches(stream_key,revision,position,envelope) VALUES($1,$2,$3,$4)",&[&key,&next,&batch.position,&document])?;
+        if let Some(receipts) = &receipts {
+            crate::exercise::persist(&mut tx, &key, next, receipts)?;
+        }
         tx.execute("UPDATE cantongrid.streams SET revision=$2,checkpoint=$3,observed_at=now() WHERE stream_key=$1",&[&key,&next,&batch.position])?;
         if !allowed() {
             return Err(StoreError::Authorization);
@@ -176,6 +200,16 @@ pub(crate) fn prefix_unblocked(
     let revision: i64 = row.get(1);
     if checkpoint != row.get::<_, Option<String>>(3)
         || row.get::<_, Option<i64>>(4) != Some(revision)
+    {
+        return Err(StoreError::CorruptJournal);
+    }
+    if plan.includes_exercises()
+        && client
+            .query_opt(
+                "SELECT 1 FROM cantongrid.exercise_pages WHERE stream_key=$1 AND revision=$2",
+                &[&key, &revision],
+            )?
+            .is_none()
     {
         return Err(StoreError::CorruptJournal);
     }
