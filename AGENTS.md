@@ -1,9 +1,8 @@
 # Working on CantonGrid
 
-- Current branch: M0 exercise-source feasibility, documented in
-  docs/design/exercise-source.md; pinned LocalNet evidence is complete.
-  Update evidence and generic fixture only; do not
-  begin M1 ingestion/migrations/APIs or modify Outcomia without a separate instruction.
+- Active milestone: M1 internal exercise receipts, authorized by “continue next”.
+  Follow docs/design/exercise-ingestion.md and the verified M0 source evidence.
+  No public exercise/lineage API or Outcomia changes in this milestone.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading, joins and streams remain later work.
