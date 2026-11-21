@@ -5,6 +5,7 @@ use cantongrid_core::{
     config::{Plan, TemplateId},
     exercise::{Exercise, ExercisePage},
     lifecycle::{Action, Batch, Event},
+    lineage::{Creation, LineagePage},
     value::Value,
     visibility::PartyId,
 };
@@ -39,7 +40,7 @@ pub fn page_env(
     if plan.includes_exercises() {
         return Err(InspectError::Bounds);
     }
-    Ok(read_page(variable, plan, lease, checkpoint, limit)?.map(|page| page.batch))
+    Ok(read_page(variable, plan, lease, checkpoint, limit)?.map(|page| page.delivery.batch))
 }
 
 /// The opt-in profile emits complete selected forward transactions, never partial exercise pages.
@@ -50,7 +51,21 @@ pub fn exercise_page_env(
     checkpoint: Option<&str>,
     limit: usize,
 ) -> Result<Option<ExercisePage>, InspectError> {
-    if !plan.includes_exercises() {
+    if !plan.includes_exercises() || plan.includes_lineage() {
+        return Err(InspectError::Bounds);
+    }
+    Ok(read_page(variable, plan, lease, checkpoint, limit)?.map(|page| page.delivery))
+}
+
+/// Read typed creation/exercise provenance under the separate generation-bound lineage profile.
+pub fn lineage_page_env(
+    variable: &str,
+    plan: &Plan,
+    lease: &SourceLease,
+    checkpoint: Option<&str>,
+    limit: usize,
+) -> Result<Option<LineagePage>, InspectError> {
+    if !plan.includes_lineage() {
         return Err(InspectError::Bounds);
     }
     read_page(variable, plan, lease, checkpoint, limit)
@@ -63,7 +78,7 @@ fn read_page(
     lease: &SourceLease,
     checkpoint: Option<&str>,
     limit: usize,
-) -> Result<Option<ExercisePage>, InspectError> {
+) -> Result<Option<LineagePage>, InspectError> {
     if !plan.is_live() || !(1..=64).contains(&limit) {
         return Err(InspectError::Bounds);
     }
@@ -140,6 +155,7 @@ fn read_page(
     // The extra row answers has-more without acknowledging an event not returned in this page.
     let mut more = rows.len() > limit;
     let mut exercises = Vec::new();
+    let mut creations = Vec::new();
     if atomic {
         // A missing witness list cannot be filtered away as an ordinary invisible event.
         if tx
@@ -169,9 +185,44 @@ fn read_page(
                 &entities,
             ],
         )?;
+        let creation_source = if plan.includes_lineage() {
+            if tx
+                .query_one(
+                    include_str!("lineage_gate.sql"),
+                    &[
+                        &cursor.boundary,
+                        &cursor.through,
+                        &parties,
+                        &packages,
+                        &modules,
+                        &entities,
+                    ],
+                )?
+                .get::<_, bool>(0)
+            {
+                return Err(InspectError::Bounds);
+            }
+            tx.query(
+                include_str!("lineage_creations.sql"),
+                &[
+                    &cursor.boundary,
+                    &cursor.through,
+                    &parties,
+                    &packages,
+                    &modules,
+                    &entities,
+                ],
+            )?
+        } else {
+            vec![]
+        };
         let target = transaction_target(
             &rows.iter().map(|r| r.get::<_, i64>(0)).collect::<Vec<_>>(),
             &source
+                .iter()
+                .map(|r| r.get::<_, i64>(0))
+                .collect::<Vec<_>>(),
+            &creation_source
                 .iter()
                 .map(|r| r.get::<_, i64>(0))
                 .collect::<Vec<_>>(),
@@ -224,6 +275,38 @@ fn read_page(
                     return Err(InspectError::Bounds);
                 }
                 exercises.push(receipt);
+            }
+            for row in creation_source
+                .iter()
+                .take_while(|r| r.get::<_, i64>(0) == target)
+            {
+                if row.try_get::<_, Option<i64>>(9)? != Some(target)
+                    || row.try_get::<_, Option<String>>(10)?.is_some()
+                {
+                    return Err(InspectError::Bounds);
+                }
+                let values: Vec<String> = row.try_get(7)?;
+                let count = values.len();
+                let receipt = Creation {
+                    version: 1,
+                    offset: target,
+                    node_id: row.try_get(1)?,
+                    transaction_id: row
+                        .try_get::<_, Option<String>>(2)?
+                        .ok_or(InspectError::Bounds)?,
+                    contract: row.try_get(3)?,
+                    template: TemplateId {
+                        package_id: row.try_get(4)?,
+                        module: row.try_get(5)?,
+                        entity: row.try_get(6)?,
+                    },
+                    witnesses: values.into_iter().collect(),
+                    divulged_only: row.try_get(8)?,
+                };
+                if count != receipt.witnesses.len() || !receipt.validate(plan) {
+                    return Err(InspectError::Bounds);
+                }
+                creations.push(receipt);
             }
             if rows.len() + exercises.len() > 64 {
                 return Err(InspectError::Limit);
@@ -300,7 +383,7 @@ fn read_page(
     if lease.source_parties(&scope, Instant::now()).is_none() {
         return Err(InspectError::Authorization);
     }
-    let page = ExercisePage {
+    let delivery = ExercisePage {
         batch: Batch {
             context: plan.context().clone(),
             position,
@@ -308,21 +391,47 @@ fn read_page(
         },
         exercises,
     };
-    if page.batch.encode().map_err(|_| InspectError::Bounds)?.len()
-        + serde_json::to_vec(&page.exercises)
+    if delivery
+        .batch
+        .encode()
+        .map_err(|_| InspectError::Bounds)?
+        .len()
+        + serde_json::to_vec(&delivery.exercises)
+            .map_err(|_| InspectError::Bounds)?
+            .len()
+        + serde_json::to_vec(&creations)
             .map_err(|_| InspectError::Bounds)?
             .len()
         > 1024 * 1024
     {
         return Err(InspectError::Limit);
     }
+    let page = LineagePage {
+        delivery,
+        creations,
+    };
+    if plan.includes_lineage() {
+        cantongrid_core::lineage::prove(plan, &page).map_err(|_| InspectError::Bounds)?;
+    }
+    if lease.source_parties(&scope, Instant::now()).is_none() {
+        return Err(InspectError::Authorization);
+    }
     Ok(Some(page))
 }
 
 /// Select the earliest complete transaction before decoding payloads. A 65th receipt
 /// proves oversize; for example, 32 lifecycle rows + 33 exercises cannot be split safely.
-fn transaction_target(lifecycle: &[i64], exercises: &[i64]) -> Result<Option<i64>, InspectError> {
-    let target = lifecycle.iter().chain(exercises).copied().min();
+fn transaction_target(
+    lifecycle: &[i64],
+    exercises: &[i64],
+    creations: &[i64],
+) -> Result<Option<i64>, InspectError> {
+    let target = lifecycle
+        .iter()
+        .chain(exercises)
+        .chain(creations)
+        .copied()
+        .min();
     if let Some(target) = target {
         if target <= 0 {
             return Err(InspectError::Bounds);
@@ -333,6 +442,12 @@ fn transaction_target(lifecycle: &[i64], exercises: &[i64]) -> Result<Option<i64
             .filter(|&&o| o == target)
             .count()
             > 64
+            || exercises
+                .iter()
+                .chain(creations)
+                .filter(|&&o| o == target)
+                .count()
+                > 64
         {
             return Err(InspectError::Limit);
         }
@@ -372,12 +487,12 @@ mod tests {
     fn transaction_budget_preserves_same_offset_ties_without_blocking_an_earlier_small_transaction()
     {
         assert_eq!(
-            transaction_target(&[10; 32], &[10; 33]),
+            transaction_target(&[10; 32], &[10; 33], &[]),
             Err(InspectError::Limit)
         );
-        assert_eq!(transaction_target(&[10; 32], &[10; 32]), Ok(Some(10)));
-        assert_eq!(transaction_target(&[9], &[10; 65]), Ok(Some(9)));
-        assert_eq!(transaction_target(&[], &[]), Ok(None));
+        assert_eq!(transaction_target(&[10; 32], &[10; 32], &[]), Ok(Some(10)));
+        assert_eq!(transaction_target(&[9], &[10; 65], &[]), Ok(Some(9)));
+        assert_eq!(transaction_target(&[], &[], &[]), Ok(None));
     }
     /// Reject wider/narrower leases before even opening SQL, not just at destination commit.
     #[test]
