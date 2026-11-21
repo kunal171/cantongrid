@@ -175,8 +175,12 @@ impl Store {
         Ok(true)
     }
 
-    /// Recover an engine in one repeatable-read snapshot. Reads still require grants and a lease.
+    /// Recover the bounded fixture engine. Live streams use SQL-native reads/checkpoints;
+    /// replaying only polling batches would omit independently recorded upgrade baselines.
     pub fn restore(&mut self, plan: &Plan) -> Result<Engine, StoreError> {
+        if plan.is_live() {
+            return Err(StoreError::UnsupportedRecovery);
+        }
         let mut tx = self
             .client
             .build_transaction()
@@ -197,7 +201,11 @@ impl Store {
             .read_only(true)
             .start()?;
         let (key, _) = stream_key(plan);
-        let (_, revision) = recover(&mut tx, plan, &key)?;
+        let revision = if plan.is_live() {
+            crate::live::prefix(&mut tx, plan)?.map_or(0, |prefix| prefix.0)
+        } else {
+            recover(&mut tx, plan, &key)?.1
+        };
         let row = tx.query_one("SELECT (SELECT count(*) FROM cantongrid.contracts WHERE stream_key=$1), (SELECT count(*) FROM cantongrid.contracts WHERE stream_key=$1 AND active), (SELECT count(*) FROM cantongrid.events WHERE stream_key=$1), (SELECT count(*) FROM cantongrid.outbox WHERE stream_key=$1)", &[&key])?;
         let stats = Stats {
             batches: revision,

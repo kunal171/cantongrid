@@ -143,7 +143,7 @@ fn baseline(
         pk: 0,
     };
     let checkpoint = serde_json::to_string(&cursor).map_err(|_| "invalid upgrade boundary")?;
-    let batch = baseline_page(prepared, auth, &checkpoint)?;
+    let batch = baseline_page(prepared, auth, &checkpoint, 64)?;
     let cursor: cantongrid_pqs::Cursor =
         serde_json::from_str(&batch.position).map_err(|_| "invalid upgrade baseline")?;
     if cursor.snapshot || cursor.boundary != boundary {
@@ -199,6 +199,7 @@ fn baseline_page(
     prepared: &Prepared,
     auth: &SourceAuthorization,
     checkpoint: &str,
+    limit: usize,
 ) -> Result<Batch, String> {
     let selected = prepared
         .after
@@ -218,7 +219,7 @@ fn baseline_page(
         &plan,
         auth.lease().ok_or("source lease unavailable")?,
         Some(checkpoint),
-        64,
+        limit,
     )
     .map_err(|e| e.to_string())?
     .ok_or("upgrade source page unavailable".into())
@@ -258,7 +259,12 @@ pub async fn upgrade_job(
                     .selection_upgrade_status(before, lease, &manifest)
                     .map_err(|e| e.to_string())?;
                 if other == "step" && state.phase == "snapshot" {
-                    let batch = baseline_page(&prepared, &auth, &state.source_cursor)?;
+                    let batch = baseline_page(
+                        &prepared,
+                        &auth,
+                        &state.source_cursor,
+                        prepared.before.page_size,
+                    )?;
                     store.stage_selection_upgrade(
                         before,
                         lease,
@@ -272,7 +278,7 @@ pub async fn upgrade_job(
                     if (other == "activate" && state.phase == "ready")
                         || state.phase == "publishing"
                     {
-                        baseline_page(&prepared, &auth, &manifest.checkpoint)?;
+                        baseline_page(&prepared, &auth, &manifest.checkpoint, 1)?;
                     }
                     if other == "activate" {
                         store.activate_selection_upgrade(before, after, lease, &manifest)

@@ -330,6 +330,14 @@ fn staged_upgrade_resumes_129_contracts_without_exposing_partial_state() {
         }
     }
     assert_eq!(state.phase, "complete");
+    let stats = s.open().stats(&after).unwrap();
+    assert_eq!(stats.batches, 1);
+    assert_eq!(stats.active_contracts, 130);
+    assert_eq!(stats.events, 130);
+    assert!(matches!(
+        s.open().restore(&after),
+        Err(StoreError::UnsupportedRecovery)
+    ));
     assert_eq!(s.count(1, &after), 129);
     assert_eq!(s.open().checkpoint(&after).unwrap(), Some(cursor(10)));
     assert_eq!(
@@ -448,6 +456,26 @@ fn cancelled_staging_can_restart_without_reusing_old_source_progress() {
         .open()
         .start_selection_upgrade(&s.plans[0], &after, &s.lease(), &manifest)
         .unwrap();
+    let mut stationary = staged_page(&s, &after, 0, 1, false);
+    stationary.position = initial.source_cursor.clone();
+    assert!(
+        s.open()
+            .stage_selection_upgrade(
+                &s.plans[0],
+                &s.lease(),
+                &manifest,
+                &initial.source_cursor,
+                &stationary
+            )
+            .is_err()
+    );
+    assert_eq!(
+        s.open()
+            .selection_upgrade_status(&s.plans[0], &s.lease(), &manifest)
+            .unwrap()
+            .pages,
+        0
+    );
     s.open()
         .stage_selection_upgrade(
             &s.plans[0],

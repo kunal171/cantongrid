@@ -80,6 +80,8 @@ impl Store {
             || encoded.len() > 1024 * 1024
             || cursor["boundary"] != boundary
             || cursor["through"] != boundary
+            || cursor["offset"] != boundary
+            || !cursor["pk"].as_i64().is_some_and(|pk| pk >= 0)
             || !cursor["snapshot"].is_boolean()
             || batch.events.iter().any(|e| {
                 before.selects(&e.template)
@@ -100,6 +102,15 @@ impl Store {
         let state = status(&mut tx, &key, manifest)?;
         if state.phase != "snapshot" || state.source_cursor != expected {
             return Err(StoreError::Busy);
+        }
+        // Snapshot keys must move forward; accepting a stationary page would permit unbounded
+        // duplicate staging. The completed cursor is checked separately against the exact boundary.
+        let previous: serde_json::Value =
+            serde_json::from_str(expected).map_err(|_| StoreError::InvalidBatch)?;
+        if cursor["snapshot"] == true
+            && (batch.events.is_empty() || cursor["pk"].as_i64() <= previous["pk"].as_i64())
+        {
+            return Err(StoreError::InvalidBatch);
         }
         let size:i64=tx.query_one("SELECT staged_bytes FROM cantongrid.selection_upgrade_jobs WHERE stream_key=$1 AND fingerprint=$2", &[&key,&fp])?.get(0);
         if state.pages >= MAX_PAGES || size + encoded.len() as i64 > MAX_STAGE_BYTES {

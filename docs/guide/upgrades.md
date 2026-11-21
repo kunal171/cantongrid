@@ -52,8 +52,9 @@ cantongrid upgrade status .local/upgrade.json .local/old-runtime.json \
   .local/new-runtime.json application.dar .local/new-models.json
 ```
 
-Repeat `step` while `phase` is `snapshot`. Each call stores at most 64 active
-contracts in a private page at the retained checkpoint, never at a guessed latest
+Repeat `step` while `phase` is `snapshot`. PQS reads use the runtime
+`page_size` (1–8, default 8); lower it for large payloads. Storage accepts at most
+64 active contracts in a private page at the retained checkpoint, never at a guessed latest
 head. Staging commits its source cursor and page together. Old API reads continue
 against the complete old selection. If an old worker moves the checkpoint, the
 upgrade fails as stale; cancel and replan rather than rewinding progress.
