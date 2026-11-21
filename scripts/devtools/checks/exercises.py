@@ -120,13 +120,20 @@ def main(argv=None):
     mode.add_argument('--fixture-tests', action='store_true',
                         help='Build/test generic Daml fixture on its IDE ledger; no PQS or external Ledger reads/writes')
     mode.add_argument('--localnet', action='store_true', help='Run the explicitly approved isolated LocalNet experiment')
+    mode.add_argument('--worker', action='store_true', help='Test the real Rust worker with existing approved M0 fixture controls')
     parser.add_argument('--allow-ledger-writes', action='store_true', help='Required opt-in for --localnet')
     parser.add_argument('--dar', type=Path, default=ROOT / 'examples/exercises/contracts/.daml/dist/cantongrid-exercise-probe-0.1.0.dar')
     parser.add_argument('--resume', help='Owned cg-m0 run ID; resume source checks without repeating Ledger writes')
     parser.add_argument('--dpm', default='dpm', help='Installed SDK launcher for --fixture-tests')
     args = parser.parse_args(argv)
-    if args.resume and not args.localnet:
-        parser.error('--resume requires --localnet')
+    if args.resume and not (args.localnet or args.worker):
+        parser.error('--resume requires --localnet or --worker')
+    if args.worker:
+        if not args.allow_ledger_writes:
+            parser.error('--worker requires --allow-ledger-writes')
+        from .exercise_worker import run
+        run(args.resume)
+        return
     if args.localnet:
         if not args.allow_ledger_writes:
             parser.error('--localnet requires --allow-ledger-writes')
