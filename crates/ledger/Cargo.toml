@@ -15,7 +15,7 @@ categories = ["database"]
 
 [dependencies]
 cantongrid-core = { path = "../core", version = "=0.4.0-alpha.2" }
-reqwest = { version = "0.13.5", default-features = false }
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls"] }
 jsonwebtoken = { version = "12.0.0", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

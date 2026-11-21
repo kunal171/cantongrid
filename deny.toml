@@ -6,8 +6,10 @@ unmaintained = "all"
 [licenses]
 # BSD notices are required by approved GraphQL/HTTP and JWT crypto dependencies;
 # source/binary distribution must retain their upstream copyright/license notices.
+# ISC covers the approved TLS implementation; CDLA-Permissive-2.0 covers its
+# Mozilla trust-anchor data. Upstream license texts/notices must be retained.
 include-dev = true
-allow = ["Apache-2.0", "Apache-2.0 WITH LLVM-exception", "MIT", "Unicode-3.0", "Zlib", "BSD-2-Clause", "BSD-3-Clause"]
+allow = ["Apache-2.0", "Apache-2.0 WITH LLVM-exception", "MIT", "Unicode-3.0", "Zlib", "BSD-2-Clause", "BSD-3-Clause", "ISC", "CDLA-Permissive-2.0"]
 confidence-threshold = 0.95
 
 [bans]

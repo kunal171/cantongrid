@@ -146,10 +146,12 @@ transport and identity-provider settings into source/cursor identity. PostgreSQL
 remains a separate numeric-loopback connection (an operator tunnel is possible);
 this does not introduce remote PostgreSQL TLS support or live-network acceptance.
 
-Dependency decision pending approval: enable the existing `reqwest` 0.13.5 `rustls`
+Dependency decision approved on 2026-11-21: enable the existing `reqwest` 0.13.5 `rustls`
 feature in ledger/runtime for certificate-verified HTTPS. This adds its Rustls,
 platform-verifier and AWS-LC dependencies; pin the resolved graph in Cargo.lock and
-run the existing vulnerability/license checks before use. No insecure-certificate
+run the existing vulnerability/license checks before use. ISC and the trust-anchor data license CDLA-Permissive-2.0 are added to the
+permissive-license allowlist for this approved TLS graph; upstream notices remain
+required. This is not an advisory or license-scanner exemption. No insecure-certificate
 switch, plaintext fallback, new Ledger SDK or runtime executable is proposed.
 The supplied build spec §2 requires approval for new third-party hard dependencies.
 
@@ -162,3 +164,10 @@ removals and incompatible selected types must stop generation, not guess a renam
 or rewrite a calculation. Installed revisions, databases, grants and source
 checkpoints are untouched. The existing reviewed upgrade command remains the
 separate activation step.
+
+Remote IDP verification uses the pinned Canton 3.5.7 OpenAPI profile and the
+[official JSON API definition](https://docs.digitalasset.com/build/3.5/reference/json-api/openapi.html).
+User reads accept `identity-provider-id`; rights reads do not expose that query
+parameter and derive their provider context through authenticated Ledger handling.
+An explicit expected token issuer and returned provider must both match; no issuer
+or provider is inferred from an endpoint hostname.
