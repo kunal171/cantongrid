@@ -16,6 +16,36 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M1 internal exercise receipts — 2026-11-21
+
+The [receipt contract](design/exercise-ingestion.md) is implemented in this
+unreleased checkout. Migration 009 was applied explicitly to the owned
+PostgreSQL 17.12 destination; earlier migration checksums remain unchanged.
+
+| Check | Result |
+| --- | --- |
+| `cargo test --workspace --locked` | 98 passed; environment-dependent tests ignored |
+| Storage PostgreSQL suite, serial `--ignored` | 60 passed, including migration/ACL checks and model rollback |
+| New receipt controls rerun after final integrity changes | Both pass, including late lease expiry and missing delivery marker |
+| CLI API PostgreSQL suite, serial `--ignored` | 3 passed: REST/GraphQL scopes, revocation and outages |
+| Other CI PostgreSQL controls | 5 passed: models, durable CLI, registry/install and source owner rejection |
+| Read-only retained M0 source integration | Pass: four scopes, one-row snapshot pages, complete forward transactions and overlap |
+| Real LocalNet Rust worker | Four receipts/outbox entries, three consuming, two unindexed targets, one lifecycle archive; idle restart unchanged |
+| Python helpers / existing PoC | 35 / 7 passed |
+| Formatting, strict workspace Clippy, secret/log/release checks | Pass |
+
+The source integration test uses synthetic leases against real retained PQS;
+it does not establish current grants. The separate worker check uses real Ledger
+authorization and exporter health, reusing the approved fixture's pair/nested
+choices without uploading DARs or provisioning more parties/users. Public
+[worker evidence](../examples/exercises/worker-evidence.json) contains counts;
+private payloads, identities and diagnostics stay under ignored `.local/`.
+
+Source pruning/regression and transaction budget failures have synthetic controls;
+no destructive pruning experiment ran. No public exercise API, package handoff
+for receipt streams, interface-choice support, redaction, pre-snapshot history,
+general lineage proof or remote production acceptance is claimed.
+
 ## M0 exercise-source feasibility — 2026-11-21
 
 The [source RFC](design/exercise-source.md#localnet-results) records the capability

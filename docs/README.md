@@ -45,8 +45,9 @@ transport (#22), and command-driven schema synchronization (#24).
 1. [M0 exercise-source feasibility](design/exercise-source.md) is verified on the
    pinned LocalNet: four party scopes match Ledger Effects, with transient and
    nested controls. General immediate-parent proof remains unsupported.
-2. M1 internal exercise receipts follows a separate source-contract review and
-   instruction; M2 introduces guarded lineage. Typed joins, historical queries,
+2. [M1 internal exercise receipts](design/exercise-ingestion.md) is implemented
+   in this checkout with explicit tree-mode opt-in and destination migration 009.
+   M2 introduces guarded lineage. Typed joins, historical queries,
    inspection and durable streams follow their own acceptance gates.
 3. Extend existing metadata/sync with impact analysis rather than duplicating it.
    Outcomia factory/clubs contract work remains a separate repository track.

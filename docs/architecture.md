@@ -180,3 +180,6 @@ party scopes. Partial views can disclose children without their factory exercise
 general immediate-parent proof remains unsupported. M1 should extend the existing
 PQS adapter with internal exercise receipts while preserving archive ownership.
 M0 adds no production event variant, destination migration or public API.
+The [M1 receipt slice](design/exercise-ingestion.md) adds opt-in atomic forward
+transactions and private receipt/outbox tables in migration 009. Existing
+create/archive APIs and archive ownership remain unchanged.

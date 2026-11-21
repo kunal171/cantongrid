@@ -29,6 +29,7 @@ Local generated configuration, tokens and reports stay ignored under `.local/`.
 | `exercises` | Existing schema041 database/reader; bounded read-only catalog inspection only, no event rows |
 | `exercises --fixture-tests [--dpm <path>]` | SDK 3.7.1; build generic fixture and test on IDE ledger, no external Ledger |
 | `exercises --localnet --allow-ledger-writes [--resume <run-id>]` | Explicitly approved fixture writes + isolated PQS databases; scoped receipt/paging comparison, see [controls](../examples/exercises/README.md) |
+| `exercises --worker --allow-ledger-writes --resume <run-id>` | Existing approved fixture + real Rust worker; owned destination migration and pair/nested controls, no party/user provisioning |
 | `visibility` | Seeded fixture; temporarily revoke/restore owned AB grants |
 | `visibility-pqs` | AB source; temporarily revoke/restore grants and observe cached rows |
 | `pipeline` | Existing Visibility + isolated reader + initialized destination; run Rust worker/APIs, caller revocation and source stop/start recovery |

@@ -19,6 +19,7 @@
 
 * [Architecture](architecture.md)
 * [Exercise source feasibility](design/exercise-source.md)
+* [Internal exercise ingestion](design/exercise-ingestion.md)
 * [Security](security.md)
 * [Commands](cli.md)
 * [Fixture format](fixtures.md)

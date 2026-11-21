@@ -84,3 +84,26 @@ through authorized Ledger Effects and PQS, including partial-party views, one-ro
 keyset pages and overlapping replay. Keep raw payloads, tokens, party IDs and
 contract IDs private. Missing exercises or descendants mean incomplete evidence,
 never an inferred parent. This fixture does not verify pruning or redaction.
+
+## Rust worker check (M1)
+
+With the existing approved M0 run, LocalNet and fixture PostgreSQL running:
+
+```bash
+python3 scripts/dev.py storage up
+cargo build -p cantongrid-cli --locked
+# Replace the example ID with your existing M0 run; port 18083 must be free.
+python3 scripts/dev.py check exercises --worker --allow-ledger-writes --resume cg-m0-01234567
+```
+
+This reuses the existing contracts/parties/users without provisioning or changing
+rights. It starts an operator-scoped tree-mode exporter, initializes the owned
+destination explicitly, indexes a fresh snapshot, and submits the same approved
+pair/nested choices. Each Rust invocation renews real Ledger authorization and
+reopens its durable checkpoint. An idle restart must leave counts unchanged.
+
+Expected: four exercise receipts and four internal outbox entries; three consuming
+exercises but only one lifecycle archive. The transient relay/child have no
+indexed prior create; their receipts do not fabricate contract state. See
+[worker evidence](worker-evidence.json). The helper stops its exporter; LocalNet
+and both PostgreSQL services are stopped separately, preserving volumes.

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Opt-in schema041 tree-mode exercise receipts, bounded complete forward
+  transactions and atomic private receipt journal/outbox (destination migration
+  009). Existing contract APIs retain create/archive behavior; no graph API.
+- Generic Daml exercise fixture, scoped source comparison and real LocalNet
+  worker controls. Package handoff for receipt streams remains unsupported.
+
 ## 0.4.0-alpha.2 — 2026-11-21
 
 - Offline LF 2.1 DAR metadata inspection with verified payload hashes, qualified
