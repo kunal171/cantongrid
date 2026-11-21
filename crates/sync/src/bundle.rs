@@ -60,7 +60,7 @@ impl SyncPlan {
             .map(|m| m.template.clone())
             .collect();
         files.insert("upgrade-input.json".into(),serde_json::to_string_pretty(&serde_json::json!({
-            "format_version":1,"activation":"requires_live_upgrade_plan",
+            "format_version":1,"activation":if before==after {"no_activation_required"} else {"requires_live_upgrade_plan"},
             "old_artifact_sha256":self.report.old_artifact_sha256,"new_artifact_sha256":self.report.new_artifact_sha256,
             "old_models":self.previous.iter().map(|m|serde_json::json!({"name":m.name,"revision":m.revision})).collect::<Vec<_>>(),
             "new_models":catalog.models().iter().map(|m|serde_json::json!({"name":m.name,"revision":m.revision})).collect::<Vec<_>>(),

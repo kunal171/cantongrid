@@ -114,15 +114,16 @@ pub(crate) fn changes(
     new: &Package,
     mappings: &BTreeMap<String, String>,
 ) -> Result<Vec<Change>, Error> {
-    let mut before = declarations(old)?;
+    let before = declarations(old)?;
     let after = declarations(new)?;
-    for value in before.values_mut() {
-        normalize(value, mappings);
-    }
     let names: std::collections::BTreeSet<_> = before.keys().chain(after.keys()).collect();
     let mut result = Vec::new();
     for name in names {
-        let kind = match (before.get(name), after.get(name)) {
+        let comparable = before.get(name).cloned().map(|mut value| {
+            normalize(&mut value, mappings);
+            value
+        });
+        let kind = match (comparable.as_ref(), after.get(name)) {
             (None, Some(_)) => "added",
             (Some(_), None) => "removed",
             (Some(a), Some(b)) if a != b => "changed",

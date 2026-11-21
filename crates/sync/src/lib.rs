@@ -15,6 +15,8 @@ use serde::Serialize;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SyncError {
+    Metadata,
+    UnsupportedVersion,
     Identity,
     MissingField,
     UnsupportedType,
@@ -25,6 +27,8 @@ pub enum SyncError {
 impl std::fmt::Display for SyncError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
+            Self::Metadata => "DAR metadata verification failed",
+            Self::UnsupportedVersion => "schema sync accepts LF 2.1 only",
             Self::Identity => "missing or ambiguous package/template identity",
             Self::MissingField => "selected field is absent from the contract signature",
             Self::UnsupportedType => "selected LF type cannot be represented by this projection",
@@ -37,3 +41,6 @@ impl std::fmt::Display for SyncError {
     }
 }
 impl std::error::Error for SyncError {}
+
+#[cfg(test)]
+mod tests;

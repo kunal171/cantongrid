@@ -4,7 +4,7 @@ use crate::{SyncError as Error, compare, resolve::Resolver};
 use cantongrid_metadata::schema::{Metadata, TypeId};
 use cantongrid_models::{Catalog, Expression};
 use serde::Serialize;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// Diagnostics name the developer's projection, never an input literal or private source payload.
 #[derive(Serialize)]
@@ -49,10 +49,18 @@ fn fields<'a>(
         Expression::Literal { .. } => {}
     }
 }
+/// Preserve unsupported language-version diagnostics without forwarding archive internals/paths.
+fn metadata_error(error: cantongrid_metadata::MetadataError) -> Error {
+    if error == cantongrid_metadata::MetadataError::UnsupportedVersion {
+        Error::UnsupportedVersion
+    } else {
+        Error::Metadata
+    }
+}
 /// The public entry verifies original DAR hashes and strict model definitions before comparison.
 pub fn plan(old_dar: &[u8], new_dar: &[u8], models_json: &str) -> Result<SyncPlan, Error> {
-    let old = cantongrid_metadata::inspect(old_dar).map_err(|_| Error::Definition)?;
-    let new = cantongrid_metadata::inspect(new_dar).map_err(|_| Error::Definition)?;
+    let old = cantongrid_metadata::inspect(old_dar).map_err(metadata_error)?;
+    let new = cantongrid_metadata::inspect(new_dar).map_err(metadata_error)?;
     let catalog = Catalog::parse(models_json).map_err(|_| Error::Definition)?;
     analyze(&old, &new, &catalog)
 }
@@ -111,6 +119,16 @@ pub(crate) fn analyze(
     }
 
     let mut models = catalog.models().to_vec();
+    let mut families: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
+    for model in catalog.models() {
+        if let Some(p) = old
+            .packages
+            .iter()
+            .find(|p| p.package_id == model.template.package_id)
+        {
+            families.entry(&p.name).or_default().insert(&p.package_id);
+        }
+    }
     for model in &mut models {
         let old_package = old
             .packages
@@ -124,6 +142,17 @@ pub(crate) fn analyze(
             });
             continue;
         };
+        if families
+            .get(old_package.name.as_str())
+            .is_some_and(|ids| ids.len() > 1)
+        {
+            report.diagnostics.push(Diagnostic {
+                model: model.name.clone(),
+                field: None,
+                error: Error::Identity,
+            });
+            continue;
+        }
         let target = match compare::replacement(old_package, new) {
             Ok(p) => p,
             Err(error) => {
