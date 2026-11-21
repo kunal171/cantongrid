@@ -163,6 +163,7 @@ pub struct Plan {
     fixture: PathBuf,
     live: bool,
     source_binding: Option<String>,
+    exercises: bool,
 }
 
 impl fmt::Debug for Plan {
@@ -230,6 +231,7 @@ impl Plan {
             fixture: source.fixture,
             live: false,
             source_binding: None,
+            exercises: false,
         })
     }
 
@@ -254,6 +256,7 @@ impl Plan {
             fixture: PathBuf::new(),
             live: true,
             source_binding: None,
+            exercises: false,
         })
     }
 
@@ -271,6 +274,20 @@ impl Plan {
 
     pub fn is_live(&self) -> bool {
         self.live
+    }
+
+    /// Opt into the verified tree-mode receipt profile. Persisted legacy generations cannot adopt it.
+    pub fn with_exercises(mut self) -> Result<Self, ConfigError> {
+        if !self.live {
+            return Err(ConfigError::UnsupportedCapability);
+        }
+        self.exercises = true;
+        Ok(self)
+    }
+
+    /// Receipt ingestion is separate from public lifecycle event selections.
+    pub fn includes_exercises(&self) -> bool {
+        self.exercises
     }
 
     pub fn templates(&self) -> impl Iterator<Item = &TemplateId> {
@@ -296,6 +313,10 @@ impl Plan {
         });
         if self.live {
             definition["profile"] = serde_json::json!("pqs041_partial_raw_prior_create_v1");
+        }
+        if self.exercises {
+            definition["profile"] =
+                serde_json::json!("pqs041_partial_raw_prior_create_exercises_v1");
         }
         if let Some(binding) = &self.source_binding {
             definition["source_binding"] = serde_json::json!(binding);

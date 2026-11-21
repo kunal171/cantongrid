@@ -5,6 +5,7 @@ pub mod authorization;
 pub mod config;
 pub mod document;
 mod envelope;
+pub mod exercise;
 pub mod fixture;
 pub mod lifecycle;
 pub mod value;
