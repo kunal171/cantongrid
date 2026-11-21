@@ -274,6 +274,7 @@ ROLLBACK;"""
             write_private(directory / ('pqs-' + scope + '.json'), evidence)
             summary['scopes'][scope] = compare_view(ledger[scope], evidence)
             summary['scopes'][scope]['paging'] = probe_paging(database, role, start, query_end, evidence['exercises'])
+            summary['scopes'][scope]['transactions'] = probe_transaction_ids(database, role, start, query_end, ledger[scope])
             write_private(directory / ('coverage-' + scope + '.json'), {
                 'requested_end': end, 'query_end': query_end, 'latest_offset': latest,
                 'pre_snapshot_history_verified': False, 'pruning_verified': False})
@@ -323,3 +324,20 @@ ORDER BY exercised_at_offset,(exercise_event_id).node_id LIMIT 1; ROLLBACK;"""
     if rows != sorted(expected, key=key):
         raise ValueError('Keyset exercise pages differ from bounded source receipts')
     return {'page_size': 1, 'receipts': len(rows), 'overlap_exact': True, 'complete_at_observed_boundary': True}
+
+
+def probe_transaction_ids(database, role, start, end, ledger):
+    """Verify participant-local offset→update ID binding; never publish the private update IDs."""
+    expected = {int(value['transaction']['offset']): value['transaction']['updateId']
+                for value in ledger.values() if value is not None}
+    query = f"""BEGIN READ ONLY; SET LOCAL statement_timeout='5s';
+SELECT coalesce(json_agg(row_to_json(t)),'[]') FROM
+(SELECT "offset",transaction_id FROM __transactions WHERE "offset" BETWEEN {start} AND {end}
+ORDER BY "offset" LIMIT 32) t; ROLLBACK;"""
+    rows = json.loads(sql(database, query, role))
+    if len(rows) >= 32:
+        raise ValueError('Transaction identity comparison reached its row bound')
+    actual = {int(row['offset']): row['transaction_id'] for row in rows}
+    if len(actual) != len(rows) or actual != expected:
+        raise ValueError('PQS transaction identities differ from authorized Ledger Effects')
+    return {'receipts': len(rows), 'update_ids_match': True}

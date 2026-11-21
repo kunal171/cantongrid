@@ -46,3 +46,11 @@ class ExerciseLocalnetTests(unittest.TestCase):
         with patch.object(localnet, 'sql', side_effect=[raw, raw, '']):
             with self.assertRaises(ValueError):
                 localnet.probe_paging('owned', 'reader', 0, 9007199254740994, [])
+
+    def test_transaction_binding_rejects_wrong_update_id(self):
+        ledger = {'control': {'transaction': {'offset': 123, 'updateId': 'expected'}}}
+        with patch.object(localnet, 'sql', return_value='[{"offset":123,"transaction_id":"expected"}]'):
+            self.assertTrue(localnet.probe_transaction_ids('owned', 'reader', 0, 123, ledger)['update_ids_match'])
+        with patch.object(localnet, 'sql', return_value='[{"offset":123,"transaction_id":"wrong"}]'):
+            with self.assertRaises(ValueError):
+                localnet.probe_transaction_ids('owned', 'reader', 0, 123, ledger)
