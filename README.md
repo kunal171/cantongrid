@@ -11,6 +11,10 @@ Outcomia is the first application example; the engine is reusable.
 
 ## Current status
 
+The source branch targeting **0.4.0-alpha.2** adds offline DAR metadata, compound
+sorting and [reviewed package upgrades](docs/guide/upgrades.md). These additions
+have synthetic/owned-PostgreSQL coverage and are not published yet.
+
 - LocalNet PQS snapshot/update ingestion, atomic checkpoints and authenticated
   generic APIs are verified for the [tested profile](docs/verification.md).
 - Model validation, exact calculations, registry and private table installation are available.

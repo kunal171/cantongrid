@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 struct Key {
     query: String,
     contract: String,
-    value: Option<QueryValue>,
+    values: Vec<Option<QueryValue>>,
 }
 
 /// Parameters start after stream, parties and template. Native SQL types preserve exact ordering.
@@ -72,16 +72,28 @@ impl QueryPlan {
                 result.filters.push_str(&format!(" AND ({condition})"));
             }
         }
-        if let Some(sort) = &options.sort {
-            let direction = if sort.direction == Direction::Asc {
-                "ASC"
-            } else {
-                "DESC"
-            };
-            result.order = format!(
-                "m.\"{}\" {direction} NULLS LAST,c.contract_id ASC",
-                sort.field
-            );
+        let sorts = options
+            .sort
+            .as_ref()
+            .map(|s| s.as_slice())
+            .unwrap_or_default();
+        if !sorts.is_empty() {
+            let mut terms: Vec<_> = sorts
+                .iter()
+                .map(|sort| {
+                    format!(
+                        "m.\"{}\" {} NULLS LAST",
+                        sort.field,
+                        if sort.direction == Direction::Asc {
+                            "ASC"
+                        } else {
+                            "DESC"
+                        }
+                    )
+                })
+                .collect();
+            terms.push("c.contract_id ASC".into());
+            result.order = terms.join(",");
         }
         result.filter_parameters = result.parameters.len();
         if let Some(after) = after {
@@ -97,9 +109,17 @@ impl QueryPlan {
                 return Err(StoreError::ModelQuery);
             }
             let id = result.bind(key.contract, "text");
-            result.page = if let Some(sort) = &options.sort {
+            if key.values.len() != sorts.len() {
+                return Err(StoreError::ModelQuery);
+            }
+            // Lexicographic comparison supports mixed directions and NULLS LAST for every key.
+            // For (price DESC, orderId ASC), resume where price falls, or equal price and later ID.
+            let mut equal = Vec::new();
+            let mut alternatives = Vec::new();
+            for (sort, value) in sorts.iter().zip(key.values) {
                 let column = format!("m.\"{}\"", sort.field);
-                match key.value {
+                let (later, same) = match value {
+                    None => (None, format!("{column} IS NULL")),
                     Some(value) => {
                         let value = model
                             .validate_sort_value(&sort.field, &value)
@@ -111,19 +131,22 @@ impl QueryPlan {
                         } else {
                             "<"
                         };
-                        // NULLS LAST applies in both directions; equal values use ascending IDs.
-                        format!(
-                            " AND ({column} IS NULL OR {column}{op}{parameter} OR ({column}={parameter} AND c.contract_id>{id}))"
+                        (
+                            Some(format!("({column} IS NULL OR {column}{op}{parameter})")),
+                            format!("{column}={parameter}"),
                         )
                     }
-                    None => format!(" AND ({column} IS NULL AND c.contract_id>{id})"),
+                };
+                if let Some(later) = later {
+                    let mut terms = equal.clone();
+                    terms.push(later);
+                    alternatives.push(format!("({})", terms.join(" AND ")));
                 }
-            } else {
-                if key.value.is_some() {
-                    return Err(StoreError::ModelQuery);
-                }
-                format!(" AND c.contract_id>{id}")
-            };
+                equal.push(same);
+            }
+            equal.push(format!("c.contract_id>{id}"));
+            alternatives.push(format!("({})", equal.join(" AND ")));
+            result.page = format!(" AND ({})", alternatives.join(" OR "));
         }
         Ok(result)
     }
@@ -141,11 +164,14 @@ impl QueryPlan {
         if contract.is_empty() || contract.len() > 2048 || contract.chars().any(char::is_control) {
             return Err(StoreError::Limit);
         }
-        let value = self
+        let values = self
             .query
             .options()
             .sort
             .as_ref()
+            .map(|s| s.as_slice())
+            .unwrap_or_default()
+            .iter()
             .map(|sort| {
                 let value = &row["values"][&sort.field];
                 if value.is_null() {
@@ -156,12 +182,11 @@ impl QueryPlan {
                         .map_err(|_| StoreError::ModelCorrupt)
                 }
             })
-            .transpose()?
-            .flatten();
+            .collect::<Result<Vec<_>, _>>()?;
         let key = serde_json::to_string(&Key {
             query: self.query.fingerprint().into(),
             contract,
-            value,
+            values,
         })
         .map_err(|_| StoreError::ModelCorrupt)?;
         if key.len() > 4096 {

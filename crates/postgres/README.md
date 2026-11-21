@@ -6,7 +6,7 @@ Restricted PostgreSQL connections and redacted database errors for CantonGrid.
 
 ```toml
 [dependencies]
-cantongrid-postgres = "=0.4.0-alpha.1"
+cantongrid-postgres = "=0.4.0-alpha.2"
 ```
 
 ```rust

@@ -16,6 +16,44 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## Unreleased 0.4.0-alpha.2 offline metadata
+
+Recorded 2026-11-21 without starting LocalNet or changing Ledger state. The CLI
+extracted LF 2.1 metadata from existing local DARs; all package IDs, names and
+versions matched independent `damlc inspect-dar --json` output (installed damlc
+3.7.0, example manifests declare SDK 3.7.1).
+
+| Artifact | Packages | Templates | Interfaces | Main package ID |
+| --- | --- | --- | --- | --- |
+| PoC | 31 | 1 | 0 | `730711263d9ca88f4ee397a7428ef775dff14ee144216dc08053f955f3cb357e` |
+| Visibility | 31 | 1 | 0 | `05d72ea44339b0e3b89e195ccd3f72f67436219915ecc8d90e32b250fc285111` |
+| Outcomia | 39 | 15 | 5 | `73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a` |
+
+Counts include dependency packages. Compiler comparison covers package inventory,
+not every field signature. Synthetic tests cover qualified/generic/recursive types,
+Numeric scales, interface wire tags, archive corruption, missing references,
+unsupported versions and resource limits. This does not verify ingestion upgrades
+against a real Canton deployment, or generated models from DAR metadata (#24).
+
+## Unreleased compound sorting and package upgrades
+
+Recorded 2026-11-21 against the separately owned PostgreSQL 17.12 fixture and
+mock source authorization. Compound ordering tests use equal prices with reversed
+contract/FIFO IDs, mixed directions, nulls, one-row pages and shared REST/GraphQL
+cursors. Existing single-sort requests and generated/served schema agreement pass.
+
+Upgrade controls cover an atomic handoff, a 129-contract/three-page staged baseline,
+reopened connections, read/write gating during publication, mixed-package forward
+creates/archives, duplicate replay, stale worker/plan rejection, failed projections,
+partial-publication cancellation and old-model rebuild rollback. Checkpoints and
+historical batches are retained. Package-availability HTTP checks reject absent
+packages under current read-only source grants.
+
+These are implementation/owned-database controls. No new DAR was uploaded, no
+Ledger transactions were submitted and no real Canton deployment-upgrade smoke
+was performed for this change. The read-only runtime is still limited to the
+verified LocalNet transport/PQS profile.
+
 ## 0.4.0-alpha.1 grouped aggregates
 
 Recorded 2026-11-20 on the LocalNet profile above for source prerelease

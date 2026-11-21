@@ -5,6 +5,10 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 
 | Command | Purpose |
 | --- | --- |
+| `upgrade plan <old-runtime> <new-runtime> <dar> <models> <namespace>` | Read-only reviewed manifest for installed targets |
+| `upgrade start\|step\|status\|activate\|cancel <manifest> <old-runtime> <new-runtime> <dar> <models>` | Durable paged handoff; see [upgrades](guide/upgrades.md) |
+| `upgrade apply <manifest> <old-runtime> <new-runtime> <dar> <models>` | Bounded atomic alternative |
+| `metadata inspect <artifact.dar>` | Offline LF 2.1 signatures as bounded JSON; source-only alpha.2 |
 | `init <new-directory>` | Scaffold a synthetic Visibility fixture; refuses an existing directory |
 | `validate <project.json>` | Validate fixture configuration without reading events or connecting |
 | `fixture run <project.json> [--party A]...` | In-memory fixture replay with simulated grants |

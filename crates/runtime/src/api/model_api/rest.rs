@@ -6,7 +6,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::Response,
 };
-use cantongrid_models::{Comparison, QueryField, QueryOptions, QueryValue, Sort};
+use cantongrid_models::{Comparison, QueryField, QueryOptions, QueryValue, Sorts};
 use cantongrid_storage::BoundModel;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -61,7 +61,7 @@ struct Input {
     cursor: Option<String>,
     #[serde(default)]
     filters: BTreeMap<String, BTreeMap<Comparison, QueryValue>>,
-    sort: Option<Sort>,
+    sort: Option<Sorts>,
 }
 /// Aggregate queries never accept contribution filters or request-supplied grouping fields.
 #[derive(Deserialize)]

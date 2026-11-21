@@ -10,6 +10,8 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [LocalNet ingestion](guide/localnet-source.md) | Source setup, runtime configuration and worker |
 | [API](guide/api.md) | Caller authentication, queries, filtering and pagination |
 | [Models](guide/models.md) | Definitions, exact calculations, installation and rebuilds |
+| [Package upgrades](guide/upgrades.md) | Reviewed additive handoffs, staged publication and rollback (unreleased) |
+| [DAR metadata](guide/metadata.md) | Offline package identities and qualified contract signatures (unreleased) |
 | [Aggregates](guide/aggregates.md) | Grouped counts/sums with full-source authorization |
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
 | [Operations](guide/operations.md) | Recovery, troubleshooting and disk usage |
@@ -35,6 +37,10 @@ Scan, hosted multi-tenancy and arbitrary processing plugins are not implemented.
 Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
+
+The source checkout targeting 0.4.0-alpha.2 includes offline DAR inspection,
+compound sorting and [reviewed package upgrades](guide/upgrades.md). Command-driven schema synchronization
+([#24](https://github.com/kunal171/cantongrid/issues/24)) remains planned.
 
 1. Extend Outcomia projections to funded assets/trading after separate authorization.
 2. Define joins and broader aggregate operations with retraction and visibility

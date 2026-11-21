@@ -594,3 +594,24 @@ fn model_installation_cli_is_explicit_idempotent_and_redacts_schema_failures() {
     assert!(!String::from_utf8_lossy(&result.stderr).contains("INSTALLATION_PRIVATE_SENTINEL"));
     assert!(String::from_utf8_lossy(&result.stderr).contains("differs from the compiled plan"));
 }
+
+/// Offline inspection must reject invalid inputs without printing source paths or partial metadata.
+#[test]
+fn metadata_inspection_errors_are_redacted_and_do_not_emit_json() {
+    let root = Scratch::new();
+    let secret_name = "private-artifact-label.dar";
+    fs::write(root.0.join(secret_name), b"private malformed contents").unwrap();
+    for path in [secret_name, "missing-private-artifact.dar", "."] {
+        let result = cli(&root.0, &["metadata", "inspect", path]);
+        assert!(!result.status.success());
+        assert!(result.stdout.is_empty());
+        let error = String::from_utf8_lossy(&result.stderr);
+        assert!(!error.contains(path));
+        assert!(!error.contains("private malformed contents"));
+    }
+    assert!(
+        !cli(&root.0, &["metadata", "inspect", secret_name, "extra"])
+            .status
+            .success()
+    );
+}

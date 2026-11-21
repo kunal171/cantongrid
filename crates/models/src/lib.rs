@@ -20,5 +20,5 @@ pub use aggregation::{AggregatePlan, Aggregation, Measure};
 
 mod query;
 pub use query::{
-    Comparison, Direction, QueryField, QueryOptions, QueryValue, Sort, ValidatedQuery,
+    Comparison, Direction, QueryField, QueryOptions, QueryValue, Sort, Sorts, ValidatedQuery,
 };

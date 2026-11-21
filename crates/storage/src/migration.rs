@@ -15,6 +15,8 @@ const MODELS: &str = include_str!("../migrations/003_models.sql");
 const INSTALLATIONS: &str = include_str!("../migrations/004_model_installations.sql");
 const BINDINGS: &str = include_str!("../migrations/005_model_bindings.sql");
 const REBUILDS: &str = include_str!("../migrations/006_model_rebuilds.sql");
+const UPGRADES: &str = include_str!("../migrations/007_selection_upgrades.sql");
+const UPGRADE_JOBS: &str = include_str!("../migrations/008_upgrade_jobs.sql");
 const MIGRATION_LOCK: i64 = 0x43475249444d4947;
 
 /// Initialize only a separately owned destination; repeat calls verify the immutable migration.
@@ -71,14 +73,14 @@ pub(crate) fn check_schema(client: &mut impl GenericClient) -> Result<(), StoreE
     check_base(client)?;
     check_runtime_versions(client, true)?;
     let owned: bool = client.query_one(
-        "SELECT count(*) = 13 AND bool_and(relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))
+        "SELECT count(*) = 16 AND bool_and(relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))
          FROM pg_class WHERE oid IN (to_regclass('cantongrid.schema_version'),
              to_regclass('cantongrid.streams'),to_regclass('cantongrid.batches'),
              to_regclass('cantongrid.contracts'),to_regclass('cantongrid.events'),
              to_regclass('cantongrid.outbox'),to_regclass('cantongrid.runtime_migrations'),
              to_regclass('cantongrid.model_revisions'),
              to_regclass('cantongrid.model_tables'), to_regclass('cantongrid.model_installations'), to_regclass('cantongrid.model_bindings'),
-             to_regclass('cantongrid.model_rebuilds'),to_regclass('cantongrid.model_rebuild_dirty'))",
+             to_regclass('cantongrid.model_rebuilds'),to_regclass('cantongrid.model_rebuild_dirty'),to_regclass('cantongrid.selection_upgrades'),to_regclass('cantongrid.selection_upgrade_jobs'),to_regclass('cantongrid.selection_upgrade_pages'))",
         &[],
     )?.get(0);
     if !owned {
@@ -96,6 +98,8 @@ fn upgrade_models(client: &mut impl GenericClient) -> Result<(), StoreError> {
         (4, INSTALLATIONS),
         (5, BINDINGS),
         (6, REBUILDS),
+        (7, UPGRADES),
+        (8, UPGRADE_JOBS),
     ] {
         if !versions.contains(&version) {
             client.batch_execute(sql)?;
@@ -133,7 +137,7 @@ fn check_runtime_versions(
     let mut versions = Vec::new();
     for (index, row) in rows.into_iter().enumerate() {
         let version: i32 = row.get(0);
-        if [2, 3, 4, 5, 6].get(index) != Some(&version) {
+        if [2, 3, 4, 5, 6, 7, 8].get(index) != Some(&version) {
             return Err(StoreError::Schema);
         }
         let expected = runtime_checksum(version).ok_or(StoreError::Schema)?;
@@ -142,7 +146,7 @@ fn check_runtime_versions(
         }
         versions.push(version);
     }
-    if versions.is_empty() || (require_current && versions.len() != 5) {
+    if versions.is_empty() || (require_current && versions.len() != 7) {
         return Err(StoreError::Schema);
     }
     Ok(versions)
@@ -156,6 +160,8 @@ fn runtime_checksum(version: i32) -> Option<String> {
         4 => INSTALLATIONS,
         5 => BINDINGS,
         6 => REBUILDS,
+        7 => UPGRADES,
+        8 => UPGRADE_JOBS,
         _ => return None,
     };
     Some(
@@ -211,6 +217,12 @@ fn checksum() -> String {
 mod tests {
     use super::*;
     /// Privilege drift must fail even when migration checksums and table ownership still match.
+    /// Newer tables must be removed with their migration entries when reconstructing an old
+    /// schema inside a rollback-only test. Leaving newer entries is intentionally rejected.
+    fn drop_upgrade_schema(tx: &mut cantongrid_postgres::postgres::Transaction<'_>) {
+        tx.batch_execute("DROP TABLE cantongrid.selection_upgrade_pages,cantongrid.selection_upgrade_jobs,cantongrid.selection_upgrades; DELETE FROM cantongrid.runtime_migrations WHERE version IN (7,8)").unwrap();
+    }
+
     #[test]
     #[ignore = "requires owned PostgreSQL; run serially"]
     fn canonical_schema_tables_columns_and_sequences_reject_nonowner_grants() {
@@ -223,6 +235,8 @@ mod tests {
             "GRANT SELECT(definition) ON cantongrid.model_revisions TO PUBLIC",
             "GRANT SELECT(contract_id) ON cantongrid.model_rebuild_dirty TO PUBLIC",
             "GRANT SELECT ON cantongrid.runtime_migrations TO PUBLIC",
+            "GRANT SELECT ON cantongrid.selection_upgrade_pages TO PUBLIC",
+            "GRANT SELECT(manifest) ON cantongrid.selection_upgrade_jobs TO PUBLIC",
             "GRANT USAGE ON SEQUENCE cantongrid.outbox_delivery_id_seq TO PUBLIC",
         ] {
             let mut tx = client.transaction().unwrap();
@@ -278,6 +292,7 @@ mod tests {
         let mut tx = client.transaction().unwrap();
         tx.execute("SELECT pg_advisory_xact_lock($1)", &[&MIGRATION_LOCK])
             .unwrap();
+        drop_upgrade_schema(&mut tx);
         tx.batch_execute("DROP TABLE cantongrid.model_rebuild_dirty,cantongrid.model_rebuilds; DROP TABLE cantongrid.model_bindings, cantongrid.model_installations, cantongrid.model_tables, cantongrid.model_revisions; DELETE FROM cantongrid.runtime_migrations WHERE version IN (3,4,5,6)").unwrap();
         assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
         upgrade_models(&mut tx).unwrap();
@@ -286,7 +301,7 @@ mod tests {
             tx.query_one("SELECT count(*) FROM cantongrid.runtime_migrations", &[])
                 .unwrap()
                 .get::<_, i64>(0),
-            5
+            7
         );
         tx.execute(
             "INSERT INTO cantongrid.runtime_migrations VALUES(99,'synthetic-unknown-version')",
@@ -329,6 +344,7 @@ mod tests {
             .query_one("SELECT count(*) FROM cantongrid.model_revisions", &[])
             .unwrap()
             .get(0);
+        drop_upgrade_schema(&mut tx);
         tx.batch_execute("DROP TABLE cantongrid.model_rebuild_dirty,cantongrid.model_rebuilds; DROP TABLE cantongrid.model_bindings, cantongrid.model_installations, cantongrid.model_tables; DELETE FROM cantongrid.runtime_migrations WHERE version IN (4,5,6)").unwrap();
         assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
         upgrade_models(&mut tx).unwrap();
@@ -363,6 +379,7 @@ mod tests {
             .query_one("SELECT count(*) FROM cantongrid.model_tables", &[])
             .unwrap()
             .get(0);
+        drop_upgrade_schema(&mut tx);
         tx.batch_execute("DROP TABLE cantongrid.model_rebuild_dirty,cantongrid.model_rebuilds; DROP TABLE cantongrid.model_bindings; DELETE FROM cantongrid.runtime_migrations WHERE version IN (5,6)").unwrap();
         assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
         upgrade_models(&mut tx).unwrap();
@@ -386,6 +403,7 @@ mod tests {
         let mut tx = client.transaction().unwrap();
         tx.execute("SELECT pg_advisory_xact_lock($1)", &[&MIGRATION_LOCK])
             .unwrap();
+        drop_upgrade_schema(&mut tx);
         tx.batch_execute("DROP TABLE cantongrid.model_rebuild_dirty,cantongrid.model_rebuilds; DELETE FROM cantongrid.runtime_migrations WHERE version=6").unwrap();
         assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
         upgrade_models(&mut tx).unwrap();

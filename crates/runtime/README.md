@@ -6,7 +6,7 @@ Authenticated CantonGrid indexing workers and REST/GraphQL query services.
 
 ```toml
 [dependencies]
-cantongrid-runtime = "=0.4.0-alpha.1"
+cantongrid-runtime = "=0.4.0-alpha.2"
 ```
 
 The library exposes `index`, `serve`, `bind_model` and bounded `rebuild`
@@ -35,3 +35,7 @@ PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
+
+Source-only 0.4.0-alpha.2 also exposes reviewed package upgrade planning and staged
+application. See the [upgrade guide](https://github.com/kunal171/cantongrid/blob/feat/dar-metadata/docs/guide/upgrades.md)
+for source checks, publication gates, resume/cancel and model rollback.

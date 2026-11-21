@@ -26,6 +26,7 @@ flowchart LR
 | `storage` | Owned migrations, state, history, checkpoints, outbox and projections |
 | `runtime` | Worker, caller authentication and REST/GraphQL |
 | `models` | Declarative definitions, exact evaluation and schema/client generation |
+| `metadata` | Bounded offline DAR/LF 2.1 signature extraction |
 | `cli` | Command dispatch |
 
 ## Source adapter
@@ -51,7 +52,7 @@ paged reads. SDK compatibility observations are in [verification](verification.m
 
 ## Destination and recovery
 
-`storage init` explicitly applies checksummed migrations 001–006. Opening a store
+`storage init` explicitly applies checksummed migrations 001–008. Opening a store
 only verifies it. Source-scoped advisory locks coordinate writers; expected
 checkpoint comparisons reject stale workers. Canonical state, evidence/history,
 model changes, checkpoint and outbox commit together. Exact duplicate deliveries
@@ -92,3 +93,46 @@ request snapshot. Canonical queries count/select authorized identities before
 encoding page payloads. Generated model REST/GraphQL share validation and exact
 native sorting. [API](guide/api.md) documents transport formats;
 [security](security.md) defines authorization, final delivery checks and limits.
+
+## Offline DAR metadata (#23)
+
+`cantongrid metadata inspect <artifact.dar>` emits versioned JSON from a local
+artifact. The isolated `cantongrid-metadata` crate reads ZIP entries without
+extracting files and uses a metadata-only protobuf projection. It verifies each
+original payload hash, resolves qualified signature references across packages
+and preserves recursive types as references. Expressions and values are skipped;
+this is not an executable LF validator or proof of deployment.
+
+Only LF 2.1 is supported. Input, expansion, traversal and output bounds are in
+[the metadata guide](guide/metadata.md). Unused interned type links are checked
+once without expanding their trees; reachable signature types have separate
+depth and work limits. No Ledger, database, SDK, JVM or protoc is required.
+Schema synchronization (#24) remains planned. Reviewed additive activation (#25)
+uses explicit model definitions; see [package upgrades](guide/upgrades.md).
+
+Dependency review and approval, 2026-11-21:
+
+| Component | Decision |
+| --- | --- |
+| `canton-lf` 0.3.2 | Evaluated at SDK commit `5caaebc3eab380de827196663d4bb18b90ffd6f4`; ZIP 2.x fails current RustSec policy. Not added; no scanner exceptions. |
+| Official LF archive schema | Metadata field projection from that pinned SDK's vendored Digital Asset Apache-2.0 schema. Source paths/checksums are in `crates/metadata/src/wire.rs`; attribution is retained in NOTICE. |
+| `zip` 9.8.1 | Approved; default features disabled, DEFLATE only. Count checked before collecting entry metadata; no disk extraction. |
+| `prost` 0.14.6 | Approved standard protobuf decoder. SHA-256 is checked against original payload bytes before interpretation. |
+| `serde`, `serde_json`, `sha2` | Existing dependencies reused. |
+
+Synthetic corruption/limit tests run in CI. Independent compiler inventory
+comparisons for PoC, Visibility and Outcomia are dated in [verification](verification.md).
+
+## Selection upgrade publication
+
+A reviewed manifest binds the old/new additive selection, checkpoint, DAR hash,
+installed targets and expected previous bindings. Migration 007 retains completed
+handoff evidence; 008 stores private paged jobs. Snapshot staging does not change
+canonical state. Publication/cancellation gate canonical queries, discovery,
+model reads and ingestion until the complete old or new prefix is available.
+
+Each page has its own transaction and source-writer lock. Promotion changes the
+selection and model aliases in the final transaction; source checkpoints and batch
+history remain unchanged. Forward ingestion then reads both package versions.
+Cancellation removes only unpublished baseline rows. After completion, model
+rollback uses the existing rebuild path while retaining the widened selection.

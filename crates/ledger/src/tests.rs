@@ -34,6 +34,7 @@ fn runtime() -> tokio::runtime::Runtime {
 fn server(replies: Vec<(u16, String)>) -> (String, thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let endpoint = format!("http://{}", listener.local_addr().unwrap());
+    let package_run = replies.len() == 7 || replies.len() == 4;
     let handle = thread::spawn(move || {
         for (index, (status, body)) in replies.into_iter().enumerate() {
             let (mut stream, _) = listener.accept().unwrap();
@@ -51,7 +52,9 @@ fn server(replies: Vec<(u16, String)>) -> (String, thread::JoinHandle<()>) {
                 }
             }
             let text = String::from_utf8(input).unwrap();
-            let path = if index == 1 {
+            let path = if package_run && index == 3 {
+                "/v2/packages"
+            } else if index == 1 || (package_run && index == 5) {
                 "/v2/users/source-reader/rights"
             } else {
                 "/v2/users/source-reader"
@@ -227,5 +230,40 @@ fn strict_configuration_rejects_secret_values_unknown_fields_and_duplicate_parti
         let mut invalid = valid.clone();
         invalid[key] = value;
         assert!(config::GrantCheckConfig::parse(&serde_json::to_vec(&invalid).unwrap()).is_err());
+    }
+}
+
+/// Package availability is authenticated read-only evidence; missing packages never become deployment proof.
+#[test]
+fn upgrade_packages_must_exist_on_the_authorized_participant() {
+    for present in [true, false] {
+        let id = "a".repeat(64);
+        let packages = if present {
+            serde_json::json!({"packageIds":[id]})
+        } else {
+            serde_json::json!({"packageIds":[]})
+        };
+        let mut replies = vec![
+            (200, ACTIVE.into()),
+            (200, RIGHTS.into()),
+            (200, ACTIVE.into()),
+            (200, packages.to_string()),
+        ];
+        if present {
+            replies.extend([
+                (200, ACTIVE.into()),
+                (200, RIGHTS.into()),
+                (200, ACTIVE.into()),
+            ]);
+        }
+        let (endpoint, server) = server(replies);
+        let checker = GrantChecker::localnet(&endpoint, USER, scope(), [party()]).unwrap();
+        assert_eq!(
+            runtime()
+                .block_on(checker.require_packages(TOKEN, &[id]))
+                .is_ok(),
+            present
+        );
+        server.join().unwrap();
     }
 }

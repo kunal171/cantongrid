@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0-alpha.2 — unreleased
+
+- Offline LF 2.1 DAR metadata inspection with verified payload hashes, qualified
+  type/contract signatures and bounded archive traversal. New `cantongrid-metadata`
+  crate and `metadata inspect` command; no Ledger or database writes.
+- Bounded compound row sorting with exact tuple keysets, compatible REST objects,
+  GraphQL `orderBy` and generated client/schema updates (#21).
+- Reviewed additive package upgrades with private durable snapshot pages, gated
+  publication/cancellation, immutable source checkpoints and model rollback (#25).
+  Explicit destination migrations 007–008; 001–006 are unchanged.
+- Automatic schema synchronization remains planned in #24.
+
 ## 0.4.0-alpha.1 — 2026-11-20
 
 - Declarative grouped counts and exact sums over maintained model contributions,

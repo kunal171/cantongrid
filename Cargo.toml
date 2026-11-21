@@ -1,9 +1,9 @@
 [workspace]
-members = ["crates/core", "crates/cli", "crates/storage", "crates/postgres", "crates/pqs", "crates/ledger", "crates/runtime", "crates/models"]
+members = ["crates/core", "crates/cli", "crates/storage", "crates/postgres", "crates/pqs", "crates/ledger", "crates/runtime", "crates/models", "crates/metadata"]
 resolver = "3"
 
 [workspace.package]
-version = "0.4.0-alpha.1"
+version = "0.4.0-alpha.2"
 license = "Apache-2.0"
 edition = "2024"
 rust-version = "1.100"

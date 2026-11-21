@@ -1,7 +1,7 @@
 //! Private current-state projections. Canonical lifecycle, model rows and progress share a commit.
 mod aggregate;
 mod binding;
-mod installed;
+pub(crate) mod installed;
 mod query;
 mod query_plan;
 pub(crate) mod rebuild;
@@ -156,4 +156,4 @@ pub(crate) fn apply(
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

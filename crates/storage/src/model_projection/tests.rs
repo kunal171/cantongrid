@@ -11,14 +11,14 @@ use cantongrid_core::{
 use cantongrid_models::{Catalog, Model};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-pub(super) const VARIABLE: &str = "CANTONGRID_DESTINATION_URL";
+pub(crate) const VARIABLE: &str = "CANTONGRID_DESTINATION_URL";
 const VISIBILITY: &str = include_str!("../../assets/models/visibility.json");
 const OUTCOMIA: &str = include_str!("../../assets/models/outcomia.json");
-pub(super) const PAYLOAD: &str = include_str!("../../assets/models/visibility-payload.json");
+pub(crate) const PAYLOAD: &str = include_str!("../../assets/models/visibility-payload.json");
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
 /// Own every synthetic source/model identity so cleanup never deletes another stream's data.
-pub(super) struct Scenario {
+pub(crate) struct Scenario {
     pub namespace: String,
     pub aliases: Vec<String>,
     pub models: Vec<Model>,
@@ -116,7 +116,7 @@ impl Scenario {
 }
 
 /// Mock trusted checker evidence; wider and narrower sets are tested explicitly below.
-pub(super) fn lease(plan: &Plan, parties: Vec<&str>) -> SourceLease {
+pub(crate) fn lease(plan: &Plan, parties: Vec<&str>) -> SourceLease {
     SourceLease::from_verified(
         plan.context().binding(),
         parties.into_iter().map(|p| PartyId::new(p).unwrap()),
@@ -126,7 +126,7 @@ pub(super) fn lease(plan: &Plan, parties: Vec<&str>) -> SourceLease {
     )
     .unwrap()
 }
-pub(super) fn create(
+pub(crate) fn create(
     plan: &Plan,
     model: &Model,
     position: &str,
@@ -148,7 +148,7 @@ pub(super) fn create(
         }],
     }
 }
-pub(super) fn archive(s: &Scenario, position: &str, contract: &str) -> Batch {
+pub(crate) fn archive(s: &Scenario, position: &str, contract: &str) -> Batch {
     let mut batch = s.create(position, contract, PAYLOAD);
     batch.events[0].id = format!("archive-{contract}");
     batch.events[0].witnesses.clear();
@@ -182,6 +182,9 @@ impl Drop for Scenario {
                 for table in [
                     "model_rebuild_dirty",
                     "model_rebuilds",
+                    "selection_upgrade_pages",
+                    "selection_upgrade_jobs",
+                    "selection_upgrades",
                     "model_bindings",
                     "outbox",
                     "events",
@@ -487,6 +490,13 @@ fn model_filters_sort_and_query_bound_keysets() {
     ] {
         let mut payload: serde_json::Value = serde_json::from_str(PAYLOAD).unwrap();
         payload["amount"] = amount.into();
+        payload["sequence"] = match contract {
+            "a" => "30",
+            "b" => "20",
+            "c" => "10",
+            _ => "40",
+        }
+        .into();
         payload["note"] = serde_json::json!(note);
         batch.events.push(
             s.create("unused", contract, &payload.to_string())
@@ -584,6 +594,44 @@ fn model_filters_sort_and_query_bound_keysets() {
             }
         }
         assert_eq!(ids, ["a", "c", "b", "d"]);
+    }
+    // Mixed directions and nullable ties must resume at the complete tuple, not only its first key.
+    for (keys, expected) in [
+        (
+            serde_json::json!([{"field":"amount","direction":"desc"},{"field":"sequence","direction":"asc"}]),
+            vec!["d", "c", "a", "b"],
+        ),
+        (
+            serde_json::json!([{"field":"note"},{"field":"amount","direction":"desc"}]),
+            vec!["a", "c", "d", "b"],
+        ),
+        (
+            serde_json::json!([{"field":"note","direction":"desc"},{"field":"amount"}]),
+            vec!["a", "c", "b", "d"],
+        ),
+    ] {
+        let query = options(serde_json::json!({"sort":keys}));
+        let mut after = None;
+        let mut ids = Vec::new();
+        loop {
+            let page = store
+                .read_model_query(
+                    &s.plans[0],
+                    &caller,
+                    &source,
+                    &binding,
+                    &query,
+                    after.as_deref(),
+                    1,
+                )
+                .unwrap();
+            ids.push(page.items[0]["contractId"].as_str().unwrap().to_owned());
+            after = page.next_after;
+            if after.is_none() {
+                break;
+            }
+        }
+        assert_eq!(ids, expected);
     }
     let nulls = options(serde_json::json!({"filters":{"note":{"isNull":true}}}));
     let page = store
