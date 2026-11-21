@@ -181,6 +181,44 @@ impl<'a> Resolver<'a> {
             })
             .collect()
     }
+    /// Check table links once without expanding every unused tree. A chain of N interned
+    /// nodes costs O(N), rather than O(N²); signature extraction still charges each expansion.
+    fn interned_links(&mut self, ty: &w::Type, bound: usize, depth: usize) -> Result<(), Error> {
+        self.charge(depth)?;
+        let children: &[w::Type] = match ty.sum.as_ref().ok_or(Error::UnsupportedType)? {
+            w::type_node::Sum::Interned(index) => {
+                if usize::try_from(*index).map_err(|_| Error::Reference)? >= bound {
+                    return Err(Error::Reference);
+                }
+                return Ok(());
+            }
+            w::type_node::Sum::Variable(v) => &v.arguments,
+            w::type_node::Sum::Reference(v) | w::type_node::Sum::Synonym(v) => &v.arguments,
+            w::type_node::Sum::Builtin(v) => &v.arguments,
+            w::type_node::Sum::Nat(_) => return Ok(()),
+            w::type_node::Sum::Forall(v) => {
+                return self.interned_links(
+                    v.body.as_deref().ok_or(Error::Reference)?,
+                    bound,
+                    depth + 1,
+                );
+            }
+            w::type_node::Sum::Struct(v) => {
+                for field in &v.fields {
+                    self.interned_links(
+                        field.value_type.as_ref().ok_or(Error::Reference)?,
+                        bound,
+                        depth + 1,
+                    )?;
+                }
+                return Ok(());
+            }
+        };
+        for child in children {
+            self.interned_links(child, bound, depth + 1)?;
+        }
+        Ok(())
+    }
     /// Read interned types only backwards through the table, so cycles cannot recurse forever.
     fn ty(&mut self, ty: &w::Type, bound: usize, depth: usize) -> Result<s::Type, Error> {
         self.charge(depth)?;
@@ -370,9 +408,9 @@ pub(crate) fn describe(decoded: &Decoded, budget: &mut Budget) -> Result<s::Pack
     let mut templates = Vec::new();
     let mut interfaces = Vec::new();
     let mut modules = BTreeSet::new();
-    // Charge/validate unused interning entries too: invalid forward/cyclic type references cannot hide.
+    // Check all table links, but only expand types reachable from the signature surface.
     for (index, ty) in p.types.iter().enumerate() {
-        r.ty(ty, index, 0)?;
+        r.interned_links(ty, index, 0)?;
     }
     for m in &p.modules {
         r.charge(0)?;

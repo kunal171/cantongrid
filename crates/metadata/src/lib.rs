@@ -88,3 +88,6 @@ impl Metadata {
         String::from_utf8(output.0).map_err(|_| MetadataError::Output)
     }
 }
+
+#[cfg(test)]
+mod tests;

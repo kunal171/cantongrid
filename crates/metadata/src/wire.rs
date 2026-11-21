@@ -294,7 +294,7 @@ pub(crate) struct Interface {
 /// Named interface method signature.
 #[derive(Clone, PartialEq, prost::Message)]
 pub(crate) struct Method {
-    #[prost(int32, tag = "1")]
+    #[prost(int32, tag = "2")]
     pub name: i32,
     #[prost(message, optional, tag = "3")]
     pub value_type: Option<Type>,
