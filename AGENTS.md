@@ -1,6 +1,9 @@
 # Working on CantonGrid
 
-- Current phase: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
+- Active milestone: M0 exercise-source feasibility, documented in
+  docs/design/exercise-source.md. Update evidence and generic fixture only; do not
+  begin M1 ingestion/migrations/APIs or modify Outcomia without a separate instruction.
+- Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading, joins and streams remain later work.
   Use docs/README.md for scope and docs/verification.md for dated evidence;

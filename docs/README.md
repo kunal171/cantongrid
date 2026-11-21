@@ -42,10 +42,14 @@ The source checkout targeting 0.4.0-alpha.2 includes offline DAR inspection (#23
 compound sorting (#21), reviewed package upgrades (#25), verified remote HTTPS
 transport (#22), and command-driven schema synchronization (#24).
 
-1. Extend Outcomia projections to funded assets/trading after separate authorization.
-2. Define joins and broader aggregate operations with retraction and visibility
-   for every input before implementation. Phase 5 then adds authenticated resumable streams, retention-gap
-   handling and reauthorization; existing outbox rows are not a public stream.
+1. [M0 exercise-source feasibility](design/exercise-source.md): verify pinned PQS
+   exercises against authorized Ledger Effects, with a generic privacy fixture.
+   No new production ingestion, migrations or public API in this milestone.
+2. M1 internal exercise receipts follows a separate source-contract review and
+   instruction; M2 introduces guarded lineage. Typed joins, historical queries,
+   inspection and durable streams follow their own acceptance gates.
+3. Extend existing metadata/sync with impact analysis rather than duplicating it.
+   Outcomia factory/clubs contract work remains a separate repository track.
 
 ## Publishing
 

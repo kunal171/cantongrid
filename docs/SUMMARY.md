@@ -18,6 +18,7 @@
 ## Reference
 
 * [Architecture](architecture.md)
+* [Exercise source feasibility](design/exercise-source.md)
 * [Security](security.md)
 * [Commands](cli.md)
 * [Fixture format](fixtures.md)

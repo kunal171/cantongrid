@@ -107,7 +107,7 @@ Only LF 2.1 is supported. Input, expansion, traversal and output bounds are in
 [the metadata guide](guide/metadata.md). Unused interned type links are checked
 once without expanding their trees; reachable signature types have separate
 depth and work limits. No Ledger, database, SDK, JVM or protoc is required.
-Schema synchronization (#24) remains planned. Reviewed additive activation (#25)
+Offline schema synchronization (#24) is implemented. Reviewed additive activation (#25)
 uses explicit model definitions; see [package upgrades](guide/upgrades.md).
 
 Dependency review and approval, 2026-11-21:
@@ -171,3 +171,11 @@ User reads accept `identity-provider-id`; rights reads do not expose that query
 parameter and derive their provider context through authenticated Ledger handling.
 An explicit expected token issuer and returned provider must both match; no issuer
 or provider is inferred from an endpoint hostname.
+
+## Next event foundation milestone
+
+[M0 exercise-source feasibility](design/exercise-source.md) is the active scope.
+It evaluates the existing schema041 exercise interface before adding another
+source path. M0 introduces no production event variant, schema migration or
+public API. Witness semantics, partial ancestry and authoritative lifecycle
+reconciliation must be demonstrated before M1 implementation.
