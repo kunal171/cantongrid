@@ -6,7 +6,7 @@ use cantongrid_core::{
     authorization::{MAX_SOURCE_LEASE, SourceLease},
     visibility::{PartyId, ScopeBinding},
 };
-use reqwest::{Client, Url, header::HeaderValue, redirect::Policy};
+use reqwest::{Client, Url, header::HeaderValue};
 use serde::{Deserialize, de::DeserializeOwned};
 use std::{
     collections::BTreeSet,
@@ -19,6 +19,8 @@ const MAX_PARTIES: usize = 128;
 const CHECK_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub mod config;
+pub mod transport;
+use transport::TransportPolicy;
 
 /// Reserve a dedicated namespace; never read an unrelated variable such as HOME as a token.
 fn credential_variable(variable: &str) -> bool {
@@ -38,6 +40,8 @@ pub struct GrantChecker {
     user: String,
     scope: ScopeBinding,
     expected: BTreeSet<PartyId>,
+    identity_provider_id: String,
+    expected_issuer: Option<String>,
 }
 
 /// Own the current lease so a failed or cancelled renewal cannot leave old success cached.
@@ -88,7 +92,7 @@ pub enum GrantError {
 impl fmt::Display for GrantError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Self::Configuration => "invalid local Ledger grant-check configuration",
+            Self::Configuration => "invalid Ledger grant-check configuration",
             Self::Credential => "source credential is missing, invalid or expired",
             Self::Unavailable => "current source authorization is unavailable",
             Self::Denied => "source authorization was denied",
@@ -105,6 +109,8 @@ impl std::error::Error for GrantError {}
 struct CredentialBounds {
     sub: String,
     exp: u64,
+    #[serde(default)]
+    iss: Option<String>,
 }
 
 /// Pinned JSON Ledger user response; HTTP success alone is not proof of the expected user.
@@ -161,39 +167,58 @@ impl GrantChecker {
         scope: ScopeBinding,
         parties: impl IntoIterator<Item = PartyId>,
     ) -> Result<Self, GrantError> {
-        let endpoint = Url::parse(endpoint).map_err(|_| GrantError::Configuration)?;
+        Self::configured(
+            endpoint,
+            user,
+            scope,
+            parties,
+            TransportPolicy::LocalnetHttp,
+            "",
+            None,
+        )
+    }
+
+    /// Remote HTTPS requires explicit policy. Identity-provider/issuer checks reject mismatches;
+    /// token decoding is still only a rejection bound, and the configured Ledger authenticates it.
+    pub fn configured(
+        endpoint: &str,
+        user: &str,
+        scope: ScopeBinding,
+        parties: impl IntoIterator<Item = PartyId>,
+        transport: TransportPolicy,
+        identity_provider_id: &str,
+        expected_issuer: Option<&str>,
+    ) -> Result<Self, GrantError> {
+        let endpoint = transport.endpoint(endpoint, "/")?;
         let expected: BTreeSet<_> = parties.into_iter().collect();
-        if endpoint.scheme() != "http"
-            || endpoint.host_str() != Some("127.0.0.1")
-            || endpoint.port().is_none()
-            || endpoint.path() != "/"
-            || endpoint.query().is_some()
-            || endpoint.fragment().is_some()
-            || !endpoint.username().is_empty()
-            || endpoint.password().is_some()
-            || user.is_empty()
+        if user.is_empty()
             || user.len() > 128
             || !user
                 .bytes()
                 .all(|b| b.is_ascii_alphanumeric() || b"@^$.!`-#+'~_|:()".contains(&b))
             || expected.is_empty()
             || expected.len() > MAX_PARTIES
+            || identity_provider_id.len() > 255
+            || identity_provider_id.bytes().any(|b| !b.is_ascii_graphic())
+            || (!identity_provider_id.is_empty() && expected_issuer.is_none())
+            || expected_issuer.is_some_and(|v| {
+                v.is_empty()
+                    || v.len() > 2048
+                    || v.chars().any(char::is_whitespace)
+                    || v.chars().any(char::is_control)
+            })
         {
             return Err(GrantError::Configuration);
         }
-        let client = Client::builder()
-            .no_proxy()
-            .redirect(Policy::none())
-            .timeout(CHECK_TIMEOUT)
-            .connect_timeout(Duration::from_secs(2))
-            .build()
-            .map_err(|_| GrantError::Configuration)?;
+        let client = transport.client(CHECK_TIMEOUT)?;
         Ok(Self {
             client,
             endpoint,
             user: user.to_owned(),
             scope,
             expected,
+            identity_provider_id: identity_provider_id.into(),
+            expected_issuer: expected_issuer.map(str::to_owned),
         })
     }
 
@@ -226,7 +251,12 @@ impl GrantChecker {
             .checked_sub(wall)
             .filter(|ttl| !ttl.is_zero())
             .ok_or(GrantError::Credential)?;
-        if claims.sub != self.user {
+        if claims.sub != self.user
+            || self
+                .expected_issuer
+                .as_ref()
+                .is_some_and(|issuer| claims.iss.as_ref() != Some(issuer))
+        {
             return Err(GrantError::Credential);
         }
         let mut bearer = HeaderValue::from_str(&format!("Bearer {token}"))
@@ -260,12 +290,12 @@ impl GrantChecker {
         .map_err(|_| GrantError::Unavailable)?
     }
 
-    /// Reject deactivated, substituted or non-default-identity-provider users.
+    /// Reject deactivated/substituted users and any provider outside the configured identity.
     async fn check_user(&self, bearer: &HeaderValue) -> Result<(), GrantError> {
         let response: UserResponse = self.get(false, bearer).await?;
         if response.user.id != self.user
             || response.user.is_deactivated
-            || !response.user.identity_provider_id.is_empty()
+            || response.user.identity_provider_id != self.identity_provider_id
         {
             return Err(GrantError::ScopeChanged);
         }
@@ -335,6 +365,12 @@ impl GrantChecker {
             if rights {
                 path.push("rights");
             }
+        }
+        if !rights && !self.identity_provider_id.is_empty() {
+            // Canton 3.5.7 exposes this parameter for GetUser, not ListUserRights.
+            // Rights use the authenticated token's provider; expected issuer is checked first.
+            url.query_pairs_mut()
+                .append_pair("identity-provider-id", &self.identity_provider_id);
         }
         self.get_url(url, bearer).await
     }
