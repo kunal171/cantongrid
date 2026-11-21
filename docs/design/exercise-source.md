@@ -21,11 +21,11 @@ of running exporter configuration or authorized event coverage.
 
 | Question | Required control | Status |
 | --- | --- | --- |
-| Exercise selection | Exact `exercises` overloads, columns and choice-filter configuration | Pending pinned database/exporter inspection |
-| Stable paging | Offset plus stable event/node tie breaker; overlapping pages | Pending |
-| Exercise visibility | Actual consuming/nonconsuming witness semantics and redaction | Pending; stakeholder/controller lists are insufficient |
-| Descendant evidence | Source node identity and valid subtree bounds | Cached upstream V029 adds a bound with default `-1`; running data unverified |
-| Transient contracts | Create/consume within one committed transaction | Pending controlled fixture |
+| Exercise selection | Exact `exercises` overloads, columns and choice-filter configuration | Retained schema041 catalog inspected; tree-mode selection still needs pinned live acceptance |
+| Stable paging | Offset plus stable event/node tie breaker; overlapping pages | Structured `(offset, node_id)` found; overlap/restart controls pending |
+| Exercise visibility | Actual consuming/nonconsuming witness semantics and redaction | Catalog has `witnesses text[]`; populated values/redaction unverified |
+| Descendant evidence | Source node identity and valid subtree bounds | Catalog has `last_descendant_node_id`; upstream migration default is `-1`; running values unverified |
+| Transient contracts | Create/consume within one committed transaction | Generic IDE-ledger fixture passes; exporter handling pending |
 | Coverage | Retained offsets, pruning, source regression and filtered nodes | Pending |
 | Lifecycle reconciliation | One canonical archive per consuming exercise/ACS delta | Design decision pending evidence |
 | Ledger Effects comparison | Same authorized participant/scope and transaction identities | Pending |
@@ -34,6 +34,63 @@ A filtered subtree may prove ancestry without identifying the immediate parent.
 Do not elevate the nearest visible exercise to a direct-parent claim. Negative
 sentinels, missing nodes and pre-snapshot history remain unsupported/incomplete.
 Exercise actors, contract stakeholders and returned witnesses are separate facts.
+
+## Observed source contract (2026-11-21)
+
+The retained PostgreSQL 17.12 schema041 database was inspected through its
+existing SELECT-only reader, in a read-only snapshot. Neither Ledger nor exporter
+was running. No event rows were read. Reproduce with
+`python3 scripts/dev.py check exercises`; private evidence is stored under
+`.local/exercise-source/`.
+
+The public overload is `exercises(qname text, from_offset bigint, to_offset bigint)`
+returning `SETOF exercise`; defaults use retained/pruned and latest offsets. Its
+stored body applies inclusive `between` bounds through offset-to-index helpers.
+The composite includes package/template/choice identity, consuming flag, contract
+ID, argument/result, effective time, redaction ID, exercise event PK and structured
+event ID, transaction index/offset, signatories/observers/controllers, subtree
+bound and witnesses. `event_id` contains `offset bigint` and `node_id integer`.
+The transaction table has a separate `transaction_id`; it is not an exercise
+composite attribute. None of these catalog facts proves populated row semantics.
+
+Function-definition evidence SHA-256:
+`5cdf84336a609713d0225227ca6973efe124426a7522f45f23f6af8b3ab0569b`.
+
+Cached upstream PQS checkout `77082b2` selects `getTransactionTrees` for
+`TransactionTreeStream`, which requests Ledger Effects. Its default
+`TransactionStream` selects ACS delta; template/interface filtering includes
+choices in tree mode rather than a separate choice-name filter. Relevant files:
+`modules/pipeline/src/com/digitalasset/pqs/pipeline/pipeline/{Config,Pipeline}.scala`,
+`modules/zio-daml/src/com/digitalasset/zio/daml/ledgerapi/UpdateService.scala` and
+`ContractFilteringSpec.scala`. This checkout is not proof of the pinned Scribe
+3.5.4 executable. A network-isolated pinned-image startup printed
+`datasource=TransactionStream`; its `--help` argument did not stop startup, so it
+failed to connect to a database. It had no credentials, mounts or network access.
+
+The existing CantonGrid fixture profiles omit `pipeline.datasource`; do not
+assume their retained databases contain exercises. A separately approved tree-mode
+experiment must not repurpose an existing ACS-delta checkpoint or database.
+
+## Proposed M1 decisions, pending live evidence
+
+- Scope event keys by source/network/generation plus transaction offset/node ID;
+  never expose database-local PKs as portable identities. Confirm replay stability
+  in the same participant view before accepting the key.
+- Keep committed transaction boundaries intact. Explicitly bound transaction
+  size; refuse an oversized transaction without advancing its checkpoint. Test
+  pages containing several events at one offset and overlapping restart pages.
+- Retain existing archive ownership until a reviewed reconciliation rule proves
+  how consuming exercises and archive rows represent one lifecycle transition.
+  Merely observing both must not apply model/outbox effects twice.
+- Preserve exercise witnesses separately from contract stakeholders/controllers.
+  A visible factory exercise cannot authorize disclosure of every child.
+- Treat subtree bounds as ancestry evidence only when identity, scope and
+  retained coverage are verified. A missing intermediate node cannot prove the
+  immediate parent. Unknown (`-1`) bounds produce no proven relationship.
+- Keep source/caller authorization and existing aggregate full-scope guards.
+  No graph query, public event type or destination migration is introduced here.
+
+These are review questions, not an implemented adapter or approved M1 contract.
 
 ## M0 deliverables
 
@@ -44,6 +101,7 @@ Exercise actors, contract stakeholders and returned witnesses are separate facts
    consuming exercise, transient creation/consumption and A/B/shared visibility.
    Build and Daml-script validation are offline; deployment/transactions require
    separately authorized, explicit local-only opt-in.
+   See [the fixture and controls](../../examples/exercises/README.md).
 3. A capability matrix comparing actual PQS output with authorized Ledger Effects:
    identities, ordering, witness scope, descendant structure, pruning and gaps.
 4. A proposed M1 source contract choosing authoritative lifecycle ownership,
