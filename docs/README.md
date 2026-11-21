@@ -38,9 +38,9 @@ Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
-The source checkout targeting 0.4.0-alpha.2 includes offline DAR inspection,
-compound sorting and [reviewed package upgrades](guide/upgrades.md). Command-driven schema synchronization
-([#24](https://github.com/kunal171/cantongrid/issues/24)) remains planned.
+The source checkout targeting 0.4.0-alpha.2 includes offline DAR inspection (#23),
+compound sorting (#21), reviewed package upgrades (#25), verified remote HTTPS
+transport (#22), and command-driven schema synchronization (#24).
 
 1. Extend Outcomia projections to funded assets/trading after separate authorization.
 2. Define joins and broader aggregate operations with retraction and visibility

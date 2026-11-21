@@ -10,7 +10,12 @@
 - Reviewed additive package upgrades with private durable snapshot pages, gated
   publication/cancellation, immutable source checkpoints and model rollback (#25).
   Explicit destination migrations 007–008; 001–006 are unchanged.
-- Automatic schema synchronization remains planned in #24.
+- Verified remote HTTPS transport policy for Ledger and health endpoints, with
+  certificate verification, redirect refusal, connection timeouts, and identity-provider/issuer
+  checking (#22).
+- Offline command-driven contract schema synchronization and review bundle generation
+  from verified DAR signatures and explicit model selections. New `cantongrid-sync`
+  crate and `sync plan` / `sync bundle` commands (#24).
 
 ## 0.4.0-alpha.1 — 2026-11-20
 
