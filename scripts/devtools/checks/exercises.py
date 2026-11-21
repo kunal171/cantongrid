@@ -125,14 +125,23 @@ def main(argv=None):
     parser.add_argument('--dar', type=Path, default=ROOT / 'examples/exercises/contracts/.daml/dist/cantongrid-exercise-probe-0.1.0.dar')
     parser.add_argument('--resume', help='Owned cg-m0 run ID; resume source checks without repeating Ledger writes')
     parser.add_argument('--dpm', default='dpm', help='Installed SDK launcher for --fixture-tests')
+    parser.add_argument('--lineage',action='store_true',help='Include real lineage API verification with --worker')
+    parser.add_argument('--scope',choices=['operator','ab'],default='operator',help='Previously approved worker source subset')
+    parser.add_argument('--outcomia',action='store_true',help='Use the previously deployed Outcomia binary creation example')
     args = parser.parse_args(argv)
+    if args.outcomia and not args.lineage:
+        parser.error('--outcomia requires --lineage')
+    if args.scope!='operator' and not args.lineage:
+        parser.error('--scope ab requires --lineage')
+    if (args.lineage or args.outcomia or args.scope!='operator') and not args.worker:
+        parser.error('--lineage/--scope require --worker')
     if args.resume and not (args.localnet or args.worker):
         parser.error('--resume requires --localnet or --worker')
     if args.worker:
         if not args.allow_ledger_writes:
             parser.error('--worker requires --allow-ledger-writes')
         from .exercise_worker import run
-        run(args.resume)
+        run(args.resume,lineage=args.lineage,scope=args.scope,outcomia=args.outcomia)
         return
     if args.localnet:
         if not args.allow_ledger_writes:

@@ -18,7 +18,7 @@ class ExerciseLocalnetTests(unittest.TestCase):
 
     def test_localnet_requires_explicit_opt_in_before_any_side_effect(self):
         with patch.object(localnet, 'run') as run, contextlib.redirect_stderr(io.StringIO()):
-            for args in [['--localnet'], ['--worker'], ['--allow-ledger-writes'], ['--resume', 'cg-m0-12345678']]:
+            for args in [['--localnet'], ['--worker'], ['--lineage'], ['--outcomia'], ['--scope','ab'], ['--allow-ledger-writes'], ['--resume', 'cg-m0-12345678']]:
                 with self.assertRaises(SystemExit):
                     command.main(args)
             run.assert_not_called()
