@@ -38,14 +38,20 @@ Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
-The source checkout targeting 0.4.0-alpha.2 includes offline DAR inspection (#23),
+The source checkout targets 0.4.0-alpha.3 with internal exercise receipts. It retains
+0.4.0-alpha.2's offline DAR inspection (#23),
 compound sorting (#21), reviewed package upgrades (#25), verified remote HTTPS
 transport (#22), and command-driven schema synchronization (#24).
 
-1. Extend Outcomia projections to funded assets/trading after separate authorization.
-2. Define joins and broader aggregate operations with retraction and visibility
-   for every input before implementation. Phase 5 then adds authenticated resumable streams, retention-gap
-   handling and reauthorization; existing outbox rows are not a public stream.
+1. [M0 exercise-source feasibility](design/exercise-source.md) is verified on the
+   pinned LocalNet: four party scopes match Ledger Effects, with transient and
+   nested controls. General immediate-parent proof remains unsupported.
+2. [M1 internal exercise receipts](design/exercise-ingestion.md) is implemented
+   in this checkout with explicit tree-mode opt-in and destination migration 009.
+   M2 introduces guarded lineage. Typed joins, historical queries,
+   inspection and durable streams follow their own acceptance gates.
+3. Extend existing metadata/sync with impact analysis rather than duplicating it.
+   Outcomia factory/clubs contract work remains a separate repository track.
 
 ## Publishing
 

@@ -5,7 +5,7 @@ authorize access, prove deployment, validate contract execution or apply migrati
 
 ```toml
 [dependencies]
-cantongrid-metadata = "=0.4.0-alpha.2"
+cantongrid-metadata = "=0.4.0-alpha.3"
 ```
 
 ```rust,no_run

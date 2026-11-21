@@ -1,0 +1,33 @@
+{
+  "recorded_on": "2026-11-21",
+  "environment": "disposable_localnet",
+  "canton": "3.5.7",
+  "scribe": "3.5.4",
+  "pqs_schema": "041",
+  "postgresql": "17.12",
+  "destination_migration": 9,
+  "runtime": "Rust CLI with current Ledger authorization and source health checks",
+  "scope": "operator",
+  "controls": [
+    "Factory_Pair",
+    "Factory_Nested",
+    "idle worker restart"
+  ],
+  "results": {
+    "exercises": 4,
+    "exercise_outbox": 4,
+    "consuming": 3,
+    "unindexed_targets": 2,
+    "lifecycle_archives": 1
+  },
+  "historical_exercises_backfilled": false,
+  "public_exercise_api_enabled": false,
+  "source_receipts": "Template choices only; event witnesses preserved independently from stakeholders",
+  "limits": [
+    "snapshot_forward_partial",
+    "no_package_handoff",
+    "no_interface_choice_evidence",
+    "no_general_parent_proof",
+    "pruning_and_redaction_not_live_tested"
+  ]
+}

@@ -63,6 +63,8 @@ fn compatible(before: &Plan, after: &Plan) -> Result<(), StoreError> {
         .ok_or(StoreError::PlanChanged)?
         .remove("templates");
     if !before.is_live()
+        || before.includes_exercises()
+        || after.includes_exercises()
         || before.source_binding().is_none()
         || a != b
         || before.selected_template_count() >= after.selected_template_count()

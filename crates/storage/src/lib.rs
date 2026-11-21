@@ -1,6 +1,7 @@
 //! Owned PostgreSQL state, lifecycle history, model projections and transactional recovery.
 #![forbid(unsafe_code)]
 mod error;
+mod exercise;
 mod journal;
 mod live;
 mod query;

@@ -29,6 +29,9 @@ struct Prepared {
 fn prepare(files: &UpgradeFiles<'_>) -> Result<Prepared, String> {
     let before = Project::load(files.before)?;
     let after = Project::load(files.after)?;
+    if before.plan.includes_exercises() || after.plan.includes_exercises() {
+        return Err("package handoff for exercise receipt streams is not yet supported".into());
+    }
     if before.destination_database_env != after.destination_database_env {
         return Err("upgrade must use the same owned destination".into());
     }

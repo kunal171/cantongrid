@@ -11,9 +11,10 @@ Outcomia is the first application example; the engine is reusable.
 
 ## Current status
 
-The source branch targeting **0.4.0-alpha.2** adds offline DAR metadata, compound
-sorting and [reviewed package upgrades](docs/guide/upgrades.md). These additions
-have synthetic/owned-PostgreSQL coverage and are not published yet.
+The **0.4.0-alpha.3** prerelease adds opt-in internal exercise
+receipts and atomic transaction ingestion, verified on the pinned LocalNet.
+See the [receipt profile](docs/design/exercise-ingestion.md) for migration 009,
+rollout and unsupported cases.
 
 - LocalNet PQS snapshot/update ingestion, atomic checkpoints and authenticated
   generic APIs are verified for the [tested profile](docs/verification.md).

@@ -16,6 +16,65 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M1 internal exercise receipts — 2026-11-21
+
+The [receipt contract](design/exercise-ingestion.md) is implemented in this
+0.4.0-alpha.3 checkout. Migration 009 was applied explicitly to the owned
+PostgreSQL 17.12 destination; earlier migration checksums remain unchanged.
+
+| Check | Result |
+| --- | --- |
+| `cargo test --workspace --locked` | 98 passed; environment-dependent tests ignored |
+| Storage PostgreSQL suite, serial `--ignored` | 60 passed, including migration/ACL checks and model rollback |
+| New receipt controls rerun after final integrity changes | Both pass, including late lease expiry and missing delivery marker |
+| CLI API PostgreSQL suite, serial `--ignored` | 3 passed: REST/GraphQL scopes, revocation and outages |
+| Other CI PostgreSQL controls | 5 passed: models, durable CLI, registry/install and source owner rejection |
+| Read-only retained M0 source integration | Pass: four scopes, one-row snapshot pages, complete forward transactions and overlap |
+| Visibility gate, owned PostgreSQL metadata probes | Pass: unknown offsets/witnesses reject; authorized redaction rejects; known outside-scope witnesses do not widen reads |
+| Real LocalNet Rust worker | Four receipts/outbox entries, three consuming, two unindexed targets, one lifecycle archive; idle restart unchanged |
+| Python helpers / existing PoC | 35 / 7 passed |
+| Formatting, strict workspace Clippy, secret/log/release checks | Pass |
+| Workspace package dry run and archive inspection | All ten `0.4.0-alpha.3` packages pass; no uploads |
+
+The source integration test uses synthetic leases against real retained PQS;
+it does not establish current grants. The separate worker check uses real Ledger
+authorization and exporter health, reusing the approved fixture's pair/nested
+choices without uploading DARs or provisioning more parties/users. Public
+[worker evidence](../examples/exercises/worker-evidence.json) contains counts;
+private payloads, identities and diagnostics stay under ignored `.local/`.
+
+Source pruning/regression and transaction budget failures have synthetic controls;
+no destructive pruning experiment ran. No public exercise API, package handoff
+for receipt streams, interface-choice support, redaction, pre-snapshot history,
+general lineage proof or remote production acceptance is claimed.
+
+Release validation targets `0.4.0-alpha.3`. The first dry run at the reused
+alpha.2 version resolved published dependencies without the new receipt APIs;
+incrementing the workspace and internal dependency versions fixed verification.
+No third-party dependency changed. Publication is a separate operator action.
+
+## M0 exercise-source feasibility — 2026-11-21
+
+The [source RFC](design/exercise-source.md#localnet-results) records the capability
+matrix and decisions; [fixture evidence](../examples/exercises/evidence.json)
+contains versions and nonsecret counts. The approved LocalNet experiment used
+new synthetic parties/users and isolated PQS databases with restricted SQL readers.
+Five transactions committed and two intended failures were rejected. Four scoped
+views match Ledger Effects payloads, witnesses, transaction update IDs and node
+bounds; one-row pages and overlapping replay pass after exporter restarts.
+
+The two IDE-ledger Daml scripts, 35 helper tests and seven existing PoC tests pass.
+Rust formatting, release metadata, secret scans and container log checks pass. Runtime Rust,
+migrations and APIs are unchanged; a full Rust suite was not rerun for this scope.
+SDK 3.7.1 selects damlc/daml-script 3.7.0. The helper uses a temporary source copy
+to avoid an observed DPM 1.1.0 percent-encoded space in local DAR dependency paths;
+this is a tooling workaround, not a classified upstream defect.
+
+No general direct-parent proof, pruning, redaction, upgrade lineage or production
+acceptance is claimed. Existing create/archive profiles were not converted to
+tree mode. Raw payloads and identities remain private under ignored `.local/`.
+Owned fixture services were stopped after verification; database volumes remain.
+
 ## Unreleased 0.4.0-alpha.2 offline metadata
 
 Recorded 2026-11-21 without starting LocalNet or changing Ledger state. The CLI

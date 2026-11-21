@@ -6,7 +6,7 @@ Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections 
 
 ```toml
 [dependencies]
-cantongrid-storage = "=0.4.0-alpha.2"
+cantongrid-storage = "=0.4.0-alpha.3"
 ```
 
 `initialize_env` applies destination migrations explicitly. `Store` manages
@@ -25,6 +25,10 @@ cantongrid fixture status examples/fixtures/visibility/cantongrid.json --databas
 Run fixture commands from a repository checkout. Never point destination
 migrations at an upstream PQS database. Typed model registration, installation,
 binding and staged rebuilds are separate explicit operations.
+Version 0.4.0-alpha.3 also supports private exercise receipts through
+`Store::apply_exercise_page`; migration 009 commits their journal/outbox with
+the ordinary lifecycle checkpoint. See the repository's
+[receipt profile](https://github.com/kunal171/cantongrid/blob/main/docs/design/exercise-ingestion.md).
 See the [PostgreSQL quickstart](https://github.com/kunal171/cantongrid/blob/main/docs/guide/quickstart.md).
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)

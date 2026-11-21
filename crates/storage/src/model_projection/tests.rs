@@ -189,6 +189,9 @@ impl Drop for Scenario {
                     "outbox",
                     "events",
                     "contracts",
+                    "exercise_outbox",
+                    "exercise_events",
+                    "exercise_pages",
                     "batches",
                     "streams",
                 ] {

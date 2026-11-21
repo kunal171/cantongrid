@@ -107,7 +107,7 @@ Only LF 2.1 is supported. Input, expansion, traversal and output bounds are in
 [the metadata guide](guide/metadata.md). Unused interned type links are checked
 once without expanding their trees; reachable signature types have separate
 depth and work limits. No Ledger, database, SDK, JVM or protoc is required.
-Schema synchronization (#24) remains planned. Reviewed additive activation (#25)
+Offline schema synchronization (#24) is implemented. Reviewed additive activation (#25)
 uses explicit model definitions; see [package upgrades](guide/upgrades.md).
 
 Dependency review and approval, 2026-11-21:
@@ -171,3 +171,15 @@ User reads accept `identity-provider-id`; rights reads do not expose that query
 parameter and derive their provider context through authenticated Ledger handling.
 An explicit expected token issuer and returned provider must both match; no issuer
 or provider is inferred from an endpoint hostname.
+
+## Next event foundation milestone
+
+[M0 exercise-source feasibility](design/exercise-source.md) is verified on the
+pinned LocalNet. PQS tree-mode receipts match authorized Ledger Effects in four
+party scopes. Partial views can disclose children without their factory exercise;
+general immediate-parent proof remains unsupported. M1 should extend the existing
+PQS adapter with internal exercise receipts while preserving archive ownership.
+M0 adds no production event variant, destination migration or public API.
+The [M1 receipt slice](design/exercise-ingestion.md) adds opt-in atomic forward
+transactions and private receipt/outbox tables in migration 009. Existing
+create/archive APIs and archive ownership remain unchanged.

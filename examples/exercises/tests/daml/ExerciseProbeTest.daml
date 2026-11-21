@@ -1,0 +1,68 @@
+-- | IDE-ledger controls prove fixture behavior only, not PQS/Ledger API witness equivalence.
+module ExerciseProbeTest where
+
+import Daml.Script
+import DA.Optional (isSome, isNone)
+import ExerciseProbe
+
+-- | Each script owns independent synthetic parties; no external Ledger is contacted by damlc test.
+data Fixture = Fixture with
+  operator : Party
+  alice : Party
+  bob : Party
+  factory : ContractId Factory
+
+-- | Create one shared parent; the two observers cannot exercise its operator-controlled choices.
+setup : () -> Script Fixture
+setup () = do
+  operator <- allocateParty "M0 operator"
+  alice <- allocateParty "M0 Alice"
+  bob <- allocateParty "M0 Bob"
+  factory <- submit operator do
+    createCmd Factory with operator; audience = [alice, bob]; factoryId = "m0-factory"
+  pure Fixture with operator; alice; bob; factory
+
+-- | A-only/B-only final contract visibility and negative choice authority are independent controls.
+testPairVisibilityAndForgedReference : Script ()
+testPairVisibilityAndForgedReference = script do
+  f <- setup ()
+  (left, right) <- submit f.operator do
+    exerciseCmd f.factory Factory_Pair with
+      runId = "pair"; leftReaders = [f.alice]; rightReaders = [f.bob]
+  aliceLeft <- queryContractId f.alice left
+  aliceRight <- queryContractId f.alice right
+  bobLeft <- queryContractId f.bob left
+  bobRight <- queryContractId f.bob right
+  assert (isSome aliceLeft && isNone aliceRight && isNone bobLeft && isSome bobRight)
+  submitMustFail f.alice do
+    exerciseCmd f.factory Factory_Pair with
+      runId = "unauthorized"; leftReaders = [f.alice]; rightReaders = [f.bob]
+  -- This child has the same declared reference but was created without any factory choice.
+  forged <- submit f.bob do
+    createCmd Child with
+      owner = f.bob; readers = []; runId = "forged"; label = "direct"; declaredFactory = "m0-factory"
+  value <- queryContractId f.bob forged
+  assert (isSome value)
+
+-- | Nested consumption and a transient child disappear from the final ACS. Failed submissions
+-- leave the current factory and active child count intact; no failed internals are source evidence.
+testNestedTransientAndRollback : Script ()
+testNestedTransientAndRollback = script do
+  f <- setup ()
+  (successor, child) <- submit f.operator do
+    exerciseCmd f.factory Factory_Nested with runId = "nested"; readers = [f.alice]
+  old <- queryContractId f.operator f.factory
+  current <- queryContractId f.operator successor
+  assert (isNone old)
+  case current of
+    None -> abort "Factory successor missing"
+    Some value -> assert (value.factoryId == "m0-factory")
+  children <- query @Child f.operator
+  relays <- query @Relay f.operator
+  assert (length children == 1 && null relays)
+  visible <- queryContractId f.alice child
+  assert (isSome visible)
+  submitMustFail f.operator do
+    exerciseCmd successor Factory_Reject with runId = "rejected"
+  after <- query @Child f.operator
+  assert (length after == 1)

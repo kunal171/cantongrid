@@ -1,6 +1,11 @@
 # Working on CantonGrid
 
-- Current phase: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
+- Active milestone: M1 internal exercise receipts, authorized by “continue next”.
+  Follow docs/design/exercise-ingestion.md and the verified M0 source evidence.
+  M1's pinned LocalNet slice is verified; keep further changes within its scope
+  unless the user separately requests M2 or another milestone.
+  No public exercise/lineage API or Outcomia changes in this milestone.
+- Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading, joins and streams remain later work.
   Use docs/README.md for scope and docs/verification.md for dated evidence;
