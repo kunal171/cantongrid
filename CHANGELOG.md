@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0-alpha.3 — 2026-11-21
 
 - Opt-in schema041 tree-mode exercise receipts, bounded complete forward
   transactions and atomic private receipt journal/outbox (destination migration

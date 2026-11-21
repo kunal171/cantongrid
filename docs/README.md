@@ -38,7 +38,8 @@ Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
-The source checkout targeting 0.4.0-alpha.2 includes offline DAR inspection (#23),
+The source checkout targets 0.4.0-alpha.3 with internal exercise receipts. It retains
+0.4.0-alpha.2's offline DAR inspection (#23),
 compound sorting (#21), reviewed package upgrades (#25), verified remote HTTPS
 transport (#22), and command-driven schema synchronization (#24).
 

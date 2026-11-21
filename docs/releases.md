@@ -3,6 +3,9 @@
 Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.2**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
+Source preparation: **0.4.0-alpha.3** adds private exercise receipts and destination
+migration 009. No tag, GitHub release or crate upload was performed for this work.
+
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
 | [0.4.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.2) | DAR metadata, compound sorting, package upgrades, remote HTTPS and schema sync | 001–008 |

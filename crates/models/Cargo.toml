@@ -14,10 +14,10 @@ description = "Declarative Daml contract projections, exact calculations, SQL an
 categories = ["database"]
 
 [dependencies]
-cantongrid-core = { path = "../core", version = "=0.4.0-alpha.2" }
+cantongrid-core = { path = "../core", version = "=0.4.0-alpha.3" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.11.1"
 
 [dev-dependencies]
-cantongrid-postgres = { path = "../postgres", version = "=0.4.0-alpha.2" }
+cantongrid-postgres = { path = "../postgres", version = "=0.4.0-alpha.3" }

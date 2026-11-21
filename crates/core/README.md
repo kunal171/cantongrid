@@ -19,7 +19,7 @@ source-authorization lease, HTTP middleware or data-serving implementation.
 
 ```toml
 [dependencies]
-cantongrid-core = "=0.4.0-alpha.2"
+cantongrid-core = "=0.4.0-alpha.3"
 ```
 
 ```rust
