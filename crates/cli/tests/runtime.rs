@@ -2,6 +2,8 @@
 //! No Canton party, ledger transaction or upstream database mutation occurs in this test.
 #[path = "runtime/aggregates.rs"]
 mod aggregates;
+#[path = "runtime/lineage.rs"]
+mod lineage;
 use cantongrid_core::{
     authorization::{MAX_SOURCE_LEASE, SourceLease},
     config::{Plan, SourceContext, TemplateId},
