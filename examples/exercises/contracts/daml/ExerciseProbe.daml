@@ -1,0 +1,87 @@
+-- | Generic M0 evidence fixture only: no assets, trading, clubs or global ID guarantees.
+-- Choices deliberately produce different stakeholder and exercise-informee views.
+module ExerciseProbe where
+
+-- | An immutable object with an intentionally untrusted application-declared factory reference.
+-- Anyone can sign their own Child; matching this text never proves a factory exercise happened.
+template Child
+  with
+    owner : Party
+    readers : [Party]
+    runId : Text
+    label : Text
+    declaredFactory : Text
+  where
+    signatory owner
+    observer readers
+    ensure runId /= "" && label /= ""
+
+-- | A short-lived nested operation. Its consuming choice creates and consumes a temporary
+-- Child before creating the permanent result, all within the outer factory transaction.
+template Relay
+  with
+    owner : Party
+    readers : [Party]
+    runId : Text
+    declaredFactory : Text
+  where
+    signatory owner
+    observer readers
+
+    -- | Produces a nested consuming exercise and a transient contract absent from the final ACS.
+    choice Relay_Create : ContractId Child
+      controller owner
+      do
+        temporary <- create Child with
+          owner; readers; runId; label = "transient"; declaredFactory
+        archive temporary
+        create Child with owner; readers; runId; label = "nested"; declaredFactory
+
+-- | Observers can see this contract but are not controllers of its choices. In particular,
+-- a factory observer is not automatically a witness of its nonconsuming exercises.
+template Factory
+  with
+    operator : Party
+    audience : [Party]
+    factoryId : Text
+  where
+    signatory operator
+    observer audience
+    ensure factoryId /= ""
+
+    -- | Return two children in one nonconsuming exercise, with independently selected observers.
+    -- The operator sees both; each other party's view must be measured, not inferred from this return type.
+    nonconsuming choice Factory_Pair : (ContractId Child, ContractId Child)
+      with
+        runId : Text
+        leftReaders : [Party]
+        rightReaders : [Party]
+      controller operator
+      do
+        left <- create Child with
+          owner = operator; readers = leftReaders; runId; label = "left"; declaredFactory = factoryId
+        right <- create Child with
+          owner = operator; readers = rightReaders; runId; label = "right"; declaredFactory = factoryId
+        pure (left, right)
+
+    -- | Consume/recreate the factory while retaining factoryId, and exercise a nested consuming relay.
+    -- Contract IDs change; the explicit logical ID remains fixture data, not proof of ancestry.
+    choice Factory_Nested : (ContractId Factory, ContractId Child)
+      with
+        runId : Text
+        readers : [Party]
+      controller operator
+      do
+        relay <- create Relay with owner = operator; readers; runId; declaredFactory = factoryId
+        child <- exercise relay Relay_Create
+        successor <- create this
+        pure (successor, child)
+
+    -- | A rejected transaction must leave no committed child or lineage receipt.
+    nonconsuming choice Factory_Reject : ()
+      with runId : Text
+      controller operator
+      do
+        _ <- create Child with
+          owner = operator; readers = audience; runId; label = "rolled-back"; declaredFactory = factoryId
+        abort "Deliberate M0 rollback control"

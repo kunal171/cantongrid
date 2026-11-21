@@ -1,0 +1,63 @@
+# Exercise evidence fixture (M0)
+
+Generic Daml controls for [source feasibility](../../docs/design/exercise-source.md).
+This example has no tokens, markets or Outcomia-specific processing.
+
+| Control | Expected IDE-ledger result | What still needs source verification |
+| --- | --- | --- |
+| `Factory_Pair` | Two children, Alice-only/Bob-only stakeholder views | Nonconsuming exercise witnesses versus child witnesses |
+| `Factory_Nested` | Old factory consumed; successor keeps `factoryId`; one permanent child | Nested consuming exercise, transient relay/child and node boundaries |
+| `Factory_Reject` | Failed submission leaves no child | No committed source receipt for rejected internals |
+| Direct `Child` creation | Bob can reuse a declared factory reference | Matching text must never prove ancestry |
+| Alice exercises operator choice | Submission rejected | Observing a factory does not grant choice authority |
+
+Every template, choice and test has comments explaining its role. The scripts
+check final contract visibility; they do not establish Ledger Effects witnesses,
+PQS redaction behavior or direct-parent evidence.
+
+## Offline checks
+
+Install the declared open-source SDK 3.7.1. Its manifest selects damlc and
+daml-script components 3.7.0; these component versions are expected.
+
+From the repository root:
+
+```bash
+python3 scripts/dev.py check exercises --fixture-tests
+# If DPM is installed outside PATH:
+python3 scripts/dev.py check exercises --fixture-tests --dpm "$HOME/.dpm/bin/dpm"
+```
+
+The helper builds contracts and runs the two scripts on the IDE ledger in a
+temporary `/tmp` directory, without an external Ledger connection. It copies only
+example sources, excludes `.daml` output and removes the temporary directory even
+on failure. This avoids DPM 1.1.0's observed space-encoded DAR dependency path.
+No SDK-cache repair, upload, party provisioning or real transaction occurs.
+
+## Retained PQS catalog
+
+With the existing fixture database and its restricted reader available:
+
+```bash
+python3 scripts/dev.py check exercises
+```
+
+This executes bounded catalog SELECTs in a read-only snapshot, never event
+functions or contract rows. It saves owner-only evidence under ignored
+`.local/exercise-source/` and prints schema facts. It does not start services,
+grant rights or claim current source authorization.
+
+## LocalNet experiment awaiting approval
+
+Proposed writes are limited to the disposable LocalNet: upload these two DARs,
+allocate three dedicated synthetic parties, provision exact operator/Alice/Bob
+users, create the factory and submit the controls above. Separate PQS source
+profiles must use exact party subsets and isolated databases, with no broadening
+of existing source grants. Each deployment runner must require an explicit
+`--allow-ledger-writes` opt-in; no deployment runner is shipped yet.
+
+Compare the same committed transactions through authorized Ledger Effects and
+PQS tree mode, then repeat under partial party scopes. Keep raw payloads, tokens,
+party IDs and contract IDs private. Publish only schema/version facts, coverage
+results and synthetic expectations. Missing exercises or descendants mean
+incomplete evidence, never an inferred parent. M0 remains open until this runs.

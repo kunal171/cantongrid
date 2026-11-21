@@ -2,7 +2,10 @@
 import argparse
 import hashlib
 import json
+from pathlib import Path
+import shutil
 import subprocess
+import tempfile
 
 from ..common import ENV, ROOT, pg_command, write_private
 
@@ -91,10 +94,35 @@ def summarize(data):
     }
 
 
+def test_fixture(dpm):
+    """Build/test a disposable copy using the SDK launcher, without contacting an external Ledger.
+
+    DPM 1.1.0 percent-encodes spaces in local DAR dependency paths. Copying only
+    source inputs to /tmp avoids that path issue and leaves the SDK cache intact.
+    The SDK manifest, not a guessed damlc path, selects the script-service runner.
+    """
+    executable = shutil.which(dpm)
+    if executable is None:
+        raise ValueError('DPM is unavailable; pass --dpm with its installed executable path')
+    with tempfile.TemporaryDirectory(prefix='cantongrid-m0-', dir='/tmp') as directory:
+        target = Path(directory) / 'exercises'
+        shutil.copytree(ROOT / 'examples/exercises', target,
+                        ignore=shutil.ignore_patterns('.daml'))
+        for package, command in [('contracts', 'build'), ('tests', 'test')]:
+            subprocess.run([executable, command], cwd=target / package,
+                           check=True, timeout=180, env=ENV)
+
+
 def main(argv=None):
     """Save owner-only evidence and print a redacted catalog summary; no source/ledger setup occurs."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args(argv)
+    parser.add_argument('--fixture-tests', action='store_true',
+                        help='Build/test generic Daml fixture on its IDE ledger; no PQS or external Ledger reads/writes')
+    parser.add_argument('--dpm', default='dpm', help='Installed SDK launcher for --fixture-tests')
+    args = parser.parse_args(argv)
+    if args.fixture_tests:
+        test_fixture(args.dpm)
+        return
     data = inspect_catalog()
     summary = summarize(data)
     write_private(ROOT / '.local/exercise-source/catalog.json', data)

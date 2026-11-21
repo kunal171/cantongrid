@@ -41,7 +41,7 @@ class ExerciseCatalogTests(unittest.TestCase):
     def test_incompatible_privileged_malformed_and_truncated_profiles_fail_closed(self):
         cases = []
         for field, value in [('schema_version', '042'), ('read_only', False), ('restricted_reader', False),
-                             ('functions', [] * 0 + [{}] * 32), ('attributes', None)]:
+                             ('functions', [{}] * 32), ('attributes', None)]:
             data = catalog()
             data[field] = value
             cases.append(json.dumps(data))
@@ -58,3 +58,14 @@ class ExerciseCatalogTests(unittest.TestCase):
             with self.assertRaises(subprocess.CalledProcessError):
                 probe.inspect_catalog()
         self.assertEqual(run.call_count, 1)
+
+    def test_fixture_build_uses_isolated_space_free_copy_and_sdk_launcher(self):
+        with patch.object(probe.shutil, 'which', return_value='/sdk/dpm'), \
+                patch.object(probe.subprocess, 'run') as run:
+            probe.test_fixture('/sdk/dpm')
+        self.assertEqual([call.args[0] for call in run.call_args_list],
+                         [['/sdk/dpm', 'build'], ['/sdk/dpm', 'test']])
+        for call in run.call_args_list:
+            self.assertNotIn(' ', str(call.kwargs['cwd']))
+            self.assertNotIn(str(probe.ROOT), str(call.kwargs['cwd']))
+            self.assertFalse(call.kwargs['cwd'].exists())
