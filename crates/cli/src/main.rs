@@ -13,6 +13,8 @@ use std::{
 const HELP: &str = "CantonGrid — local ingestion and storage reference
 
 Usage:
+  cantongrid sync plan <old.dar> <new.dar> <models.json>
+  cantongrid sync bundle <old.dar> <new.dar> <models.json> <output-directory>
   cantongrid metadata inspect <artifact.dar>
   cantongrid upgrade plan <old-runtime> <new-runtime> <dar> <models> <namespace>
   cantongrid upgrade start|step|status|activate|cancel <manifest> <old-runtime> <new-runtime> <dar> <models>
@@ -64,6 +66,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
         [command, action, rest @ ..] if command == "upgrade" => {
             commands::selection_upgrade::run(action, rest)
         }
+        [command, action, rest @ ..] if command == "sync" => commands::sync::run(action, rest),
         [command, action, path] if command == "metadata" && action == "inspect" => {
             let metadata =
                 cantongrid_metadata::inspect_file(Path::new(path)).map_err(|e| e.to_string())?;

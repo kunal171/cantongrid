@@ -300,6 +300,7 @@ dependencies = [
  "cantongrid-pqs",
  "cantongrid-runtime",
  "cantongrid-storage",
+ "cantongrid-sync",
  "jsonwebtoken",
  "reqwest",
  "serde_json",

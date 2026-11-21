@@ -11,3 +11,5 @@ pub mod model_binding;
 pub mod model_rebuild;
 
 pub mod selection_upgrade;
+
+pub mod sync;
