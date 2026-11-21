@@ -12,7 +12,7 @@ pub(crate) struct Installed {
 }
 
 /// Only compiler-derived identifiers reach DML. Stored SQL and table names are never executed.
-pub(super) fn load(
+pub(crate) fn load(
     tx: &mut Transaction<'_>,
     namespace: &str,
     name: &str,
