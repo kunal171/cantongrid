@@ -141,6 +141,23 @@ fn read_page(
     let mut more = rows.len() > limit;
     let mut exercises = Vec::new();
     if atomic {
+        // A missing witness list cannot be filtered away as an ordinary invisible event.
+        if tx
+            .query_one(
+                include_str!("exercise_gate.sql"),
+                &[
+                    &cursor.boundary,
+                    &cursor.through,
+                    &parties,
+                    &packages,
+                    &modules,
+                    &entities,
+                ],
+            )?
+            .get::<_, bool>(0)
+        {
+            return Err(InspectError::Bounds);
+        }
         let source = tx.query(
             include_str!("exercises.sql"),
             &[

@@ -125,5 +125,14 @@ mod tests {
         receipt.last_descendant_node_id = 2;
         receipt.version = 2;
         assert!(!receipt.validate(&plan));
+        receipt.version = 1;
+        receipt.argument = serde_json::to_string(&"x".repeat(65536)).unwrap();
+        assert!(!receipt.validate(&plan));
+        receipt.argument = "{}".into();
+        receipt.result = "broken JSON".into();
+        assert!(!receipt.validate(&plan));
+        receipt.result = "null".into();
+        receipt.controllers.clear();
+        assert!(!receipt.validate(&plan));
     }
 }
