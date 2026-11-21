@@ -272,6 +272,53 @@ impl GrantChecker {
         Ok(())
     }
 
+    /// Confirm target package availability on this authenticated participant. A local DAR
+    /// alone is not deployment evidence; this performs GET only and never vets/uploads it.
+    pub async fn require_packages_env(
+        &self,
+        variable: &str,
+        packages: &[String],
+    ) -> Result<(), GrantError> {
+        if !credential_variable(variable) {
+            return Err(GrantError::Configuration);
+        }
+        let token = std::env::var(variable).map_err(|_| GrantError::Credential)?;
+        self.require_packages(&token, packages).await
+    }
+    /// Use one immutable credential through both rights checks and the package read.
+    async fn require_packages(&self, token: &str, packages: &[String]) -> Result<(), GrantError> {
+        if packages.is_empty()
+            || packages.len() > 64
+            || packages.iter().any(|id| {
+                id.len() != 64
+                    || !id
+                        .bytes()
+                        .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+            })
+        {
+            return Err(GrantError::Configuration);
+        }
+        self.check(token).await?;
+        let mut bearer = HeaderValue::from_str(&format!("Bearer {token}"))
+            .map_err(|_| GrantError::Credential)?;
+        bearer.set_sensitive(true);
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Packages {
+            package_ids: Vec<String>,
+        }
+        let url = self
+            .endpoint
+            .join("v2/packages")
+            .map_err(|_| GrantError::Configuration)?;
+        let response: Packages = self.get_url(url, &bearer).await?;
+        if packages.iter().any(|id| !response.package_ids.contains(id)) {
+            return Err(GrantError::Response);
+        }
+        self.check(token).await?;
+        Ok(())
+    }
+
     /// Perform GET only, with bounded streaming reads and redacted failures. A successful
     /// HTTP response alone is insufficient: its typed shape and exact grants must also pass.
     async fn get<T: DeserializeOwned>(
@@ -289,6 +336,15 @@ impl GrantChecker {
                 path.push("rights");
             }
         }
+        self.get_url(url, bearer).await
+    }
+
+    /// Share the bounded, redirect-free transport across user and package reads.
+    async fn get_url<T: DeserializeOwned>(
+        &self,
+        url: Url,
+        bearer: &HeaderValue,
+    ) -> Result<T, GrantError> {
         let mut response = self
             .client
             .get(url)
