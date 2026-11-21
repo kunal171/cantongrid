@@ -122,17 +122,11 @@ impl Project {
                 return Err("invalid credential reference".into());
             }
         }
-        let health = reqwest::Url::parse(&doc.source_health)
-            .map_err(|_| "invalid source health endpoint")?;
-        if health.scheme() != "http"
-            || health.host_str() != Some("127.0.0.1")
-            || health.port().is_none()
-            || health.path() != "/readyz"
-            || !health.username().is_empty()
-            || health.password().is_some()
-            || health.query().is_some()
-            || health.fragment().is_some()
-            || !doc.api.bind.ip().is_loopback()
+        authorization
+            .transport()
+            .endpoint(&doc.source_health, "/readyz")
+            .map_err(|_| "unsafe source health endpoint")?;
+        if !doc.api.bind.ip().is_loopback()
             || doc.api.issuer.is_empty()
             || doc.api.audience.is_empty()
             || doc.source_database_env == doc.destination_database_env
@@ -148,6 +142,24 @@ impl Project {
             &identity,
             &doc.source_health,
         ));
+        let plan = match authorization.identity_settings() {
+            ("", None) => plan,
+            (provider, issuer) => {
+                use sha2::{Digest, Sha256};
+                let identity = serde_json::json!([
+                    "pqs041-source-auth-v2",
+                    plan.source_binding(),
+                    provider,
+                    issuer
+                ]);
+                plan.with_source_binding(
+                    Sha256::digest(identity.to_string().as_bytes())
+                        .iter()
+                        .map(|b| format!("{b:02x}"))
+                        .collect(),
+                )
+            }
+        };
         let mut api = doc.api;
         if api.grants_file.is_relative() {
             api.grants_file = path

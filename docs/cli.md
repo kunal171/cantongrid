@@ -5,6 +5,8 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 
 | Command | Purpose |
 | --- | --- |
+| `sync plan <old.dar> <new.dar> <models.json>` | Offline schema compatibility report; source-only alpha.2 |
+| `sync bundle <old.dar> <new.dar> <models.json> <output-directory>` | Offline generation of review bundle (models, SQL, GraphQL, TS); refuses overwriting |
 | `upgrade plan <old-runtime> <new-runtime> <dar> <models> <namespace>` | Read-only reviewed manifest for installed targets |
 | `upgrade start\|step\|status\|activate\|cancel <manifest> <old-runtime> <new-runtime> <dar> <models>` | Durable paged handoff; see [upgrades](guide/upgrades.md) |
 | `upgrade apply <manifest> <old-runtime> <new-runtime> <dar> <models>` | Bounded atomic alternative |

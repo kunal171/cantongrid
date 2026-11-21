@@ -615,3 +615,31 @@ fn metadata_inspection_errors_are_redacted_and_do_not_emit_json() {
             .success()
     );
 }
+
+/// Offline schema sync CLI must reject invalid inputs and wrong arguments without leaking paths or contents.
+#[test]
+fn sync_cli_rejects_malformed_inputs_without_leaking_paths_or_payloads() {
+    let root = Scratch::new();
+    let old_dar = "private-old-artifact.dar";
+    let new_dar = "private-new-artifact.dar";
+    let models = "private-models.json";
+    fs::write(root.0.join(old_dar), b"private malformed old").unwrap();
+    fs::write(root.0.join(new_dar), b"private malformed new").unwrap();
+    fs::write(root.0.join(models), b"private malformed models").unwrap();
+    for args in [
+        vec!["sync", "plan", old_dar, new_dar, models],
+        vec!["sync", "bundle", old_dar, new_dar, models, "bundle-out"],
+        vec!["sync", "plan", "missing-old.dar", new_dar, models],
+        vec!["sync", "plan"],
+        vec!["sync", "unknown"],
+    ] {
+        let result = cli(&root.0, &args);
+        assert!(!result.status.success());
+        assert!(result.stdout.is_empty());
+        let error = String::from_utf8_lossy(&result.stderr);
+        assert!(!error.contains(old_dar));
+        assert!(!error.contains(new_dar));
+        assert!(!error.contains(models));
+        assert!(!error.contains("private malformed"));
+    }
+}

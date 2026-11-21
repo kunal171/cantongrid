@@ -7,11 +7,10 @@ use std::{path::Path, time::Duration};
 /// Source readiness is independent from SQL reachability and user authorization.
 /// Do not turn a failed/expired exporter into an apparently fresh cached source.
 pub(crate) async fn ready(project: &Project) -> Result<(), String> {
-    let client = reqwest::Client::builder()
-        .no_proxy()
-        .redirect(reqwest::redirect::Policy::none())
-        .timeout(Duration::from_secs(3))
-        .build()
+    let client = project
+        .authorization
+        .transport()
+        .client(Duration::from_secs(3))
         .map_err(|_| "source health client failed")?;
     let response = client
         .get(&project.source_health)
