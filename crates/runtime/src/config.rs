@@ -19,6 +19,7 @@ struct Document {
     source_health: String,
     /// Explicit operator assertion of exporter shape; empty SQL is not evidence of tree mode.
     exercise_source: Option<String>,
+    lineage_source: Option<String>,
     templates: Vec<TemplateId>,
     history: String,
     archive_policy: String,
@@ -113,6 +114,11 @@ impl Project {
             None => plan,
             Some("pqs041_ledger_effects") => plan.with_exercises().map_err(|e| e.to_string())?,
             Some(_) => return Err("unsupported exercise source profile".into()),
+        };
+        let plan = match doc.lineage_source.as_deref() {
+            None => plan,
+            Some("pqs041_complete_subtrees") => plan.with_lineage().map_err(|e| e.to_string())?,
+            Some(_) => return Err("unsupported lineage source profile".into()),
         };
         for variable in [
             &doc.source_database_env,
