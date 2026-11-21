@@ -585,6 +585,44 @@ fn model_filters_sort_and_query_bound_keysets() {
         }
         assert_eq!(ids, ["a", "c", "b", "d"]);
     }
+    // Mixed directions and nullable ties must resume at the complete tuple, not only its first key.
+    for (keys, expected) in [
+        (
+            serde_json::json!([{"field":"amount","direction":"desc"},{"field":"label","direction":"desc"}]),
+            vec!["d", "a", "c", "b"],
+        ),
+        (
+            serde_json::json!([{"field":"note"},{"field":"amount","direction":"desc"}]),
+            vec!["a", "c", "d", "b"],
+        ),
+        (
+            serde_json::json!([{"field":"note","direction":"desc"},{"field":"amount"}]),
+            vec!["a", "c", "b", "d"],
+        ),
+    ] {
+        let query = options(serde_json::json!({"sort":keys}));
+        let mut after = None;
+        let mut ids = Vec::new();
+        loop {
+            let page = store
+                .read_model_query(
+                    &s.plans[0],
+                    &caller,
+                    &source,
+                    &binding,
+                    &query,
+                    after.as_deref(),
+                    1,
+                )
+                .unwrap();
+            ids.push(page.items[0]["contractId"].as_str().unwrap().to_owned());
+            after = page.next_after;
+            if after.is_none() {
+                break;
+            }
+        }
+        assert_eq!(ids, expected);
+    }
     let nulls = options(serde_json::json!({"filters":{"note":{"isNull":true}}}));
     let page = store
         .read_model_query(&s.plans[0], &caller, &source, &binding, &nulls, None, 4)

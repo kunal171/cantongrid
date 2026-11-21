@@ -229,6 +229,14 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
                                 options.insert(name.into(), value.as_value().clone().into_json()?);
                             }
                         }
+                        if let Some(value) = ctx.args.get("orderBy").filter(|v| !v.is_null()) {
+                            if options.contains_key("sort") {
+                                return Err(async_graphql::Error::new(
+                                    "use sort or orderBy, not both",
+                                ));
+                            }
+                            options.insert("sort".into(), value.as_value().clone().into_json()?);
+                        }
                         let options: QueryOptions = serde_json::from_value(options.into())
                             .map_err(|_| async_graphql::Error::new("invalid model query"))?;
                         let operation = ctx.data::<ModelRequest>()?;
@@ -261,6 +269,10 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
             .argument(InputValue::new(
                 "sort",
                 TypeRef::named(format!("{stem}Sort")),
+            ))
+            .argument(InputValue::new(
+                "orderBy",
+                TypeRef::named_nn_list(format!("{stem}Sort")),
             )),
         );
         builder = builder.register(values).register(row).register(page);

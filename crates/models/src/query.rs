@@ -12,7 +12,7 @@ pub struct QueryOptions {
     #[serde(default)]
     pub filters: BTreeMap<String, BTreeMap<Comparison, QueryValue>>,
     #[serde(default)]
-    pub sort: Option<Sort>,
+    pub sort: Option<Sorts>,
 }
 
 /// SQL operators are chosen from this closed enum, never from user-provided SQL fragments.
@@ -68,6 +68,23 @@ pub struct Sort {
     pub field: String,
     #[serde(default)]
     pub direction: Direction,
+}
+/// Compatible wire input: one legacy sort object or an ordered list of up to four keys.
+/// Validation canonicalizes both encodings to a list before computing cursor fingerprints.
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum Sorts {
+    One(Sort),
+    Many(Vec<Sort>),
+}
+impl Sorts {
+    /// Preserve client key priority; the storage layer appends contract identity as the final key.
+    pub fn as_slice(&self) -> &[Sort] {
+        match self {
+            Self::One(value) => std::slice::from_ref(value),
+            Self::Many(values) => values,
+        }
+    }
 }
 /// Value ordering only; nulls remain last and contract-ID ties remain ascending in either direction.
 #[derive(Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize)]
@@ -165,12 +182,20 @@ impl Model {
                 }
             }
         }
-        if let Some(sort) = &normalized.sort
-            && !self.fields.contains_key(&sort.field)
-        {
-            return Err(ModelError::Query);
+        if let Some(sorts) = &normalized.sort {
+            let keys = sorts.as_slice();
+            let mut seen = std::collections::BTreeSet::new();
+            if keys.is_empty()
+                || keys.len() > 4
+                || keys
+                    .iter()
+                    .any(|key| !self.fields.contains_key(&key.field) || !seen.insert(&key.field))
+            {
+                return Err(ModelError::Query);
+            }
+            normalized.sort = Some(Sorts::Many(keys.to_vec()));
         }
-        let document = serde_json::json!(["cantongrid-model-query-v1", normalized]);
+        let document = serde_json::json!(["cantongrid-model-query-v2", normalized]);
         let fingerprint = Sha256::digest(document.to_string().as_bytes())
             .iter()
             .map(|b| format!("{b:02x}"))
@@ -285,5 +310,39 @@ mod tests {
         let fields = serde_json::to_value(model.query_fields().unwrap()).unwrap();
         assert!(fields.to_string().contains("isNull"));
         assert!(!fields.to_string().contains("path"));
+    }
+    /// Single-object/list requests normalize identically, but key priority remains meaningful.
+    #[test]
+    fn compound_sort_order_is_bounded_unique_and_cursor_bound() {
+        let model = Catalog::parse(include_str!("../assets/models/visibility.json"))
+            .unwrap()
+            .models()[0]
+            .clone();
+        let query = |s: &str| serde_json::from_str::<QueryOptions>(s).unwrap();
+        let one = model
+            .validate_query(&query(r#"{"sort":{"field":"amount"}}"#))
+            .unwrap();
+        let list = model
+            .validate_query(&query(r#"{"sort":[{"field":"amount"}]}"#))
+            .unwrap();
+        assert_eq!(one.fingerprint(), list.fingerprint());
+        for invalid in [
+            r#"{"sort":[]}"#,
+            r#"{"sort":[{"field":"amount"},{"field":"amount"}]}"#,
+            r#"{"sort":[{"field":"amount"},{"field":"sequence"},{"field":"label"},{"field":"note"},{"field":"flag"}]}"#,
+        ] {
+            assert!(model.validate_query(&query(invalid)).is_err());
+        }
+        let a = model
+            .validate_query(&query(
+                r#"{"sort":[{"field":"amount"},{"field":"sequence","direction":"desc"}]}"#,
+            ))
+            .unwrap();
+        let b = model
+            .validate_query(&query(
+                r#"{"sort":[{"field":"sequence","direction":"desc"},{"field":"amount"}]}"#,
+            ))
+            .unwrap();
+        assert_ne!(a.fingerprint(), b.fingerprint());
     }
 }

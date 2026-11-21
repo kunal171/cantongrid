@@ -61,7 +61,7 @@ impl Catalog {
                 root.push_str(&field);
             }
             root.push_str(&format!(
-                "  {}(namespace: String!, limit: Int, cursor: String, filters: {stem}Filter, sort: {stem}Sort): {stem}Page!\n",
+                "  {}(namespace: String!, limit: Int, cursor: String, filters: {stem}Filter, sort: {stem}Sort, orderBy: [{stem}Sort!]): {stem}Page!\n",
                 model.api_name()?
             ));
         }
@@ -103,7 +103,7 @@ impl Catalog {
                     .join("; ");
                 result.push_str(&format!("  readonly {name}?: {{ {ops} }};\n"));
             }
-            result.push_str(&format!("}}\nexport interface {stem}Query {{\n  readonly namespace: string;\n  readonly limit?: number;\n  readonly cursor?: string;\n  readonly filters?: {stem}Filter;\n  readonly sort?: {{ readonly field: keyof {stem}Values; readonly direction?: \"asc\" | \"desc\" }};\n"));
+            result.push_str(&format!("}}\nexport interface {stem}Sort {{ readonly field: keyof {stem}Values; readonly direction?: \"asc\" | \"desc\" }}\nexport interface {stem}Query {{\n  readonly namespace: string;\n  readonly limit?: number;\n  readonly cursor?: string;\n  readonly filters?: {stem}Filter;\n  readonly sort?: {stem}Sort | readonly {stem}Sort[];\n"));
             result.push_str(&format!("}}\nexport interface {stem}Row {{ readonly contractId: string; readonly values: {stem}Values; }}\nexport interface {stem}Page {{ readonly items: readonly {stem}Row[]; readonly visibleTotal: string; readonly nextCursor: string | null; readonly fingerprint: string; }}\nexport const {} = {{ field: \"{}\", fingerprint: \"{}\" }} as const;\n", model.api_name()?, model.api_name()?, model.fingerprint()?));
         }
         for model in self.models().iter().filter(|m| m.aggregation.is_some()) {
