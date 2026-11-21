@@ -96,10 +96,24 @@ impl std::error::Error for EvidenceError {}
 /// Prove direct links only from complete, laminar source intervals. At most 64 nodes
 /// means checking every candidate interval costs at most 64² comparisons, never an unbounded walk.
 pub fn prove(plan: &Plan, page: &LineagePage) -> Result<Vec<DirectEdge>, EvidenceError> {
-    let exercises = &page.delivery.exercises;
+    prove_evidence(
+        plan,
+        &page.delivery.batch,
+        &page.delivery.exercises,
+        &page.creations,
+    )
+}
+
+/// Borrow already bounded deliveries so storage validation does not copy financial payloads.
+pub fn prove_evidence(
+    plan: &Plan,
+    batch: &crate::lifecycle::Batch,
+    exercises: &[crate::exercise::Exercise],
+    creations: &[Creation],
+) -> Result<Vec<DirectEdge>, EvidenceError> {
     if !plan.includes_lineage()
-        || page.delivery.batch.context != *plan.context()
-        || exercises.len() + page.creations.len() > 64
+        || batch.context != *plan.context()
+        || exercises.len() + creations.len() > 64
     {
         return Err(EvidenceError);
     }
@@ -113,7 +127,7 @@ pub fn prove(plan: &Plan, page: &LineagePage) -> Result<Vec<DirectEdge>, Evidenc
         offsets.insert(e.offset);
         transactions.insert(&e.transaction_id);
     }
-    for c in &page.creations {
+    for c in creations {
         if !c.validate(plan) || nodes.insert(c.node_id, &c.witnesses).is_some() {
             return Err(EvidenceError);
         }
@@ -123,7 +137,7 @@ pub fn prove(plan: &Plan, page: &LineagePage) -> Result<Vec<DirectEdge>, Evidenc
     if offsets.len() > 1 || transactions.len() > 1 {
         return Err(EvidenceError);
     }
-    for event in &page.delivery.batch.events {
+    for event in &batch.events {
         let origin = event.origin.as_ref().ok_or(EvidenceError)?;
         if (origin.snapshot_observation && !nodes.is_empty())
             || (!origin.snapshot_observation
@@ -159,7 +173,8 @@ pub fn prove(plan: &Plan, page: &LineagePage) -> Result<Vec<DirectEdge>, Evidenc
                 .all(|e| e.last_descendant_node_id >= e.node_id)
     };
     let mut result = vec![];
-    for c in &page.creations {
+    let mut proof_bytes = 0_usize;
+    for c in creations {
         let parent = exercises
             .iter()
             .filter(|e| e.node_id < c.node_id && c.node_id <= e.last_descendant_node_id)
@@ -173,6 +188,20 @@ pub fn prove(plan: &Plan, page: &LineagePage) -> Result<Vec<DirectEdge>, Evidenc
         }) {
             continue;
         }
+        let clauses: BTreeSet<_> = nodes
+            .range(parent.node_id..=parent.last_descendant_node_id)
+            .map(|(_, w)| *w)
+            .collect();
+        proof_bytes = proof_bytes
+            .checked_add(
+                serde_json::to_vec(&clauses)
+                    .map_err(|_| EvidenceError)?
+                    .len(),
+            )
+            .ok_or(EvidenceError)?;
+        if proof_bytes > 1024 * 1024 {
+            return Err(EvidenceError);
+        }
         result.push(DirectEdge {
             version: 1,
             offset: c.offset,
@@ -184,10 +213,7 @@ pub fn prove(plan: &Plan, page: &LineagePage) -> Result<Vec<DirectEdge>, Evidenc
             parent_template: parent.template.clone(),
             child_template: c.template.clone(),
             choice: parent.choice.clone(),
-            visibility_clauses: nodes
-                .range(parent.node_id..=parent.last_descendant_node_id)
-                .map(|(_, w)| (*w).clone())
-                .collect(),
+            visibility_clauses: clauses.into_iter().cloned().collect(),
         });
     }
     Ok(result)
