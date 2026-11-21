@@ -92,3 +92,41 @@ request snapshot. Canonical queries count/select authorized identities before
 encoding page payloads. Generated model REST/GraphQL share validation and exact
 native sorting. [API](guide/api.md) documents transport formats;
 [security](security.md) defines authorization, final delivery checks and limits.
+
+## Planned DAR metadata extraction (#23)
+
+The first command will be `cantongrid metadata inspect <dar>`. It reads a local
+artifact offline and emits versioned JSON; it does not upload, activate models,
+change source grants or claim that the package is deployed. Synchronization (#24)
+and coordinated activation (#25) remain separate work.
+
+Proposed implementation: an isolated `cantongrid-metadata` library with a bounded
+ZIP reader and a metadata-only protobuf schema projection. Start with explicitly
+supported LF 2.1; reject unknown/dev versions. Preserve exact package hashes,
+package names/versions, dependency references, templates/choices, records,
+variants/enums, type parameters, optionals/lists, Numeric scales and opaque
+ContractId targets. Keep type references qualified rather than expanding recursive
+types indefinitely. Unsupported constructs must be reported, never guessed.
+
+Dependency review (2026-11-21):
+
+| Component | Decision |
+| --- | --- |
+| `canton-lf` 0.3.2 / Nodejumper SDK | Evaluated at `5caaebc3eab380de827196663d4bb18b90ffd6f4`; it depends on ZIP 2.x, flagged by the current RustSec policy. Do not add it or scanner exceptions. |
+| Official LF archive schema | Use the metadata field tags from the SDK's vendored Digital Asset Apache-2.0 schema; record upstream pin/checksums and retain attribution. Expressions/bytecode are outside metadata output. |
+| `zip` 9.8.1 | Proposed new runtime dependency, no default features, DEFLATE only. Central-directory reads into bounded memory; never extract to disk. MSRV 1.89 is within this project's 1.100 toolchain. |
+| `prost` 0.14.6 | Proposed new runtime dependency for standard protobuf decoding. Verify the declared SHA-256 against original payload bytes before interpreting metadata. |
+| `serde`, `serde_json`, `sha2` | Reuse existing workspace versions. No SDK/JVM/protoc executable required at runtime. |
+
+New dependencies await approval under the supplied build spec's interoperable
+components rule. Independent work may define the JSON contract, limits and tests;
+do not modify Cargo dependencies until approval arrives.
+
+Limits must cover input bytes, entry count, individual/total expanded bytes,
+manifest length, protobuf/type depth and emitted metadata. Reject encrypted entries,
+unsafe/duplicate paths, duplicate manifest keys, missing main packages, bad hashes,
+invalid interning/references and missing dependencies. Sort unordered collections
+for deterministic JSON/fingerprints while retaining declaration/parameter order.
+Test corruption/version/resource limits with synthetic archives and compare pinned
+real PoC/Visibility/Outcomia artifacts with independent compiler metadata. Real
+artifact checks are local evidence, not ledger or runtime compatibility claims.
