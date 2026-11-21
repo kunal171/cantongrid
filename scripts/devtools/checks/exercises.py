@@ -1,4 +1,4 @@
-"""M0 catalog-only inspection of the retained schema041 fixture; no Ledger event reads."""
+"""M0 probes: catalog-only by default; explicit opt-ins for IDE or LocalNet experiments."""
 import argparse
 import hashlib
 import json
@@ -114,12 +114,27 @@ def test_fixture(dpm):
 
 
 def main(argv=None):
-    """Save owner-only evidence and print a redacted catalog summary; no source/ledger setup occurs."""
+    """Dispatch checks with explicit write opt-in; default catalog mode never sets up a source."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--fixture-tests', action='store_true',
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--fixture-tests', action='store_true',
                         help='Build/test generic Daml fixture on its IDE ledger; no PQS or external Ledger reads/writes')
+    mode.add_argument('--localnet', action='store_true', help='Run the explicitly approved isolated LocalNet experiment')
+    parser.add_argument('--allow-ledger-writes', action='store_true', help='Required opt-in for --localnet')
+    parser.add_argument('--dar', type=Path, default=ROOT / 'examples/exercises/contracts/.daml/dist/cantongrid-exercise-probe-0.1.0.dar')
+    parser.add_argument('--resume', help='Owned cg-m0 run ID; resume source checks without repeating Ledger writes')
     parser.add_argument('--dpm', default='dpm', help='Installed SDK launcher for --fixture-tests')
     args = parser.parse_args(argv)
+    if args.resume and not args.localnet:
+        parser.error('--resume requires --localnet')
+    if args.localnet:
+        if not args.allow_ledger_writes:
+            parser.error('--localnet requires --allow-ledger-writes')
+        from .exercise_localnet import run
+        run(args.dar, args.resume)
+        return
+    if args.allow_ledger_writes:
+        parser.error('--allow-ledger-writes requires --localnet')
     if args.fixture_tests:
         test_fixture(args.dpm)
         return
