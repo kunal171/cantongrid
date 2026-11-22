@@ -6,7 +6,7 @@ Read-only authorized Canton Participant Query Store snapshot and update paging.
 
 ```toml
 [dependencies]
-cantongrid-pqs = "=0.4.0-alpha.3"
+cantongrid-pqs = "=0.4.0-alpha.4"
 ```
 
 Use `inspect_env` to check a dedicated PQS reader's schema and retained boundary.
@@ -26,6 +26,10 @@ cantongrid source inspect-pqs --database-env CANTONGRID_PQS_URL
 
 See the [source guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet-source.md)
 for role setup and supported coverage.
+
+For an explicitly enabled lineage plan, `lineage_page_env` reads typed creation
+provenance together with exercise receipts in one bounded read-only snapshot.
+Transient metadata does not change create/archive contract materialization.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 

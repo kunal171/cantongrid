@@ -9,7 +9,7 @@ The executable is named `cantongrid`. Run `cantongrid --help` for commands.
 Requires Rust 1.100.0 or newer. The package installs the `cantongrid` executable.
 
 ```bash
-cargo install cantongrid-cli --version 0.4.0-alpha.3 --locked
+cargo install cantongrid-cli --version 0.4.0-alpha.4 --locked
 cantongrid --help
 cantongrid init ./my-demo
 cantongrid validate ./my-demo/cantongrid.json
