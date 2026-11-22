@@ -68,3 +68,26 @@ authorized source is configured; this prevents a production-readiness claim.
 Remote checks are read-only and must not upload DARs, allocate parties, change
 credentials or provision paid infrastructure. Record only sanitized capabilities
 and evidence, never connection secrets or raw endpoint credentials.
+
+## M8 receipt and retention contract
+
+Use private durable subscriptions and random receipt IDs over the existing outbox.
+Never expose sequence IDs in signed JWT contents: signatures do not encrypt them.
+Current permissions apply at registration, every read, acknowledgement and delivery.
+
+Pruning must mark a subscription's gap only when it removes unacknowledged events
+visible to that subscription's pinned party scope. Hidden-only pruning must not
+change public heartbeats or create false gaps. Keep canonical event history intact.
+Registration is idempotent by caller/scope/name. Acknowledgements advance monotonically;
+old acknowledgements cannot rewind progress. Explicit signed receipt cursors support
+short resumptions; missing cursors resume the durable acknowledged position.
+
+Bound subscription lifetime, pending receipts, recent acknowledged receipts and
+retention work. Canonical lifecycle feeds use typed versioned envelopes and a bounded
+long-poll transport; they are not model-projection or GraphQL subscription feeds.
+Revalidate during waiting and before encoding. Selection upgrades gate delivery;
+changing source/policy requires an explicitly new subscription.
+
+Random receipt IDs use PostgreSQL's built-in `gen_random_uuid`, available in the
+[PostgreSQL 14 UUID functions](https://www.postgresql.org/docs/14/functions-uuid.html)
+and supported PostgreSQL 17 profile; no extension or runtime dependency is needed.

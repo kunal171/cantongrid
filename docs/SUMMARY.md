@@ -11,6 +11,7 @@
 * [Direct lineage](guide/lineage.md)
 * [Declared relationships](guide/relationships.md)
 * [Typed inner joins](guide/joins.md)
+* [Historical canonical state](guide/temporal.md)
 * [Developer inspector](guide/inspector.md)
 * [Offline DAR metadata](guide/metadata.md)
 * [Upgrade impact analysis](guide/upgrade-impact.md)
