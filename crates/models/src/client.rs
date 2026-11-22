@@ -1,5 +1,6 @@
 //! Deterministic client contracts for model APIs; financial values never become JS numbers.
 mod aggregates;
+mod relationships;
 use crate::{Catalog, Comparison, FieldType, Model, ModelError};
 
 impl Model {
@@ -23,7 +24,7 @@ impl Catalog {
         let mut result = String::from(
             "# Exact Int64/Numeric values are strings. Access requires current source and caller grants.\n",
         );
-        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]!, aggregateQueryField: String, aggregateFields: [CgModelField!] }\n");
+        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]!, relationshipQueryFields: [String!], aggregateQueryField: String, aggregateFields: [CgModelField!] }\n");
         let mut root = String::from("type Query {\n  models: [CgModel!]!\n");
         for model in self.models() {
             let stem = model.api_type()?;
@@ -60,6 +61,11 @@ impl Catalog {
                 result.push_str(&types);
                 root.push_str(&field);
             }
+            for link in &model.relationships {
+                let (types, field) = relationships::graphql(model, &link.name)?;
+                result.push_str(&types);
+                root.push_str(&field);
+            }
             root.push_str(&format!(
                 "  {}(namespace: String!, limit: Int, cursor: String, filters: {stem}Filter, sort: {stem}Sort, orderBy: [{stem}Sort!]): {stem}Page!\n",
                 model.api_name()?
@@ -76,6 +82,9 @@ impl Catalog {
         );
         for model in self.models() {
             let stem = model.api_type()?;
+            for link in &model.relationships {
+                result.push_str(&relationships::typescript(model, &link.name)?);
+            }
             result.push_str(&format!("export interface {stem}Values {{\n"));
             for (name, expression) in &model.fields {
                 result.push_str(&format!(

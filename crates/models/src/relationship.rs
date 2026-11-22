@@ -93,11 +93,88 @@ impl Model {
     }
 }
 
+impl Relationship {
+    /// Public provenance vocabulary shared by generated SDL and the runtime schema.
+    pub const OUTPUT_FIELDS: &[&str] = &[
+        "sourceContractId",
+        "targetContractId",
+        "relationship",
+        "declaration",
+        "declarationRevision",
+        "sourceModelRevision",
+        "targetModelRevision",
+        "sourceFingerprint",
+        "targetFingerprint",
+        "coverage",
+    ];
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::Catalog;
     const EXAMPLE: &str = include_str!("../assets/models/visibility.json");
+
+    #[test]
+    fn relationship_keys_reject_optional_boolean_scale_drift_and_untrusted_fields() {
+        let model = Catalog::parse(EXAMPLE).unwrap().models()[0].clone();
+        let link = Relationship {
+            name: "links".into(),
+            revision: 1,
+            source_field: "amount".into(),
+            target: RelationshipTarget {
+                model: model.name.clone(),
+                revision: 1,
+                field: "amount".into(),
+            },
+            max_targets: 10,
+        };
+        let mut source = model.clone();
+        source.relationships.push(link);
+        source.validate_relationship("links", &model).unwrap();
+        let mut target = model.clone();
+        target.fields.insert(
+            "amount".into(),
+            crate::Expression::Field {
+                path: vec!["amount".into()],
+                value_type: FieldType::Numeric { scale: 2 },
+            },
+        );
+        assert!(source.validate_relationship("links", &target).is_err());
+        for kind in [
+            FieldType::Bool,
+            FieldType::Optional {
+                item: Box::new(FieldType::Text),
+            },
+        ] {
+            source.fields.insert(
+                "key".into(),
+                crate::Expression::Field {
+                    path: vec!["key".into()],
+                    value_type: kind,
+                },
+            );
+            source.relationships[0].source_field = "key".into();
+            assert!(source.validate().is_err());
+        }
+        source = model;
+        source.relationships = vec![Relationship {
+            name: "bad-name".into(),
+            revision: 1,
+            source_field: "label".into(),
+            target: RelationshipTarget {
+                model: source.name.clone(),
+                revision: 1,
+                field: "label".into(),
+            },
+            max_targets: 10,
+        }];
+        assert!(source.validate().is_err());
+        let mut wire = serde_json::to_value(&source).unwrap();
+        wire["relationships"][0]["name"] = "links".into();
+        wire["relationships"][0]["sql"] = "SELECT 1".into();
+        assert!(serde_json::from_value::<Model>(wire).is_err());
+    }
 
     #[test]
     fn declarations_are_versioned_typed_and_never_change_legacy_fingerprints() {
