@@ -67,6 +67,9 @@ pub struct Model {
     /// Optional grouped query over maintained contributions; absence preserves old fingerprints.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub aggregation: Option<crate::Aggregation>,
+    /// Explicit application links; absence preserves existing model fingerprints.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub relationships: Vec<crate::Relationship>,
 }
 
 /// Strict versioned model catalog input; compiled plans cannot be supplied through this document.
@@ -162,6 +165,7 @@ impl Model {
         if let Some(aggregation) = &self.aggregation {
             aggregation.validate(&types)?;
         }
+        crate::relationship::validate(self)?;
         Ok(())
     }
     /// Canonical definition fingerprint is independent from map ordering and input whitespace.

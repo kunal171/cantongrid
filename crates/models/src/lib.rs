@@ -22,3 +22,6 @@ mod query;
 pub use query::{
     Comparison, Direction, QueryField, QueryOptions, QueryValue, Sort, Sorts, ValidatedQuery,
 };
+
+mod relationship;
+pub use relationship::{Relationship, RelationshipTarget};
