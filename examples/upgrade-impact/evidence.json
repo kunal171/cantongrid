@@ -1,0 +1,19 @@
+{
+  "format_version": 1,
+  "verified_on": "2026-11-22",
+  "scope": "offline_unchanged_dar_baseline",
+  "dar_sha256": "b53ccaa76903e755581b1c1ff03da39044c879b437ee57b7996b712447d83f85",
+  "main_package_id": "730711263d9ca88f4ee397a7428ef775dff14ee144216dc08053f955f3cb357e",
+  "models": 1,
+  "selected_reads": 7,
+  "compatible": true,
+  "rebuild": "unnecessary",
+  "sample_statuses": [
+    "matched",
+    "matched"
+  ],
+  "projected_values_equal": false,
+  "ledger_writes": false,
+  "database_connections": false,
+  "live_upgrade_verified": false
+}

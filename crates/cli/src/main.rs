@@ -13,7 +13,11 @@ use std::{
 const HELP: &str = "CantonGrid — local ingestion and storage reference
 
 Usage:
+  cantongrid inspect evaluate <models.json> <model-name> <payload.json>
+  cantongrid inspect progress <runtime.json>
   cantongrid sync plan <old.dar> <new.dar> <models.json>
+  cantongrid sync summary <old.dar> <new.dar> <models.json>
+  cantongrid sync evaluate <old.dar> <new.dar> <models.json> <fixtures.json>
   cantongrid sync bundle <old.dar> <new.dar> <models.json> <output-directory>
   cantongrid metadata inspect <artifact.dar>
   cantongrid upgrade plan <old-runtime> <new-runtime> <dar> <models> <namespace>
@@ -63,6 +67,9 @@ fn main() -> ExitCode {
 /// Accept exact command shapes before dispatching fixture, source or operator actions.
 fn run(args: Vec<String>) -> Result<(), String> {
     match args.as_slice() {
+        [command, action, rest @ ..] if command == "inspect" => {
+            commands::inspector::run(action, rest)
+        }
         [command, action, rest @ ..] if command == "upgrade" => {
             commands::selection_upgrade::run(action, rest)
         }

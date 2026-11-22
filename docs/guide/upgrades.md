@@ -4,8 +4,8 @@ Introduced in **0.4.0-alpha.2**, reviewed additive package handoffs keep
 one source generation, its checkpoint and existing contracts/history. Old packages
 remain selected: uploading a new package does not migrate old contracts.
 
-This command consumes explicit model JSON. Automatic DAR-to-model synchronization
-is separate work in [#24](https://github.com/kunal171/cantongrid/issues/24).
+This command consumes explicit model JSON. Use [offline sync and impact analysis](upgrade-impact.md)
+to prepare and review definitions first; sync alone cannot activate a package.
 
 ## Prepare and review
 

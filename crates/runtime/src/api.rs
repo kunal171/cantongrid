@@ -39,6 +39,9 @@ struct Filter {
 /// Trusted query dispatch; root/direction are data inputs, never grant claims.
 enum Selection {
     Canonical(PageKind),
+    Transaction {
+        root: String,
+    },
     Lineage {
         root: String,
         direction: LineageDirection,
@@ -50,6 +53,16 @@ impl Selection {
         match self {
             Self::Canonical(PageKind::Active) => "active".into(),
             Self::Canonical(PageKind::History) => "history".into(),
+            Self::Transaction { root } => {
+                use sha2::{Digest, Sha256};
+                format!(
+                    "inspect-transaction:{}",
+                    Sha256::digest(root.as_bytes())
+                        .iter()
+                        .map(|b| format!("{b:02x}"))
+                        .collect::<String>()
+                )
+            }
             Self::Lineage { root, direction } => {
                 use sha2::{Digest, Sha256};
                 let hash =
@@ -129,6 +142,14 @@ impl Service {
         {
             return Err("invalid lineage filter".into());
         }
+        if let Selection::Transaction { root } = &selection
+            && (root.is_empty()
+                || root.len() > 1024
+                || root.trim() != root
+                || root.chars().any(char::is_control))
+        {
+            return Err("invalid inspector filter".into());
+        }
         let project = Project::load(&self.path)?;
         let identity = auth::authenticate(&project, token)?;
         let limit = filter.limit.unwrap_or(20);
@@ -137,6 +158,7 @@ impl Service {
         }
         let name = selection.cursor_kind();
         let history = matches!(selection, Selection::Canonical(PageKind::History));
+        let inspecting = matches!(selection, Selection::Transaction { .. });
         let lineage = matches!(selection, Selection::Lineage { .. });
         let after = filter
             .cursor
@@ -166,6 +188,14 @@ impl Service {
                 let mut store = Store::open_env(&project.destination_database_env)
                     .map_err(|_| "destination unavailable")?;
                 let page = match selection {
+                    Selection::Transaction { root } => store.inspect_transaction(
+                        &project.plan,
+                        &caller,
+                        lease,
+                        &root,
+                        after.as_deref(),
+                        limit,
+                    ),
                     Selection::Canonical(kind) => store.read_page(
                         &project.plan,
                         &caller,
@@ -187,8 +217,12 @@ impl Service {
                     ),
                 }
                 .map_err(|e| {
-                    if e == cantongrid_storage::StoreError::LineageUnavailable {
+                    if e == cantongrid_storage::StoreError::LineageUnavailable
+                        || e == cantongrid_storage::StoreError::InspectorUnavailable
+                    {
                         "contract unavailable".into()
+                    } else if e == cantongrid_storage::StoreError::ModelQuery {
+                        "invalid inspector filter".into()
                     } else {
                         format!("authorized query unavailable: {e}")
                     }
@@ -236,6 +270,11 @@ impl Service {
                 "payloadEncoding":"raw_json","archiveEvidence":"prior_create_dependency"
             })),
         };
+        if inspecting {
+            result.provenance = async_graphql::Json(
+                serde_json::json!({"coverage":"partial_recorded_evidence","complete":false,"view":"flat_authorized_records","order":"visible_record_ordinal","payloadsIncluded":false}),
+            );
+        }
         if lineage {
             result.provenance.0["coverage"] = serde_json::json!("partial_recorded_evidence");
             result.provenance.0["complete"] = serde_json::json!(false);
@@ -274,6 +313,33 @@ fn public_event(item: serde_json::Value) -> serde_json::Value {
 struct QueryRoot;
 #[Object]
 impl QueryRoot {
+    /// Flat authorized records; neither a transaction ID nor an exercise observer grants endpoint access.
+    #[graphql(complexity = 50)]
+    async fn inspect_transaction(
+        &self,
+        ctx: &Context<'_>,
+        transaction_id: String,
+        limit: Option<i32>,
+        cursor: Option<String>,
+    ) -> async_graphql::Result<Page> {
+        let request = ctx.data_unchecked::<RequestContext>();
+        request
+            .service
+            .query_selection(
+                &request.token,
+                Selection::Transaction {
+                    root: transaction_id,
+                },
+                Filter {
+                    limit: limit.map(|v| v as usize),
+                    cursor,
+                },
+            )
+            .await
+            .map(|r| r.page)
+            .map_err(|_| async_graphql::Error::new("authorized query unavailable"))
+    }
+
     /// A visible root does not imply visibility of its relationships or proof participants.
     #[graphql(complexity = 50)]
     async fn contract_lineage(
@@ -437,6 +503,7 @@ async fn rest(
             } else if reason == "invalid page limit"
                 || reason == "invalid cursor"
                 || reason == "invalid lineage filter"
+                || reason == "invalid inspector filter"
             {
                 StatusCode::BAD_REQUEST
             } else {
@@ -496,6 +563,16 @@ async fn lineage(
     .await
 }
 
+/// Inspector pagination uses visible ordinals, never source node positions.
+async fn transaction(
+    State(service): State<Service>,
+    headers: HeaderMap,
+    axum::extract::Path(root): axum::extract::Path<String>,
+    Query(filter): Query<Filter>,
+) -> Response {
+    rest(service, headers, filter, Selection::Transaction { root }).await
+}
+
 /// Check caller again after the complete GraphQL operation, so a mid-operation grant change
 /// cannot expose a successful earlier resolver alongside later denial errors.
 async fn graphql(
@@ -550,6 +627,7 @@ pub async fn serve(path: &Path) -> Result<(), String> {
     };
     let router = Router::new()
         .route("/v1/contracts", get(active))
+        .route("/v1/inspect/transactions/{transactionId}", get(transaction))
         .route("/v1/contracts/{contractId}/lineage", get(lineage))
         .route("/v1/events", get(history))
         .route("/graphql", post(graphql))
@@ -557,6 +635,10 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .route("/v1/models", get(model_api::list))
         .route("/v1/models/{namespace}/{name}", get(model_api::describe))
         .route("/v1/models/{namespace}/{name}/query", post(model_api::rows))
+        .route(
+            "/v1/models/{namespace}/{name}/inspect",
+            post(model_api::diagnose),
+        )
         .route(
             "/v1/models/{namespace}/{name}/joins/{relationship}/query",
             post(model_api::join_rows),

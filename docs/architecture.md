@@ -139,7 +139,7 @@ rollback uses the existing rebuild path while retaining the widened selection.
 
 ## Remote transport and schema synchronization (#22–#24)
 
-Next source slice: retain the default numeric-loopback HTTP policy and add an
+Implemented source policy: retain default numeric-loopback HTTP and support an
 explicit HTTPS policy for Ledger and health endpoints. Validate endpoint shape,
 keep redirects/proxies disabled, preserve bounded timeouts/bodies, and bind the
 transport and identity-provider settings into source/cursor identity. PostgreSQL
@@ -155,7 +155,7 @@ required. This is not an advisory or license-scanner exemption. No insecure-cert
 switch, plaintext fallback, new Ledger SDK or runtime executable is proposed.
 The supplied build spec §2 requires approval for new third-party hard dependencies.
 
-Schema sync will reuse `cantongrid-metadata` and `cantongrid-models`. Developers
+Schema sync reuses `cantongrid-metadata` and `cantongrid-models`. Developers
 pin exact old package identities and explicit projections/processing rules. An
 offline command resolves the corresponding new package/template, validates selected
 field paths/types/scales, reports whole-signature changes and emits models, SQL,
@@ -216,3 +216,23 @@ values in the same snapshot. Existing atomic projections remain the source of
 truth. Generated schemas include both fingerprints to isolate namespace aliases.
 Aggregate authorization is unchanged. See the [contract](design/joins.md) and
 [guide](guide/joins.md).
+
+## Developer inspector (M5)
+
+`storage::inspector` reads existing committed provenance and model tables in
+read-only snapshots. Transaction ordinals are assigned after independent event/
+endpoint visibility checks. Projection diagnoses compare native SQL records and
+emit only finite status/error codes. Model API catalog and encoding guards apply
+to diagnostics. Global checkpoint/rebuild observations use a local operator
+command and count-free restricted PQS bounds; no global progress API is mounted.
+See the [contract](design/inspector.md) and [guide](guide/inspector.md).
+
+## Upgrade impact analysis (M6)
+
+`cantongrid-sync` extends the existing verified DAR comparison with selected-field
+signatures, downstream projection dependencies and exact generated identities.
+Relationship revision drift is a structured blocker; no pin is silently rewritten.
+The same compiler generates compatible bundles. Read-only sample evaluation uses
+the model evaluator and M5 sanitized diagnostics. It does not interpret LF or
+connect to sources/storage. See the [contract](design/impact.md) and
+[guide](guide/upgrade-impact.md) for bounds and explicit activation gates.

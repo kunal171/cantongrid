@@ -107,6 +107,10 @@ fn retained_scoped_sources_preserve_atomic_transactions_and_receipt_replay() {
             pk: 0,
         })
         .unwrap();
+        let bounds = cantongrid_pqs::bounds_env(&variable, &plan, &lease).unwrap();
+        assert_eq!(bounds["schema"], "041");
+        assert_eq!(bounds["historyComplete"], false);
+        assert!(bounds["latest"].as_str().unwrap().parse::<i64>().unwrap() >= factory);
         let expected = read(&format!("pqs-{scope}.json"));
         let retained_end = read(&format!("coverage-{scope}.json"))["query_end"]
             .as_i64()

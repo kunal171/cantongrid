@@ -3,7 +3,11 @@
 #![forbid(unsafe_code)]
 mod bundle;
 mod compare;
+mod evaluation;
+mod impact;
 pub use bundle::Bundle;
+pub use evaluation::{Evaluation, EvaluationReport};
+pub use impact::{Artifacts, Dependency, FieldDependency, ImpactReport, ModelImpact, Signature};
 mod plan;
 mod resolve;
 pub use compare::Change;

@@ -1,0 +1,11 @@
+{
+  "diagnostic": {
+    "errorCode": null,
+    "fingerprint": "207804e002ff9b69208418ee9cf10e20d7fdc7aa7e282bf415f296344eb8f463",
+    "model": "records",
+    "revision": "1",
+    "status": "matched"
+  },
+  "ledgerExecution": "not_performed",
+  "operation": "inspector_evaluation"
+}

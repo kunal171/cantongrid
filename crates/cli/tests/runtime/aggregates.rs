@@ -159,7 +159,7 @@ fn aggregate_rest_graphql_share_privacy_cursors_and_revocation_guards() {
         &format!("{base}/models"),
         Some(&ab),
         Some(
-            json!({"query":"{models{namespace name revision fingerprint queryField fields{name kind nullable scale operators} aggregateQueryField aggregateFields{name kind nullable scale operators}}}"}),
+            json!({"query":"{models{namespace name revision fingerprint queryField diagnosticQueryField fields{name kind nullable scale operators} aggregateQueryField aggregateFields{name kind nullable scale operators}}}"}),
         ),
     );
     assert_eq!(described["data"]["models"], listing["models"]);

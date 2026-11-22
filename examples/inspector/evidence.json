@@ -1,0 +1,33 @@
+{
+  "recordedOn": "2026-11-22",
+  "releaseTarget": "0.4.0-alpha.5",
+  "published": false,
+  "source": "retained LocalNet SQL and owned synthetic fixtures",
+  "currentLedgerAuthority": "not claimed; retained checks use synthetic leases",
+  "retainedSourceProfiles": [
+    "operator",
+    "a",
+    "b",
+    "ab"
+  ],
+  "rustTests": 190,
+  "pythonTests": 42,
+  "nestedStorageVisibleRecords": {
+    "a": 4,
+    "b": 3,
+    "shared": 5
+  },
+  "pairApiVisibleRecords": {
+    "a": 2,
+    "b": 2,
+    "shared": 3
+  },
+  "nativeNumericDriftDetected": "0.0000000001",
+  "sourceRowsChanged": false,
+  "ledgerWrites": false,
+  "rawPayloadsExported": false,
+  "hiddenNodePositionsExported": false,
+  "checkpointAdvancedByInspection": false,
+  "globalProgressApi": false,
+  "failedTrace": "not_recorded"
+}

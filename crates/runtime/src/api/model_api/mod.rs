@@ -1,5 +1,6 @@
 //! Per-request generated model schema, authenticated before metadata discovery or row resolution.
 use super::{Project, RequestContext, Service, auth, bearer, current_source, error, source_valid};
+mod diagnostics;
 mod graphql_schema;
 mod join_schema;
 mod relationship_schema;
@@ -13,6 +14,7 @@ use axum::{
 };
 use cantongrid_models::QueryOptions;
 use cantongrid_storage::{BoundModel, Store};
+pub(super) use diagnostics::rest as diagnose;
 use graphql_schema::schema;
 pub(super) use relationships::{joined as join_rows, rest as relationship_rows};
 pub(super) use rest::{aggregates, describe, list, rows};
@@ -58,6 +60,9 @@ enum QueryError {
 enum QueryMode {
     Rows(QueryOptions),
     Aggregate,
+    Diagnostic {
+        root: String,
+    },
     Relationship {
         name: String,
         root: String,
@@ -112,6 +117,17 @@ async fn query_mode(
     let project = Project::load(&service.path).map_err(|_| QueryError::Unavailable)?;
     let identity = auth::authenticate(&project, token).map_err(|_| QueryError::Unavailable)?;
     let kind = match &mode {
+        QueryMode::Diagnostic { root } => {
+            if root.is_empty()
+                || root.len() > 1024
+                || root.trim() != root
+                || root.chars().any(char::is_control)
+                || cursor.is_some()
+            {
+                return Err(QueryError::Input);
+            }
+            format!("diagnostic:{}:{}", binding.namespace, binding.fingerprint)
+        }
         QueryMode::Rows(options) => {
             let validated = binding
                 .model
@@ -203,6 +219,13 @@ async fn query_mode(
                 .map_err(|_| QueryError::Unavailable)?;
             let lease = source.lease().ok_or(QueryError::Unavailable)?;
             let result = match mode {
+                QueryMode::Diagnostic { root } => store.inspect_projection(
+                    &project.plan,
+                    &identity.caller,
+                    lease,
+                    &binding,
+                    &root,
+                ),
                 QueryMode::Rows(options) => store.read_model_query(
                     &project.plan,
                     &identity.caller,
@@ -242,7 +265,9 @@ async fn query_mode(
                 ),
             };
             result.map_err(|e| {
-                if e == cantongrid_storage::StoreError::RelationshipUnavailable {
+                if e == cantongrid_storage::StoreError::RelationshipUnavailable
+                    || e == cantongrid_storage::StoreError::InspectorUnavailable
+                {
                     QueryError::NotFound
                 } else if e == cantongrid_storage::StoreError::ModelQuery {
                     QueryError::Input

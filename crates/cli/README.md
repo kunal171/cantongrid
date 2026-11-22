@@ -9,7 +9,7 @@ The executable is named `cantongrid`. Run `cantongrid --help` for commands.
 Requires Rust 1.100.0 or newer. The package installs the `cantongrid` executable.
 
 ```bash
-cargo install cantongrid-cli --version 0.4.0-alpha.4 --locked
+cargo install cantongrid-cli --version 0.4.0-alpha.5 --locked
 cantongrid --help
 cantongrid init ./my-demo
 cantongrid validate ./my-demo/cantongrid.json
@@ -24,6 +24,9 @@ and `cantongrid serve runtime.json` serves authenticated REST/GraphQL.
 `cantongrid models` validates projections and generates SQL, TypeScript and
 GraphQL definitions. Source credentials and database setup are separate steps;
 follow the [LocalNet PoC](https://github.com/kunal171/cantongrid/blob/main/docs/guide/poc.md).
+
+Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/inspector.md):
+authorized transaction/projection evidence and sanitized local diagnostics.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 

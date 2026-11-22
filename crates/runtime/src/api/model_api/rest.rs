@@ -20,6 +20,7 @@ pub(super) struct Metadata {
     revision: String,
     fingerprint: String,
     query_field: String,
+    diagnostic_query_field: String,
     fields: Vec<QueryField>,
     #[serde(skip_serializing_if = "Option::is_none")]
     relationship_query_fields: Option<Vec<String>>,
@@ -38,6 +39,10 @@ pub(super) fn metadata(binding: &BoundModel, bindings: &[BoundModel]) -> Result<
         revision: binding.model.revision.to_string(),
         fingerprint: binding.fingerprint.clone(),
         query_field: binding.model.api_name().map_err(|e| e.to_string())?,
+        diagnostic_query_field: binding
+            .model
+            .diagnostic_api_name()
+            .map_err(|_| "diagnostic metadata unavailable")?,
         fields: binding.model.query_fields().map_err(|e| e.to_string())?,
         relationship_query_fields: if binding.model.relationships.is_empty() {
             None

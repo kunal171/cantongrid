@@ -24,6 +24,7 @@ pub struct Report {
     pub packages_added: Vec<String>,
     pub packages_removed: Vec<String>,
     pub diagnostics: Vec<Diagnostic>,
+    pub impact: crate::ImpactReport,
 }
 /// A source-only review result. A blocked result has no generated model catalog to consume.
 pub struct SyncPlan {
@@ -104,6 +105,7 @@ pub(crate) fn analyze(
             .map(|p| p.package_id.clone())
             .collect(),
         diagnostics: vec![],
+        impact: crate::ImpactReport::default(),
     };
     let mut old_resolver = Resolver::new(old);
     let mut new_resolver = Resolver::new(new);
@@ -212,6 +214,57 @@ pub(crate) fn analyze(
             model.revision = model.revision.checked_add(1).ok_or(Error::Limit)?;
         }
     }
+    // Target revisions are application policy, not package identity. Never rewrite a pin.
+    // Keep the report available when refreshed models would fail catalog cross-validation.
+    for model in &models {
+        for link in &model.relationships {
+            let target = models.iter().find(|m| m.name == link.target.model);
+            let error = match target {
+                Some(target) if target.revision != link.target.revision => {
+                    Some(Error::Incompatible)
+                }
+                None if link.join.is_some() => Some(Error::Identity),
+                _ => None,
+            };
+            if let Some(error) = error {
+                report.diagnostics.push(Diagnostic {
+                    model: model.name.clone(),
+                    field: Some(format!("relationship.{}", link.name)),
+                    error,
+                });
+            }
+        }
+    }
+    // A target that cannot be resolved is unavailable even when its revision could not
+    // refresh. Propagate that blocker through incoming links, including cycles, at most
+    // once per model; do not report those generated APIs as unaffected.
+    let mut blocked: BTreeSet<String> =
+        report.diagnostics.iter().map(|d| d.model.clone()).collect();
+    loop {
+        let mut changed = false;
+        for model in &models {
+            if blocked.contains(&model.name) {
+                continue;
+            }
+            if let Some(link) = model
+                .relationships
+                .iter()
+                .find(|link| blocked.contains(&link.target.model))
+            {
+                report.diagnostics.push(Diagnostic {
+                    model: model.name.clone(),
+                    field: Some(format!("relationship.{}", link.name)),
+                    error: Error::Incompatible,
+                });
+                blocked.insert(model.name.clone());
+                changed = true;
+            }
+        }
+        if !changed {
+            break;
+        }
+    }
+    report.impact = crate::impact::build(old, new, catalog.models(), &models, &report.diagnostics)?;
     if report.changes.len() > 4096 || report.diagnostics.len() > 8192 {
         return Err(Error::Limit);
     }

@@ -299,3 +299,9 @@ fn malformed_dars_are_rejected_at_the_public_boundary() {
         Err(SyncError::Metadata)
     ));
 }
+
+#[path = "impact_tests.rs"]
+mod impact;
+
+#[path = "evaluation_tests.rs"]
+mod evaluation;

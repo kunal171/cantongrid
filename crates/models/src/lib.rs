@@ -31,3 +31,6 @@ pub use join::{JoinFields, JoinKind, JoinProjection};
 
 #[cfg(test)]
 mod join_tests;
+
+mod diagnostic;
+pub use diagnostic::ModelDiagnostic;

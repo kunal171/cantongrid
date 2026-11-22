@@ -3,7 +3,9 @@
 use cantongrid_postgres::{DatabaseError, connect_env, postgres::IsolationLevel};
 use std::fmt;
 
+mod bounds;
 pub mod coverage;
+pub use bounds::bounds_env;
 mod reader;
 pub use reader::{Cursor, exercise_page_env, lineage_page_env, page_env};
 mod handoff;

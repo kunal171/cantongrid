@@ -6,7 +6,7 @@ Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections 
 
 ```toml
 [dependencies]
-cantongrid-storage = "=0.4.0-alpha.4"
+cantongrid-storage = "=0.4.0-alpha.5"
 ```
 
 `initialize_env` applies destination migrations explicitly. `Store` manages
@@ -42,6 +42,9 @@ projections, with independently authorized endpoints. See the
 Version alpha.4 also includes explicit typed inner joins over declared relationships,
 with selected columns and independent input authorization. See the
 [join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/joins.md).
+
+Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/inspector.md):
+authorized transaction/projection evidence and sanitized local diagnostics.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 

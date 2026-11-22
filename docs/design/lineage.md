@@ -60,8 +60,9 @@ local controls; no new DAR/party provisioning or Outcomia modification is implie
 
 Declared relationships (M3) have a [separate semantic contract](relationships.md);
 they never become source proofs. [M4 inner joins](joins.md) have a separate
-selected-value API. General traversal, inspector and durable public streams remain
-deferred. No production-readiness claim.
+selected-value API. The [M5 inspector](inspector.md) adds a flat authorized record
+view in the alpha.5 source checkout. General traversal and durable public streams
+remain deferred. No production-readiness claim.
 
 ## Recorded LocalNet results
 
