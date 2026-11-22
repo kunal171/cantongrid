@@ -196,3 +196,13 @@ share the existing source-health, caller-grant and signed-cursor guards.
 This is one-hop, partial recorded evidence; it does not reconstruct missing
 history, follow payload references or expose unindexed transient endpoints.
 See the [design](design/lineage.md) and [API guide](guide/lineage.md).
+
+## Declared relationships (M3)
+
+Model declarations pin the target revision and exact key types. Existing model
+registry fingerprints version the policy; existing atomic projections maintain
+its inputs. `model_projection::relationships` resolves only independently visible
+active endpoints, with a bounded visible fanout. Runtime model APIs bind both
+fingerprints and the root into signed cursors and recheck the catalog before
+response delivery. There is no separate relationship cache or new migration.
+See the [contract](design/relationships.md) and [guide](guide/relationships.md).

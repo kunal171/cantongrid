@@ -16,6 +16,28 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M3 declared relationships — 2026-11-22
+
+Implemented in the source checkout preparing alpha.4. The
+[relationship contract](design/relationships.md) and
+[example](../examples/relationships/README.md) describe the supported slice.
+No dependency or destination migration was added.
+
+| Check | Result |
+| --- | --- |
+| Model declarations | Names, duplicate policies, exact scalar/scale compatibility, unsupported optional/Boolean keys and immutable revision conflicts checked; absent declarations preserve legacy fingerprints |
+| Owned PostgreSQL | 62 storage tests passed; new relationship case covers different templates, separate create batches, A/B/shared visibility, hidden fanout, exact large Numeric keys, archive/recreate, replay, stale bindings, cross-stream denial and projection rollback |
+| REST / GraphQL | Five runtime integration tests passed with mock source authority; relationship counts/items agree, shared transport cursors work, cross-root/policy/caller cursors fail, hidden/unknown roots match, target publication/rollback and source policy revisions obey their pins |
+| Current authority | Caller revocation, grant epochs and unhealthy/denied sources stop delivery; aliases share the existing two-resolver budget |
+| Generated interfaces | Offline SDL signatures match served schema, example TypeScript passes strict `tsc --noEmit`, and ordinary/forged reference previews preserve the same declared key |
+
+The workspace tests, strict Clippy, existing model registry/install/recovery
+workflows, Python helpers, security checks and package dry run are part of the
+final branch checks. Fixture source leases and the API's mock checker are not
+live Canton evidence. No ledger writes, package uploads or grant changes were
+needed for M3. Its current active projection queries do not imply historical
+edges, proof of creation, joined payloads or transitive reachability.
+
 ## M2 direct lineage — 2026-11-22
 
 Implemented on `feat/privacy-safe-lineage`, preparing **0.4.0-alpha.4**; not a

@@ -9,6 +9,10 @@
 - Generic and existing Outcomia LocalNet acceptance; unknown/filtered subtrees
   remain unproven. No declared links, joins or transitive traversal.
 
+- M3 versioned declared relationships over exact projected keys, generated client
+  interfaces and guarded current-state REST/GraphQL queries. Declared links remain
+  distinct from source-proven lineage; no joined payloads or traversal.
+
 ## 0.4.0-alpha.3 — 2026-11-21
 
 - Opt-in schema041 tree-mode exercise receipts, bounded complete forward

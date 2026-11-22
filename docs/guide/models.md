@@ -328,3 +328,10 @@ See [verification](../verification.md#staged-rebuilds) for owned-PostgreSQL and
 mock-source coverage and the 261-contract [LocalNet acceptance](poc.md#evidence-and-boundaries).
 
 Grouped count/sum declarations are documented in [aggregate models](aggregates.md).
+
+## Explicit relationships
+
+Models can declare versioned links over exact projected keys. Both endpoints
+retain independent visibility; results are application declarations, not source
+ancestry proofs. See the [relationship guide](relationships.md) and
+[factory example](../../examples/relationships/README.md).

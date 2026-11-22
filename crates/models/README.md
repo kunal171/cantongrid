@@ -28,6 +28,10 @@ source binding and active revision changes are explicit operator actions.
 See the [model guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/models.md)
 for a complete definition and lifecycle.
 
+Source alpha.4 also supports versioned declared relationships over current model
+projections, with independently authorized endpoints. See the
+[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/relationships.md).
+
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
 Supported profile: the tested live profile is loopback-only, with authorized node-local

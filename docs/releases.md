@@ -31,13 +31,15 @@ older source releases. GitHub releases do not upload crates automatically.
 
 ## Preparing 0.4.0-alpha.4 (unpublished)
 
-The source adds opt-in privacy-safe direct lineage and private migration 010.
+The source adds opt-in privacy-safe direct lineage and private migration 010,
+plus versioned declared relationships over current model projections.
 Use a new generation with both exercise and lineage source settings; receipt-only
 and legacy generations cannot silently adopt lineage. Run explicit `storage init`
 and upgrade workers and API instances together. Older binaries reject migration
 010; rollback requires a pre-upgrade backup and the previous binary.
 
-The [guide](guide/lineage.md) describes partial one-hop coverage, visibility and
+The [relationship guide](guide/relationships.md) describes model revision gates;
+older binaries reject declarations. The [lineage guide](guide/lineage.md) describes partial one-hop coverage, visibility and
 cursor rules. Generic and Outcomia LocalNet evidence is linked from
 [verification](verification.md). This checkout does not publish a release or crates.
 

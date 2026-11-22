@@ -1,6 +1,7 @@
 # Declared relationships (M3)
 
-Status: implementation in progress on `feat/declared-relationships`, based on M2.
+Status: implemented on `feat/declared-relationships`, based on M2; owned
+PostgreSQL and mock-source API acceptance passed. No new LocalNet run claimed.
 
 ## Contract
 
@@ -33,7 +34,7 @@ Both canonical endpoints must independently be active and visible, with both
 model rows present in the exact configured stream. Filter before count, ordering,
 fanout checking and keyset paging. Hidden and unknown roots have the same
 unavailable response. Hidden targets produce no placeholders or hidden counts.
-No target uniqueness or absence is claimed. The 100-target limit applies only to
+Self-links are excluded. No target uniqueness or absence is claimed. The 100-target limit applies only to
 visible rows, so hidden rows cannot change success into a limit error.
 
 Expose one outgoing hop through authenticated REST and generated model GraphQL.

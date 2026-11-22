@@ -33,6 +33,10 @@ and `contractLineage` on the generic GraphQL API. Responses contain partial
 one-hop evidence, with caller and source checks before delivery. See the
 [lineage guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/lineage.md).
 
+Source alpha.4 also supports versioned declared relationships over current model
+projections, with independently authorized endpoints. See the
+[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/relationships.md).
+
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 
 Supported profile: the tested live profile is loopback-only, with authorized node-local
