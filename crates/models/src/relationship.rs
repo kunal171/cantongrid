@@ -13,6 +13,9 @@ pub struct Relationship {
     pub target: RelationshipTarget,
     /// Visible fanout only; hidden matches must not change query success or public counts.
     pub max_targets: u32,
+    /// Joined values require explicit opt-in; absence preserves M3 fingerprints and API behavior.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub join: Option<crate::JoinProjection>,
 }
 
 /// Exact target revision within the source binding's namespace and physical stream.
@@ -42,6 +45,9 @@ pub(crate) fn validate(model: &Model) -> Result<(), ModelError> {
             return Err(ModelError::Definition);
         }
         key_type(model, &link.source_field)?;
+        if let Some(join) = &link.join {
+            join.validate_source(model)?;
+        }
     }
     Ok(())
 }
@@ -82,6 +88,9 @@ impl Model {
             || key_type(self, &link.source_field)? != key_type(target, &link.target.field)?
         {
             return Err(ModelError::Type);
+        }
+        if let Some(join) = &link.join {
+            join.validate_target(target)?;
         }
         Ok(())
     }
@@ -128,6 +137,7 @@ mod tests {
                 field: "amount".into(),
             },
             max_targets: 10,
+            join: None,
         };
         let mut source = model.clone();
         source.relationships.push(link);
@@ -168,6 +178,7 @@ mod tests {
                 field: "label".into(),
             },
             max_targets: 10,
+            join: None,
         }];
         assert!(source.validate().is_err());
         let mut wire = serde_json::to_value(&source).unwrap();
@@ -202,6 +213,7 @@ mod tests {
                 field,
             },
             max_targets: 100,
+            join: None,
         };
         let mut source = model.clone();
         source.relationships.push(link.clone());

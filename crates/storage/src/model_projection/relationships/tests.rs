@@ -27,6 +27,7 @@ fn declared_links_follow_atomic_current_state_without_becoming_ancestry() {
                 field: "label".into(),
             },
             max_targets: 2,
+            join: None,
         },
         Relationship {
             name: "amountPeers".into(),
@@ -38,6 +39,7 @@ fn declared_links_follow_atomic_current_state_without_becoming_ancestry() {
                 field: "amount".into(),
             },
             max_targets: 100,
+            join: None,
         },
     ];
     s.install(source.clone());

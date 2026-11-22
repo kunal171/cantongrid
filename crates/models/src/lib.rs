@@ -25,3 +25,9 @@ pub use query::{
 
 mod relationship;
 pub use relationship::{Relationship, RelationshipTarget};
+
+mod join;
+pub use join::{JoinFields, JoinKind, JoinProjection};
+
+#[cfg(test)]
+mod join_tests;
