@@ -124,6 +124,15 @@ impl Catalog {
             }
             model.validate()?;
         }
+        // Resolve targets present in this upload early. Separately registered targets are checked
+        // against their exact installed revision and active binding at query time.
+        for model in &doc.models {
+            for link in &model.relationships {
+                if let Some(target) = doc.models.iter().find(|m| m.name == link.target.model) {
+                    model.validate_relationship(&link.name, target)?;
+                }
+            }
+        }
         doc.models.sort_by(|a, b| a.name.cmp(&b.name));
         let fingerprint = digest(&serde_json::to_string(&doc).map_err(|_| ModelError::Document)?);
         Ok(Self {
