@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0-alpha.6 — 2026-11-22 (unreleased)
+
+- M7 bounded canonical state at an acknowledged source offset, with current
+  authorization, exact values and explicit unavailable-history responses.
+
 ## 0.4.0-alpha.5 — 2026-11-22
 
 - Read-only authorized transaction timelines and native per-contract projection
