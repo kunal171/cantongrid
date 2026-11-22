@@ -1,13 +1,13 @@
 # Working on CantonGrid
 
-- Active milestone: M3 explicit, versioned declared relationships, authorized by
-  “complete M3” on feat/declared-relationships. Follow docs/design/relationships.md.
-  M2 remains the direct source-proof baseline. No joined payloads, transitive
-  traversal, Outcomia changes or publication in this milestone. Preserve existing
-  aggregate scope guards and independent endpoint visibility.
+- Active milestone: M4 safe typed inner joins, authorized by “complete m4 too”
+  on feat/safe-inner-joins. Follow docs/design/joins.md. Reuse M3 relationship
+  policies and M2 source proofs without merging their provenance. Preserve all
+  aggregate scope guards. No outer joins, traversal, Outcomia changes, ledger
+  writes or publication in this milestone.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
-  acceptance. Funded trading, joins and streams remain later work.
+  acceptance. Funded trading and streams remain later work.
   Use docs/README.md for scope and docs/verification.md for dated evidence;
   do not claim full Phase 4 or production acceptance.
 - Aggregate reads require callers to cover the complete configured source-party
