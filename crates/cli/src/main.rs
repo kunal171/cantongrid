@@ -16,6 +16,8 @@ Usage:
   cantongrid inspect evaluate <models.json> <model-name> <payload.json>
   cantongrid inspect progress <runtime.json>
   cantongrid sync plan <old.dar> <new.dar> <models.json>
+  cantongrid sync summary <old.dar> <new.dar> <models.json>
+  cantongrid sync evaluate <old.dar> <new.dar> <models.json> <fixtures.json>
   cantongrid sync bundle <old.dar> <new.dar> <models.json> <output-directory>
   cantongrid metadata inspect <artifact.dar>
   cantongrid upgrade plan <old-runtime> <new-runtime> <dar> <models> <namespace>

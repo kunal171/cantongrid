@@ -309,3 +309,31 @@ pub(crate) fn build(
         ],
     })
 }
+
+impl crate::SyncPlan {
+    /// Concise operator output, also included in compatible bundles. Findings never apply changes.
+    pub fn impact_summary(&self) -> String {
+        let mut text = format!(
+            "Upgrade impact (offline)\nCompatible: {}\n",
+            self.report.compatible
+        );
+        for model in &self.report.impact.models {
+            text.push_str(&format!(
+                "- {}: rebuild {}; revision {} -> {}\n",
+                model.model, model.rebuild, model.before.revision, model.proposed.revision
+            ));
+            for dependency in model.dependencies.iter().filter(|d| d.review) {
+                text.push_str(&format!(
+                    "  Review {} {} -> {} (pinned {:?}, proposed {:?})\n",
+                    dependency.kind,
+                    dependency.name,
+                    dependency.model,
+                    dependency.target_revision,
+                    dependency.proposed_target_revision
+                ));
+            }
+        }
+        text.push_str("No ledger, database, checkpoint, history or grant changes applied.\n");
+        text
+    }
+}

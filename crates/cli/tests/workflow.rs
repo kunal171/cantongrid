@@ -628,6 +628,15 @@ fn sync_cli_rejects_malformed_inputs_without_leaking_paths_or_payloads() {
     fs::write(root.0.join(models), b"private malformed models").unwrap();
     for args in [
         vec!["sync", "plan", old_dar, new_dar, models],
+        vec![
+            "sync",
+            "evaluate",
+            old_dar,
+            new_dar,
+            models,
+            "private-fixtures.json",
+        ],
+        vec!["sync", "evaluate"],
         vec!["sync", "bundle", old_dar, new_dar, models, "bundle-out"],
         vec!["sync", "plan", "missing-old.dar", new_dar, models],
         vec!["sync", "plan"],
