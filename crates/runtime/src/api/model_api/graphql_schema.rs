@@ -40,6 +40,7 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
         .limit_depth(8)
         .limit_complexity(100)
         .disable_introspection();
+    builder = super::diagnostics::types(builder);
     let mut root = Object::new("Query");
     let metadata = bindings
         .iter()
@@ -70,7 +71,14 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
         .field(scalar("scale", TypeRef::named("Int")))
         .field(scalar("operators", TypeRef::named_nn_list_nn("String")));
     let mut model_metadata = Object::new("CgModel");
-    for name in ["namespace", "name", "revision", "fingerprint", "queryField"] {
+    for name in [
+        "namespace",
+        "name",
+        "revision",
+        "fingerprint",
+        "queryField",
+        "diagnosticQueryField",
+    ] {
         model_metadata = model_metadata.field(scalar(name, TypeRef::named_nn("String")));
     }
     model_metadata = model_metadata.field(Field::new(
@@ -314,6 +322,7 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
             )),
         );
         builder = builder.register(values).register(row).register(page);
+        root = super::diagnostics::root(root, &model, bindings)?;
         for link in &model.relationships {
             (builder, root) =
                 super::relationship_schema::register(builder, root, &model, &link.name, bindings)?;

@@ -784,7 +784,7 @@ fn model_binding_cli_checks_source_authority_and_readiness_before_activation() {
         &base,
         Some(&a),
         Some(
-            json!({"query":"{models{namespace name revision fingerprint queryField fields{name kind nullable scale operators}}}"}),
+            json!({"query":"{models{namespace name revision fingerprint queryField diagnosticQueryField fields{name kind nullable scale operators}}}"}),
         ),
     );
     assert_eq!(gql_discovery["data"]["models"], discovery);

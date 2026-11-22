@@ -19,7 +19,7 @@ Status: planned implementation on `feat/developer-inspector`, after alpha.4.
   Page 1–25/default20; at most 128 visible records, 2 MiB response. Signed cursors
   bind operation, transaction, caller policy and physical plan/generation. Cursor
   positions are visible ordinals, never source-node numbers.
-- Authenticated per-contract projection diagnosis: current visible canonical
+- Authenticated per-model/per-contract projection diagnosis: current visible canonical
   input, current bound model revision, sanitized evaluation status and native SQL
   comparison with the maintained row. No values or aggregate groups are returned.
   Archived/filtered inputs should have no current row. Unknown/hidden roots share

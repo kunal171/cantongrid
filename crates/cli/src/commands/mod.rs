@@ -13,3 +13,5 @@ pub mod model_rebuild;
 pub mod selection_upgrade;
 
 pub mod sync;
+
+pub mod inspector;
