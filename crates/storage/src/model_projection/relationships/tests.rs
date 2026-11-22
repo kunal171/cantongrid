@@ -10,6 +10,7 @@ fn declared_links_follow_atomic_current_state_without_becoming_ancestry() {
     let mut s = Scenario::visibility();
     let target = s.models[0].clone();
     let mut source = target.clone();
+    source.template.entity = "Factory".into();
     source.name = format!("{}_root", s.namespace);
     source.filter = Some(Filter {
         field: "state".into(),
@@ -43,7 +44,7 @@ fn declared_links_follow_atomic_current_state_without_becoming_ancestry() {
     s.plans[0] = Plan::pqs(
         s.plans[0].context().clone(),
         [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()].into(),
-        [target.template.clone()].into(),
+        [target.template.clone(), source.template.clone()].into(),
     )
     .unwrap()
     .with_source_binding("a".repeat(64));
@@ -58,6 +59,9 @@ fn declared_links_follow_atomic_current_state_without_becoming_ancestry() {
             payload["amount"] = amount.into();
         }
         let mut batch = create(&plan, &target, position, id, &payload.to_string());
+        if anchor {
+            batch.events[0].template = source.template.clone();
+        }
         batch.events[0].witnesses = owner.split(',').map(|p| PartyId::new(p).unwrap()).collect();
         batch
     };
@@ -75,6 +79,16 @@ fn declared_links_follow_atomic_current_state_without_becoming_ancestry() {
         model: model.clone(),
         fingerprint: model.fingerprint().unwrap(),
     };
+    let mut changed = source.clone();
+    changed.relationships[0].revision = 2;
+    let conflict = cantongrid_models::Catalog::parse(
+        &serde_json::json!({"version":1,"models":[changed]}).to_string(),
+    )
+    .unwrap();
+    assert!(matches!(
+        store.register_models(&s.namespace, &conflict),
+        Err(StoreError::ModelConflict)
+    ));
     let left = binding(&source);
     let right = binding(&target);
     let a = CallerGrants::from_verified(plan.context().binding(), [PartyId::new("A").unwrap()]);

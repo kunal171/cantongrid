@@ -239,7 +239,18 @@ fn declared_relationship_transports_bind_policy_root_revisions_and_current_grant
         Some(json!({"contract_id":"root","limit":1,"cursor":first["nextCursor"]})),
     )
     .1;
-    assert_eq!(gql["data"][&field], second);
+    for key in ["items", "visibleTotal", "fingerprint"] {
+        assert_eq!(gql["data"][&field][key], second[key]);
+    }
+    // Cursors encode issue time: compare their cross-transport behavior, not token bytes.
+    let third = request(
+        &rt,
+        &relation,
+        Some(&ab),
+        Some(json!({"contract_id":"root","cursor":gql["data"][&field]["nextCursor"],"limit":1})),
+    )
+    .1;
+    assert_eq!(third["items"][0]["targetContractId"], "a2");
     assert_eq!(second["items"][0]["relationship"], "declared");
     assert!(second["items"][0].get("proof").is_none());
     for (url, token, input) in [
