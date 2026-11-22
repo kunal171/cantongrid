@@ -8,6 +8,9 @@
   source-node gaps or global progress exposed to API callers.
 - Existing destination migrations, source plans and model fingerprints unchanged.
 
+- Update the existing `url` dependency to 2.5.9 (and `form_urlencoded` to
+  1.2.3) for RUSTSEC-2026-0592.
+
 ## 0.4.0-alpha.4 — 2026-11-22
 
 - Opt-in typed creation provenance and conservative direct exercise-to-create
