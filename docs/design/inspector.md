@@ -1,6 +1,8 @@
 # Read-only developer inspector (M5)
 
-Status: planned implementation on `feat/developer-inspector`, after alpha.4.
+Status: implemented on `feat/developer-inspector`, preparing alpha.5; owned
+PostgreSQL/mock-source tests and retained LocalNet SQL reconciliation pass.
+No new live Ledger acceptance is claimed.
 
 ## Supported surfaces
 

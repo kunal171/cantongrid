@@ -16,6 +16,40 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M5 developer inspector — 2026-11-22
+
+Implemented in the alpha.5 source checkout; not published. The
+[guide](guide/inspector.md), [contract](design/inspector.md) and
+[example findings](../examples/inspector/README.md) describe the supported surface.
+Migrations 001–010 and model/source fingerprints are unchanged.
+
+| Check | Result |
+| --- | --- |
+| Transaction visibility | Owned PostgreSQL and mock-source REST/GraphQL agree for A/B/shared callers. Hidden/unknown transactions match; ordinals and counts include only independently visible indexed endpoints and source-event witnesses |
+| Redaction and paging | No arguments/results, controllers, raw node bounds, witness lists, payloads or global checkpoints. Cross-transaction/caller/operation cursors fail; source outage, grant epochs and revocation stop delivery |
+| Projection diagnosis | Exact native Numeric drift at `0.0000000001`, missing/unexpected rows, filtered/archived inputs and current model publication tested. Findings never repair rows; archived absence remains consistent even if a newer model cannot evaluate its old payload |
+| Local commands | Matched/invalid payload findings contain no sentinel value/path; malformed shapes fail before I/O. Revoked operator authority yields no progress report and leaves the checkpoint unchanged |
+| Retained source | Four M0 LocalNet SQL profiles reconcile inspector records with source metadata, including A/B subsets. Unindexed transients stay absent; source bounds use the restricted reader and no row-count scan |
+| Interfaces | Offline/served diagnostic SDL signatures match; example TypeScript compiles with strict `tsc --noEmit` |
+
+The final suite passed 106 default Rust tests, 67 owned-storage tests, eight runtime
+API tests, five other database/CLI controls and four retained-source tests: 190
+Rust tests total. The 35 development-helper and seven PoC-helper tests, formatting,
+strict Clippy and security tools pass. Workspace package dry runs and archive
+inspection are required final source checks; no upload is performed in this task.
+
+Retained SQL checks use synthetic leases and an isolated owned destination, not
+new live Ledger authorization. No source rows, parties, grants, DARs or ledger
+transactions were changed. Failed operations have no durable historical trace;
+`not_recorded` is reported rather than invented execution history. Global progress
+is local operator-only. Production and rejected-command simulation are unverified.
+
+The security gate discovered upstream [RUSTSEC-2026-0592](https://rustsec.org/advisories/RUSTSEC-2026-0592).
+The existing transitive `url` dependency was updated to 2.5.9 with
+`form_urlencoded` 1.2.3; no new dependency was added. No exploit through a
+CantonGrid endpoint was demonstrated. This is an already patched upstream
+advisory, not a new contribution candidate.
+
 ## M4 typed inner joins — 2026-11-22
 
 Alpha.4 implements the [M4 contract](design/joins.md), with

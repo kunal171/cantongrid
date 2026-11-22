@@ -31,6 +31,14 @@ cargo install cantongrid-cli --version 0.4.0-alpha.4 --locked
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
 
+## Preparing 0.4.0-alpha.5 (unpublished)
+
+M5 adds read-only transaction and projection inspection plus sanitized local
+operator commands. No migration, plan change, model revision or reindex is
+required. Migrations 001–010 remain unchanged. The new server adds diagnostic
+metadata/GraphQL roots; use the matching generated client definitions. Existing
+alpha.4 database state remains compatible. See the [guide](guide/inspector.md).
+
 ## 0.4.0-alpha.4 compatibility
 
 This prerelease adds opt-in privacy-safe direct lineage and private migration 010,

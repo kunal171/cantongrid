@@ -216,3 +216,13 @@ values in the same snapshot. Existing atomic projections remain the source of
 truth. Generated schemas include both fingerprints to isolate namespace aliases.
 Aggregate authorization is unchanged. See the [contract](design/joins.md) and
 [guide](guide/joins.md).
+
+## Developer inspector (M5)
+
+`storage::inspector` reads existing committed provenance and model tables in
+read-only snapshots. Transaction ordinals are assigned after independent event/
+endpoint visibility checks. Projection diagnoses compare native SQL records and
+emit only finite status/error codes. Model API catalog and encoding guards apply
+to diagnostics. Global checkpoint/rebuild observations use a local operator
+command and count-free restricted PQS bounds; no global progress API is mounted.
+See the [contract](design/inspector.md) and [guide](guide/inspector.md).

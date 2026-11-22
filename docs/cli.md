@@ -28,6 +28,8 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `models typescript <models.json>` | Emit exact indexed-row interfaces |
 | `models graphql <models.json>` | Emit generated model SDL |
 | `models plan <models.json>` | Print DDL without executing it |
+| `inspect evaluate <models.json> <model-name> <payload.json>` | Local sanitized evaluation finding; no source connection or ledger execution |
+| `inspect progress <runtime.json>` | Current source authority/health plus restricted source bounds and owned progress; read-only, operator-local |
 | `models register <models.json> --namespace <project> --database-env <variable>` | Atomically register immutable definitions; no activation |
 | `models inspect <project> <model-name> <revision> --database-env <variable>` | Read registration/fingerprint metadata |
 | `models bind <runtime.json> <project> <model-name> <revision> [--replace <previous-revision>]` | Verify source rights/readiness, atomically backfill and activate an installed revision |

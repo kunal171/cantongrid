@@ -12,6 +12,7 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [Models](guide/models.md) | Definitions, exact calculations, installation and rebuilds |
 | [Package upgrades](guide/upgrades.md) | Reviewed additive handoffs, staged publication and rollback (unreleased) |
 | [DAR metadata](guide/metadata.md) | Offline package identities and qualified contract signatures (unreleased) |
+| [Developer inspector](guide/inspector.md) | Authorized committed records, projection findings and local progress |
 | [Typed inner joins](guide/joins.md) | Selected typed values with complete input visibility |
 | [Declared relationships](guide/relationships.md) | Versioned application links with independent endpoint visibility |
 | [Aggregates](guide/aggregates.md) | Grouped counts/sums with full-source authorization |
@@ -55,8 +56,8 @@ transport (#22), and command-driven schema synchronization (#24).
    [M2 direct lineage](design/lineage.md) is verified on the pinned LocalNet in this
    checkout. [M3 declared relationships](design/relationships.md) is implemented in this checkout;
    [M4 typed inner joins](design/joins.md) is implemented with owned PostgreSQL/mock-source checks.
-   Historical queries,
-   inspection and durable streams follow their own acceptance gates.
+   [M5 developer inspector](design/inspector.md) is implemented in the alpha.5
+   source checkout. Historical queries and durable streams follow their own gates.
 3. Extend existing metadata/sync with impact analysis rather than duplicating it.
    Outcomia factory/clubs contract work remains a separate repository track.
 

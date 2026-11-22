@@ -166,5 +166,6 @@ M0's pinned fixture is reproducible, including deliberately restricted views and
 explicit unsupported relationships. This is source-feasibility evidence, not
 production acceptance or proof of complete history.
 M1 then adds internal exercise receipts and replay/storage tests; M2 adds guarded
-lineage queries. Joins, temporal queries, inspectors, streams and reconciliation
+lineage queries. [M4 joins](joins.md) and the source-only [M5 inspector](inspector.md)
+now have separate guarded surfaces. Temporal queries, streams and reconciliation
 remain later milestones. Reuse metadata/sync for later impact analysis.
