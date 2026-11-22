@@ -260,6 +260,23 @@ fn projection_inspector_redacts_values_and_rechecks_model_publication_and_author
     );
     healthy.store(true, Ordering::Relaxed);
     allowed.store(false, Ordering::Relaxed);
+    let before_progress = store.checkpoint(&plan).unwrap();
+    let denied = Command::new(env!("CARGO_BIN_EXE_cantongrid"))
+        .args(["inspect", "progress", path.to_str().unwrap()])
+        .env("CANTONGRID_TEST_PQS_URL", source_database)
+        .env(
+            "CANTONGRID_TEST_SOURCE_TOKEN",
+            jwt("source-reader", key, clock() + 600),
+        )
+        .output()
+        .unwrap();
+    assert!(!denied.status.success());
+    assert!(denied.stdout.is_empty());
+    assert_eq!(store.checkpoint(&plan).unwrap(), before_progress);
+    let error = String::from_utf8_lossy(&denied.stderr);
+    assert!(!error.contains(source_database));
+    assert!(!error.contains("secret-sentinel"));
+
     assert_eq!(
         request(&rt, &url, Some(&a), Some(json!({"contract_id":"a"}))).0,
         503
