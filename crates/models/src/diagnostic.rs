@@ -44,9 +44,28 @@ impl Model {
     }
 }
 
+impl ModelDiagnostic {
+    /// Common generated output vocabulary for canonical/model identity and sanitized findings.
+    pub const OUTPUT_FIELDS: &[&str] = &[
+        "model",
+        "revision",
+        "fingerprint",
+        "status",
+        "contractId",
+        "namespace",
+        "projection",
+        "coverage",
+    ];
+}
+impl Model {
+    /// Diagnostic roots have a separate operation domain from ordinary model queries.
+    pub fn diagnostic_api_name(&self) -> Result<String, ModelError> {
+        Ok(format!("{}_diagnostic", self.api_name()?))
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
     #[test]
     fn diagnostics_never_echo_secret_inputs_values_or_parser_details() {
         let model = crate::Catalog::parse(include_str!("../assets/models/visibility.json"))
@@ -65,8 +84,7 @@ mod tests {
             assert!(!encoded.contains("line "));
             assert!(!encoded.contains("amount"));
         }
-        let mut payload: serde_json::Value =
-            serde_json::from_str(include_str!("../assets/models/visibility-payload.json")).unwrap();
+        let mut payload = serde_json::json!({"label":"example","owner":"A","amount":"1.0000000000","sequence":"1","note":null,"state":"Ready"});
         assert_eq!(
             model.diagnose(&payload.to_string()).unwrap().status,
             "matched"
