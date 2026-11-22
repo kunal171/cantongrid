@@ -120,6 +120,7 @@ pub fn prove_evidence(
     let mut nodes = BTreeMap::new();
     let mut offsets = BTreeSet::new();
     let mut transactions = BTreeSet::new();
+    let mut created_contracts = BTreeSet::new();
     for e in exercises {
         if !e.validate(plan) || nodes.insert(e.node_id, &e.witnesses).is_some() {
             return Err(EvidenceError);
@@ -128,7 +129,10 @@ pub fn prove_evidence(
         transactions.insert(&e.transaction_id);
     }
     for c in creations {
-        if !c.validate(plan) || nodes.insert(c.node_id, &c.witnesses).is_some() {
+        if !c.validate(plan)
+            || nodes.insert(c.node_id, &c.witnesses).is_some()
+            || !created_contracts.insert(&c.contract)
+        {
             return Err(EvidenceError);
         }
         offsets.insert(c.offset);
@@ -182,6 +186,9 @@ pub fn prove_evidence(
         let Some(parent) = parent.filter(|e| complete(e)) else {
             continue;
         };
+        if parent.contract == c.contract {
+            return Err(EvidenceError);
+        }
         // A known containing interval does not prove directness around an unknown nested bound.
         if exercises.iter().any(|e| {
             e.node_id > parent.node_id && e.node_id < c.node_id && e.last_descendant_node_id < 0
@@ -325,6 +332,12 @@ mod tests {
         let mut duplicate = page.clone();
         duplicate.creations[0].node_id = 2;
         assert_eq!(prove(&plan, &duplicate), Err(EvidenceError));
+        let mut repeated = page.clone();
+        repeated.creations[1].contract = repeated.creations[0].contract.clone();
+        assert_eq!(prove(&plan, &repeated), Err(EvidenceError));
+        let mut self_edge = page.clone();
+        self_edge.creations[0].contract = self_edge.delivery.exercises[0].contract.clone();
+        assert_eq!(prove(&plan, &self_edge), Err(EvidenceError));
         let mut huge = page;
         huge.delivery.exercises[0].last_descendant_node_id = i32::MAX;
         assert!(
