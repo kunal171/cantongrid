@@ -144,11 +144,12 @@ def run():
 
     try:
         child = start()
-        rows, cursor = [], None
+        rows, cursor, historical_pages = [], None, 0
         while True:
-            page_path = f'/v1/contracts/as-of?asOfOffset={boundary}&limit=25' + (f'&cursor={cursor}' if cursor else '')
+            page_path = f'/v1/contracts/as-of?asOfOffset={boundary}&limit=3' + (f'&cursor={cursor}' if cursor else '')
             status, page = request(base, token, page_path)
             assert status == 200 and page['provenance']['coverage'] == 'observed_retained'
+            historical_pages += 1
             rows.extend({'contractId': row['contractId'], 'payload': json.loads(row['payload']['value'])} for row in page['items'])
             cursor = page['nextCursor']
             if cursor is None:
@@ -185,7 +186,7 @@ def run():
         assert request(base, token, f"/v1/subscriptions/{recovered['id']}/events")[1]['events'] == []
         report = {'format_version': 1, 'scope': 'existing_localnet_read_only_ledger',
                   'tested_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-                  'contracts_compared': len(source_rows), 'snapshot_pages': pages,
+                  'contracts_compared': len(source_rows), 'snapshot_pages': pages, 'historical_pages': historical_pages,
                   'source_inventory_equal': True, 'historical_paging': True, 'api_restart_replay': True,
                   'durable_ack': True, 'explicit_retention_gap': True, 'outbox_rows_pruned': removed,
                   'canonical_history_preserved': True, 'quiescent_fixture_baseline_resync': True,

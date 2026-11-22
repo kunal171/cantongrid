@@ -112,10 +112,11 @@ import http.server,ssl,json,os
 class Handler(http.server.BaseHTTPRequestHandler):
  def log_message(self,*args): pass
  def do_GET(self):
+  with open('requests.count','a') as counter: counter.write('1\n')
   if not self.headers.get('Authorization','').startswith('Bearer '):
    self.send_response(401); self.end_headers(); return
   if os.path.exists('redirect'):
-   self.send_response(302); self.send_header('Location','http://127.0.0.1:9/stolen'); self.end_headers(); return
+   self.send_response(302); self.send_header('Location',open('redirect').read().strip()); self.end_headers(); return
   if self.path.endswith('/rights'):
    data={'rights':[{'kind':{'CanReadAs':{'value':{'party':'A'}}}}]}
   else:
@@ -179,6 +180,10 @@ fn verified_https_rejects_untrusted_certs_wrong_hosts_and_redirects() {
         Err(GrantError::Unavailable)
     ));
     assert!(
+        !fixture.directory.join("requests.count").exists(),
+        "untrusted TLS must not receive any HTTP credential"
+    );
+    assert!(
         runtime()
             .block_on(fixture.checker("localhost", true).check(TOKEN))
             .is_ok()
@@ -187,9 +192,24 @@ fn verified_https_rejects_untrusted_certs_wrong_hosts_and_redirects() {
         runtime().block_on(fixture.checker("127.0.0.1", true).check(TOKEN)),
         Err(GrantError::Unavailable)
     ));
-    std::fs::write(fixture.directory.join("redirect"), b"test redirect").unwrap();
+    assert_eq!(
+        std::fs::read_to_string(fixture.directory.join("requests.count"))
+            .unwrap()
+            .lines()
+            .count(),
+        3,
+        "a hostname mismatch must not send another credential-bearing request"
+    );
+    let trap = TcpListener::bind("127.0.0.1:0").unwrap();
+    trap.set_nonblocking(true).unwrap();
+    let target = format!("http://{}/stolen", trap.local_addr().unwrap());
+    std::fs::write(fixture.directory.join("redirect"), target.as_bytes()).unwrap();
     assert!(matches!(
         runtime().block_on(fixture.checker("localhost", true).check(TOKEN)),
         Err(GrantError::Unavailable)
     ));
+    assert!(
+        matches!(trap.accept(),Err(error) if error.kind()==std::io::ErrorKind::WouldBlock),
+        "HTTPS downgrade must not open a connection to the plaintext trap"
+    );
 }
