@@ -24,12 +24,12 @@ See the [guide](guide/upgrade-impact.md), [contract](design/impact.md) and
 
 | Check | Result |
 | --- | --- |
-| Dependency/report controls | 18 sync tests pass: unchanged/unselected changes, exact scale/optionality/removal/enum checks, arithmetic/filter/aggregate/key/join dependencies, deterministic redaction and bounded signature expansion |
-| Policy review | Refreshing a target blocks unchanged incoming links with stale revision pins. Missing join targets block complete bundles. Blocked plans retain useful reports and generate no artifacts |
+| Dependency/report controls | 20 sync tests pass: unchanged/unselected changes, exact scale/optionality/removal/enum checks, arithmetic/filter/aggregate/key/join dependencies, deterministic redaction and bounded signature expansion |
+| Policy review | Refreshing a target blocks unchanged incoming links with stale revision pins. Missing join targets block complete bundles. Unresolved target blockers propagate through incoming links, including cycles. Blocked plans retain useful reports and generate no artifacts |
 | Evaluation | Exact before/after values, filtered/invalid samples, blocked candidates, duplicate/unknown fields and sample bounds tested; results omit payloads and values |
 | Public CLI | Optional `sync_dar` test passes against the existing compiler-built PoC DAR: plan/evaluate/summary/bundle parity, overwrite refusal, redacted errors, no source connection |
 | PoC sample | Full canonical PoC model has seven declared source reads; unchanged verified DAR needs no rebuild. A one-unit Int64 difference near its maximum is detected exactly |
-| Regression checks | 117 default workspace Rust tests, 35 helper tests, seven PoC tests, formatting and strict all-target Clippy pass. Dependency/license, secret and workflow scans pass |
+| Regression checks | 119 default workspace Rust tests, 35 helper tests, seven PoC tests, formatting and strict all-target Clippy pass. Dependency/license, secret and workflow scans pass |
 
 The pinned audit passes using the 2026-11-22 local advisory database; two remote
 refresh attempts timed out. GitHub's normal audit remains required before merge.

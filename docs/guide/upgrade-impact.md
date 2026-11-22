@@ -41,7 +41,8 @@ output type does not establish compatible LF semantics.
 
 Relationship target revisions are explicit policy. If a target refreshes, its
 incoming links are marked for review, including links whose own package stayed
-unchanged. CantonGrid does not silently change the pin. Manually review the new
+unchanged. Unresolved target blockers also propagate through incoming links.
+CantonGrid does not silently change the pin. Manually review the new
 model definitions, increment changed model/policy revisions and validate the
 complete catalog before registration. A join target outside the supplied catalog
 blocks complete bundle generation. Non-join external targets remain explicit

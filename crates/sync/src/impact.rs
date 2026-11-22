@@ -143,7 +143,7 @@ fn artifacts(model: &Model, models: &[Model]) -> Result<Artifacts, Error> {
 }
 /// Explain downstream consumers without rewriting policies. An external target must be reviewed
 /// against its registered binding; an in-catalog target revision change is a hard sync blocker.
-fn dependencies(model: &Model, proposed: &[Model]) -> Vec<Dependency> {
+fn dependencies(model: &Model, proposed: &[Model], blocked: &BTreeSet<&str>) -> Vec<Dependency> {
     let local = |kind, name: String, fields: Vec<String>| Dependency {
         kind,
         name,
@@ -176,7 +176,8 @@ fn dependencies(model: &Model, proposed: &[Model]) -> Vec<Dependency> {
     links.sort_by(|a, b| a.name.cmp(&b.name));
     for link in links {
         let target = proposed.iter().find(|m| m.name == link.target.model);
-        let review = target.is_none_or(|m| m.revision != link.target.revision);
+        let review = target.is_none_or(|m| m.revision != link.target.revision)
+            || blocked.contains(link.target.model.as_str());
         result.push(local(
             "relationship_source",
             link.name.clone(),
@@ -227,6 +228,7 @@ pub(crate) fn build(
         .collect();
     let mut old_resolver = Resolver::new(old);
     let mut new_resolver = Resolver::new(new);
+    let blocked_models = diagnostics.iter().map(|d| d.model.as_str()).collect();
     let mut models = Vec::new();
     let mut remaining = 4 * 1024 * 1024;
     for (model, candidate) in previous.iter().zip(proposed) {
@@ -295,7 +297,7 @@ pub(crate) fn build(
             before,
             proposed: after,
             fields,
-            dependencies: dependencies(model, proposed),
+            dependencies: dependencies(model, proposed, &blocked_models),
         });
     }
     Ok(ImpactReport {

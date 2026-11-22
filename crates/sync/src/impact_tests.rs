@@ -245,3 +245,60 @@ fn repeated_large_signature_expansion_hits_the_report_budget() {
         Err(SyncError::Limit)
     ));
 }
+
+#[test]
+fn unresolved_target_identity_blocks_incoming_apis_even_without_a_revision_refresh() {
+    let mut old = metadata(&"a".repeat(64));
+    let mut dependency = metadata(&"c".repeat(64)).packages.remove(0);
+    dependency.name = "target_application".into();
+    old.packages.push(dependency);
+    let new = metadata(&"a".repeat(64));
+    let mut entries = linked().models().to_vec();
+    entries[1].template.package_id = "c".repeat(64);
+    let catalog =
+        Catalog::parse(&serde_json::json!({"version":1,"models":entries}).to_string()).unwrap();
+    let plan = plan::analyze(&old, &new, &catalog).unwrap();
+    let source = &plan.report.impact.models[0];
+    assert_eq!(source.before.fingerprint, source.proposed.fingerprint);
+    assert!(source.affected);
+    assert_eq!(source.rebuild, "blocked");
+    assert!(
+        source
+            .dependencies
+            .iter()
+            .any(|d| d.kind == "join_target" && d.review)
+    );
+    assert!(matches!(plan.bundle(), Err(SyncError::Incompatible)));
+}
+
+#[test]
+fn dependency_blockers_reach_multiple_hops_and_terminate_on_cycles() {
+    let mut old = metadata(&"a".repeat(64));
+    let mut dependency = metadata(&"c".repeat(64)).packages.remove(0);
+    dependency.name = "third_application".into();
+    old.packages.push(dependency);
+    let mut entries = linked().models().to_vec();
+    let mut third = entries[1].clone();
+    third.name = "third".into();
+    third.template.package_id = "c".repeat(64);
+    let mut link = entries[0].relationships[0].clone();
+    link.join = None;
+    link.target.model = "third".into();
+    entries[1].relationships.push(link.clone());
+    link.target.model = "quotes".into();
+    third.relationships.push(link);
+    entries.push(third);
+    let catalog =
+        Catalog::parse(&serde_json::json!({"version":1,"models":entries}).to_string()).unwrap();
+    let plan = plan::analyze(&old, &metadata(&"a".repeat(64)), &catalog).unwrap();
+    assert_eq!(plan.report.impact.models.len(), 3);
+    assert!(
+        plan.report
+            .impact
+            .models
+            .iter()
+            .all(|m| m.rebuild == "blocked")
+    );
+    assert_eq!(plan.report.diagnostics.len(), 3);
+    assert!(matches!(plan.bundle(), Err(SyncError::Incompatible)));
+}
