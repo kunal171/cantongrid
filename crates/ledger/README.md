@@ -6,7 +6,7 @@ Current Canton Ledger API user and party-grant verification for CantonGrid.
 
 ```toml
 [dependencies]
-cantongrid-ledger = "=0.4.0-alpha.4"
+cantongrid-ledger = "=0.4.0-alpha.5"
 ```
 
 Use `GrantChecker` with the configured source scope and wrap it in

@@ -6,7 +6,7 @@ Authenticated CantonGrid indexing workers and REST/GraphQL query services.
 
 ```toml
 [dependencies]
-cantongrid-runtime = "=0.4.0-alpha.4"
+cantongrid-runtime = "=0.4.0-alpha.5"
 ```
 
 The library exposes `index`, `serve`, `bind_model` and bounded `rebuild`

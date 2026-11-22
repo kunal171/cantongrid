@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0-alpha.5 — 2026-11-22 (unreleased)
+
+- Read-only authorized transaction timelines and native per-contract projection
+  diagnostics, with sanitized local evaluation/progress evidence commands.
+- Visible-only ordinals and counts; no raw arguments, witness lists, payloads,
+  source-node gaps or global progress exposed to API callers.
+- Existing destination migrations, source plans and model fingerprints unchanged.
+
 ## 0.4.0-alpha.4 — 2026-11-22
 
 - Opt-in typed creation provenance and conservative direct exercise-to-create

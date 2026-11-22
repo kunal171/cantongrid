@@ -6,7 +6,7 @@ Declarative Daml contract projections, exact calculations, SQL and client type g
 
 ```toml
 [dependencies]
-cantongrid-models = "=0.4.0-alpha.4"
+cantongrid-models = "=0.4.0-alpha.5"
 ```
 
 The library exposes `Catalog`, `Model`, exact typed expressions, SQL plans and

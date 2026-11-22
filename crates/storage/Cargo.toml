@@ -14,9 +14,9 @@ description = "Owned PostgreSQL lifecycle persistence, checkpoints and typed mod
 categories = ["database"]
 
 [dependencies]
-cantongrid-postgres = { path = "../postgres", version = "=0.4.0-alpha.4" }
+cantongrid-postgres = { path = "../postgres", version = "=0.4.0-alpha.5" }
 serde_json = "1.0"
 sha2 = "0.11.1"
-cantongrid-core = { path = "../core", version = "=0.4.0-alpha.4" }
-cantongrid-models = { path = "../models", version = "=0.4.0-alpha.4" }
+cantongrid-core = { path = "../core", version = "=0.4.0-alpha.5" }
+cantongrid-models = { path = "../models", version = "=0.4.0-alpha.5" }
 serde = { version = "1.0.229", features = ["derive"] }
