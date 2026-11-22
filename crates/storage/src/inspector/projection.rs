@@ -68,7 +68,11 @@ impl Store {
             None
         };
         let present:bool=tx.query_one(&format!("SELECT EXISTS(SELECT 1 FROM {} WHERE \"_cg_stream_key\"=$1 AND \"_cg_contract_id\"=$2)",model.relation()),&[&key,&contract])?.get(0);
-        let projection = if finding.status == "invalid" {
+        // An archived contract must have no current row, regardless of whether its historical
+        // payload satisfies a newer model revision's input requirements.
+        let projection = if !active {
+            if present { "unexpected" } else { "consistent" }
+        } else if finding.status == "invalid" {
             "evaluation_failed"
         } else if let Some(expected) = expected {
             if !present {

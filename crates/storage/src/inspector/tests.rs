@@ -5,10 +5,11 @@ use cantongrid_core::visibility::{CallerGrants, PartyId};
 #[test]
 #[ignore = "requires owned PostgreSQL; synthetic source authority"]
 fn projection_inspection_preserves_exact_comparison_and_never_repairs_drift() {
-    let s = Scenario::visibility();
+    let mut s = Scenario::visibility();
     s.seed();
     s.bind(1, None).unwrap();
-    let plan = &s.plans[0];
+    let owned_plan = s.plans[0].clone();
+    let plan = &owned_plan;
     let mut store = s.open();
     let authority = lease(plan, vec!["A"]);
     let caller =
@@ -63,6 +64,35 @@ fn projection_inspection_preserves_exact_comparison_and_never_repairs_drift() {
             s.relation(0)
         ))
         .unwrap();
+    // Missing rows are findings, not permission to repair or invent projected values.
+    let expected = s.models[0]
+        .row_json(
+            &crate::journal::stream_key(plan).0,
+            "first",
+            &s.models[0].evaluate(PAYLOAD).unwrap().unwrap(),
+        )
+        .unwrap();
+    store
+        .client
+        .execute(&format!("DELETE FROM {}", s.relation(0)), &[])
+        .unwrap();
+    assert_eq!(
+        store
+            .inspect_projection(plan, &caller, &authority, &binding, "first")
+            .unwrap()
+            .items[0]["projection"],
+        "missing"
+    );
+    let relation = s.relation(0);
+    store
+        .client
+        .execute(
+            &format!(
+                "INSERT INTO {relation} SELECT * FROM jsonb_populate_record(NULL::{relation},$1)"
+            ),
+            &[&expected],
+        )
+        .unwrap();
     store
         .apply_authorized(plan, &archive(&s, "archive", "first"), &authority)
         .unwrap();
@@ -71,10 +101,53 @@ fn projection_inspection_preserves_exact_comparison_and_never_repairs_drift() {
         .unwrap();
     assert_eq!(page.items[0]["projection"], "consistent");
     assert_eq!(page.items[0]["active"], false);
+    store
+        .client
+        .execute(
+            &format!(
+                "INSERT INTO {relation} SELECT * FROM jsonb_populate_record(NULL::{relation},$1)"
+            ),
+            &[&expected],
+        )
+        .unwrap();
+    assert_eq!(
+        store
+            .inspect_projection(plan, &caller, &authority, &binding, "first")
+            .unwrap()
+            .items[0]["projection"],
+        "unexpected"
+    );
+    store
+        .client
+        .execute(&format!("DELETE FROM {relation}"), &[])
+        .unwrap();
+    let before_progress = store.checkpoint(plan).unwrap();
     let progress = store.inspect_progress(plan, &authority).unwrap();
+    assert_eq!(store.checkpoint(plan).unwrap(), before_progress);
     assert!(progress.get("destinationRevision").is_some());
     assert_eq!(progress["failedTrace"], "not_recorded");
     assert!(progress.get("checkpoint").is_none());
+    let mut next = s.models[0].clone();
+    next.revision = 2;
+    next.fields.insert(
+        "newField".into(),
+        cantongrid_models::Expression::Field {
+            path: vec!["missingInArchivedInput".into()],
+            value_type: cantongrid_models::FieldType::Text,
+        },
+    );
+    s.install(next.clone());
+    s.bind(2, Some(1)).unwrap();
+    let new_binding = BoundModel {
+        namespace: s.namespace.clone(),
+        fingerprint: next.fingerprint().unwrap(),
+        model: next,
+    };
+    let archived = store
+        .inspect_projection(plan, &caller, &authority, &new_binding, "first")
+        .unwrap();
+    assert_eq!(archived.items[0]["status"], "invalid");
+    assert_eq!(archived.items[0]["projection"], "consistent");
 }
 
 #[test]
@@ -255,6 +328,22 @@ fn transaction_inspection_renumbers_visible_nodes_and_reconciles_only_indexed_ev
         Some(StoreError::InspectorUnavailable)
     );
     assert_eq!(store.checkpoint(plan).unwrap(), checkpoint);
+    let now = std::time::Instant::now();
+    let expired = cantongrid_core::authorization::SourceLease::from_verified(
+        plan.context().binding(),
+        plan.source_parties().cloned(),
+        now,
+        std::time::Duration::from_millis(1),
+        now + std::time::Duration::from_millis(1),
+    )
+    .unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(3));
+    assert_eq!(
+        store
+            .inspect_transaction(plan, &caller, &expired, "known-transaction", None, 20)
+            .err(),
+        Some(StoreError::Authorization)
+    );
     store
         .apply_lineage_page(plan, &page, &authority, checkpoint.as_deref())
         .unwrap();
