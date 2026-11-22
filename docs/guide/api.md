@@ -247,3 +247,9 @@ breaks the final tie. Pagination binds the whole ordered tuple, directions, filt
 principal and model/plan identity. A one-element array and its legacy object produce
 the same normalized query. Start fresh pages after upgrading from older binaries:
 old internal row-key formats are rejected rather than misread.
+
+## Direct lineage
+
+The source checkout preparing alpha.4 supports opt-in one-hop contract lineage
+through REST and the generic GraphQL API. See the [lineage guide](lineage.md)
+for configuration, queries, partial coverage and endpoint visibility rules.

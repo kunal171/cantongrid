@@ -29,6 +29,18 @@ cargo install cantongrid-cli --version 0.4.0-alpha.3 --locked
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
 
+## Preparing 0.4.0-alpha.4 (unpublished)
+
+The source adds opt-in privacy-safe direct lineage and private migration 010.
+Use a new generation with both exercise and lineage source settings; receipt-only
+and legacy generations cannot silently adopt lineage. Run explicit `storage init`
+and upgrade workers and API instances together. Older binaries reject migration
+010; rollback requires a pre-upgrade backup and the previous binary.
+
+The [guide](guide/lineage.md) describes partial one-hop coverage, visibility and
+cursor rules. Generic and Outcomia LocalNet evidence is linked from
+[verification](verification.md). This checkout does not publish a release or crates.
+
 ## 0.4.0-alpha.3 compatibility
 
 Run explicit `storage init` through migration 009 before opening the new binary.

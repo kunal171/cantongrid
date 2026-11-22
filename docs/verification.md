@@ -16,10 +16,38 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M2 direct lineage — 2026-11-22
+
+Implemented on `feat/privacy-safe-lineage`, preparing **0.4.0-alpha.4**; not a
+published release. Migration 010 adds private provenance/edge storage. Older
+migration files remain unchanged. See the [design](design/lineage.md) and
+[API guide](guide/lineage.md).
+
+The [LocalNet evidence](../examples/exercises/lineage-evidence.json) records four
+runs against existing generic and Outcomia packages, with real source authority
+and independent application callers. Generic root edges were operator=3 and
+A/B/shared=1 each; Outcomia root edges were operator=2 and A/B/shared=1 each.
+REST and GraphQL agreed; ungranted/revoked callers were denied. Restricted
+protocol observers could not query the unindexed market endpoint. These runs
+used development source before the mechanical alpha.4 package-version change.
+No DAR upload, new parties/users, grant widening, funding or trades occurred.
+
+Proof tests cover complete nested subtrees, missing/unknown nodes, crossing
+bounds, mixed transactions, duplicate node/creation identities and self-edges.
+Owned PostgreSQL tests check visibility before counts/paging, endpoint and proof
+policies, replay, SQL/model rollback and late lease expiry. API controls cover
+root/direction/caller cursor binding, grant epochs, revocation, unavailable root
+uniformity and unhealthy/denied source responses. Retained-source SQL tests use
+synthetic leases and do not replace the real-authority LocalNet checks above.
+
+Coverage is always partial recorded evidence and one hop. There is no inferred
+ancestry from application fields, hidden-edge placeholder, transitive traversal,
+declared relationship, join or receipt/lineage package handoff.
+
 ## M1 internal exercise receipts — 2026-11-21
 
-The [receipt contract](design/exercise-ingestion.md) is implemented in this
-0.4.0-alpha.3 checkout. Migration 009 was applied explicitly to the owned
+The [receipt contract](design/exercise-ingestion.md) is implemented in the
+0.4.0-alpha.3 release. Migration 009 was applied explicitly to the owned
 PostgreSQL 17.12 destination; earlier migration checksums remain unchanged.
 
 | Check | Result |

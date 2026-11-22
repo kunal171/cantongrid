@@ -107,3 +107,35 @@ exercises but only one lifecycle archive. The transient relay/child have no
 indexed prior create; their receipts do not fabricate contract state. See
 [worker evidence](worker-evidence.json). The helper stops its exporter; LocalNet
 and both PostgreSQL services are stopped separately, preserving volumes.
+
+## Direct lineage checks (M2)
+
+Use an existing approved M0 run and the same running services as M1. These
+commands submit local fixture transactions, so obtain authorization first.
+Replace the example run ID; each invocation uses a fresh destination generation.
+
+```bash
+python3 scripts/dev.py check exercises --worker --lineage --scope operator --allow-ledger-writes --resume cg-m0-01234567
+python3 scripts/dev.py check exercises --worker --lineage --scope ab --allow-ledger-writes --resume cg-m0-01234567
+# Requires the existing Outcomia package already deployed on this LocalNet:
+python3 scripts/dev.py check exercises --worker --lineage --outcomia --scope operator --allow-ledger-writes --resume cg-m0-01234567
+python3 scripts/dev.py check exercises --worker --lineage --outcomia --scope ab --allow-ledger-writes --resume cg-m0-01234567
+```
+
+The helpers reuse existing parties, users and grants. They never upload an
+Outcomia DAR or change its source repository. The Outcomia controls create a
+protocol and draft binary market; they do not fund accounts or trade. The runtime
+remains generic; package selection and transactions live only in the example helper.
+
+Each check runs the real Rust worker, then compares authenticated REST and
+GraphQL edges under the selected caller scopes. It checks pagination, unavailable
+roots and caller revocation. The [recorded results](lineage-evidence.json) include
+both generic and Outcomia runs. Restricted protocol observers do not acquire
+visibility into an unindexed market endpoint. Transient creations can support
+internal proof but do not become materialized public contracts.
+
+See the [lineage guide](../../docs/guide/lineage.md) for configuration, partial
+coverage and endpoint examples. Raw identifiers and credentials stay under
+ignored `.local/`; the public evidence contains counts only. Helpers stop their
+exporter and API child; stop LocalNet and both PostgreSQL services separately,
+preserving volumes.

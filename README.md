@@ -11,6 +11,10 @@ Outcomia is the first application example; the engine is reusable.
 
 ## Current status
 
+The source checkout prepares **0.4.0-alpha.4** with opt-in, one-hop
+[direct lineage](docs/guide/lineage.md), migration 010 and generic/Outcomia LocalNet
+acceptance. This work has not been published.
+
 The **0.4.0-alpha.3** prerelease adds opt-in internal exercise
 receipts and atomic transaction ingestion, verified on the pinned LocalNet.
 See the [receipt profile](docs/design/exercise-ingestion.md) for migration 009,

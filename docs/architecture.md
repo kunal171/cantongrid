@@ -52,7 +52,7 @@ paged reads. SDK compatibility observations are in [verification](verification.m
 
 ## Destination and recovery
 
-`storage init` explicitly applies checksummed migrations 001–008. Opening a store
+`storage init` explicitly applies checksummed migrations 001–010. Opening a store
 only verifies it. Source-scoped advisory locks coordinate writers; expected
 checkpoint comparisons reject stale workers. Canonical state, evidence/history,
 model changes, checkpoint and outbox commit together. Exact duplicate deliveries
@@ -183,3 +183,16 @@ M0 adds no production event variant, destination migration or public API.
 The [M1 receipt slice](design/exercise-ingestion.md) adds opt-in atomic forward
 transactions and private receipt/outbox tables in migration 009. Existing
 create/archive APIs and archive ownership remain unchanged.
+
+## Direct lineage (M2)
+
+Opt-in tree-mode ingestion retains typed creation metadata in addition to
+exercise receipts. `core::lineage` proves bounded direct edges only from complete
+recorded subtrees. `storage::lineage` persists proof dependencies atomically with
+lifecycle changes and the checkpoint. Its read query filters proof dependencies
+and both indexed endpoints before counting or paging. Runtime REST and GraphQL
+share the existing source-health, caller-grant and signed-cursor guards.
+
+This is one-hop, partial recorded evidence; it does not reconstruct missing
+history, follow payload references or expose unindexed transient endpoints.
+See the [design](design/lineage.md) and [API guide](guide/lineage.md).

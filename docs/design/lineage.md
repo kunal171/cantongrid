@@ -1,6 +1,7 @@
 # Direct lineage (M2)
 
-Status: implementation in progress on `feat/privacy-safe-lineage`.
+Status: implemented in the source checkout on `feat/privacy-safe-lineage`;
+pinned LocalNet generic/Outcomia acceptance passed. Preparing alpha.4, not published.
 Baseline: release commit `3ab2715547571383fcb1b8d40047212c14959229`.
 
 ## Evidence contract
@@ -34,6 +35,7 @@ evidence. Application field values, timestamps and choice names are never proof.
   Migrations 001–009 remain immutable. No new third-party dependency.
 - Bound transaction provenance to 64 nodes; preserve the existing 64 lifecycle/
   exercise-record budget and 1 MiB combined delivery budget. Reject oversize input.
+  Derived witness-policy processing has a separate 1 MiB budget.
 - Each edge retains an AND of proof-node witness obligations (OR within each node).
   Reads additionally require current visibility of both indexed endpoint contracts.
   An exercise observer gains no contract access through an edge.
@@ -58,3 +60,23 @@ local controls; no new DAR/party provisioning or Outcomia modification is implie
 
 Declared relationships (M3), joins (M4), general traversal, inspector and durable
 public streams remain deferred. No production-readiness claim.
+
+## Recorded LocalNet results
+
+Both scenarios reuse existing deployed packages, the approved synthetic parties
+and their exact operator/AB source users. No DAR upload, party/user provisioning,
+source grant change or Outcomia repository modification occurred.
+
+| Scenario | Operator-visible root edges | A / B / shared-visible root edges |
+| --- | ---: | --- |
+| Generic pair + nested choices | 3 | 1 / 1 / 1 |
+| Outcomia `Protocol_CreateBinary` | 2 | 1 / 1 / 1 |
+
+The Outcomia operator sees the successor protocol and draft market. Restricted
+administrators see the protocol successor, while the unindexed/divulged market
+endpoint remains unavailable. Both transports agree; hidden roots match unknown
+roots, ungranted principals fail and caller revocation stops access.
+
+Reproduction: [exercise example](../../examples/exercises/README.md).
+Public counts: [lineage evidence](../../examples/exercises/lineage-evidence.json).
+Raw identities and responses remain in ignored owner-only `.local/` files.

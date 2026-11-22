@@ -1,7 +1,7 @@
 # Working on CantonGrid
 
 - Active milestone: M2 privacy-safe direct lineage, authorized by “continue” on
-  feat/privacy-safe-lineage. Follow docs/design/lineage.md and verified M0/M1 evidence.
+  feat/privacy-safe-lineage. Follow docs/design/lineage.md and verified M0/M1/M2 evidence.
   No declared links, joins, transitive traversal, Outcomia changes or publication
   without a separate instruction. Existing aggregate scope guards stay intact.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL

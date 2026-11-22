@@ -38,7 +38,8 @@ Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
-The source checkout targets 0.4.0-alpha.3 with internal exercise receipts. It retains
+The source checkout prepares 0.4.0-alpha.4 with [direct lineage](guide/lineage.md).
+The published alpha.3 provides internal exercise receipts. Both retain
 0.4.0-alpha.2's offline DAR inspection (#23),
 compound sorting (#21), reviewed package upgrades (#25), verified remote HTTPS
 transport (#22), and command-driven schema synchronization (#24).
@@ -48,7 +49,8 @@ transport (#22), and command-driven schema synchronization (#24).
    nested controls. General immediate-parent proof remains unsupported.
 2. [M1 internal exercise receipts](design/exercise-ingestion.md) is implemented
    in this checkout with explicit tree-mode opt-in and destination migration 009.
-   M2 introduces guarded lineage. Typed joins, historical queries,
+   [M2 direct lineage](design/lineage.md) is verified on the pinned LocalNet in this
+   checkout. M3 declared relationships comes next; typed joins, historical queries,
    inspection and durable streams follow their own acceptance gates.
 3. Extend existing metadata/sync with impact analysis rather than duplicating it.
    Outcomia factory/clubs contract work remains a separate repository track.
