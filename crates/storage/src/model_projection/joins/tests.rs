@@ -342,3 +342,81 @@ fn selected_join_budgets_cannot_be_poisoned_by_hidden_values() {
         Some(StoreError::RelationshipUnavailable)
     );
 }
+
+#[test]
+#[ignore = "requires owned PostgreSQL; no Canton writes"]
+fn a_lease_expiring_while_join_sql_waits_returns_no_page() {
+    let f = JoinFixture::new();
+    let mut store = f.scenario.open();
+    f.start(&mut store);
+    f.apply(&mut store, &f.batch("target", "b", "B", false, None));
+    let mut holder =
+        cantongrid_postgres::connect_env(crate::model_projection::tests::VARIABLE).unwrap();
+    let mut tx = holder.transaction().unwrap();
+    tx.batch_execute(&format!(
+        "LOCK TABLE {} IN ACCESS EXCLUSIVE MODE",
+        f.scenario.relation(0)
+    ))
+    .unwrap();
+    let plan = f.plan.clone();
+    let source = f.source.clone();
+    let target = f.target.clone();
+    let (ready, received) = std::sync::mpsc::channel();
+    let reader = std::thread::spawn(move || {
+        let mut store = Store::open_env(crate::model_projection::tests::VARIABLE).unwrap();
+        // Extend only this owned test connection's lock wait beyond its synthetic lease.
+        store.client.batch_execute("SET lock_timeout=3000").unwrap();
+        let pid: i32 = store
+            .client
+            .query_one("SELECT pg_backend_pid()", &[])
+            .unwrap()
+            .get(0);
+        let now = Instant::now();
+        let authority = SourceLease::from_verified(
+            plan.context().binding(),
+            [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()],
+            now,
+            std::time::Duration::from_millis(1000),
+            now + std::time::Duration::from_secs(2),
+        )
+        .unwrap();
+        let caller = CallerGrants::from_verified(
+            plan.context().binding(),
+            [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()],
+        );
+        ready.send(pid).unwrap();
+        store
+            .read_join(
+                &plan,
+                &caller,
+                &authority,
+                RelationshipQuery {
+                    source: &source,
+                    target: &target,
+                    name: "children",
+                    root: "root",
+                    after: None,
+                    limit: 1,
+                },
+            )
+            .err()
+    });
+    let pid = received
+        .recv_timeout(std::time::Duration::from_secs(5))
+        .unwrap();
+    let deadline = Instant::now() + std::time::Duration::from_secs(2);
+    while !tx
+        .query_one(
+            "SELECT EXISTS(SELECT 1 FROM pg_locks WHERE pid=$1 AND NOT granted)",
+            &[&pid],
+        )
+        .unwrap()
+        .get::<_, bool>(0)
+    {
+        assert!(Instant::now() < deadline, "reader never reached SQL lock");
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    tx.commit().unwrap();
+    assert_eq!(reader.join().unwrap(), Some(StoreError::Authorization));
+}

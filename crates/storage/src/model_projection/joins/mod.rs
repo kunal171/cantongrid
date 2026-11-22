@@ -123,6 +123,8 @@ impl Store {
             return Err(StoreError::ModelCorrupt);
         }
         let mut items = Vec::new();
+        // Repeated source values count for every returned row: 25 × 100 KiB already
+        // exceeds 2 MiB even with tiny targets. The state budget above counts the source once.
         let mut response_bytes = 0_usize;
         for row in rows {
             let value = serde_json::json!({"sourceContractId":root,"targetContractId":row.get::<_,String>(0),"relationship":"declared","declaration":name,"declarationRevision":link.revision.to_string(),"sourceModelRevision":source.model.revision.to_string(),"targetModelRevision":target.model.revision.to_string(),"sourceFingerprint":source.fingerprint,"targetFingerprint":target.fingerprint,"coverage":"current_active_projection","depth":1,"joinKind":"inner","sourceValues":source_value,"targetValues":row.get::<_,serde_json::Value>(1)});
