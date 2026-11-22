@@ -1,4 +1,5 @@
 //! Admission precedes body extraction; database permits survive cancelled HTTP futures.
+mod polls;
 use super::error;
 use axum::{
     extract::{Request, State},
@@ -17,6 +18,7 @@ pub(super) struct Limits {
     requests: Arc<Semaphore>,
     database: Arc<Semaphore>,
     deadline: Duration,
+    polls: polls::Polls,
 }
 impl Default for Limits {
     fn default() -> Self {
@@ -24,10 +26,16 @@ impl Default for Limits {
             requests: Arc::new(Semaphore::new(16)),
             database: Arc::new(Semaphore::new(16)),
             deadline: Duration::from_secs(30),
+            polls: polls::Polls::default(),
         }
     }
 }
 impl Limits {
+    /// Waiting subscriptions consume a separate quota in addition to normal admission/database slots.
+    pub(super) fn poll(&self, principal: &str) -> Result<polls::Permit, &'static str> {
+        self.polls.acquire(principal)
+    }
+
     /// Move the slot into the blocking closure: dropping its JoinHandle cannot stop a SQL call.
     pub(super) async fn blocking<T: Send + 'static>(
         &self,
@@ -101,3 +109,9 @@ pub(super) fn guarded_json(
 
 #[cfg(test)]
 mod tests;
+
+/// Static operator-visible limits describe configured budgets without exposing another caller's activity.
+pub(super) fn document() -> serde_json::Value {
+    let limits = Limits::default();
+    serde_json::json!({"requestSlots":limits.requests.available_permits(),"databaseSlots":limits.database.available_permits(),"requestDeadlineSeconds":limits.deadline.as_secs(),"maxResponseBytes":MAX_RESPONSE,"longPollSlots":polls::MAX_POLLS,"longPollSlotsPerPrincipal":polls::PER_PRINCIPAL})
+}

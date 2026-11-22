@@ -1,5 +1,7 @@
 //! Local operator operations require source credentials and separately owned destination access.
 mod maintenance;
+mod status;
+pub use status::status;
 mod preflight;
 use crate::{config::Project, index::ready};
 use cantongrid_ledger::SourceAuthorization;

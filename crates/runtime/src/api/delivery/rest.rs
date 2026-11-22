@@ -52,6 +52,20 @@ pub(in crate::api) async fn events(
     if wait > 10 || !(1..=25).contains(&limit) {
         return error(StatusCode::BAD_REQUEST);
     }
+    let _poll = if wait > 0 {
+        let Ok(project) = Project::load(&service.path) else {
+            return error(StatusCode::SERVICE_UNAVAILABLE);
+        };
+        let Ok(identity) = auth::authenticate(&project, &token) else {
+            return error(StatusCode::UNAUTHORIZED);
+        };
+        match service.limits.poll(&identity.binding) {
+            Ok(permit) => Some(permit),
+            Err(_) => return error(StatusCode::TOO_MANY_REQUESTS),
+        }
+    } else {
+        None
+    };
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(wait);
     loop {
         match service

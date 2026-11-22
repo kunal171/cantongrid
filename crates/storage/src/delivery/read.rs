@@ -30,6 +30,9 @@ impl Store {
         }
         let mut tx = self.client.transaction()?;
         let key = lock(&mut tx, plan)?;
+        if !crate::operations::fresh(&mut tx, &key)? {
+            return Err(StoreError::DeliveryStale);
+        }
         let acknowledged = state(&mut tx, &key, consumer, query.subscription, &current)?;
         let after = match query.after {
             Some(resume) => position(&mut tx, query.subscription, resume)?.max(acknowledged),

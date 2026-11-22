@@ -6,6 +6,8 @@ mod aggregates;
 mod delivery;
 #[path = "runtime/fixture.rs"]
 mod fixture;
+#[path = "runtime/health.rs"]
+mod health;
 #[path = "runtime/inspector.rs"]
 mod inspector;
 #[path = "runtime/joins.rs"]

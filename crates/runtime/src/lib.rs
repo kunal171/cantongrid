@@ -22,4 +22,4 @@ mod inspector;
 pub use inspector::inspect_progress;
 
 mod operations;
-pub use operations::{NetworkProfile, check_configuration, preflight, prune_deliveries};
+pub use operations::{NetworkProfile, check_configuration, preflight, prune_deliveries, status};

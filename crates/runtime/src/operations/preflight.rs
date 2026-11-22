@@ -69,13 +69,27 @@ pub async fn preflight(path: &Path, profile: NetworkProfile) -> Result<serde_jso
     crate::auth::validate_configuration(&project)?;
     let definition = project.plan.definition();
     let config = configured(&project, profile);
+    let packages = project
+        .plan
+        .templates()
+        .map(|template| template.package_id.clone())
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+    project
+        .authorization
+        .checker()
+        .map_err(|_| "source authorization unavailable")?
+        .require_packages_env(project.authorization.credential_env(), &packages)
+        .await
+        .map_err(|_| "selected packages unavailable on the authorized participant")?;
     let authorization = source(&project).await?;
     let report=tokio::task::spawn_blocking(move||{
         let lease=authorization.lease().ok_or("source authorization unavailable")?;
         let bounds=cantongrid_pqs::bounds_env(&project.source_database_env,&project.plan,lease).map_err(|_|"restricted source schema or bounds unavailable")?;
         Store::open_env(&project.destination_database_env).map_err(|_|"owned destination unavailable; initialize or review it explicitly")?;
         if lease.source_parties(&project.plan.context().binding(),std::time::Instant::now()).is_none(){return Err("source authorization expired".into());}
-        Ok::<_,String>(serde_json::json!({"operation":"source_preflight","configured":config,"currentSourceRightsVerified":true,"exporterReady":true,"restrictedPqs":bounds,"ownedDestinationVerified":true,"destinationMigration":11,"ledgerWrites":false,"actualNetworkVerified":false,"liveAcceptanceComplete":false}))
+        Ok::<_,String>(serde_json::json!({"operation":"source_preflight","configured":config,"selectedPackagesAvailable":true,"selectedTemplateEntitiesIndependentlyVerified":false,"currentSourceRightsVerified":true,"exporterReady":true,"restrictedPqs":bounds,"ownedDestinationVerified":true,"destinationMigration":11,"ledgerWrites":false,"actualNetworkVerified":false,"liveAcceptanceComplete":false}))
     }).await.map_err(|_|"preflight worker unavailable")??;
     let current = Project::load(path)?;
     validate(&current, profile)?;

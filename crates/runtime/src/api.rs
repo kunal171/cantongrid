@@ -1,5 +1,6 @@
 //! REST and GraphQL share one authorized SQL query path; neither transport supplies party grants.
 pub(crate) mod delivery;
+mod health;
 mod model_api;
 mod resources;
 mod temporal;
@@ -694,6 +695,7 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         limits: resources::Limits::default(),
     };
     let router = Router::new()
+        .route("/v1/health", get(health::readiness))
         .route("/v1/subscriptions", post(delivery::subscribe))
         .route(
             "/v1/subscriptions/{subscriptionId}/events",
@@ -756,4 +758,9 @@ async fn no_store(request: axum::extract::Request, next: axum::middleware::Next)
         axum::http::HeaderValue::from_static("no-store"),
     );
     response
+}
+
+/// Operator status publishes fixed budgets only, never current global request activity.
+pub(crate) fn resource_limits() -> serde_json::Value {
+    resources::document()
 }
