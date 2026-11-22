@@ -6,6 +6,7 @@ pub use index::index;
 
 mod api;
 mod auth;
+pub use api::delivery::{DeliveryEvent, DeliveryEvidence, DeliveryKind};
 pub use api::serve;
 
 mod model_binding;

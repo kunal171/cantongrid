@@ -1,4 +1,5 @@
 //! REST and GraphQL share one authorized SQL query path; neither transport supplies party grants.
+pub(crate) mod delivery;
 mod model_api;
 mod resources;
 mod temporal;
@@ -682,7 +683,7 @@ async fn graphql(
 }
 
 /// Bind only configured loopback addresses, cap request bodies and bound concurrent DB work.
-/// No playground, mutation, subscription, arbitrary SQL or unauthenticated data route is mounted.
+/// Durable subscription writes affect owned consumer metadata only; no ledger mutation is exposed.
 pub async fn serve(path: &Path) -> Result<(), String> {
     let project = Project::load(path)?;
     let listener = tokio::net::TcpListener::bind(project.api.bind)
@@ -693,6 +694,19 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         limits: resources::Limits::default(),
     };
     let router = Router::new()
+        .route("/v1/subscriptions", post(delivery::subscribe))
+        .route(
+            "/v1/subscriptions/{subscriptionId}/events",
+            get(delivery::events),
+        )
+        .route(
+            "/v1/subscriptions/{subscriptionId}/acknowledge",
+            post(delivery::acknowledge),
+        )
+        .route(
+            "/v1/subscriptions/{subscriptionId}/cancel",
+            post(delivery::cancel),
+        )
         .route("/v1/contracts", get(active))
         .route("/v1/contracts/as-of", get(temporal::state))
         .route("/v1/inspect/transactions/{transactionId}", get(transaction))
