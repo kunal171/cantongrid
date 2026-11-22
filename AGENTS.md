@@ -1,9 +1,10 @@
 # Working on CantonGrid
 
-- Active milestone: M5 read-only developer inspector, authorized by “continue M5”
-  on feat/developer-inspector. Follow docs/design/inspector.md. Keep general API
-  diagnostics caller-scoped; global progress is local operator-only. No ledger
-  writes, Outcomia changes, publication or later milestones in this task.
+- Active milestone: M6 offline upgrade impact analysis on feat/developer-inspector,
+  alongside completed M5. Follow docs/design/impact.md and docs/design/inspector.md.
+  The user authorized one combined M5/M6 PR and merge after checks pass. Keep
+  diagnostics caller-scoped and global progress local-only. No ledger writes,
+  Outcomia changes, release publication or later milestones in this task.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading and streams remain later work.
