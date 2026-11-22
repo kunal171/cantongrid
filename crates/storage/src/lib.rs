@@ -2,7 +2,9 @@
 #![forbid(unsafe_code)]
 mod delivery;
 mod error;
-pub use delivery::{Consumer, DeliveryStart, Subscription, SubscriptionRequest};
+pub use delivery::{
+    Consumer, DeliveryPage, DeliveryQuery, DeliveryStart, Subscription, SubscriptionRequest,
+};
 mod exercise;
 mod inspector;
 mod journal;

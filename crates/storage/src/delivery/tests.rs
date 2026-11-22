@@ -119,3 +119,6 @@ fn subscriptions_retry_without_resetting_and_reject_other_principals_parties_and
     // Subscription state changes do not modify canonical exact values or checkpoints.
     assert!(store.client.query_one("SELECT EXISTS(SELECT 1 FROM cantongrid.contracts WHERE stream_key=$1 AND payload->>'value'=$2)",&[&stream_key(plan).0,&PAYLOAD]).unwrap().get::<_,bool>(0));
 }
+
+#[path = "read_tests.rs"]
+mod read_controls;
