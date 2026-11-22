@@ -26,6 +26,7 @@ impl SyncPlan {
         }
         let mut files: BTreeMap<String, String> = BTreeMap::new();
         files.insert("metadata.json".into(), self.metadata.clone());
+        files.insert("impact.txt".into(), self.impact_summary());
         files.insert(
             "models.json".into(),
             serde_json::to_string_pretty(

@@ -202,3 +202,46 @@ fn unchanged_selection_with_unselected_signature_change_needs_no_projection_rebu
     assert!(!plan.report.impact.models[0].affected);
     assert_eq!(plan.report.impact.models[0].rebuild, "unnecessary");
 }
+
+#[test]
+fn changing_only_a_target_also_blocks_an_unchanged_incoming_relationship() {
+    let mut old = metadata(&"a".repeat(64));
+    let mut target = metadata(&"c".repeat(64)).packages.remove(0);
+    target.name = "target_app".into();
+    old.packages.push(target);
+    let mut new = metadata(&"b".repeat(64));
+    new.packages[0].name = "target_app".into();
+    new.packages.push(old.packages[0].clone());
+    let mut models = linked().models().to_vec();
+    models[1].template.package_id = "c".repeat(64);
+    let catalog =
+        Catalog::parse(&serde_json::json!({"version":1,"models":models}).to_string()).unwrap();
+    let plan = plan::analyze(&old, &new, &catalog).unwrap();
+    let impact = &plan.report.impact.models[0];
+    assert_eq!(impact.before.fingerprint, impact.proposed.fingerprint);
+    assert!(impact.affected);
+    assert_eq!(impact.rebuild, "blocked");
+    assert!(matches!(plan.bundle(), Err(SyncError::Incompatible)));
+}
+#[test]
+fn repeated_large_signature_expansion_hits_the_report_budget() {
+    let mut old = metadata(&"a".repeat(64));
+    let names = (0..6000)
+        .map(|n| format!("Case{n:04}{}", "x".repeat(90)))
+        .collect();
+    old.packages[0].data_types[1].definition = s::Definition::Enum {
+        constructors: names,
+    };
+    let mut model = models().models()[0].clone();
+    for n in 0..10 {
+        model
+            .fields
+            .insert(format!("state{n}"), model.fields["state"].clone());
+    }
+    let catalog =
+        Catalog::parse(&serde_json::json!({"version":1,"models":[model]}).to_string()).unwrap();
+    assert!(matches!(
+        plan::analyze(&old, &old, &catalog),
+        Err(SyncError::Limit)
+    ));
+}
