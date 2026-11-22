@@ -72,6 +72,8 @@ fn durable_api_replay_ack_scope_privacy_and_authorized_retention_gaps() {
             .unwrap()
             .contains("12345678901234567890.0000000001")
     );
+    f.restart();
+    assert_eq!(page.1["events"], f.get(&path, "a").1["events"]);
     let cursor = page.1["nextCursor"].as_str().unwrap();
     cursor_receipt(cursor);
     assert_eq!(
@@ -172,4 +174,64 @@ fn long_poll_reauthorizes_after_source_revocation_instead_of_returning_a_heartbe
         200
     );
     assert_eq!(f.get(&format!("/v1/subscriptions/{id}/events"), "a").0, 404);
+}
+
+#[test]
+#[ignore = "requires owned PostgreSQL and mock source; no Canton writes"]
+fn long_poll_delivers_new_owned_events_and_can_resume_after_api_restart() {
+    let mut f = Fixture::new();
+    f.commit(10, vec![]);
+    let sub = f.post(
+        "/v1/subscriptions",
+        "a",
+        json!({"name":"poll-new-events","start":"now"}),
+    );
+    assert_eq!(sub.0, 200);
+    let id = sub.1["id"].as_str().unwrap();
+    let plan = f.plan.clone();
+    let event = f.create("arrived", "A", 15, false);
+    let writer = thread::spawn(move || {
+        thread::sleep(Duration::from_millis(250));
+        let now = Instant::now();
+        let authority = SourceLease::from_verified(
+            plan.context().binding(),
+            [party("A"), party("B")],
+            now,
+            MAX_SOURCE_LEASE,
+            now + MAX_SOURCE_LEASE,
+        )
+        .unwrap();
+        let batch = Batch {
+            context: plan.context().clone(),
+            position:
+                json!({"snapshot":false,"boundary":20,"through":20,"offset":20,"pk":i64::MAX})
+                    .to_string(),
+            events: vec![event],
+        };
+        Store::open_env("CANTONGRID_DESTINATION_URL")
+            .unwrap()
+            .apply_authorized(&plan, &batch, &authority)
+            .unwrap();
+    });
+    let page = f.get(&format!("/v1/subscriptions/{id}/events?waitSeconds=2"), "a");
+    writer.join().unwrap();
+    assert_eq!(page.0, 200);
+    assert_eq!(page.1["events"][0]["eventId"], "create-arrived");
+    let cursor = page.1["nextCursor"].as_str().unwrap();
+    assert_eq!(
+        f.post(
+            &format!("/v1/subscriptions/{id}/acknowledge"),
+            "a",
+            json!({"cursor":cursor})
+        )
+        .0,
+        200
+    );
+    f.restart();
+    assert!(
+        f.get(&format!("/v1/subscriptions/{id}/events"), "a").1["events"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
 }

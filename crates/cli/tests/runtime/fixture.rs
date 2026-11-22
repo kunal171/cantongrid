@@ -104,6 +104,49 @@ impl Fixture {
             key,
         }
     }
+    /// Restart only the API child, preserving the source stub, configuration and durable database.
+    pub fn restart(&mut self) {
+        if let Some(mut child) = self.running.child.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+        self.running.child = Some(
+            Command::new(env!("CARGO_BIN_EXE_cantongrid"))
+                .args([
+                    "serve",
+                    self.running
+                        .directory
+                        .join("runtime.json")
+                        .to_str()
+                        .unwrap(),
+                ])
+                .env(
+                    "CANTONGRID_TEST_PQS_URL",
+                    "host=127.0.0.1 port=9 user=read_only dbname=synthetic",
+                )
+                .env(
+                    "CANTONGRID_TEST_SOURCE_TOKEN",
+                    jwt("source-reader", &self.key, clock() + 600),
+                )
+                .env("CANTONGRID_TEST_API_KEY", &self.key)
+                .env(
+                    "CANTONGRID_TEST_CURSOR_KEY",
+                    "local-extended-cursor-test-key-00000001",
+                )
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()
+                .unwrap(),
+        );
+        let address = self.base.strip_prefix("http://").unwrap();
+        for _ in 0..100 {
+            if std::net::TcpStream::connect(address).is_ok() {
+                return;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        panic!("API child did not restart within fixture deadline");
+    }
     /// Fresh synthetic destination-write authority; API reads independently consult the source stub.
     pub fn lease(&self) -> SourceLease {
         let now = Instant::now();
