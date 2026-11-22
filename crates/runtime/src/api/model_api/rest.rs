@@ -22,6 +22,8 @@ pub(super) struct Metadata {
     query_field: String,
     fields: Vec<QueryField>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    relationship_query_fields: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     aggregate_query_field: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     aggregate_fields: Option<Vec<QueryField>>,
@@ -35,6 +37,23 @@ pub(super) fn metadata(binding: &BoundModel) -> Result<Metadata, String> {
         fingerprint: binding.fingerprint.clone(),
         query_field: binding.model.api_name().map_err(|e| e.to_string())?,
         fields: binding.model.query_fields().map_err(|e| e.to_string())?,
+        relationship_query_fields: if binding.model.relationships.is_empty() {
+            None
+        } else {
+            Some(
+                binding
+                    .model
+                    .relationships
+                    .iter()
+                    .map(|r| {
+                        binding
+                            .model
+                            .relationship_api_name(&r.name)
+                            .map_err(|e| e.to_string())
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
+            )
+        },
         aggregate_query_field: binding
             .model
             .aggregation
@@ -182,6 +201,7 @@ async fn handle(
             };
             match result {
                 Ok(page) => page,
+                Err(super::QueryError::NotFound) => return error(StatusCode::NOT_FOUND),
                 Err(super::QueryError::Input) => return error(StatusCode::BAD_REQUEST),
                 Err(super::QueryError::Forbidden) => return error(StatusCode::FORBIDDEN),
                 Err(super::QueryError::Unavailable) => {

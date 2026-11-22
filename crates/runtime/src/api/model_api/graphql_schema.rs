@@ -73,6 +73,25 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
     for name in ["namespace", "name", "revision", "fingerprint", "queryField"] {
         model_metadata = model_metadata.field(scalar(name, TypeRef::named_nn("String")));
     }
+    model_metadata = model_metadata.field(Field::new(
+        "relationshipQueryFields",
+        TypeRef::named_nn_list("String"),
+        |ctx| {
+            FieldFuture::new(async move {
+                let parent = ctx.parent_value.try_downcast_ref::<serde_json::Value>()?;
+                Ok(parent
+                    .get("relationshipQueryFields")
+                    .and_then(|v| v.as_array())
+                    .map(|items| {
+                        FieldValue::list(items.iter().cloned().map(|item| {
+                            FieldValue::value(
+                                async_graphql::Value::from_json(item).unwrap_or_default(),
+                            )
+                        }))
+                    }))
+            })
+        },
+    ));
     model_metadata = model_metadata.field(scalar("aggregateQueryField", TypeRef::named("String")));
     model_metadata = model_metadata.field(Field::new(
         "aggregateFields",
@@ -276,6 +295,10 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
             )),
         );
         builder = builder.register(values).register(row).register(page);
+        for link in &model.relationships {
+            (builder, root) =
+                super::relationship_schema::register(builder, root, &model, &link.name, bindings)?;
+        }
         if model.aggregation.is_some() {
             let choices = bindings
                 .iter()
@@ -393,6 +416,7 @@ mod tests {
                 "sequence":{"op":"field","path":["sequence"],"as":{"type":"int64"}}}}]});
         doc["models"][0]["aggregation"] = serde_json::json!({"group_by":["state"],"measures":{
             "contracts":{"op":"count"},"total":{"op":"sum","field":"amount"},"units":{"op":"sum","field":"sequence"}}});
+        doc["models"][0]["relationships"] = serde_json::json!([{"name":"related","revision":1,"source_field":"state","target":{"model":"records","revision":1,"field":"state"},"max_targets":100}]);
         let catalog = Catalog::parse(&doc.to_string()).unwrap();
         let model = catalog.models()[0].clone();
         let binding = BoundModel {

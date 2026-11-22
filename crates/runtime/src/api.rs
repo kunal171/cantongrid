@@ -558,6 +558,10 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .route("/v1/models/{namespace}/{name}", get(model_api::describe))
         .route("/v1/models/{namespace}/{name}/query", post(model_api::rows))
         .route(
+            "/v1/models/{namespace}/{name}/relationships/{relationship}/query",
+            post(model_api::relationship_rows),
+        )
+        .route(
             "/v1/models/{namespace}/{name}/aggregate",
             post(model_api::aggregates),
         )
