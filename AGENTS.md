@@ -1,9 +1,9 @@
 # Working on CantonGrid
 
-- Active task: release 0.4.0-alpha.4 (M2–M4), explicitly authorized by the user:
-  push, open PR, merge after CI and publish the prerelease and coordinated crates.
-  Preserve the small commits and scope/evidence in docs/verification.md. M5 work
-  requires its own instruction. No ledger writes or Outcomia repository changes.
+- Active milestone: M5 read-only developer inspector, authorized by “continue M5”
+  on feat/developer-inspector. Follow docs/design/inspector.md. Keep general API
+  diagnostics caller-scoped; global progress is local operator-only. No ledger
+  writes, Outcomia changes, publication or later milestones in this task.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading and streams remain later work.
