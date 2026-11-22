@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0-alpha.5 — 2026-11-22 (unreleased)
+## 0.4.0-alpha.5 — 2026-11-22
 
 - Read-only authorized transaction timelines and native per-contract projection
   diagnostics, with sanitized local evaluation/progress evidence commands.

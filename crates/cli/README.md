@@ -25,8 +25,10 @@ and `cantongrid serve runtime.json` serves authenticated REST/GraphQL.
 GraphQL definitions. Source credentials and database setup are separate steps;
 follow the [LocalNet PoC](https://github.com/kunal171/cantongrid/blob/main/docs/guide/poc.md).
 
-Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/inspector.md):
+Version alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/inspector.md):
 authorized transaction/projection evidence and sanitized local diagnostics.
+`cantongrid sync plan` reports upgrade dependencies and rebuild/API impact;
+`sync summary` and `sync evaluate` provide offline review and redacted sample checks.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 

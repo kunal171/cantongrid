@@ -1,6 +1,6 @@
 # Developer inspector
 
-Available in the source checkout preparing **0.4.0-alpha.5**. Existing migrations
+Available in **0.4.0-alpha.5**. Existing migrations
 001–010, source plans and model fingerprints are unchanged. No reindex is needed.
 The [example](../../examples/inspector/README.md) runs offline diagnostics and the
 owned PostgreSQL tests.

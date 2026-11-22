@@ -18,7 +18,7 @@ PostgreSQL 14's support status and the upgrade requirement are in [operations](g
 
 ## M6 upgrade impact analysis — 2026-11-22
 
-Implemented in the unpublished alpha.5 source checkout on the M5 branch.
+Shipped in alpha.5 after combined M5/M6 PR #30.
 See the [guide](guide/upgrade-impact.md), [contract](design/impact.md) and
 [PoC baseline/evidence](../examples/upgrade-impact/README.md).
 
@@ -31,8 +31,8 @@ See the [guide](guide/upgrade-impact.md), [contract](design/impact.md) and
 | PoC sample | Full canonical PoC model has seven declared source reads; unchanged verified DAR needs no rebuild. A one-unit Int64 difference near its maximum is detected exactly |
 | Regression checks | 119 default workspace Rust tests, 35 helper tests, seven PoC tests, formatting and strict all-target Clippy pass. Dependency/license, secret and workflow scans pass |
 
-The pinned audit passes using the 2026-11-22 local advisory database; two remote
-refresh attempts timed out. GitHub's normal audit remains required before merge.
+The pinned local audit and the online GitHub CI audit pass. All four PR/push
+checks passed before merging M5/M6; main checks passed after merge.
 M5's separate owned-database and retained-source results below remain the evidence
 for its APIs. M6 adds no migration, dependency, source connection or ledger write.
 The real-DAR CLI test is an unchanged-artifact baseline. Changed signatures and
@@ -40,7 +40,7 @@ blocked upgrades use synthetic LF graphs; no live package upgrade is claimed.
 
 ## M5 developer inspector — 2026-11-22
 
-Implemented in the alpha.5 source checkout; not published. The
+Shipped in alpha.5. The
 [guide](guide/inspector.md), [contract](design/inspector.md) and
 [example findings](../examples/inspector/README.md) describe the supported surface.
 Migrations 001–010 and model/source fingerprints are unchanged.

@@ -65,7 +65,7 @@ Run inspection against the new DAR to obtain verified package IDs and signatures
 [Upgrade impact analysis](upgrade-impact.md) extends `sync plan` with dependency,
 API and rebuild reports. `sync bundle` generates reviewed model/SQL/GraphQL/TS
 artifacts; `sync evaluate` checks explicitly supplied local before/after samples.
-The M6 additions are in the unpublished alpha.5 source checkout.
+The M6 additions ship in alpha.5.
 
 Inspection and sync do not apply SQL, upload/vet DARs or activate ingestion.
 [Reviewed upgrades](upgrades.md) remain a separate source-authorized operation.
