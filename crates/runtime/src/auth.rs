@@ -216,3 +216,37 @@ pub(crate) fn after(
     }
     Ok(cursor.after)
 }
+
+/// Operator preflight checks all enabled caller mappings and independent key material without printing either.
+pub(crate) fn validate_configuration(project: &Project) -> Result<(), String> {
+    keys(project)?;
+    let bytes = read(&project.api.grants_file, 65536)
+        .map_err(|_| "caller grant configuration unavailable")?;
+    let grants: Grants = cantongrid_core::document::parse(
+        std::str::from_utf8(&bytes).map_err(|_| "caller grant configuration unavailable")?,
+    )
+    .map_err(|_| "caller grant configuration unavailable")?;
+    if grants.version != 1 || grants.epoch == 0 || grants.principals.len() > 1024 {
+        return Err("caller grant configuration unavailable".into());
+    }
+    let source: BTreeSet<_> = project.plan.source_parties().cloned().collect();
+    for (subject, principal) in grants.principals {
+        if !principal.enabled {
+            continue;
+        }
+        let parties: BTreeSet<_> = principal
+            .parties
+            .iter()
+            .map(|p| PartyId::new(p.clone()))
+            .collect::<Result<_, _>>()
+            .map_err(|_| "caller grant configuration unavailable")?;
+        if subject.is_empty()
+            || parties.is_empty()
+            || parties.len() != principal.parties.len()
+            || !parties.is_subset(&source)
+        {
+            return Err("caller grant configuration unavailable".into());
+        }
+    }
+    Ok(())
+}

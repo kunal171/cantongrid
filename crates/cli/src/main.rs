@@ -13,6 +13,8 @@ use std::{
 const HELP: &str = "CantonGrid — local ingestion and storage reference
 
 Usage:
+  cantongrid ops check-config <runtime.json> --profile localnet|testnet|mainnet
+  cantongrid ops preflight <runtime.json> --profile localnet|testnet|mainnet
   cantongrid ops prune-deliveries <runtime.json> --retain <1..100000> --limit <1..256>
   cantongrid inspect evaluate <models.json> <model-name> <payload.json>
   cantongrid inspect progress <runtime.json>
