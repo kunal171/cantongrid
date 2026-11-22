@@ -58,8 +58,9 @@ count/pagination and bind cross-root/direction cursors. Compare authorized Local
 queries against the existing generic fixture. Reuse only previously approved
 local controls; no new DAR/party provisioning or Outcomia modification is implied.
 
-Declared relationships (M3), joins (M4), general traversal, inspector and durable
-public streams remain deferred. No production-readiness claim.
+Declared relationships (M3) have a [separate semantic contract](relationships.md);
+they never become source proofs. Joins (M4), general traversal, inspector and
+durable public streams remain deferred. No production-readiness claim.
 
 ## Recorded LocalNet results
 

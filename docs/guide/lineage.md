@@ -65,5 +65,6 @@ nodes or unknown bounds produce no guessed edge; a matching application ID is
 not proof. See the [proof contract](../design/lineage.md) for the conservative
 subtree criterion and [verification](../verification.md) for exact tested scope.
 
-Declared relationships, joins, transitive traversal, public streams, interface
-choices and receipt/lineage package handoff remain later work.
+For explicit application links, use the separate [declared relationship API](relationships.md).
+Joins, transitive traversal, public streams, interface choices and receipt/lineage
+package handoff remain later work.
