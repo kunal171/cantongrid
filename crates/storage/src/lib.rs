@@ -1,6 +1,8 @@
 //! Owned PostgreSQL state, lifecycle history, model projections and transactional recovery.
 #![forbid(unsafe_code)]
+mod delivery;
 mod error;
+pub use delivery::{Consumer, DeliveryStart, Subscription, SubscriptionRequest};
 mod exercise;
 mod inspector;
 mod journal;
