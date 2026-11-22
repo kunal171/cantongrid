@@ -39,6 +39,13 @@ required. Migrations 001–010 remain unchanged. The new server adds diagnostic
 metadata/GraphQL roots; use the matching generated client definitions. Existing
 alpha.4 database state remains compatible. See the [guide](guide/inspector.md).
 
+M6 extends offline sync with selected-field/dependency impact, generated API/table
+identities, rebuild requirements, a concise summary and redacted before/after
+sample evaluation. Target revision drift and missing join targets now return
+structured blockers instead of losing the report or failing later in generation.
+The compatibility report gains an additive versioned `impact` section; compatible
+bundles add a hashed `impact.txt`. See [upgrade impact](guide/upgrade-impact.md).
+
 ## 0.4.0-alpha.4 compatibility
 
 This prerelease adds opt-in privacy-safe direct lineage and private migration 010,

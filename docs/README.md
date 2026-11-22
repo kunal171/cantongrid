@@ -10,8 +10,9 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [LocalNet ingestion](guide/localnet-source.md) | Source setup, runtime configuration and worker |
 | [API](guide/api.md) | Caller authentication, queries, filtering and pagination |
 | [Models](guide/models.md) | Definitions, exact calculations, installation and rebuilds |
-| [Package upgrades](guide/upgrades.md) | Reviewed additive handoffs, staged publication and rollback (unreleased) |
-| [DAR metadata](guide/metadata.md) | Offline package identities and qualified contract signatures (unreleased) |
+| [Package upgrades](guide/upgrades.md) | Reviewed additive handoffs, staged publication and rollback |
+| [DAR metadata](guide/metadata.md) | Offline package identities and qualified contract signatures |
+| [Upgrade impact analysis](guide/upgrade-impact.md) | Offline dependency, generated API and rebuild review |
 | [Developer inspector](guide/inspector.md) | Authorized committed records, projection findings and local progress |
 | [Typed inner joins](guide/joins.md) | Selected typed values with complete input visibility |
 | [Declared relationships](guide/relationships.md) | Versioned application links with independent endpoint visibility |
@@ -58,7 +59,9 @@ transport (#22), and command-driven schema synchronization (#24).
    [M4 typed inner joins](design/joins.md) is implemented with owned PostgreSQL/mock-source checks.
    [M5 developer inspector](design/inspector.md) is implemented in the alpha.5
    source checkout. Historical queries and durable streams follow their own gates.
-3. Extend existing metadata/sync with impact analysis rather than duplicating it.
+3. [M6 upgrade impact analysis](guide/upgrade-impact.md) extends existing
+   metadata/sync in the alpha.5 source checkout. Durable streams and historical
+   queries remain later milestones.
    Outcomia factory/clubs contract work remains a separate repository track.
 
 ## Publishing

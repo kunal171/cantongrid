@@ -61,10 +61,13 @@ Limits are fixed in this version; errors omit untrusted archive contents and pat
 
 ## After a contract update
 
-Run inspection against the new DAR to obtain its package IDs and signatures.
-This command does not update model configuration, generate models from metadata,
-apply SQL, upload DARs or activate an ingestion revision. [Reviewed upgrades](upgrades.md)
-consume explicit model definitions separately. Existing `models plan`,
-`models graphql` and `models typescript` still consume developer-authored model
-JSON. Command-driven synchronization is tracked in
-[#24](https://github.com/kunal171/cantongrid/issues/24), with reviewed additive activation implemented in [package upgrades](upgrades.md).
+Run inspection against the new DAR to obtain verified package IDs and signatures.
+[Upgrade impact analysis](upgrade-impact.md) extends `sync plan` with dependency,
+API and rebuild reports. `sync bundle` generates reviewed model/SQL/GraphQL/TS
+artifacts; `sync evaluate` checks explicitly supplied local before/after samples.
+The M6 additions are in the unpublished alpha.5 source checkout.
+
+Inspection and sync do not apply SQL, upload/vet DARs or activate ingestion.
+[Reviewed upgrades](upgrades.md) remain a separate source-authorized operation.
+Existing `models plan`, `models graphql` and `models typescript` also continue to
+accept developer-authored model JSON directly.

@@ -5,12 +5,14 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 
 | Command | Purpose |
 | --- | --- |
-| `sync plan <old.dar> <new.dar> <models.json>` | Offline schema compatibility report; source-only alpha.2 |
+| `sync plan <old.dar> <new.dar> <models.json>` | Offline compatibility/dependency/API/rebuild report; M6 additions in unpublished alpha.5 |
+| `sync summary <old.dar> <new.dar> <models.json>` | Concise offline impact summary |
+| `sync evaluate <old.dar> <new.dar> <models.json> <fixtures.json>` | Sanitized old/new projection sample comparison; no LF execution |
 | `sync bundle <old.dar> <new.dar> <models.json> <output-directory>` | Offline generation of review bundle (models, SQL, GraphQL, TS); refuses overwriting |
 | `upgrade plan <old-runtime> <new-runtime> <dar> <models> <namespace>` | Read-only reviewed manifest for installed targets |
 | `upgrade start\|step\|status\|activate\|cancel <manifest> <old-runtime> <new-runtime> <dar> <models>` | Durable paged handoff; see [upgrades](guide/upgrades.md) |
 | `upgrade apply <manifest> <old-runtime> <new-runtime> <dar> <models>` | Bounded atomic alternative |
-| `metadata inspect <artifact.dar>` | Offline LF 2.1 signatures as bounded JSON; source-only alpha.2 |
+| `metadata inspect <artifact.dar>` | Offline LF 2.1 signatures as bounded JSON |
 | `init <new-directory>` | Scaffold a synthetic Visibility fixture; refuses an existing directory |
 | `validate <project.json>` | Validate fixture configuration without reading events or connecting |
 | `fixture run <project.json> [--party A]...` | In-memory fixture replay with simulated grants |

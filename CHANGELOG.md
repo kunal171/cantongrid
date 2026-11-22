@@ -7,6 +7,10 @@
 - Visible-only ordinals and counts; no raw arguments, witness lists, payloads,
   source-node gaps or global progress exposed to API callers.
 - Existing destination migrations, source plans and model fingerprints unchanged.
+- M6 offline sync impact/dependency reports with exact generated table/API identities,
+  explicit rebuild requirements and relationship revision-review blockers.
+- `sync summary`, sanitized `sync evaluate` and bundled `impact.txt`; incompatible
+  plans retain their report and cannot generate an applicable bundle.
 
 - Update the existing `url` dependency to 2.5.9 (and `form_urlencoded` to
   1.2.3) for RUSTSEC-2026-0592.

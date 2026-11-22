@@ -12,7 +12,8 @@ Outcomia is the first application example; the engine is reusable.
 ## Current status
 
 The source checkout prepares **0.4.0-alpha.5** with the read-only
-[developer inspector](docs/guide/inspector.md). It is not published yet.
+[developer inspector](docs/guide/inspector.md) and offline
+[upgrade impact analysis](docs/guide/upgrade-impact.md). It is not published yet.
 
 The **0.4.0-alpha.4** prerelease adds opt-in, one-hop
 [direct lineage](docs/guide/lineage.md), migration 010 and generic/Outcomia LocalNet

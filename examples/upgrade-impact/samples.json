@@ -1,0 +1,24 @@
+{
+  "format_version": 1,
+  "samples": [
+    {
+      "model": "markets",
+      "before": {
+        "demoId": "impact-example",
+        "question": "Synthetic fixture",
+        "state": "Open",
+        "priceTick": "0.0100000000",
+        "quantityLot": "9223372036854775807",
+        "outcome": null
+      },
+      "after": {
+        "demoId": "impact-example",
+        "question": "Synthetic fixture",
+        "state": "Open",
+        "priceTick": "0.0100000000",
+        "quantityLot": "9223372036854775806",
+        "outcome": null
+      }
+    }
+  ]
+}

@@ -16,6 +16,28 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M6 upgrade impact analysis — 2026-11-22
+
+Implemented in the unpublished alpha.5 source checkout on the M5 branch.
+See the [guide](guide/upgrade-impact.md), [contract](design/impact.md) and
+[PoC baseline/evidence](../examples/upgrade-impact/README.md).
+
+| Check | Result |
+| --- | --- |
+| Dependency/report controls | 18 sync tests pass: unchanged/unselected changes, exact scale/optionality/removal/enum checks, arithmetic/filter/aggregate/key/join dependencies, deterministic redaction and bounded signature expansion |
+| Policy review | Refreshing a target blocks unchanged incoming links with stale revision pins. Missing join targets block complete bundles. Blocked plans retain useful reports and generate no artifacts |
+| Evaluation | Exact before/after values, filtered/invalid samples, blocked candidates, duplicate/unknown fields and sample bounds tested; results omit payloads and values |
+| Public CLI | Optional `sync_dar` test passes against the existing compiler-built PoC DAR: plan/evaluate/summary/bundle parity, overwrite refusal, redacted errors, no source connection |
+| PoC sample | Full canonical PoC model has seven declared source reads; unchanged verified DAR needs no rebuild. A one-unit Int64 difference near its maximum is detected exactly |
+| Regression checks | 117 default workspace Rust tests, 35 helper tests, seven PoC tests, formatting and strict all-target Clippy pass. Dependency/license, secret and workflow scans pass |
+
+The pinned audit passes using the 2026-11-22 local advisory database; two remote
+refresh attempts timed out. GitHub's normal audit remains required before merge.
+M5's separate owned-database and retained-source results below remain the evidence
+for its APIs. M6 adds no migration, dependency, source connection or ledger write.
+The real-DAR CLI test is an unchanged-artifact baseline. Changed signatures and
+blocked upgrades use synthetic LF graphs; no live package upgrade is claimed.
+
 ## M5 developer inspector — 2026-11-22
 
 Implemented in the alpha.5 source checkout; not published. The
