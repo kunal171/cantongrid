@@ -1,0 +1,35 @@
+//! Operational commands validate exact argument shapes and finite budgets before any source access.
+use std::path::Path;
+
+/// Keep retention maintenance separate from query filters and ledger command submission.
+pub fn run(action: &str, args: &[String]) -> Result<(), String> {
+    match (action, args) {
+        ("prune-deliveries", [path, retain_flag, retain, limit_flag, limit])
+            if retain_flag == "--retain" && limit_flag == "--limit" =>
+        {
+            let retain = retain
+                .parse::<usize>()
+                .ok()
+                .filter(|n| (1..=100000).contains(n))
+                .ok_or("invalid delivery retention budget")?;
+            let limit = limit
+                .parse::<usize>()
+                .ok()
+                .filter(|n| (1..=256).contains(n))
+                .ok_or("invalid delivery retention budget")?;
+            let runtime = tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(2)
+                .enable_all()
+                .build()
+                .map_err(|_| "runtime unavailable")?;
+            crate::print_json(&runtime.block_on(cantongrid_runtime::prune_deliveries(
+                Path::new(path),
+                retain,
+                limit,
+            ))?)
+        }
+        _ => Err(
+            "expected ops prune-deliveries <runtime> --retain <1..100000> --limit <1..256>".into(),
+        ),
+    }
+}

@@ -94,6 +94,7 @@ async fn cycle(path: &Path) -> Result<(), String> {
                     .observe_authorized(&project.plan, lease)
                     .map_err(|e| e.to_string())?;
             }
+            retain_outbox(&mut store, &project.plan, lease);
             return Ok(());
         }
         if project.plan.includes_exercises() {
@@ -114,6 +115,7 @@ async fn cycle(path: &Path) -> Result<(), String> {
                     .observe_authorized(&project.plan, lease)
                     .map_err(|e| e.to_string())?;
             }
+            retain_outbox(&mut store, &project.plan, lease);
             return Ok(());
         }
         if let Some(batch) = cantongrid_pqs::page_env(
@@ -133,8 +135,22 @@ async fn cycle(path: &Path) -> Result<(), String> {
                 .observe_authorized(&project.plan, lease)
                 .map_err(|e| e.to_string())?;
         }
+        retain_outbox(&mut store, &project.plan, lease);
         Ok(())
     })
     .await
     .map_err(|_| "index worker failed")?
+}
+
+/// Retention is a separate transaction: its failure never undoes an already committed source page.
+fn retain_outbox(
+    store: &mut Store,
+    plan: &cantongrid_core::config::Plan,
+    lease: &cantongrid_core::authorization::SourceLease,
+) {
+    if store.prune_deliveries(plan, lease, 100000, 256).is_err() {
+        eprintln!(
+            "CantonGrid: delivery retention deferred; maintenance did not change canonical history or checkpoint"
+        );
+    }
 }

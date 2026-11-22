@@ -13,6 +13,7 @@ use std::{
 const HELP: &str = "CantonGrid — local ingestion and storage reference
 
 Usage:
+  cantongrid ops prune-deliveries <runtime.json> --retain <1..100000> --limit <1..256>
   cantongrid inspect evaluate <models.json> <model-name> <payload.json>
   cantongrid inspect progress <runtime.json>
   cantongrid sync plan <old.dar> <new.dar> <models.json>
@@ -67,6 +68,7 @@ fn main() -> ExitCode {
 /// Accept exact command shapes before dispatching fixture, source or operator actions.
 fn run(args: Vec<String>) -> Result<(), String> {
     match args.as_slice() {
+        [command, action, rest @ ..] if command == "ops" => commands::operations::run(action, rest),
         [command, action, rest @ ..] if command == "inspect" => {
             commands::inspector::run(action, rest)
         }

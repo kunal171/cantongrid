@@ -20,3 +20,6 @@ pub use selection_upgrade::{UpgradeFiles, apply_upgrade, plan_upgrade, upgrade_j
 
 mod inspector;
 pub use inspector::inspect_progress;
+
+mod operations;
+pub use operations::prune_deliveries;
