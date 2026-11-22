@@ -1,10 +1,11 @@
 # Working on CantonGrid
 
-- Active task: publish the completed M5/M6 release 0.4.0-alpha.5 and all ten
-  coordinated crates, explicitly authorized by the user. Merge the focused release
-  documentation PR after CI passes; tag the verified commit without overwriting
-  existing versions. Keep release evidence separate from live-ledger acceptance.
-  No ledger writes, Outcomia changes or later milestones in this task.
+- Active task: M7 temporal prototype, M8 durable delivery and M9 hardening on
+  feat/temporal-streams-hardening, authorized together by the user. Follow
+  docs/design/temporal-streams-hardening.md. Keep changes in focused commits.
+  No remote source exists yet: the user requested validation checks and a precise
+  remote setup guide. Do not claim live TestNet or production acceptance.
+  No publication, ledger writes, Outcomia changes or later features in this task.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading and streams remain later work.
