@@ -1,6 +1,7 @@
 # Safe inner joins (M4)
 
-Status: planned implementation on `feat/safe-inner-joins`, based on completed M3.
+Status: implemented on `feat/safe-inner-joins`, based on completed M3.
+Owned PostgreSQL and mock-source API acceptance passed; no new LocalNet run claimed.
 
 ## Definition and scope
 

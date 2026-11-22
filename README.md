@@ -45,3 +45,7 @@ The alpha.4 source checkout also includes [declared relationships](docs/guide/re
 versioned application links over exact model keys, with independently visible
 endpoints and generated REST/GraphQL client contracts. They are separate from
 source-proven lineage. See the [example](examples/relationships/README.md).
+
+[M4 typed inner joins](docs/guide/joins.md) add explicitly selected values from both
+independently visible models, with exact generated types and cursors invalidated
+only by visible result changes. See the [example](examples/joins/README.md).

@@ -16,6 +16,33 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M4 typed inner joins — 2026-11-22
+
+The alpha.4 source checkout implements the [M4 contract](design/joins.md), with
+[a runnable example](../examples/joins/README.md). No new dependency, destination
+migration, ledger write or external deployment was needed.
+
+| Check | Result |
+| --- | --- |
+| Declaration/type controls | Inner joins only; selected columns must exist, be unique and bounded. M3 definitions without join opt-in preserve their fingerprints |
+| Owned PostgreSQL | 65 storage tests passed, including three M4 cases: independent A/B/shared input visibility, exact Int64/Numeric, bool/null, unselected columns absent, schema drift, replay, projection rollback and archive/recreate |
+| Cursor state | Visible changes invalidate pages; hidden archives/creates do not invalidate a narrow caller's cursor. No global checkpoint is used as a hidden-update signal |
+| Resource/lease denial | Hidden large values do not consume the caller's 2 MiB selected-result budget. Expiry while SQL waits on an owned relation lock returns no page |
+| REST / GraphQL | Six runtime integration tests passed; join items/counts agree, transport cursors work, cross-root/caller/operation cursors fail, outer-join/column overrides are rejected and aliases share the two-resolver budget |
+| Publication and authority | Target revision publication stops the pinned join; rollback restores it. Grant epochs, caller revocation and unhealthy/denied sources stop delivery |
+| Generated interfaces | Served SDL matches offline signatures, including two namespaces with distinct target definitions. Example TypeScript passes strict `tsc --noEmit`; preview/SQL-plan commands pass |
+
+The workspace suite passed 104 default Rust tests; model database and CLI
+recovery/registry/install controls also passed. Strict Clippy, formatting,
+35 development-helper and seven PoC-helper tests, dependency/advisory/license/
+secret/workflow checks passed. Package builds and archive inspection are part of
+the final source checks; no upload is performed.
+
+These checks use real owned PostgreSQL with synthetic source leases and a mock
+API source checker. They do not establish new LocalNet, production, global/outer
+join, historical or multi-hop acceptance. Existing aggregate full-source guards
+remain unchanged.
+
 ## M3 declared relationships — 2026-11-22
 
 Implemented in the source checkout preparing alpha.4. The

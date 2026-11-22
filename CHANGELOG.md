@@ -13,6 +13,10 @@
   interfaces and guarded current-state REST/GraphQL queries. Declared links remain
   distinct from source-proven lineage; no joined payloads or traversal.
 
+- M4 opt-in typed inner joins with independently visible inputs, selected values,
+  exact generated clients and visible-result cursor invalidation. No outer joins,
+  hidden-input placeholders or changes to aggregate authorization.
+
 ## 0.4.0-alpha.3 — 2026-11-21
 
 - Opt-in schema041 tree-mode exercise receipts, bounded complete forward

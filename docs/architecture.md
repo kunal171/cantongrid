@@ -206,3 +206,13 @@ active endpoints, with a bounded visible fanout. Runtime model APIs bind both
 fingerprints and the root into signed cursors and recheck the catalog before
 response delivery. There is no separate relationship cache or new migration.
 See the [contract](design/relationships.md) and [guide](guide/relationships.md).
+
+## Typed inner joins (M4)
+
+An optional relationship projection selects columns from both registered models.
+`model_projection::joins` intersects endpoint visibility before fanout, hashes
+only visible selected results for cursor invalidation, and reads one page's typed
+values in the same snapshot. Existing atomic projections remain the source of
+truth. Generated schemas include both fingerprints to isolate namespace aliases.
+Aggregate authorization is unchanged. See the [contract](design/joins.md) and
+[guide](guide/joins.md).

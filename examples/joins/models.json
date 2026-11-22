@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "name": "factories",
+      "revision": 1,
+      "template": {
+        "package_id": "0000000000000000000000000000000000000000000000000000000000000000",
+        "module": "ExerciseProbe",
+        "entity": "Factory"
+      },
+      "fields": {
+        "factoryKey": {
+          "op": "field",
+          "path": [
+            "factoryId"
+          ],
+          "as": {
+            "type": "text"
+          }
+        }
+      },
+      "relationships": [
+        {
+          "name": "declaredChildren",
+          "revision": 1,
+          "source_field": "factoryKey",
+          "target": {
+            "model": "children",
+            "revision": 1,
+            "field": "factoryKey"
+          },
+          "max_targets": 100,
+          "join": {
+            "kind": "inner",
+            "source_fields": [
+              "factoryKey"
+            ],
+            "target_fields": [
+              "label"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "children",
+      "revision": 1,
+      "template": {
+        "package_id": "0000000000000000000000000000000000000000000000000000000000000000",
+        "module": "ExerciseProbe",
+        "entity": "Child"
+      },
+      "fields": {
+        "factoryKey": {
+          "op": "field",
+          "path": [
+            "declaredFactory"
+          ],
+          "as": {
+            "type": "text"
+          }
+        },
+        "label": {
+          "op": "field",
+          "path": [
+            "label"
+          ],
+          "as": {
+            "type": "text"
+          }
+        }
+      }
+    }
+  ]
+}

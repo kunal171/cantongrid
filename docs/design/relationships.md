@@ -55,5 +55,6 @@ no incoming traversal or caller-supplied relationship policy.
 - Runnable generic configuration example and guide. Existing fixture evidence is
   not labelled LocalNet acceptance; no new ledger-write authorization is assumed.
 
-M4 joined rows, transitive traversal, historical materialization and streams remain
-separate milestones. No production acceptance claim.
+[M4 inner joins](joins.md) add an explicit selected-value projection; this M3 API
+retains IDs/provenance only. Transitive traversal, historical materialization and
+streams remain separate milestones. No production acceptance claim.

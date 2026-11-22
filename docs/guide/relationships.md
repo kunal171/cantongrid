@@ -114,5 +114,6 @@ Old cursors are rejected after policy or grant changes.
 Upgrade all workers and API instances before publishing declarations; older
 binaries reject the new model vocabulary. No new third-party dependency was added.
 Read the [design](../design/relationships.md) and [verification](../verification.md)
-for tested scope. Incoming/transitive traversal, historical queries, joined values
-and durable streams remain separate milestones.
+for tested scope. [Explicit inner joins](joins.md) now provide selected typed values through a
+separate opt-in API. Incoming/transitive traversal, historical queries and durable
+streams remain separate milestones.

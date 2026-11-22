@@ -59,8 +59,9 @@ queries against the existing generic fixture. Reuse only previously approved
 local controls; no new DAR/party provisioning or Outcomia modification is implied.
 
 Declared relationships (M3) have a [separate semantic contract](relationships.md);
-they never become source proofs. Joins (M4), general traversal, inspector and
-durable public streams remain deferred. No production-readiness claim.
+they never become source proofs. [M4 inner joins](joins.md) have a separate
+selected-value API. General traversal, inspector and durable public streams remain
+deferred. No production-readiness claim.
 
 ## Recorded LocalNet results
 

@@ -66,5 +66,6 @@ not proof. See the [proof contract](../design/lineage.md) for the conservative
 subtree criterion and [verification](../verification.md) for exact tested scope.
 
 For explicit application links, use the separate [declared relationship API](relationships.md).
-Joins, transitive traversal, public streams, interface choices and receipt/lineage
-package handoff remain later work.
+[Typed inner joins](joins.md) are separately enabled on those declarations.
+Transitive traversal, public streams, interface choices and receipt/lineage package
+handoff remain later work.

@@ -12,6 +12,7 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [Models](guide/models.md) | Definitions, exact calculations, installation and rebuilds |
 | [Package upgrades](guide/upgrades.md) | Reviewed additive handoffs, staged publication and rollback (unreleased) |
 | [DAR metadata](guide/metadata.md) | Offline package identities and qualified contract signatures (unreleased) |
+| [Typed inner joins](guide/joins.md) | Selected typed values with complete input visibility |
 | [Declared relationships](guide/relationships.md) | Versioned application links with independent endpoint visibility |
 | [Aggregates](guide/aggregates.md) | Grouped counts/sums with full-source authorization |
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
@@ -33,7 +34,7 @@ The [aggregate slice](guide/aggregates.md) adds count/sum queries over
 maintained projections, generated APIs and complete-source access checks.
 
 Phase 4 model integration remains in progress. History starts at an active
-snapshot and continues forward. Published 0.3.0 does not include aggregates. Joins, interfaces/reassignments,
+snapshot and continues forward. Published 0.3.0 does not include aggregates or joins. Interfaces/reassignments,
 Scan, hosted multi-tenancy and arbitrary processing plugins are not implemented.
 Remote/TLS, devnet and production deployment are unverified.
 
@@ -52,7 +53,8 @@ transport (#22), and command-driven schema synchronization (#24).
    in this checkout with explicit tree-mode opt-in and destination migration 009.
    [M2 direct lineage](design/lineage.md) is verified on the pinned LocalNet in this
    checkout. [M3 declared relationships](design/relationships.md) is implemented in this checkout;
-   typed joins, historical queries,
+   [M4 typed inner joins](design/joins.md) is implemented with owned PostgreSQL/mock-source checks.
+   Historical queries,
    inspection and durable streams follow their own acceptance gates.
 3. Extend existing metadata/sync with impact analysis rather than duplicating it.
    Outcomia factory/clubs contract work remains a separate repository track.

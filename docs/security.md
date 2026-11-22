@@ -23,8 +23,12 @@ encoding; a failed final guard discards the whole body. Local grants reload for
 each request; removing or disabling a principal denies its existing bearer.
 
 A shared A-or-B contract differs from a row combining A-only and B-only inputs:
-the latter requires both permissions. Future joins, aggregates and streams must
-preserve every input's visibility dependencies.
+the latter requires both permissions. Typed inner joins check both active endpoint
+policies before counts, fanout, selected-value encoding and paging. Their cursors
+hash only the caller-visible selected result: a hidden update cannot invalidate
+someone else's page. Outer/anti joins are not exposed. Aggregates still require
+the complete configured source-party scope. Future streams must retain every
+input's visibility dependencies.
 
 Schema041 archives have empty witnesses. The prior-create policy requires an
 observed matching creation and current rights; absence, pruning or revocation
