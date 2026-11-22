@@ -24,8 +24,9 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest stable release is **0.3.0**; the latest published prerelease is **0.4.0-alpha.3**.
-The alpha series adds aggregates, metadata/sync and internal exercise receipts. Stable 0.3.0 includes LocalNet ingestion, model projections,
+The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.4**.
+The alpha series adds aggregates, metadata/sync, exercises, direct lineage,
+declared relationships and typed inner joins. Stable 0.3.0 includes LocalNet ingestion, model projections,
 generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
 PostgreSQL 17.12 compatibility and large real-ledger rebuild acceptance pass.
 See [verification](verification.md) for the exact environments and checks.
@@ -40,7 +41,7 @@ Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
-The source checkout prepares 0.4.0-alpha.4 with [direct lineage](guide/lineage.md).
+Release 0.4.0-alpha.4 includes [direct lineage](guide/lineage.md).
 The published alpha.3 provides internal exercise receipts. Both retain
 0.4.0-alpha.2's offline DAR inspection (#23),
 compound sorting (#21), reviewed package upgrades (#25), verified remote HTTPS

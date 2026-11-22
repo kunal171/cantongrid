@@ -250,6 +250,6 @@ old internal row-key formats are rejected rather than misread.
 
 ## Direct lineage
 
-The source checkout preparing alpha.4 supports opt-in one-hop contract lineage
+Release alpha.4 supports opt-in one-hop contract lineage
 through REST and the generic GraphQL API. See the [lineage guide](lineage.md)
 for configuration, queries, partial coverage and endpoint visibility rules.

@@ -1,6 +1,6 @@
 # Declared relationships
 
-M3 is available in the source checkout preparing **0.4.0-alpha.4**. A relationship
+M3 is available in **0.4.0-alpha.4**. A relationship
 is an explicit application policy over model fields. It is always labelled
 `declared`; it does not prove that a factory created a contract. [Direct lineage](lineage.md)
 uses separate source evidence and never consumes these declarations.

@@ -1,7 +1,7 @@
 # Direct lineage (M2)
 
-Status: implemented in the source checkout on `feat/privacy-safe-lineage`;
-pinned LocalNet generic/Outcomia acceptance passed. Preparing alpha.4, not published.
+Status: included in 0.4.0-alpha.4; pinned LocalNet generic/Outcomia acceptance
+passed. Implementation started on `feat/privacy-safe-lineage`.
 Baseline: release commit `3ab2715547571383fcb1b8d40047212c14959229`.
 
 ## Evidence contract

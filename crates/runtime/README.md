@@ -33,11 +33,11 @@ and `contractLineage` on the generic GraphQL API. Responses contain partial
 one-hop evidence, with caller and source checks before delivery. See the
 [lineage guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/lineage.md).
 
-Source alpha.4 also supports versioned declared relationships over current model
+Version alpha.4 also supports versioned declared relationships over current model
 projections, with independently authorized endpoints. See the
 [relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/relationships.md).
 
-Source alpha.4 also includes explicit typed inner joins over declared relationships,
+Version alpha.4 also includes explicit typed inner joins over declared relationships,
 with selected columns and independent input authorization. See the
 [join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/joins.md).
 
@@ -49,6 +49,6 @@ source or caller access. See the guide for setup, limits and the LocalNet PoC.
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
 
-Source-only 0.4.0-alpha.4 also exposes reviewed package upgrade planning and staged
+Version 0.4.0-alpha.4 also exposes reviewed package upgrade planning and staged
 application. See the [upgrade guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/upgrades.md)
 for source checks, publication gates, resume/cancel and model rollback.

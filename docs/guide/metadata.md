@@ -1,6 +1,6 @@
 # Offline DAR metadata
 
-Available in the source checkout targeting **0.4.0-alpha.2**, not yet published.
+Introduced in **0.4.0-alpha.2**; included in the coordinated alpha.4 release.
 The command reads a local DAR and writes JSON to stdout:
 
 ```bash

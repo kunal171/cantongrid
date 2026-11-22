@@ -1,10 +1,9 @@
 # Working on CantonGrid
 
-- Active milestone: M4 safe typed inner joins, authorized by “complete m4 too”
-  on feat/safe-inner-joins. Follow docs/design/joins.md. Reuse M3 relationship
-  policies and M2 source proofs without merging their provenance. Preserve all
-  aggregate scope guards. No outer joins, traversal, Outcomia changes, ledger
-  writes or publication in this milestone.
+- Active task: release 0.4.0-alpha.4 (M2–M4), explicitly authorized by the user:
+  push, open PR, merge after CI and publish the prerelease and coordinated crates.
+  Preserve the small commits and scope/evidence in docs/verification.md. M5 work
+  requires its own instruction. No ledger writes or Outcomia repository changes.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading and streams remain later work.

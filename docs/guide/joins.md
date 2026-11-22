@@ -1,6 +1,6 @@
 # Typed inner joins
 
-M4 is available in the source checkout preparing **0.4.0-alpha.4**. It returns
+M4 is available in **0.4.0-alpha.4**. It returns
 selected typed fields from independently visible contracts linked by an explicit
 [relationship declaration](relationships.md). It does not infer ancestry.
 

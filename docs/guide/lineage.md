@@ -1,6 +1,6 @@
 # Direct contract lineage
 
-Available in the source checkout preparing **0.4.0-alpha.4**. The published
+Available in **0.4.0-alpha.4**. The published
 alpha.3 receipt profile has no lineage API.
 
 ## Enable

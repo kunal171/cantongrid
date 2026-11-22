@@ -35,11 +35,11 @@ Opt-in `Store::apply_lineage_page` also commits typed creation evidence and
 proven direct edges atomically with the checkpoint (migration 010). Lineage reads
 require both indexed endpoints and all proof dependencies to be visible.
 
-Source alpha.4 also supports versioned declared relationships over current model
+Version alpha.4 also supports versioned declared relationships over current model
 projections, with independently authorized endpoints. See the
 [relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/relationships.md).
 
-Source alpha.4 also includes explicit typed inner joins over declared relationships,
+Version alpha.4 also includes explicit typed inner joins over declared relationships,
 with selected columns and independent input authorization. See the
 [join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/joins.md).
 

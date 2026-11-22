@@ -21,6 +21,6 @@ ZIP safety, payload hashes, signature references and fixed resource bounds.
 
 See the [metadata guide](https://github.com/kunal171/cantongrid/blob/feat/dar-metadata/docs/guide/metadata.md)
 for the output contract, limits and unsupported operations.
-This development version is unreleased; use a source checkout until publication.
+Install the matching CLI version for the metadata inspection commands.
 
 Licensed under Apache-2.0; see LICENSE and NOTICE.

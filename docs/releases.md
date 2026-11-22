@@ -1,12 +1,14 @@
 # Releases and publication
 
-Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.3**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.4**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
-Release **0.4.0-alpha.3** adds private exercise receipts and destination migration 009.
+Release **0.4.0-alpha.4** adds direct lineage, versioned relationships and typed
+inner joins, with explicit destination migration 010.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.4.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.4) | Scoped direct lineage, declared relationships and typed inner joins | 001–010 |
 | [0.4.0-alpha.3](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.3) | Atomic private exercise receipts, scoped source evidence and LocalNet worker controls | 001–009 |
 | [0.4.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.2) | DAR metadata, compound sorting, package upgrades, remote HTTPS and schema sync | 001–008 |
 | [0.4.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.1) | Grouped counts/exact sums, generated APIs and full-source scope checks | 001–006 |
@@ -18,20 +20,20 @@ Release **0.4.0-alpha.3** adds private exercise receipts and destination migrati
 | [0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1) | LocalNet ingestion and authenticated generic APIs | 001–002 |
 | [0.1.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.1.0-alpha.1) | Fixtures, owned storage and source checks | 001 |
 
-The CLI and nine libraries form the coordinated **0.4.0-alpha.3** release, with
+The CLI and nine libraries form the coordinated **0.4.0-alpha.4** release, with
 package-specific READMEs. Use the [quickstart](guide/quickstart.md) or install the
 prerelease explicitly:
 
 ```bash
-cargo install cantongrid-cli --version 0.4.0-alpha.3 --locked
+cargo install cantongrid-cli --version 0.4.0-alpha.4 --locked
 ```
 
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
 
-## Preparing 0.4.0-alpha.4 (unpublished)
+## 0.4.0-alpha.4 compatibility
 
-The source adds opt-in privacy-safe direct lineage and private migration 010,
+This prerelease adds opt-in privacy-safe direct lineage and private migration 010,
 plus versioned declared relationships and opt-in typed inner joins over current
 model projections.
 Use a new generation with both exercise and lineage source settings; receipt-only
@@ -43,7 +45,8 @@ The [join guide](guide/joins.md) covers projection budgets and visible-result cu
 The [relationship guide](guide/relationships.md) describes model revision gates;
 older binaries reject declarations. The [lineage guide](guide/lineage.md) describes partial one-hop coverage, visibility and
 cursor rules. Generic and Outcomia LocalNet evidence is linked from
-[verification](verification.md). This checkout does not publish a release or crates.
+[verification](verification.md). M2 has recorded LocalNet acceptance; M3/M4 use owned PostgreSQL and mock-source
+authority. No production acceptance is claimed.
 
 ## 0.4.0-alpha.3 compatibility
 

@@ -11,9 +11,10 @@ Outcomia is the first application example; the engine is reusable.
 
 ## Current status
 
-The source checkout prepares **0.4.0-alpha.4** with opt-in, one-hop
+The **0.4.0-alpha.4** prerelease adds opt-in, one-hop
 [direct lineage](docs/guide/lineage.md), migration 010 and generic/Outcomia LocalNet
-acceptance. This work has not been published.
+acceptance. Declared relationships and typed inner joins have owned-PostgreSQL
+and mock-source API verification.
 
 The **0.4.0-alpha.3** prerelease adds opt-in internal exercise
 receipts and atomic transaction ingestion, verified on the pinned LocalNet.
@@ -41,7 +42,7 @@ See the [quickstart](docs/guide/quickstart.md) for setup and examples, and the
 [next steps](docs/README.md#next) for remaining work. Runtime code is Rust; Python scripts
 are local development tools. Licensed under [Apache-2.0](LICENSE).
 
-The alpha.4 source checkout also includes [declared relationships](docs/guide/relationships.md):
+Alpha.4 also includes [declared relationships](docs/guide/relationships.md):
 versioned application links over exact model keys, with independently visible
 endpoints and generated REST/GraphQL client contracts. They are separate from
 source-proven lineage. See the [example](examples/relationships/README.md).

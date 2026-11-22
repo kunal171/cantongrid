@@ -18,7 +18,7 @@ PostgreSQL 14's support status and the upgrade requirement are in [operations](g
 
 ## M4 typed inner joins — 2026-11-22
 
-The alpha.4 source checkout implements the [M4 contract](design/joins.md), with
+Alpha.4 implements the [M4 contract](design/joins.md), with
 [a runnable example](../examples/joins/README.md). No new dependency, destination
 migration, ledger write or external deployment was needed.
 
@@ -45,7 +45,7 @@ remain unchanged.
 
 ## M3 declared relationships — 2026-11-22
 
-Implemented in the source checkout preparing alpha.4. The
+Included in alpha.4. The
 [relationship contract](design/relationships.md) and
 [example](../examples/relationships/README.md) describe the supported slice.
 No dependency or destination migration was added.
@@ -67,8 +67,7 @@ edges, proof of creation, joined payloads or transitive reachability.
 
 ## M2 direct lineage — 2026-11-22
 
-Implemented on `feat/privacy-safe-lineage`, preparing **0.4.0-alpha.4**; not a
-published release. Migration 010 adds private provenance/edge storage. Older
+Included in **0.4.0-alpha.4**, originally developed on `feat/privacy-safe-lineage`. Migration 010 adds private provenance/edge storage. Older
 migration files remain unchanged. See the [design](design/lineage.md) and
 [API guide](guide/lineage.md).
 
