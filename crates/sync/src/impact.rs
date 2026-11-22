@@ -49,6 +49,7 @@ pub struct FieldDependency {
     pub after_error: Option<Error>,
     pub compatible: bool,
 }
+/// Resolved selected LF semantics, kept separate from the developer-declared output type.
 #[derive(Serialize)]
 pub struct Signature {
     pub scalar: FieldType,
@@ -324,12 +325,16 @@ impl crate::SyncPlan {
             ));
             for dependency in model.dependencies.iter().filter(|d| d.review) {
                 text.push_str(&format!(
-                    "  Review {} {} -> {} (pinned {:?}, proposed {:?})\n",
+                    "  Review {} {} -> {} (pinned {}, proposed {})\n",
                     dependency.kind,
                     dependency.name,
                     dependency.model,
-                    dependency.target_revision,
-                    dependency.proposed_target_revision
+                    dependency
+                        .target_revision
+                        .map_or_else(|| "unknown".into(), |n| n.to_string()),
+                    dependency
+                        .proposed_target_revision
+                        .map_or_else(|| "external".into(), |n| n.to_string())
                 ));
             }
         }

@@ -24,6 +24,7 @@ pub struct EvaluationReport {
     pub compatible: bool,
     pub samples: Vec<Evaluation>,
 }
+/// One-based input ordinal identifies a sample without retaining operator-supplied labels.
 #[derive(Serialize)]
 pub struct Evaluation {
     pub ordinal: usize,
