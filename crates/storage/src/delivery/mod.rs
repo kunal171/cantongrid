@@ -1,5 +1,6 @@
 //! Private durable consumer progress. Public cursors use random receipts, never outbox sequence IDs.
 mod read;
+mod retention;
 mod subscriptions;
 use crate::{StoreError, journal::stream_key};
 use cantongrid_core::{authorization::SourceLease, config::Plan, visibility::CallerGrants};

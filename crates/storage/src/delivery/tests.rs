@@ -122,3 +122,6 @@ fn subscriptions_retry_without_resetting_and_reject_other_principals_parties_and
 
 #[path = "read_tests.rs"]
 mod read_controls;
+
+#[path = "retention_tests.rs"]
+mod retention_controls;
