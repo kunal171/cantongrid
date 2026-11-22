@@ -44,6 +44,7 @@ Usage:
   cantongrid init <new-directory>
   cantongrid validate <project.json>
   cantongrid fixture run <project.json> [--party <synthetic-party>]...
+  cantongrid storage check --database-env <CANTONGRID_VARIABLE>
   cantongrid storage init --database-env <CANTONGRID_VARIABLE>
   cantongrid fixture index <project.json> --database-env <CANTONGRID_VARIABLE>
   cantongrid fixture status <project.json> --database-env <CANTONGRID_VARIABLE>
@@ -170,6 +171,11 @@ fn run(args: Vec<String>) -> Result<(), String> {
             // Validation intentionally does not open the fixture or acquire credentials.
             let _ = plan;
             Ok(())
+        }
+        [command, action, flag, variable]
+            if command == "storage" && action == "check" && flag == "--database-env" =>
+        {
+            commands::storage::check(variable)
         }
         [command, action, flag, variable]
             if command == "storage" && action == "init" && flag == "--database-env" =>

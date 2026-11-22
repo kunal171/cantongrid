@@ -10,6 +10,7 @@ ROUTES = {
     'localnet': 'localnet',
     'pqs': 'pqs',
     'storage': 'storage',
+    'recovery': 'recovery',
     'security': 'security',
     'release': 'release',
     'packages': 'packages',
