@@ -1,9 +1,10 @@
 # Working on CantonGrid
 
-- Active milestone: M2 privacy-safe direct lineage, authorized by “continue” on
-  feat/privacy-safe-lineage. Follow docs/design/lineage.md and verified M0/M1/M2 evidence.
-  No declared links, joins, transitive traversal, Outcomia changes or publication
-  without a separate instruction. Existing aggregate scope guards stay intact.
+- Active milestone: M3 explicit, versioned declared relationships, authorized by
+  “complete M3” on feat/declared-relationships. Follow docs/design/relationships.md.
+  M2 remains the direct source-proof baseline. No joined payloads, transitive
+  traversal, Outcomia changes or publication in this milestone. Preserve existing
+  aggregate scope guards and independent endpoint visibility.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading, joins and streams remain later work.
