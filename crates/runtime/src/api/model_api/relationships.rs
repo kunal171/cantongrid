@@ -62,6 +62,7 @@ pub(super) async fn query(
             name,
             root,
             target: Box::new(target),
+            joined: false,
         },
     )
     .await
@@ -73,6 +74,27 @@ pub(in crate::api) async fn rest(
     headers: HeaderMap,
     Path((namespace, model, name)): Path<(String, String, String)>,
     body: Bytes,
+) -> Response {
+    handle(service, headers, (namespace, model, name), body, false).await
+}
+
+/// Join routes choose their operation on the server, never from untrusted body fields.
+pub(in crate::api) async fn joined(
+    State(service): State<Service>,
+    headers: HeaderMap,
+    Path(path): Path<(String, String, String)>,
+    body: Bytes,
+) -> Response {
+    handle(service, headers, path, body, true).await
+}
+
+/// Keep identical authentication, strict decoding and final catalog checks for both operations.
+async fn handle(
+    service: Service,
+    headers: HeaderMap,
+    (namespace, model, name): (String, String, String),
+    body: Bytes,
+    joined: bool,
 ) -> Response {
     let Ok(token) = bearer(&headers) else {
         return error(StatusCode::UNAUTHORIZED);
@@ -95,6 +117,14 @@ pub(in crate::api) async fn rest(
     if binding.model.relationship(&name).is_err() {
         return error(StatusCode::NOT_FOUND);
     }
+    if joined
+        && binding
+            .model
+            .relationship(&name)
+            .is_ok_and(|r| r.join.is_none())
+    {
+        return error(StatusCode::NOT_FOUND);
+    }
     let Ok(target) = target(&bindings, binding, &name) else {
         return error(StatusCode::SERVICE_UNAVAILABLE);
     };
@@ -104,16 +134,17 @@ pub(in crate::api) async fn rest(
     else {
         return error(StatusCode::BAD_REQUEST);
     };
-    match query(
+    match query_mode(
         &service,
         &token,
         binding.clone(),
-        target,
-        name,
-        input.contract_id,
-        super::super::Filter {
-            limit: Some(input.limit),
-            cursor: input.cursor,
+        input.limit,
+        input.cursor,
+        QueryMode::Relationship {
+            name,
+            root: input.contract_id,
+            target: Box::new(target),
+            joined,
         },
     )
     .await

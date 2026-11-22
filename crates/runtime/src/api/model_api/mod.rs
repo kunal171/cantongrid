@@ -1,6 +1,7 @@
 //! Per-request generated model schema, authenticated before metadata discovery or row resolution.
 use super::{Project, RequestContext, Service, auth, bearer, current_source, error, source_valid};
 mod graphql_schema;
+mod join_schema;
 mod relationship_schema;
 mod relationships;
 mod rest;
@@ -13,7 +14,7 @@ use axum::{
 use cantongrid_models::QueryOptions;
 use cantongrid_storage::{BoundModel, Store};
 use graphql_schema::schema;
-pub(super) use relationships::rest as relationship_rows;
+pub(super) use relationships::{joined as join_rows, rest as relationship_rows};
 pub(super) use rest::{aggregates, describe, list, rows};
 mod aggregate_schema;
 use std::sync::atomic::AtomicUsize;
@@ -61,6 +62,7 @@ enum QueryMode {
         name: String,
         root: String,
         target: Box<BoundModel>,
+        joined: bool,
     },
 }
 
@@ -122,11 +124,22 @@ async fn query_mode(
                 validated.fingerprint()
             )
         }
-        QueryMode::Relationship { name, root, target } => {
+        QueryMode::Relationship {
+            name,
+            root,
+            target,
+            joined,
+        } => {
             binding
                 .model
                 .validate_relationship(name, &target.model)
                 .map_err(|_| QueryError::Unavailable)?;
+            if *joined {
+                binding
+                    .model
+                    .join_fields(name, &target.model)
+                    .map_err(|_| QueryError::Unavailable)?;
+            }
             if root.is_empty()
                 || root.len() > 1024
                 || root.trim() != root
@@ -143,7 +156,8 @@ async fn query_mode(
                 root
             ]);
             format!(
-                "relationship:v1:{}",
+                "{}:v1:{}",
+                if *joined { "join" } else { "relationship" },
                 Sha256::digest(domain.to_string())
                     .iter()
                     .map(|b| format!("{b:02x}"))
@@ -198,19 +212,26 @@ async fn query_mode(
                     after.as_deref(),
                     limit,
                 ),
-                QueryMode::Relationship { name, root, target } => store.read_relationship(
-                    &project.plan,
-                    &identity.caller,
-                    lease,
-                    cantongrid_storage::RelationshipQuery {
+                QueryMode::Relationship {
+                    name,
+                    root,
+                    target,
+                    joined,
+                } => {
+                    let query = cantongrid_storage::RelationshipQuery {
                         source: &binding,
                         target: &target,
                         name: &name,
                         root: &root,
                         after: after.as_deref(),
                         limit,
-                    },
-                ),
+                    };
+                    if joined {
+                        store.read_join(&project.plan, &identity.caller, lease, query)
+                    } else {
+                        store.read_relationship(&project.plan, &identity.caller, lease, query)
+                    }
+                }
                 QueryMode::Aggregate => store.read_aggregate(
                     &project.plan,
                     &identity.caller,

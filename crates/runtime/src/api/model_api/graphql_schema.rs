@@ -43,7 +43,7 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
     let mut root = Object::new("Query");
     let metadata = bindings
         .iter()
-        .map(super::rest::metadata)
+        .map(|b| super::rest::metadata(b, bindings))
         .collect::<Result<Vec<_>, _>>()?;
     let metadata = serde_json::to_value(metadata).map_err(|_| "metadata unavailable")?;
     root = root.field(Field::new(
@@ -81,6 +81,25 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
                 let parent = ctx.parent_value.try_downcast_ref::<serde_json::Value>()?;
                 Ok(parent
                     .get("relationshipQueryFields")
+                    .and_then(|v| v.as_array())
+                    .map(|items| {
+                        FieldValue::list(items.iter().cloned().map(|item| {
+                            FieldValue::value(
+                                async_graphql::Value::from_json(item).unwrap_or_default(),
+                            )
+                        }))
+                    }))
+            })
+        },
+    ));
+    model_metadata = model_metadata.field(Field::new(
+        "joinQueryFields",
+        TypeRef::named_nn_list("String"),
+        |ctx| {
+            FieldFuture::new(async move {
+                let parent = ctx.parent_value.try_downcast_ref::<serde_json::Value>()?;
+                Ok(parent
+                    .get("joinQueryFields")
                     .and_then(|v| v.as_array())
                     .map(|items| {
                         FieldValue::list(items.iter().cloned().map(|item| {
@@ -298,6 +317,10 @@ pub(super) fn schema(bindings: &[BoundModel]) -> Result<Schema, String> {
         for link in &model.relationships {
             (builder, root) =
                 super::relationship_schema::register(builder, root, &model, &link.name, bindings)?;
+            if link.join.is_some() {
+                (builder, root) =
+                    super::join_schema::register(builder, root, &model, &link.name, bindings)?;
+            }
         }
         if model.aggregation.is_some() {
             let choices = bindings
@@ -417,6 +440,7 @@ mod tests {
         doc["models"][0]["aggregation"] = serde_json::json!({"group_by":["state"],"measures":{
             "contracts":{"op":"count"},"total":{"op":"sum","field":"amount"},"units":{"op":"sum","field":"sequence"}}});
         doc["models"][0]["relationships"] = serde_json::json!([{"name":"related","revision":1,"source_field":"state","target":{"model":"records","revision":1,"field":"state"},"max_targets":100}]);
+        doc["models"][0]["relationships"][0]["join"] = serde_json::json!({"kind":"inner","source_fields":["state"],"target_fields":["amount","sequence"]});
         let catalog = Catalog::parse(&doc.to_string()).unwrap();
         let model = catalog.models()[0].clone();
         let binding = BoundModel {
@@ -433,6 +457,40 @@ mod tests {
                 Some(&expected),
                 "aggregate schema mismatch: {name}"
             );
+        }
+    }
+    #[test]
+    fn joined_target_types_are_distinct_across_namespace_aliases() {
+        let mut target = serde_json::json!({"version":1,"models":[{"name":"children","revision":1,"template":{"package_id":"0".repeat(64),"module":"Example","entity":"Child"},"fields":{"label":{"op":"field","path":["label"],"as":{"type":"text"}},"amount":{"op":"field","path":["amount"],"as":{"type":"numeric","scale":10}},"note":{"op":"field","path":["note"],"as":{"type":"optional","item":{"type":"text"}}}}}]});
+        target["models"][0]["name"] = "children".into();
+        let mut source = target["models"][0].clone();
+        source["name"] = "parents".into();
+        source["relationships"] = serde_json::json!([{"name":"related","revision":1,"source_field":"label","target":{"model":"children","revision":1,"field":"label"},"max_targets":10,"join":{"kind":"inner","source_fields":["label"],"target_fields":["amount","note"]}}]);
+        target["models"].as_array_mut().unwrap().push(source);
+        let first = Catalog::parse(&target.to_string()).unwrap();
+        target["models"][0]["fields"]["amount"]["as"] = serde_json::json!({"type":"text"});
+        let second = Catalog::parse(&target.to_string()).unwrap();
+        let mut bindings = Vec::new();
+        for (namespace, catalog) in [("one", &first), ("two", &second)] {
+            for model in catalog.models() {
+                bindings.push(BoundModel {
+                    namespace: namespace.into(),
+                    model: model.clone(),
+                    fingerprint: model.fingerprint().unwrap(),
+                });
+            }
+        }
+        let actual = signatures(&schema(&bindings).unwrap().sdl());
+        for catalog in [&first, &second] {
+            for (name, expected) in signatures(&catalog.graphql_schema().unwrap()) {
+                if name == "Query" {
+                    for field in expected {
+                        assert!(actual[&name].contains(&field));
+                    }
+                } else {
+                    assert_eq!(actual.get(&name), Some(&expected), "{name}");
+                }
+            }
         }
     }
 }
