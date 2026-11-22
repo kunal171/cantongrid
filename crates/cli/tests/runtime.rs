@@ -2,6 +2,8 @@
 //! No Canton party, ledger transaction or upstream database mutation occurs in this test.
 #[path = "runtime/aggregates.rs"]
 mod aggregates;
+#[path = "runtime/joins.rs"]
+mod joins;
 #[path = "runtime/lineage.rs"]
 mod lineage;
 #[path = "runtime/model_cleanup.rs"]
