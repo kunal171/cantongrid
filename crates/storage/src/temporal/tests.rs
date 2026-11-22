@@ -264,3 +264,53 @@ fn temporal_missing_journal_rows_and_origins_fail_closed_without_checkpoint_muta
         Some(StoreError::TemporalUnavailable)
     );
 }
+
+#[test]
+#[ignore = "requires owned PostgreSQL; synthetic upgrade metadata"]
+fn temporal_additive_baselines_raise_the_floor_and_excess_upgrade_history_fails_closed() {
+    let s = Scenario::visibility();
+    let plan = &s.plans[0];
+    let mut store = s.open();
+    let mut initial = s.create(&position(10), "first", PAYLOAD);
+    initial.events[0].origin = Some(Origin {
+        offset: 2,
+        snapshot_observation: true,
+    });
+    store.apply_authorized(plan, &initial, &s.lease()).unwrap();
+    store
+        .apply_authorized(
+            plan,
+            &Batch {
+                context: plan.context().clone(),
+                position: position(20),
+                events: vec![],
+            },
+            &s.lease(),
+        )
+        .unwrap();
+    let key = stream_key(plan).0;
+    let manifest = serde_json::json!({"checkpoint":position(20)});
+    store.client.execute("INSERT INTO cantongrid.selection_upgrades(stream_key,fingerprint,manifest) VALUES($1,'synthetic-baseline',$2)",&[&key,&manifest]).unwrap();
+    let read = |store: &mut Store, offset| {
+        store.read_as_of(
+            plan,
+            &caller(plan, &["A"]),
+            &s.lease(),
+            TemporalQuery {
+                offset,
+                after: None,
+                limit: 25,
+            },
+        )
+    };
+    assert_eq!(
+        read(&mut store, 15).err(),
+        Some(StoreError::TemporalUnavailable)
+    );
+    assert_eq!(read(&mut store, 20).unwrap().visible_total, 1);
+    store.client.execute("INSERT INTO cantongrid.selection_upgrades(stream_key,fingerprint,manifest) SELECT $1,'limit-'||n,$2 FROM generate_series(1,64)n",&[&key,&manifest]).unwrap();
+    assert_eq!(
+        read(&mut store, 20).err(),
+        Some(StoreError::TemporalUnavailable)
+    );
+}

@@ -23,6 +23,7 @@ impl Position {
             || p.offset > p.through
             || p.pk < 0
             || (p.snapshot && p.boundary != p.through)
+            || (!p.snapshot && p.through == p.boundary && p.pk != i64::MAX)
         {
             return Err(StoreError::TemporalUnavailable);
         }
@@ -95,7 +96,9 @@ pub(super) fn observed(
         return Err(StoreError::TemporalUnavailable);
     }
     for row in events {
-        let origin: serde_json::Value = row.get(0);
+        let origin: serde_json::Value = row
+            .get::<_, Option<serde_json::Value>>(0)
+            .ok_or(StoreError::TemporalUnavailable)?;
         let origin: cantongrid_core::lifecycle::Origin =
             serde_json::from_value(origin).map_err(|_| StoreError::TemporalUnavailable)?;
         if origin.offset < 0

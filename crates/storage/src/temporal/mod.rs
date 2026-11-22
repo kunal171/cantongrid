@@ -24,6 +24,9 @@ impl Store {
         if !crate::model_projection::authorized(plan, lease) {
             return Err(StoreError::Authorization);
         }
+        if !plan.is_live() || plan.source_binding().is_none() {
+            return Err(StoreError::TemporalUnavailable);
+        }
         if query.offset < 0
             || !(1..=25).contains(&query.limit)
             || query
