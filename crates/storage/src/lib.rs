@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 mod error;
 mod exercise;
+mod inspector;
 mod journal;
 mod lineage;
 pub use lineage::{LineageDirection, LineageQuery};

@@ -16,7 +16,7 @@ pub struct RelationshipQuery<'a> {
 }
 
 /// Revalidate registry, physical schema, active binding and selected template in the read snapshot.
-pub(super) fn active(
+pub(crate) fn active(
     tx: &mut Transaction<'_>,
     plan: &Plan,
     binding: &BoundModel,
