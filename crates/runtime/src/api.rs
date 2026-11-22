@@ -1,6 +1,7 @@
 //! REST and GraphQL share one authorized SQL query path; neither transport supplies party grants.
 mod model_api;
 mod resources;
+mod temporal;
 
 use crate::{auth, config::Project, index::ready};
 use async_graphql::{Context, EmptyMutation, EmptySubscription, Object, Schema, SimpleObject};
@@ -39,6 +40,9 @@ struct Filter {
 /// Trusted query dispatch; root/direction are data inputs, never grant claims.
 enum Selection {
     Canonical(PageKind),
+    Temporal {
+        offset: i64,
+    },
     Transaction {
         root: String,
     },
@@ -53,6 +57,7 @@ impl Selection {
         match self {
             Self::Canonical(PageKind::Active) => "active".into(),
             Self::Canonical(PageKind::History) => "history".into(),
+            Self::Temporal { offset } => format!("as-of:{offset}"),
             Self::Transaction { root } => {
                 use sha2::{Digest, Sha256};
                 format!(
@@ -156,6 +161,10 @@ impl Service {
         if !(1..=25).contains(&limit) {
             return Err("invalid page limit".into());
         }
+        let historical_offset = match &selection {
+            Selection::Temporal { offset } => Some(*offset),
+            _ => None,
+        };
         let name = selection.cursor_kind();
         let history = matches!(selection, Selection::Canonical(PageKind::History));
         let inspecting = matches!(selection, Selection::Transaction { .. });
@@ -196,6 +205,16 @@ impl Service {
                         after.as_deref(),
                         limit,
                     ),
+                    Selection::Temporal { offset } => store.read_as_of(
+                        &project.plan,
+                        &caller,
+                        lease,
+                        cantongrid_storage::TemporalQuery {
+                            offset,
+                            after: after.as_deref(),
+                            limit,
+                        },
+                    ),
                     Selection::Canonical(kind) => store.read_page(
                         &project.plan,
                         &caller,
@@ -217,7 +236,9 @@ impl Service {
                     ),
                 }
                 .map_err(|e| {
-                    if e == cantongrid_storage::StoreError::LineageUnavailable
+                    if e == cantongrid_storage::StoreError::TemporalUnavailable {
+                        "temporal coverage unavailable".into()
+                    } else if e == cantongrid_storage::StoreError::LineageUnavailable
                         || e == cantongrid_storage::StoreError::InspectorUnavailable
                     {
                         "contract unavailable".into()
@@ -270,6 +291,15 @@ impl Service {
                 "payloadEncoding":"raw_json","archiveEvidence":"prior_create_dependency"
             })),
         };
+        if let Some(offset) = historical_offset {
+            result.provenance = async_graphql::Json(serde_json::json!({
+                "source":source,"network":network,"generation":generation,
+                "coverage":"observed_retained","completeWithinConfiguredScope":true,
+                "asOfOffset":offset.to_string(),"historyFromOffset":result.provenance.0["historyFromOffset"],
+                "timeDomain":"source_local_offset","projection":"canonical_immutable_contracts",
+                "modelRevision":null,"applicationEffectiveTime":"not_inferred"
+            }));
+        }
         if inspecting {
             result.provenance = async_graphql::Json(
                 serde_json::json!({"coverage":"partial_recorded_evidence","complete":false,"view":"flat_authorized_records","order":"visible_record_ordinal","payloadsIncluded":false}),
@@ -313,6 +343,40 @@ fn public_event(item: serde_json::Value) -> serde_json::Value {
 struct QueryRoot;
 #[Object]
 impl QueryRoot {
+    /// Canonical state at a proven boundary, always under current caller and source authority.
+    #[graphql(complexity = 50)]
+    async fn contracts_as_of(
+        &self,
+        ctx: &Context<'_>,
+        as_of_offset: String,
+        limit: Option<i32>,
+        cursor: Option<String>,
+    ) -> async_graphql::Result<Page> {
+        use async_graphql::ErrorExtensions;
+        let offset = temporal::offset(&as_of_offset).map_err(async_graphql::Error::new)?;
+        let request = ctx.data_unchecked::<RequestContext>();
+        request
+            .service
+            .query_selection(
+                &request.token,
+                Selection::Temporal { offset },
+                Filter {
+                    limit: limit.map(|v| v as usize),
+                    cursor,
+                },
+            )
+            .await
+            .map(|r| r.page)
+            .map_err(|reason| {
+                let error = async_graphql::Error::new("authorized temporal query unavailable");
+                if reason == "temporal coverage unavailable" {
+                    error.extend_with(|_, e| e.set("coverage", "unavailable"))
+                } else {
+                    error
+                }
+            })
+    }
+
     /// Flat authorized records; neither a transaction ID nor an exercise observer grants endpoint access.
     #[graphql(complexity = 50)]
     async fn inspect_transaction(
@@ -498,6 +562,9 @@ async fn rest(
         Ok(page) => page.response(&token),
         Err(reason) => {
             eprintln!("CantonGrid query: {reason}");
+            if reason == "temporal coverage unavailable" {
+                return (StatusCode::CONFLICT,Json(serde_json::json!({"error":"temporal state unavailable","coverage":"unavailable"}))).into_response();
+            }
             error(if reason == "contract unavailable" {
                 StatusCode::NOT_FOUND
             } else if reason == "invalid page limit"
@@ -627,6 +694,7 @@ pub async fn serve(path: &Path) -> Result<(), String> {
     };
     let router = Router::new()
         .route("/v1/contracts", get(active))
+        .route("/v1/contracts/as-of", get(temporal::state))
         .route("/v1/inspect/transactions/{transactionId}", get(transaction))
         .route("/v1/contracts/{contractId}/lineage", get(lineage))
         .route("/v1/events", get(history))

@@ -2,6 +2,8 @@
 //! No Canton party, ledger transaction or upstream database mutation occurs in this test.
 #[path = "runtime/aggregates.rs"]
 mod aggregates;
+#[path = "runtime/fixture.rs"]
+mod fixture;
 #[path = "runtime/inspector.rs"]
 mod inspector;
 #[path = "runtime/joins.rs"]
@@ -14,6 +16,8 @@ mod model_cleanup;
 mod projection_inspector;
 #[path = "runtime/relationships.rs"]
 mod relationships;
+#[path = "runtime/temporal.rs"]
+mod temporal;
 use cantongrid_core::{
     authorization::{MAX_SOURCE_LEASE, SourceLease},
     config::{Plan, SourceContext, TemplateId},
