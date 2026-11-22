@@ -20,7 +20,10 @@ impl Store {
             return Err(StoreError::ModelQuery);
         }
         let after = super::ordinal(after)?;
-        if !plan.includes_lineage() || !crate::model_projection::authorized(plan, lease) {
+        if !crate::model_projection::authorized(plan, lease) {
+            return Err(StoreError::Authorization);
+        }
+        if !plan.includes_lineage() {
             return Err(StoreError::InspectorUnavailable);
         }
         let scope = plan.context().binding();

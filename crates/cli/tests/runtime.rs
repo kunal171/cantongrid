@@ -2,12 +2,16 @@
 //! No Canton party, ledger transaction or upstream database mutation occurs in this test.
 #[path = "runtime/aggregates.rs"]
 mod aggregates;
+#[path = "runtime/inspector.rs"]
+mod inspector;
 #[path = "runtime/joins.rs"]
 mod joins;
 #[path = "runtime/lineage.rs"]
 mod lineage;
 #[path = "runtime/model_cleanup.rs"]
 mod model_cleanup;
+#[path = "runtime/projection_inspector.rs"]
+mod projection_inspector;
 #[path = "runtime/relationships.rs"]
 mod relationships;
 use cantongrid_core::{
@@ -145,7 +149,10 @@ fn request(
         let mut request = if let Some(body) = query {
             client
                 .post(
-                    if address.ends_with("/query") || address.ends_with("/aggregate") {
+                    if address.ends_with("/query")
+                        || address.ends_with("/aggregate")
+                        || address.ends_with("/inspect")
+                    {
                         address.to_owned()
                     } else {
                         format!("{address}/graphql")
