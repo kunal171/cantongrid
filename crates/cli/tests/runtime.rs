@@ -4,6 +4,10 @@
 mod aggregates;
 #[path = "runtime/lineage.rs"]
 mod lineage;
+#[path = "runtime/model_cleanup.rs"]
+mod model_cleanup;
+#[path = "runtime/relationships.rs"]
+mod relationships;
 use cantongrid_core::{
     authorization::{MAX_SOURCE_LEASE, SourceLease},
     config::{Plan, SourceContext, TemplateId},
