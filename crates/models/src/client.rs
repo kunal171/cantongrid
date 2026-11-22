@@ -1,5 +1,6 @@
 //! Deterministic client contracts for model APIs; financial values never become JS numbers.
 mod aggregates;
+mod joins;
 mod relationships;
 use crate::{Catalog, Comparison, FieldType, Model, ModelError};
 
@@ -24,7 +25,7 @@ impl Catalog {
         let mut result = String::from(
             "# Exact Int64/Numeric values are strings. Access requires current source and caller grants.\n",
         );
-        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]!, relationshipQueryFields: [String!], aggregateQueryField: String, aggregateFields: [CgModelField!] }\n");
+        result.push_str("enum CgSortDirection { asc desc }\ntype CgModelField { name: String!, kind: String!, nullable: Boolean!, scale: Int, operators: [String!]! }\ntype CgModel { namespace: String!, name: String!, revision: String!, fingerprint: String!, queryField: String!, fields: [CgModelField!]!, relationshipQueryFields: [String!], joinQueryFields: [String!], aggregateQueryField: String, aggregateFields: [CgModelField!] }\n");
         let mut root = String::from("type Query {\n  models: [CgModel!]!\n");
         for model in self.models() {
             let stem = model.api_type()?;
@@ -65,6 +66,16 @@ impl Catalog {
                 let (types, field) = relationships::graphql(model, &link.name)?;
                 result.push_str(&types);
                 root.push_str(&field);
+                if link.join.is_some() {
+                    let target = self
+                        .models()
+                        .iter()
+                        .find(|m| m.name == link.target.model && m.revision == link.target.revision)
+                        .ok_or(ModelError::Definition)?;
+                    let (types, field) = joins::graphql(model, &link.name, target)?;
+                    result.push_str(&types);
+                    root.push_str(&field);
+                }
             }
             root.push_str(&format!(
                 "  {}(namespace: String!, limit: Int, cursor: String, filters: {stem}Filter, sort: {stem}Sort, orderBy: [{stem}Sort!]): {stem}Page!\n",
@@ -84,6 +95,14 @@ impl Catalog {
             let stem = model.api_type()?;
             for link in &model.relationships {
                 result.push_str(&relationships::typescript(model, &link.name)?);
+                if link.join.is_some() {
+                    let target = self
+                        .models()
+                        .iter()
+                        .find(|m| m.name == link.target.model && m.revision == link.target.revision)
+                        .ok_or(ModelError::Definition)?;
+                    result.push_str(&joins::typescript(model, &link.name, target)?);
+                }
             }
             result.push_str(&format!("export interface {stem}Values {{\n"));
             for (name, expression) in &model.fields {

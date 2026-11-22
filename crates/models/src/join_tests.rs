@@ -62,10 +62,13 @@ fn explicit_join_columns_are_typed_bounded_and_preserve_absent_fingerprints() {
     assert!(serde_json::from_value::<crate::Model>(wire).is_err());
     source.relationships[0].join = Some(projection);
     let mut alias = base.clone();
-    alias.fields["note"] = crate::Expression::Field {
-        path: vec!["note".into()],
-        value_type: crate::FieldType::Text,
-    };
+    alias.fields.insert(
+        "note".into(),
+        crate::Expression::Field {
+            path: vec!["note".into()],
+            value_type: crate::FieldType::Text,
+        },
+    );
     assert_ne!(
         source.join_api_name("related", &base).unwrap(),
         source.join_api_name("related", &alias).unwrap()
