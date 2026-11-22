@@ -10,7 +10,7 @@ import time
 from ..common import ROOT, ENV, write_private
 from ..ledger import get, request, token
 from ..pqs import source_config
-from .exercise_localnet import BASE, event_format, exporter_config, verify_scope, wait_exporter
+from .exercise_localnet import BASE, event_format, exporter_config, verify_scope, wait_exporter, sql
 
 
 def destination(statement):
@@ -22,7 +22,7 @@ def destination(statement):
                           check=True, timeout=15, env=ENV).stdout.strip()
 
 
-def run(resume):
+def run(resume, *, lineage=False, scope='operator', outcomia=False):
     """Index a fresh snapshot, then the already approved pair/nested Daml controls.
 
     The dispatcher requires --allow-ledger-writes. Existing parties/users/DAR are
@@ -33,13 +33,21 @@ def run(resume):
     original = ROOT / '.local/exercise-source/runs' / resume
     context = json.loads((original / 'context.json').read_text())
     parties = context['parties']
-    selected = [parties['operator']]
-    user = resume + '-operator'
+    if outcomia:
+        if not lineage:raise ValueError('Outcomia lineage check requires --lineage')
+        from . import exercise_outcomia
+        context={**context,'package':exercise_outcomia.PACKAGE}
+    module='Outcomia.Binary' if outcomia else 'ExerciseProbe'
+    entities=['Protocol','BinaryMarket'] if outcomia else ['Factory','Child','Relay']
+    if scope not in ('operator','ab') or (scope!='operator' and not lineage):
+        raise ValueError('Unsupported worker scope')
+    selected = [parties['operator']] if scope=='operator' else [parties['a'],parties['b']]
+    user = resume + '-' + scope
     verify_scope(user, selected)
-    identifier = 'cg-m1-' + secrets.token_hex(4)
+    identifier = ('cg-m2-' if lineage else 'cg-m1-') + secrets.token_hex(4)
     directory = ROOT / '.local/exercise-source/workers' / identifier
-    database = resume.replace('-', '_') + '_operator'
-    profile = source_config(user, parties['operator'], '*', database)
+    database = resume.replace('-', '_') + '_' + scope
+    profile = source_config(user, ' | '.join(selected), '*', database)
     profile['pipeline']['datasource'] = 'TransactionTreeStream'
     write_private(directory / 'source.conf', profile)
     write_private(directory / 'compose.json', exporter_config(directory))
@@ -48,12 +56,14 @@ def run(resume):
         'network': 'localnet', 'generation': 1, 'parties': selected, 'credential_env': 'CANTONGRID_M1_TOKEN'},
         'source_database_env': 'CANTONGRID_M1_PQS_URL', 'destination_database_env': 'CANTONGRID_DESTINATION_URL',
         'source_health': 'http://127.0.0.1:18083/readyz', 'exercise_source': 'pqs041_ledger_effects',
-        'templates': [{'package_id': context['package'], 'module': 'ExerciseProbe', 'entity': entity}
-                      for entity in ['Factory', 'Child', 'Relay']],
+        'templates': [{'package_id': context['package'], 'module': module, 'entity': entity}
+                      for entity in entities],
         'page_size': 1, 'history': 'snapshot_forward_partial', 'archive_policy': 'prior_create_current_grants',
         'payload': 'raw_json', 'retention': 'retain_while_authorized',
         'api': {'bind': '127.0.0.1:0', 'issuer': 'm1-test', 'audience': 'm1-test',
                 'token_key_env': 'CANTONGRID_M1_API_KEY', 'cursor_key_env': 'CANTONGRID_M1_CURSOR_KEY', 'grants_file': 'unused.json'}}
+    if lineage:
+        config['lineage_source']='pqs041_complete_subtrees'
     write_private(directory / 'runtime.json', config)
     env = {**ENV, 'CANTONGRID_M1_TOKEN': token(user, 3600),
         'CANTONGRID_M1_PQS_URL': f'host=127.0.0.1 port=5441 user={database}_reader password=local-pqs-reader dbname={database}',
@@ -76,26 +86,34 @@ def run(resume):
         subprocess.run([*compose, 'up', '-d'], env=ENV, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=60)
         wait_exporter()
         cli('storage', 'init', '--database-env', 'CANTONGRID_DESTINATION_URL')
-        for _ in range(64):
-            cli('index', str(directory / 'runtime.json'), '--once')
-            if checkpoint()['snapshot'] is False:
-                break
+        if outcomia:
+            factories=[exercise_outcomia.bootstrap(resume+'-writer',parties,identifier)]
         else:
-            raise ValueError('Worker snapshot exceeded its iteration bound')
-        selection = {'activeAtOffset': get(BASE, '/v2/state/ledger-end', token())['offset'],
-                     'eventFormat': event_format(selected)}
-        rows = request(BASE, '/v2/state/active-contracts?limit=100', token(resume + '-writer'), body=selection)
-        factories = [row['contractEntry']['JsActiveContract']['createdEvent'] for row in rows
-                     if 'JsActiveContract' in row.get('contractEntry', {})]
-        factories = [row for row in factories if row['templateId'].endswith(':ExerciseProbe:Factory')
-                     and row['createArgument']['factoryId'] == resume]
+            selection = {'activeAtOffset': get(BASE, '/v2/state/ledger-end', token())['offset'],
+                         'eventFormat': event_format(selected)}
+            rows = request(BASE, '/v2/state/active-contracts?limit=100', token(resume + '-writer'), body=selection)
+            factories = [row['contractEntry']['JsActiveContract']['createdEvent'] for row in rows
+                         if 'JsActiveContract' in row.get('contractEntry', {})]
+            factories = [row for row in factories if row['templateId'].endswith(':ExerciseProbe:Factory')
+                         and row['createArgument']['factoryId'] == resume]
         if len(factories) != 1:
             raise ValueError('Expected one existing owned factory; no contract was guessed')
-        for choice, arguments in [('Factory_Pair', {'runId': identifier + '-pair',
+        # An already healthy exporter can still be replaying older approved controls.
+        # Reach the current factory's actual creation offset before choosing the snapshot.
+        deadline=time.monotonic()+45
+        while int(sql(database,'SELECT latest_offset();',database+'_reader'))<int(factories[0]['offset']):
+            if time.monotonic()>deadline:raise ValueError('Source did not catch up before the snapshot')
+            time.sleep(0.2)
+        for _ in range(64):
+            cli('index',str(directory/'runtime.json'),'--once')
+            if checkpoint()['snapshot'] is False:break
+        else:raise ValueError('Worker snapshot exceeded its iteration bound')
+        controls=exercise_outcomia.actions(parties,identifier) if outcomia else [('Factory_Pair', {'runId': identifier + '-pair',
                 'leftReaders': [parties['a']], 'rightReaders': [parties['b']]}),
-                ('Factory_Nested', {'runId': identifier + '-nested', 'readers': [parties['a']]})]:
+                ('Factory_Nested', {'runId': identifier + '-nested', 'readers': [parties['a']]})]
+        for choice, arguments in controls:
             response = request(BASE, '/v2/commands/submit-and-wait-for-transaction', token(resume + '-writer'), body={
-                'commands': {'commandId': identifier + '-' + choice, 'userId': resume + '-writer', 'actAs': selected,
+                'commands': {'commandId': identifier + '-' + choice, 'userId': resume + '-writer', 'actAs': [parties['operator']],
                     'commands': [{'ExerciseCommand': {'templateId': factories[0]['templateId'],
                         'contractId': factories[0]['contractId'], 'choice': choice, 'choiceArgument': arguments}}]}}, timeout=120)
             write_private(directory / (choice + '.json'), response)
@@ -122,12 +140,17 @@ SELECT json_build_object(
         WHERE e.stream_key=s.stream_key AND e.kind='archive'))
 FROM cantongrid.streams s WHERE definition->>'source'='""" + identifier + "';"
         report = json.loads(destination(summary_query))
-        if report != {'exercises': 4, 'exercise_outbox': 4, 'consuming': 3, 'unindexed_targets': 2, 'lifecycle_archives': 1}:
+        count=1 if outcomia else (4 if scope=='operator' else 3)
+        expected={'exercises':count,'exercise_outbox':count,'consuming':1 if outcomia else 3,'unindexed_targets':0 if outcomia else 2,'lifecycle_archives':1}
+        if report != expected:
             raise ValueError('Worker receipt/outbox counts differ from the four expected exercises')
         cli('index', str(directory / 'runtime.json'), '--once')
         if json.loads(destination(summary_query)) != report:
             raise ValueError('Idle worker cycle duplicated exercise evidence')
         verify_scope(user, selected)
+        if lineage:
+            from .exercise_graph import verify_graph
+            report['graph']=verify_graph(directory,config,env,binary,parties,scope,factories[0]['contractId'],outcomia=outcomia)
         write_private(directory / 'summary.json', report)
         print(json.dumps(report))
     finally:

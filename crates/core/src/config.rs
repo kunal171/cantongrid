@@ -164,6 +164,7 @@ pub struct Plan {
     live: bool,
     source_binding: Option<String>,
     exercises: bool,
+    lineage: bool,
 }
 
 impl fmt::Debug for Plan {
@@ -232,6 +233,7 @@ impl Plan {
             live: false,
             source_binding: None,
             exercises: false,
+            lineage: false,
         })
     }
 
@@ -257,6 +259,7 @@ impl Plan {
             live: true,
             source_binding: None,
             exercises: false,
+            lineage: false,
         })
     }
 
@@ -290,6 +293,20 @@ impl Plan {
         self.exercises
     }
 
+    /// Creation provenance is a separate generation-bound profile, not a receipt-only backfill.
+    pub fn with_lineage(mut self) -> Result<Self, ConfigError> {
+        if !self.exercises {
+            return Err(ConfigError::UnsupportedCapability);
+        }
+        self.lineage = true;
+        Ok(self)
+    }
+
+    /// Whether the source must supply typed forward creation evidence.
+    pub fn includes_lineage(&self) -> bool {
+        self.lineage
+    }
+
     pub fn templates(&self) -> impl Iterator<Item = &TemplateId> {
         self.templates.iter()
     }
@@ -317,6 +334,9 @@ impl Plan {
         if self.exercises {
             definition["profile"] =
                 serde_json::json!("pqs041_partial_raw_prior_create_exercises_v1");
+        }
+        if self.lineage {
+            definition["profile"] = serde_json::json!("pqs041_partial_direct_lineage_v1");
         }
         if let Some(binding) = &self.source_binding {
             definition["source_binding"] = serde_json::json!(binding);

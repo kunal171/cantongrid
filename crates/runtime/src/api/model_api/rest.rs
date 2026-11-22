@@ -22,12 +22,16 @@ pub(super) struct Metadata {
     query_field: String,
     fields: Vec<QueryField>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    relationship_query_fields: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    join_query_fields: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     aggregate_query_field: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     aggregate_fields: Option<Vec<QueryField>>,
 }
 /// Expose field/type metadata for an active binding without serializing its processing expressions.
-pub(super) fn metadata(binding: &BoundModel) -> Result<Metadata, String> {
+pub(super) fn metadata(binding: &BoundModel, bindings: &[BoundModel]) -> Result<Metadata, String> {
     Ok(Metadata {
         namespace: binding.namespace.clone(),
         name: binding.model.name.clone(),
@@ -35,6 +39,37 @@ pub(super) fn metadata(binding: &BoundModel) -> Result<Metadata, String> {
         fingerprint: binding.fingerprint.clone(),
         query_field: binding.model.api_name().map_err(|e| e.to_string())?,
         fields: binding.model.query_fields().map_err(|e| e.to_string())?,
+        relationship_query_fields: if binding.model.relationships.is_empty() {
+            None
+        } else {
+            Some(
+                binding
+                    .model
+                    .relationships
+                    .iter()
+                    .map(|r| {
+                        binding
+                            .model
+                            .relationship_api_name(&r.name)
+                            .map_err(|e| e.to_string())
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
+            )
+        },
+        join_query_fields: {
+            let names: Vec<_> = binding
+                .model
+                .relationships
+                .iter()
+                .filter(|r| r.join.is_some())
+                .filter_map(|r| {
+                    super::relationships::target(bindings, binding, &r.name)
+                        .ok()
+                        .and_then(|target| binding.model.join_api_name(&r.name, &target.model).ok())
+                })
+                .collect();
+            if names.is_empty() { None } else { Some(names) }
+        },
         aggregate_query_field: binding
             .model
             .aggregation
@@ -182,6 +217,7 @@ async fn handle(
             };
             match result {
                 Ok(page) => page,
+                Err(super::QueryError::NotFound) => return error(StatusCode::NOT_FOUND),
                 Err(super::QueryError::Input) => return error(StatusCode::BAD_REQUEST),
                 Err(super::QueryError::Forbidden) => return error(StatusCode::FORBIDDEN),
                 Err(super::QueryError::Unavailable) => {
@@ -189,7 +225,7 @@ async fn handle(
                 }
             }
         } else {
-            let Ok(metadata) = metadata(binding)
+            let Ok(metadata) = metadata(binding, &bindings)
                 .and_then(|m| serde_json::to_value(m).map_err(|_| "metadata unavailable".into()))
             else {
                 return error(StatusCode::SERVICE_UNAVAILABLE);
@@ -197,7 +233,10 @@ async fn handle(
             metadata
         }
     } else {
-        let metadata = bindings.iter().map(metadata).collect::<Result<Vec<_>, _>>();
+        let metadata = bindings
+            .iter()
+            .map(|b| metadata(b, &bindings))
+            .collect::<Result<Vec<_>, _>>();
         let Ok(value) = metadata
             .and_then(|m| serde_json::to_value(m).map_err(|_| "metadata unavailable".into()))
         else {

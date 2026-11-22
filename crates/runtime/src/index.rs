@@ -76,6 +76,26 @@ async fn cycle(path: &Path) -> Result<(), String> {
         let mut store =
             Store::open_env(&project.destination_database_env).map_err(|e| e.to_string())?;
         let checkpoint = store.checkpoint(&project.plan).map_err(|e| e.to_string())?;
+        if project.plan.includes_lineage() {
+            if let Some(page) = cantongrid_pqs::lineage_page_env(
+                &project.source_database_env,
+                &project.plan,
+                lease,
+                checkpoint.as_deref(),
+                project.page_size,
+            )
+            .map_err(|e| e.to_string())?
+            {
+                store
+                    .apply_lineage_page(&project.plan, &page, lease, checkpoint.as_deref())
+                    .map_err(|e| e.to_string())?;
+            } else {
+                store
+                    .observe_authorized(&project.plan, lease)
+                    .map_err(|e| e.to_string())?;
+            }
+            return Ok(());
+        }
         if project.plan.includes_exercises() {
             if let Some(page) = cantongrid_pqs::exercise_page_env(
                 &project.source_database_env,

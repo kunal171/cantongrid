@@ -12,6 +12,8 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [Models](guide/models.md) | Definitions, exact calculations, installation and rebuilds |
 | [Package upgrades](guide/upgrades.md) | Reviewed additive handoffs, staged publication and rollback (unreleased) |
 | [DAR metadata](guide/metadata.md) | Offline package identities and qualified contract signatures (unreleased) |
+| [Typed inner joins](guide/joins.md) | Selected typed values with complete input visibility |
+| [Declared relationships](guide/relationships.md) | Versioned application links with independent endpoint visibility |
 | [Aggregates](guide/aggregates.md) | Grouped counts/sums with full-source authorization |
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
 | [Operations](guide/operations.md) | Recovery, troubleshooting and disk usage |
@@ -22,8 +24,9 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest stable release is **0.3.0**; the prerelease **0.4.0-alpha.1**
-adds grouped aggregates. Stable 0.3.0 includes LocalNet ingestion, model projections,
+The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.4**.
+The alpha series adds aggregates, metadata/sync, exercises, direct lineage,
+declared relationships and typed inner joins. Stable 0.3.0 includes LocalNet ingestion, model projections,
 generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
 PostgreSQL 17.12 compatibility and large real-ledger rebuild acceptance pass.
 See [verification](verification.md) for the exact environments and checks.
@@ -32,13 +35,14 @@ The [aggregate slice](guide/aggregates.md) adds count/sum queries over
 maintained projections, generated APIs and complete-source access checks.
 
 Phase 4 model integration remains in progress. History starts at an active
-snapshot and continues forward. Published 0.3.0 does not include aggregates. Joins, interfaces/reassignments,
+snapshot and continues forward. Published 0.3.0 does not include aggregates or joins. Interfaces/reassignments,
 Scan, hosted multi-tenancy and arbitrary processing plugins are not implemented.
 Remote/TLS, devnet and production deployment are unverified.
 
 ## Next
 
-The source checkout targets 0.4.0-alpha.3 with internal exercise receipts. It retains
+Release 0.4.0-alpha.4 includes [direct lineage](guide/lineage.md).
+The published alpha.3 provides internal exercise receipts. Both retain
 0.4.0-alpha.2's offline DAR inspection (#23),
 compound sorting (#21), reviewed package upgrades (#25), verified remote HTTPS
 transport (#22), and command-driven schema synchronization (#24).
@@ -48,7 +52,10 @@ transport (#22), and command-driven schema synchronization (#24).
    nested controls. General immediate-parent proof remains unsupported.
 2. [M1 internal exercise receipts](design/exercise-ingestion.md) is implemented
    in this checkout with explicit tree-mode opt-in and destination migration 009.
-   M2 introduces guarded lineage. Typed joins, historical queries,
+   [M2 direct lineage](design/lineage.md) is verified on the pinned LocalNet in this
+   checkout. [M3 declared relationships](design/relationships.md) is implemented in this checkout;
+   [M4 typed inner joins](design/joins.md) is implemented with owned PostgreSQL/mock-source checks.
+   Historical queries,
    inspection and durable streams follow their own acceptance gates.
 3. Extend existing metadata/sync with impact analysis rather than duplicating it.
    Outcomia factory/clubs contract work remains a separate repository track.

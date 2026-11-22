@@ -14,7 +14,7 @@ description = "Read-only authorized Canton Participant Query Store snapshot and 
 categories = ["database"]
 
 [dependencies]
-cantongrid-postgres = { path = "../postgres", version = "=0.4.0-alpha.3" }
+cantongrid-postgres = { path = "../postgres", version = "=0.4.0-alpha.4" }
 serde = { version = "1.0", features = ["derive"] }
-cantongrid-core = { path = "../core", version = "=0.4.0-alpha.3" }
+cantongrid-core = { path = "../core", version = "=0.4.0-alpha.4" }
 serde_json = "1.0"

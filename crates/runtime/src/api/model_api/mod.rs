@@ -1,6 +1,9 @@
 //! Per-request generated model schema, authenticated before metadata discovery or row resolution.
 use super::{Project, RequestContext, Service, auth, bearer, current_source, error, source_valid};
 mod graphql_schema;
+mod join_schema;
+mod relationship_schema;
+mod relationships;
 mod rest;
 use axum::{
     body::Bytes,
@@ -11,6 +14,7 @@ use axum::{
 use cantongrid_models::QueryOptions;
 use cantongrid_storage::{BoundModel, Store};
 use graphql_schema::schema;
+pub(super) use relationships::{joined as join_rows, rest as relationship_rows};
 pub(super) use rest::{aggregates, describe, list, rows};
 mod aggregate_schema;
 use std::sync::atomic::AtomicUsize;
@@ -47,12 +51,19 @@ enum QueryError {
     Input,
     Forbidden,
     Unavailable,
+    NotFound,
 }
 
 /// The operation domain is server-selected; aggregate input predicates are not accepted.
 enum QueryMode {
     Rows(QueryOptions),
     Aggregate,
+    Relationship {
+        name: String,
+        root: String,
+        target: Box<BoundModel>,
+        joined: bool,
+    },
 }
 
 /// Existing row resolvers retain their filter/sort contract and cursor domain.
@@ -113,6 +124,46 @@ async fn query_mode(
                 validated.fingerprint()
             )
         }
+        QueryMode::Relationship {
+            name,
+            root,
+            target,
+            joined,
+        } => {
+            binding
+                .model
+                .validate_relationship(name, &target.model)
+                .map_err(|_| QueryError::Unavailable)?;
+            if *joined {
+                binding
+                    .model
+                    .join_fields(name, &target.model)
+                    .map_err(|_| QueryError::Unavailable)?;
+            }
+            if root.is_empty()
+                || root.len() > 1024
+                || root.trim() != root
+                || root.chars().any(char::is_control)
+            {
+                return Err(QueryError::Input);
+            }
+            use sha2::{Digest, Sha256};
+            let domain = serde_json::json!([
+                binding.namespace,
+                binding.fingerprint,
+                target.fingerprint,
+                name,
+                root
+            ]);
+            format!(
+                "{}:v1:{}",
+                if *joined { "join" } else { "relationship" },
+                Sha256::digest(domain.to_string())
+                    .iter()
+                    .map(|b| format!("{b:02x}"))
+                    .collect::<String>()
+            )
+        }
         QueryMode::Aggregate => {
             binding
                 .model
@@ -161,6 +212,26 @@ async fn query_mode(
                     after.as_deref(),
                     limit,
                 ),
+                QueryMode::Relationship {
+                    name,
+                    root,
+                    target,
+                    joined,
+                } => {
+                    let query = cantongrid_storage::RelationshipQuery {
+                        source: &binding,
+                        target: &target,
+                        name: &name,
+                        root: &root,
+                        after: after.as_deref(),
+                        limit,
+                    };
+                    if joined {
+                        store.read_join(&project.plan, &identity.caller, lease, query)
+                    } else {
+                        store.read_relationship(&project.plan, &identity.caller, lease, query)
+                    }
+                }
                 QueryMode::Aggregate => store.read_aggregate(
                     &project.plan,
                     &identity.caller,
@@ -171,7 +242,9 @@ async fn query_mode(
                 ),
             };
             result.map_err(|e| {
-                if e == cantongrid_storage::StoreError::ModelQuery {
+                if e == cantongrid_storage::StoreError::RelationshipUnavailable {
+                    QueryError::NotFound
+                } else if e == cantongrid_storage::StoreError::ModelQuery {
                     QueryError::Input
                 } else {
                     QueryError::Unavailable

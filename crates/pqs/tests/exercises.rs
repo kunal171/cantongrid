@@ -181,3 +181,94 @@ fn retained_scoped_sources_preserve_atomic_transactions_and_receipt_replay() {
         }
     }
 }
+
+#[test]
+#[ignore = "requires retained M0 databases and CANTONGRID_M0_RUN_DIR; read-only synthetic leases"]
+fn creation_provenance_retains_transients_and_never_fills_hidden_parent_gaps() {
+    let directory = PathBuf::from(std::env::var("CANTONGRID_M0_RUN_DIR").unwrap());
+    let read = |name: &str| -> serde_json::Value {
+        serde_json::from_slice(&std::fs::read(directory.join(name)).unwrap()).unwrap()
+    };
+    let context = read("context.json");
+    let factory = read("transactions.json")["factory"].as_i64().unwrap();
+    for scope in ["operator", "a", "b", "ab"] {
+        let plan = Plan::pqs(
+            SourceContext::new(format!("m2-{scope}"), "retained-localnet".into(), 1).unwrap(),
+            context["scopes"][scope]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|p| PartyId::new(p.as_str().unwrap()).unwrap())
+                .collect(),
+            ["Factory", "Child", "Relay"]
+                .into_iter()
+                .map(|entity| TemplateId {
+                    package_id: context["package"].as_str().unwrap().into(),
+                    module: "ExerciseProbe".into(),
+                    entity: entity.into(),
+                })
+                .collect(),
+        )
+        .unwrap()
+        .with_exercises()
+        .unwrap()
+        .with_lineage()
+        .unwrap();
+        let now = Instant::now();
+        let lease = SourceLease::from_verified(
+            plan.context().binding(),
+            plan.source_parties().cloned(),
+            now,
+            MAX_SOURCE_LEASE,
+            now + MAX_SOURCE_LEASE,
+        )
+        .unwrap();
+        let variable = format!("CANTONGRID_M1_{}_URL", scope.to_uppercase());
+        let end = read(&format!("coverage-{scope}.json"))["query_end"]
+            .as_i64()
+            .unwrap();
+        let mut cursor = serde_json::to_string(&Cursor {
+            snapshot: true,
+            boundary: factory,
+            through: factory,
+            offset: factory,
+            pk: 0,
+        })
+        .unwrap();
+        let mut creations = vec![];
+        let mut edges = vec![];
+        for _ in 0..32 {
+            let Some(page) =
+                cantongrid_pqs::lineage_page_env(&variable, &plan, &lease, Some(&cursor), 1)
+                    .unwrap()
+            else {
+                break;
+            };
+            let after: Cursor = serde_json::from_str(&page.delivery.batch.position).unwrap();
+            if !after.snapshot && after.boundary > end {
+                break;
+            }
+            let retry =
+                cantongrid_pqs::lineage_page_env(&variable, &plan, &lease, Some(&cursor), 1)
+                    .unwrap()
+                    .unwrap();
+            assert_eq!(page.creations, retry.creations);
+            edges.extend(cantongrid_core::lineage::prove(&plan, &page).unwrap());
+            creations.extend(page.creations);
+            cursor = page.delivery.batch.position;
+        }
+        assert_eq!(
+            creations.len(),
+            read(&format!("pqs-{scope}.json"))["creates"]
+                .as_array()
+                .unwrap()
+                .len()
+                - 1
+        );
+        assert_eq!(edges.len(), if scope == "operator" { 8 } else { 4 });
+        assert_eq!(
+            creations.iter().filter(|c| c.divulged_only).count(),
+            if scope == "b" { 3 } else { 2 }
+        );
+    }
+}

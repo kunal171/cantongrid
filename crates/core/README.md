@@ -19,7 +19,7 @@ source-authorization lease, HTTP middleware or data-serving implementation.
 
 ```toml
 [dependencies]
-cantongrid-core = "=0.4.0-alpha.3"
+cantongrid-core = "=0.4.0-alpha.4"
 ```
 
 ```rust
@@ -29,6 +29,10 @@ use cantongrid_core::value::{Decimal, Value};
 let amount = Value::Numeric(Decimal { scale: 2, decimal: "1.20".into() });
 assert!(amount.validate().is_ok());
 ```
+
+`lineage::prove` derives direct exercise-to-creation edges only from complete,
+bounded source subtrees. It retains every proof-node witness obligation; matching
+application fields are not ancestry evidence.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 

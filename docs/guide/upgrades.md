@@ -1,6 +1,6 @@
 # Upgrade selected packages
 
-Source-only **0.4.0-alpha.2** adds reviewed additive package handoffs. It keeps
+Introduced in **0.4.0-alpha.2**, reviewed additive package handoffs keep
 one source generation, its checkpoint and existing contracts/history. Old packages
 remain selected: uploading a new package does not migrate old contracts.
 

@@ -135,8 +135,9 @@ literal. The Visibility model uses:
 
 This is the value of a model's `filter` property, not a standalone model document.
 Filters never widen input visibility. Numeric×Numeric, optional arithmetic,
-nested optionals, joins, aggregates, arbitrary SQL and executable plugins are
-not supported. Arithmetic overflow fails the evaluation rather than saturating.
+nested optionals, arbitrary SQL and executable plugins are not supported.
+[Aggregates](aggregates.md) and [typed inner joins](joins.md) have separate
+explicit declarations and authorization rules. Arithmetic overflow fails the evaluation rather than saturating.
 
 Definitions are strict JSON: no duplicate/unknown keys or floating-point tokens.
 A document is at most 64 KiB with 1–16 models. Each model has 1–32 fields, at most
@@ -328,3 +329,10 @@ See [verification](../verification.md#staged-rebuilds) for owned-PostgreSQL and
 mock-source coverage and the 261-contract [LocalNet acceptance](poc.md#evidence-and-boundaries).
 
 Grouped count/sum declarations are documented in [aggregate models](aggregates.md).
+
+## Explicit relationships
+
+Models can declare versioned links over exact projected keys. Both endpoints
+retain independent visibility; results are application declarations, not source
+ancestry proofs. See the [relationship guide](relationships.md) and
+[factory example](../../examples/relationships/README.md).

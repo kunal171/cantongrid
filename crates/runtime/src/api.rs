@@ -12,7 +12,7 @@ use axum::{
     routing::{get, post},
 };
 use cantongrid_ledger::SourceAuthorization;
-use cantongrid_storage::{PageKind, Store};
+use cantongrid_storage::{LineageDirection, LineageQuery, PageKind, Store};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -32,6 +32,42 @@ struct RequestContext {
 #[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 struct Filter {
+    limit: Option<usize>,
+    cursor: Option<String>,
+}
+
+/// Trusted query dispatch; root/direction are data inputs, never grant claims.
+enum Selection {
+    Canonical(PageKind),
+    Lineage {
+        root: String,
+        direction: LineageDirection,
+    },
+}
+impl Selection {
+    /// Cursor domains prevent cross-root, cross-direction and canonical/lineage replay.
+    fn cursor_kind(&self) -> String {
+        match self {
+            Self::Canonical(PageKind::Active) => "active".into(),
+            Self::Canonical(PageKind::History) => "history".into(),
+            Self::Lineage { root, direction } => {
+                use sha2::{Digest, Sha256};
+                let hash =
+                    Sha256::digest(serde_json::json!([root, direction.as_str()]).to_string());
+                format!(
+                    "lineage:{}",
+                    hash.iter().map(|b| format!("{b:02x}")).collect::<String>()
+                )
+            }
+        }
+    }
+}
+
+/// REST exposes only one-hop directions. Unknown filter fields remain rejected.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LineageFilter {
+    direction: LineageDirection,
     limit: Option<usize>,
     cursor: Option<String>,
 }
@@ -74,20 +110,38 @@ impl Service {
         kind: PageKind,
         filter: Filter,
     ) -> Result<AuthorizedPage, String> {
+        self.query_selection(token, Selection::Canonical(kind), filter)
+            .await
+    }
+
+    /// Reuse the canonical authority/encoding guards for direct lineage as well as lifecycle pages.
+    async fn query_selection(
+        &self,
+        token: &str,
+        selection: Selection,
+        filter: Filter,
+    ) -> Result<AuthorizedPage, String> {
+        if let Selection::Lineage { root, .. } = &selection
+            && (root.is_empty()
+                || root.len() > 1024
+                || root.trim() != root
+                || root.chars().any(char::is_control))
+        {
+            return Err("invalid lineage filter".into());
+        }
         let project = Project::load(&self.path)?;
         let identity = auth::authenticate(&project, token)?;
         let limit = filter.limit.unwrap_or(20);
         if !(1..=25).contains(&limit) {
             return Err("invalid page limit".into());
         }
-        let name = match kind {
-            PageKind::Active => "active",
-            PageKind::History => "history",
-        };
+        let name = selection.cursor_kind();
+        let history = matches!(selection, Selection::Canonical(PageKind::History));
+        let lineage = matches!(selection, Selection::Lineage { .. });
         let after = filter
             .cursor
             .as_deref()
-            .map(|c| auth::after(&project, &identity, name, c))
+            .map(|c| auth::after(&project, &identity, &name, c))
             .transpose()?;
         let mut authorization = SourceAuthorization::new(
             project
@@ -111,9 +165,34 @@ impl Service {
                     .ok_or("source authorization unavailable")?;
                 let mut store = Store::open_env(&project.destination_database_env)
                     .map_err(|_| "destination unavailable")?;
-                let page = store
-                    .read_page(&project.plan, &caller, lease, kind, after.as_deref(), limit)
-                    .map_err(|e| format!("authorized query unavailable: {e}"))?;
+                let page = match selection {
+                    Selection::Canonical(kind) => store.read_page(
+                        &project.plan,
+                        &caller,
+                        lease,
+                        kind,
+                        after.as_deref(),
+                        limit,
+                    ),
+                    Selection::Lineage { root, direction } => store.read_lineage(
+                        &project.plan,
+                        &caller,
+                        lease,
+                        LineageQuery {
+                            root: &root,
+                            direction,
+                            after: after.as_deref(),
+                            limit,
+                        },
+                    ),
+                }
+                .map_err(|e| {
+                    if e == cantongrid_storage::StoreError::LineageUnavailable {
+                        "contract unavailable".into()
+                    } else {
+                        format!("authorized query unavailable: {e}")
+                    }
+                })?;
                 Ok::<_, String>(page)
             })
             .await
@@ -127,7 +206,7 @@ impl Service {
         let next_cursor = page
             .next_after
             .take()
-            .map(|key| auth::cursor(&project, &current, name, key))
+            .map(|key| auth::cursor(&project, &current, &name, key))
             .transpose()?;
         let cursor = page
             .checkpoint
@@ -139,17 +218,11 @@ impl Service {
             Some(_) => "partial_history",
             None => "unknown",
         };
-        let result = Page {
+        let mut result = Page {
             items: page
                 .items
                 .into_iter()
-                .map(|item| {
-                    if matches!(kind, PageKind::History) {
-                        public_event(item)
-                    } else {
-                        item
-                    }
-                })
+                .map(|item| if history { public_event(item) } else { item })
                 .map(async_graphql::Json)
                 .collect(),
             visible_total: page.visible_total.to_string(),
@@ -163,6 +236,11 @@ impl Service {
                 "payloadEncoding":"raw_json","archiveEvidence":"prior_create_dependency"
             })),
         };
+        if lineage {
+            result.provenance.0["coverage"] = serde_json::json!("partial_recorded_evidence");
+            result.provenance.0["complete"] = serde_json::json!(false);
+            result.provenance.0["depth"] = serde_json::json!(1);
+        }
         if !source_valid(&source_authorization, &project)
             || auth::authenticate(&project, token)?.binding != binding
         {
@@ -196,6 +274,37 @@ fn public_event(item: serde_json::Value) -> serde_json::Value {
 struct QueryRoot;
 #[Object]
 impl QueryRoot {
+    /// A visible root does not imply visibility of its relationships or proof participants.
+    #[graphql(complexity = 50)]
+    async fn contract_lineage(
+        &self,
+        ctx: &Context<'_>,
+        contract_id: String,
+        direction: String,
+        limit: Option<i32>,
+        cursor: Option<String>,
+    ) -> async_graphql::Result<Page> {
+        let direction: LineageDirection =
+            serde_json::from_value(serde_json::Value::String(direction))
+                .map_err(|_| async_graphql::Error::new("invalid lineage direction"))?;
+        let request = ctx.data_unchecked::<RequestContext>();
+        request
+            .service
+            .query_selection(
+                &request.token,
+                Selection::Lineage {
+                    root: contract_id,
+                    direction,
+                },
+                Filter {
+                    limit: limit.map(|v| v as usize),
+                    cursor,
+                },
+            )
+            .await
+            .map(|result| result.page)
+            .map_err(|_| async_graphql::Error::new("authorized query unavailable"))
+    }
     /// Resolve a caller-visible current-state page using the same authorized service path as REST.
     #[graphql(complexity = 50)]
     async fn active_contracts(
@@ -303,7 +412,12 @@ fn error(status: StatusCode) -> Response {
 }
 
 /// Authenticate a generic REST read and retain its final source lease through response encoding.
-async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKind) -> Response {
+async fn rest(
+    service: Service,
+    headers: HeaderMap,
+    filter: Filter,
+    selection: Selection,
+) -> Response {
     let token = match bearer(&headers) {
         Ok(t) => t,
         Err(r) => return error(r),
@@ -314,17 +428,20 @@ async fn rest(service: Service, headers: HeaderMap, filter: Filter, kind: PageKi
     if auth::authenticate(&project, &token).is_err() {
         return error(StatusCode::UNAUTHORIZED);
     }
-    match service.query(&token, kind, filter).await {
+    match service.query_selection(&token, selection, filter).await {
         Ok(page) => page.response(&token),
         Err(reason) => {
             eprintln!("CantonGrid query: {reason}");
-            error(
-                if reason == "invalid page limit" || reason == "invalid cursor" {
-                    StatusCode::BAD_REQUEST
-                } else {
-                    StatusCode::SERVICE_UNAVAILABLE
-                },
-            )
+            error(if reason == "contract unavailable" {
+                StatusCode::NOT_FOUND
+            } else if reason == "invalid page limit"
+                || reason == "invalid cursor"
+                || reason == "invalid lineage filter"
+            {
+                StatusCode::BAD_REQUEST
+            } else {
+                StatusCode::SERVICE_UNAVAILABLE
+            })
         }
     }
 }
@@ -334,7 +451,13 @@ async fn active(
     headers: HeaderMap,
     Query(filter): Query<Filter>,
 ) -> Response {
-    rest(service, headers, filter, PageKind::Active).await
+    rest(
+        service,
+        headers,
+        filter,
+        Selection::Canonical(PageKind::Active),
+    )
+    .await
 }
 /// Expose history through the common REST guard, keeping its cursor distinct from active rows.
 async fn history(
@@ -342,7 +465,35 @@ async fn history(
     headers: HeaderMap,
     Query(filter): Query<Filter>,
 ) -> Response {
-    rest(service, headers, filter, PageKind::History).await
+    rest(
+        service,
+        headers,
+        filter,
+        Selection::Canonical(PageKind::History),
+    )
+    .await
+}
+
+/// Root visibility uses the same opaque unavailable response for unknown and unauthorized IDs.
+async fn lineage(
+    State(service): State<Service>,
+    headers: HeaderMap,
+    axum::extract::Path(root): axum::extract::Path<String>,
+    Query(filter): Query<LineageFilter>,
+) -> Response {
+    rest(
+        service,
+        headers,
+        Filter {
+            limit: filter.limit,
+            cursor: filter.cursor,
+        },
+        Selection::Lineage {
+            root,
+            direction: filter.direction,
+        },
+    )
+    .await
 }
 
 /// Check caller again after the complete GraphQL operation, so a mid-operation grant change
@@ -399,12 +550,21 @@ pub async fn serve(path: &Path) -> Result<(), String> {
     };
     let router = Router::new()
         .route("/v1/contracts", get(active))
+        .route("/v1/contracts/{contractId}/lineage", get(lineage))
         .route("/v1/events", get(history))
         .route("/graphql", post(graphql))
         .route("/models/graphql", post(model_api::graphql))
         .route("/v1/models", get(model_api::list))
         .route("/v1/models/{namespace}/{name}", get(model_api::describe))
         .route("/v1/models/{namespace}/{name}/query", post(model_api::rows))
+        .route(
+            "/v1/models/{namespace}/{name}/joins/{relationship}/query",
+            post(model_api::join_rows),
+        )
+        .route(
+            "/v1/models/{namespace}/{name}/relationships/{relationship}/query",
+            post(model_api::relationship_rows),
+        )
         .route(
             "/v1/models/{namespace}/{name}/aggregate",
             post(model_api::aggregates),

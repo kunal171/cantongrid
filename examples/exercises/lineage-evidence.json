@@ -1,0 +1,100 @@
+{
+  "recorded_on": "2026-11-21",
+  "release_target": "0.4.0-alpha.4",
+  "environment": "disposable_localnet",
+  "canton": "3.5.7",
+  "scribe": "3.5.4",
+  "pqs_schema": "041",
+  "postgresql": "17.12",
+  "destination_migration": 10,
+  "tests": {
+    "generic_operator": {
+      "exercises": 4,
+      "exercise_outbox": 4,
+      "consuming": 3,
+      "unindexed_targets": 2,
+      "lifecycle_archives": 1,
+      "graph": {
+        "source_scope": "operator",
+        "visible_edges": {
+          "operator": 3
+        },
+        "rest_graphql_match": true,
+        "ungranted_denied": true,
+        "caller_revocation_denied": true,
+        "one_hop_only": true
+      }
+    },
+    "generic_restricted": {
+      "exercises": 3,
+      "exercise_outbox": 3,
+      "consuming": 3,
+      "unindexed_targets": 2,
+      "lifecycle_archives": 1,
+      "graph": {
+        "source_scope": "ab",
+        "visible_edges": {
+          "a": 1,
+          "b": 1,
+          "ab": 1
+        },
+        "rest_graphql_match": true,
+        "ungranted_denied": true,
+        "caller_revocation_denied": true,
+        "one_hop_only": true
+      }
+    },
+    "outcomia_operator": {
+      "exercises": 1,
+      "exercise_outbox": 1,
+      "consuming": 1,
+      "unindexed_targets": 0,
+      "lifecycle_archives": 1,
+      "graph": {
+        "source_scope": "operator",
+        "visible_edges": {
+          "operator": 2
+        },
+        "rest_graphql_match": true,
+        "ungranted_denied": true,
+        "caller_revocation_denied": true,
+        "one_hop_only": true
+      }
+    },
+    "outcomia_restricted": {
+      "exercises": 1,
+      "exercise_outbox": 1,
+      "consuming": 1,
+      "unindexed_targets": 0,
+      "lifecycle_archives": 1,
+      "graph": {
+        "source_scope": "ab",
+        "visible_edges": {
+          "a": 1,
+          "b": 1,
+          "ab": 1
+        },
+        "rest_graphql_match": true,
+        "ungranted_denied": true,
+        "caller_revocation_denied": true,
+        "one_hop_only": true
+      }
+    }
+  },
+  "authority": "Real Ledger source checks and independent organization callers",
+  "outcomia_package": "73c2c43b962bb68d033a62182bbb76ed27b50375a8b6ded3314220e5d1ba114a",
+  "existing_packages_and_parties_reused": true,
+  "outcomia_repository_modified": false,
+  "proof": "direct complete source subtree only",
+  "coverage": "partial_recorded_evidence",
+  "depth": 1,
+  "unsupported": [
+    "declared_links",
+    "joins",
+    "transitive_traversal",
+    "pre_snapshot_history",
+    "interface_choices",
+    "package_handoff",
+    "production_acceptance"
+  ]
+}

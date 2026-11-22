@@ -6,7 +6,7 @@ Declarative Daml contract projections, exact calculations, SQL and client type g
 
 ```toml
 [dependencies]
-cantongrid-models = "=0.4.0-alpha.3"
+cantongrid-models = "=0.4.0-alpha.4"
 ```
 
 The library exposes `Catalog`, `Model`, exact typed expressions, SQL plans and
@@ -27,6 +27,14 @@ Numeric and Int64 values retain exact string encodings. SQL installation,
 source binding and active revision changes are explicit operator actions.
 See the [model guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/models.md)
 for a complete definition and lifecycle.
+
+Version alpha.4 also supports versioned declared relationships over current model
+projections, with independently authorized endpoints. See the
+[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/relationships.md).
+
+Version alpha.4 also includes explicit typed inner joins over declared relationships,
+with selected columns and independent input authorization. See the
+[join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/joins.md).
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
 

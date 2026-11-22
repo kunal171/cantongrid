@@ -5,7 +5,7 @@ use std::fmt;
 
 pub mod coverage;
 mod reader;
-pub use reader::{Cursor, exercise_page_env, page_env};
+pub use reader::{Cursor, exercise_page_env, lineage_page_env, page_env};
 mod handoff;
 pub use handoff::{Reconciliation, RetainedWindow, reconcile_env};
 

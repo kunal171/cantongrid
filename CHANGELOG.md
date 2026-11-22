@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0-alpha.4 — 2026-11-22
+
+- Opt-in typed creation provenance and conservative direct exercise-to-create
+  proofs, with private atomic edge/outbox storage in migration 010.
+- Authenticated one-hop REST/GraphQL lineage queries with independent endpoint
+  visibility, full proof dependencies and root/direction-bound cursors.
+- Generic and existing Outcomia LocalNet acceptance; unknown/filtered subtrees
+  remain unproven. Lineage stays separate from declared links and joins; no
+  transitive traversal.
+
+- M3 versioned declared relationships over exact projected keys, generated client
+  interfaces and guarded current-state REST/GraphQL queries. Declared links remain
+  distinct from source-proven lineage; no joined payloads or traversal.
+
+- M4 opt-in typed inner joins with independently visible inputs, selected values,
+  exact generated clients and visible-result cursor invalidation. No outer joins,
+  hidden-input placeholders or changes to aggregate authorization.
+
 ## 0.4.0-alpha.3 — 2026-11-21
 
 - Opt-in schema041 tree-mode exercise receipts, bounded complete forward

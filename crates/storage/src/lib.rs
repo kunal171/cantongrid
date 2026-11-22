@@ -3,6 +3,8 @@
 mod error;
 mod exercise;
 mod journal;
+mod lineage;
+pub use lineage::{LineageDirection, LineageQuery};
 mod live;
 mod query;
 pub use query::{PageKind, ReadPage};
@@ -12,7 +14,9 @@ pub use model_registry::ModelRegistration;
 mod model_installation;
 pub use model_installation::ModelInstallation;
 mod model_projection;
-pub use model_projection::{BoundModel, ModelBinding, ModelPage, RebuildAction, RebuildStatus};
+pub use model_projection::{
+    BoundModel, ModelBinding, ModelPage, RebuildAction, RebuildStatus, RelationshipQuery,
+};
 mod store;
 pub use error::StoreError;
 pub use migration::initialize_env;

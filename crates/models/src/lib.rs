@@ -22,3 +22,12 @@ mod query;
 pub use query::{
     Comparison, Direction, QueryField, QueryOptions, QueryValue, Sort, Sorts, ValidatedQuery,
 };
+
+mod relationship;
+pub use relationship::{Relationship, RelationshipTarget};
+
+mod join;
+pub use join::{JoinFields, JoinKind, JoinProjection};
+
+#[cfg(test)]
+mod join_tests;

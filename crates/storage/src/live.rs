@@ -52,7 +52,7 @@ impl Store {
         expected: Option<&str>,
     ) -> Result<bool, StoreError> {
         let expected = expected.map(str::to_owned);
-        self.apply_live_checked(plan, batch, lease, Some(&expected), None)
+        self.apply_live_checked(plan, batch, lease, Some(&expected), None, None)
     }
 
     /// Stage internal evidence in the same transaction as contract effects and the durable cursor.
@@ -70,6 +70,7 @@ impl Store {
             lease,
             Some(&expected),
             Some(&page.exercises),
+            None,
         )
     }
 
@@ -81,7 +82,26 @@ impl Store {
         batch: &Batch,
         lease: &SourceLease,
     ) -> Result<bool, StoreError> {
-        self.apply_live_checked(plan, batch, lease, None, None)
+        self.apply_live_checked(plan, batch, lease, None, None, None)
+    }
+
+    /// Publish typed creation evidence and derived edges under the same lifecycle CAS and lock.
+    pub fn apply_lineage_page(
+        &mut self,
+        plan: &Plan,
+        page: &cantongrid_core::lineage::LineagePage,
+        lease: &SourceLease,
+        expected: Option<&str>,
+    ) -> Result<bool, StoreError> {
+        let expected = expected.map(str::to_owned);
+        self.apply_live_checked(
+            plan,
+            &page.delivery.batch,
+            lease,
+            Some(&expected),
+            Some(&page.delivery.exercises),
+            Some(&page.creations),
+        )
     }
 
     /// Check lease/plan/checkpoint, then commit canonical events, model changes and rebuild dirty IDs together.
@@ -92,6 +112,7 @@ impl Store {
         lease: &SourceLease,
         expected_cursor: Option<&Option<String>>,
         exercises: Option<&Vec<cantongrid_core::exercise::Exercise>>,
+        creations: Option<&Vec<cantongrid_core::lineage::Creation>>,
     ) -> Result<bool, StoreError> {
         let scope = plan.context().binding();
         let expected: BTreeSet<_> = plan.source_parties().cloned().collect();
@@ -111,9 +132,17 @@ impl Store {
         }
         let receipts = crate::exercise::validate(plan, batch, exercises)?;
         let encoded = batch.encode().map_err(|_| StoreError::InvalidBatch)?;
-        if encoded.len() + receipts.as_ref().map_or(0, |r| r.to_string().len()) > 1024 * 1024 {
+        let creation_bytes = creations
+            .map(serde_json::to_vec)
+            .transpose()
+            .map_err(|_| StoreError::InvalidBatch)?
+            .map_or(0, |v| v.len());
+        if encoded.len() + receipts.as_ref().map_or(0, |r| r.to_string().len()) + creation_bytes
+            > 1024 * 1024
+        {
             return Err(StoreError::Limit);
         }
+        let provenance = crate::lineage::prepare(plan, batch, exercises, creations)?;
         let document: serde_json::Value =
             serde_json::from_str(&encoded).map_err(|_| StoreError::InvalidBatch)?;
         let (key, lock) = stream_key(plan);
@@ -145,6 +174,7 @@ impl Store {
         } else {
             0
         };
+        crate::lineage::check_head(&mut tx, plan, &key, revision)?;
         // Recheck inside the writer lock: a checkpoint read before source polling
         // cannot protect against delivery-evidence corruption during that interval.
         if plan.includes_exercises()
@@ -163,7 +193,11 @@ impl Store {
             &[&key, &batch.position],
         )? {
             let prior = tx.query_opt("SELECT p.envelope FROM cantongrid.exercise_pages p JOIN cantongrid.batches b USING(stream_key,revision) WHERE b.stream_key=$1 AND b.position=$2", &[&key,&batch.position])?.map(|r|r.get::<_,serde_json::Value>(0));
-            return if row.get::<_, serde_json::Value>(0) == document && prior == receipts {
+            let prior_lineage=tx.query_opt("SELECT p.envelope FROM cantongrid.lineage_pages p JOIN cantongrid.batches b USING(stream_key,revision) WHERE b.stream_key=$1 AND b.position=$2", &[&key,&batch.position])?.map(|r|r.get::<_,serde_json::Value>(0));
+            return if row.get::<_, serde_json::Value>(0) == document
+                && prior == receipts
+                && prior_lineage.as_ref() == provenance.as_ref().map(|(document, _)| document)
+            {
                 Ok(false)
             } else {
                 Err(StoreError::InvalidBatch)
@@ -176,6 +210,9 @@ impl Store {
         tx.execute("INSERT INTO cantongrid.batches(stream_key,revision,position,envelope) VALUES($1,$2,$3,$4)",&[&key,&next,&batch.position,&document])?;
         if let Some(receipts) = &receipts {
             crate::exercise::persist(&mut tx, &key, next, receipts)?;
+        }
+        if let Some((document, edges)) = &provenance {
+            crate::lineage::persist(&mut tx, &key, next, document, edges)?;
         }
         tx.execute("UPDATE cantongrid.streams SET revision=$2,checkpoint=$3,observed_at=now() WHERE stream_key=$1",&[&key,&next,&batch.position])?;
         if !allowed() {
@@ -211,6 +248,7 @@ pub(crate) fn prefix_unblocked(
     }
     let checkpoint: Option<String> = row.get(2);
     let revision: i64 = row.get(1);
+    crate::lineage::check_head(client, plan, &key, revision)?;
     if checkpoint != row.get::<_, Option<String>>(3)
         || row.get::<_, Option<i64>>(4) != Some(revision)
     {

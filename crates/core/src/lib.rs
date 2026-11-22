@@ -8,5 +8,6 @@ mod envelope;
 pub mod exercise;
 pub mod fixture;
 pub mod lifecycle;
+pub mod lineage;
 pub mod value;
 pub mod visibility;

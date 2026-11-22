@@ -52,7 +52,7 @@ paged reads. SDK compatibility observations are in [verification](verification.m
 
 ## Destination and recovery
 
-`storage init` explicitly applies checksummed migrations 001–008. Opening a store
+`storage init` explicitly applies checksummed migrations 001–010. Opening a store
 only verifies it. Source-scoped advisory locks coordinate writers; expected
 checkpoint comparisons reject stale workers. Canonical state, evidence/history,
 model changes, checkpoint and outbox commit together. Exact duplicate deliveries
@@ -183,3 +183,36 @@ M0 adds no production event variant, destination migration or public API.
 The [M1 receipt slice](design/exercise-ingestion.md) adds opt-in atomic forward
 transactions and private receipt/outbox tables in migration 009. Existing
 create/archive APIs and archive ownership remain unchanged.
+
+## Direct lineage (M2)
+
+Opt-in tree-mode ingestion retains typed creation metadata in addition to
+exercise receipts. `core::lineage` proves bounded direct edges only from complete
+recorded subtrees. `storage::lineage` persists proof dependencies atomically with
+lifecycle changes and the checkpoint. Its read query filters proof dependencies
+and both indexed endpoints before counting or paging. Runtime REST and GraphQL
+share the existing source-health, caller-grant and signed-cursor guards.
+
+This is one-hop, partial recorded evidence; it does not reconstruct missing
+history, follow payload references or expose unindexed transient endpoints.
+See the [design](design/lineage.md) and [API guide](guide/lineage.md).
+
+## Declared relationships (M3)
+
+Model declarations pin the target revision and exact key types. Existing model
+registry fingerprints version the policy; existing atomic projections maintain
+its inputs. `model_projection::relationships` resolves only independently visible
+active endpoints, with a bounded visible fanout. Runtime model APIs bind both
+fingerprints and the root into signed cursors and recheck the catalog before
+response delivery. There is no separate relationship cache or new migration.
+See the [contract](design/relationships.md) and [guide](guide/relationships.md).
+
+## Typed inner joins (M4)
+
+An optional relationship projection selects columns from both registered models.
+`model_projection::joins` intersects endpoint visibility before fanout, hashes
+only visible selected results for cursor invalidation, and reads one page's typed
+values in the same snapshot. Existing atomic projections remain the source of
+truth. Generated schemas include both fingerprints to isolate namespace aliases.
+Aggregate authorization is unchanged. See the [contract](design/joins.md) and
+[guide](guide/joins.md).

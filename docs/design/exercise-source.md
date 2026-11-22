@@ -109,7 +109,8 @@ global history. No pruning, redaction, cross-participant or upgrade experiment r
 Decision: PQS tree mode is sufficient for the M1 internal exercise-receipt slice
 on this profile. A second ingestion adapter is not justified by this experiment.
 Neither source can recover an exercise hidden from the same authorized view;
-general immediate-parent provenance remains unsupported. No graph API is enabled.
+general immediate-parent provenance remains unsupported. M0 enables no graph API;
+[M2](lineage.md) adds a narrower, opt-in complete-subtree proof profile.
 
 ## Proposed M1 contract, pending implementation review
 

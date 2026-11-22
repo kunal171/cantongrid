@@ -67,6 +67,9 @@ pub struct Model {
     /// Optional grouped query over maintained contributions; absence preserves old fingerprints.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub aggregation: Option<crate::Aggregation>,
+    /// Explicit application links; absence preserves existing model fingerprints.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub relationships: Vec<crate::Relationship>,
 }
 
 /// Strict versioned model catalog input; compiled plans cannot be supplied through this document.
@@ -121,6 +124,15 @@ impl Catalog {
             }
             model.validate()?;
         }
+        // Resolve targets present in this upload early. Separately registered targets are checked
+        // against their exact installed revision and active binding at query time.
+        for model in &doc.models {
+            for link in &model.relationships {
+                if let Some(target) = doc.models.iter().find(|m| m.name == link.target.model) {
+                    model.validate_relationship(&link.name, target)?;
+                }
+            }
+        }
         doc.models.sort_by(|a, b| a.name.cmp(&b.name));
         let fingerprint = digest(&serde_json::to_string(&doc).map_err(|_| ModelError::Document)?);
         Ok(Self {
@@ -162,6 +174,7 @@ impl Model {
         if let Some(aggregation) = &self.aggregation {
             aggregation.validate(&types)?;
         }
+        crate::relationship::validate(self)?;
         Ok(())
     }
     /// Canonical definition fingerprint is independent from map ordering and input whitespace.

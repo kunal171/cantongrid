@@ -16,10 +16,86 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M4 typed inner joins — 2026-11-22
+
+Alpha.4 implements the [M4 contract](design/joins.md), with
+[a runnable example](../examples/joins/README.md). No new dependency, destination
+migration, ledger write or external deployment was needed.
+
+| Check | Result |
+| --- | --- |
+| Declaration/type controls | Inner joins only; selected columns must exist, be unique and bounded. M3 definitions without join opt-in preserve their fingerprints |
+| Owned PostgreSQL | 65 storage tests passed, including three M4 cases: independent A/B/shared input visibility, exact Int64/Numeric, bool/null, unselected columns absent, schema drift, replay, projection rollback and archive/recreate |
+| Cursor state | Visible changes invalidate pages; hidden archives/creates do not invalidate a narrow caller's cursor. No global checkpoint is used as a hidden-update signal |
+| Resource/lease denial | Hidden large values do not consume the caller's 2 MiB selected-result budget. Expiry while SQL waits on an owned relation lock returns no page |
+| REST / GraphQL | Six runtime integration tests passed; join items/counts agree, transport cursors work, cross-root/caller/operation cursors fail, outer-join/column overrides are rejected and aliases share the two-resolver budget |
+| Publication and authority | Target revision publication stops the pinned join; rollback restores it. Grant epochs, caller revocation and unhealthy/denied sources stop delivery |
+| Generated interfaces | Served SDL matches offline signatures, including two namespaces with distinct target definitions. Example TypeScript passes strict `tsc --noEmit`; preview/SQL-plan commands pass |
+
+The workspace suite passed 104 default Rust tests; model database and CLI
+recovery/registry/install controls also passed. Strict Clippy, formatting,
+35 development-helper and seven PoC-helper tests, dependency/advisory/license/
+secret/workflow checks passed. Package builds and archive inspection are part of
+the final source checks; no upload is performed.
+
+These checks use real owned PostgreSQL with synthetic source leases and a mock
+API source checker. They do not establish new LocalNet, production, global/outer
+join, historical or multi-hop acceptance. Existing aggregate full-source guards
+remain unchanged.
+
+## M3 declared relationships — 2026-11-22
+
+Included in alpha.4. The
+[relationship contract](design/relationships.md) and
+[example](../examples/relationships/README.md) describe the supported slice.
+No dependency or destination migration was added.
+
+| Check | Result |
+| --- | --- |
+| Model declarations | Names, duplicate policies, exact scalar/scale compatibility, unsupported optional/Boolean keys and immutable revision conflicts checked; absent declarations preserve legacy fingerprints |
+| Owned PostgreSQL | 62 storage tests passed; new relationship case covers different templates, separate create batches, A/B/shared visibility, hidden fanout, exact large Numeric keys, archive/recreate, replay, stale bindings, cross-stream denial and projection rollback |
+| REST / GraphQL | Five runtime integration tests passed with mock source authority; relationship counts/items agree, shared transport cursors work, cross-root/policy/caller cursors fail, hidden/unknown roots match, target publication/rollback and source policy revisions obey their pins |
+| Current authority | Caller revocation, grant epochs and unhealthy/denied sources stop delivery; aliases share the existing two-resolver budget |
+| Generated interfaces | Offline SDL signatures match served schema, example TypeScript passes strict `tsc --noEmit`, and ordinary/forged reference previews preserve the same declared key |
+
+The workspace tests, strict Clippy, existing model registry/install/recovery
+workflows, Python helpers, security checks and package dry run are part of the
+final branch checks. Fixture source leases and the API's mock checker are not
+live Canton evidence. No ledger writes, package uploads or grant changes were
+needed for M3. Its current active projection queries do not imply historical
+edges, proof of creation, joined payloads or transitive reachability.
+
+## M2 direct lineage — 2026-11-22
+
+Included in **0.4.0-alpha.4**, originally developed on `feat/privacy-safe-lineage`. Migration 010 adds private provenance/edge storage. Older
+migration files remain unchanged. See the [design](design/lineage.md) and
+[API guide](guide/lineage.md).
+
+The [LocalNet evidence](../examples/exercises/lineage-evidence.json) records four
+runs against existing generic and Outcomia packages, with real source authority
+and independent application callers. Generic root edges were operator=3 and
+A/B/shared=1 each; Outcomia root edges were operator=2 and A/B/shared=1 each.
+REST and GraphQL agreed; ungranted/revoked callers were denied. Restricted
+protocol observers could not query the unindexed market endpoint. These runs
+used development source before the mechanical alpha.4 package-version change.
+No DAR upload, new parties/users, grant widening, funding or trades occurred.
+
+Proof tests cover complete nested subtrees, missing/unknown nodes, crossing
+bounds, mixed transactions, duplicate node/creation identities and self-edges.
+Owned PostgreSQL tests check visibility before counts/paging, endpoint and proof
+policies, replay, SQL/model rollback and late lease expiry. API controls cover
+root/direction/caller cursor binding, grant epochs, revocation, unavailable root
+uniformity and unhealthy/denied source responses. Retained-source SQL tests use
+synthetic leases and do not replace the real-authority LocalNet checks above.
+
+Coverage is always partial recorded evidence and one hop. There is no inferred
+ancestry from application fields, hidden-edge placeholder, transitive traversal,
+declared relationship, join or receipt/lineage package handoff.
+
 ## M1 internal exercise receipts — 2026-11-21
 
-The [receipt contract](design/exercise-ingestion.md) is implemented in this
-0.4.0-alpha.3 checkout. Migration 009 was applied explicitly to the owned
+The [receipt contract](design/exercise-ingestion.md) is implemented in the
+0.4.0-alpha.3 release. Migration 009 was applied explicitly to the owned
 PostgreSQL 17.12 destination; earlier migration checksums remain unchanged.
 
 | Check | Result |
