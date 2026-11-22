@@ -1,13 +1,14 @@
 # Releases and publication
 
-Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.4**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.5**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
-Release **0.4.0-alpha.4** adds direct lineage, versioned relationships and typed
-inner joins, with explicit destination migration 010.
+Release **0.4.0-alpha.5** adds read-only developer inspection and offline upgrade
+impact analysis. Destination migrations 001–010 remain unchanged.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.4.0-alpha.5](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.5) | Scoped developer inspection, upgrade impact/dependency reports and local sample evaluation | 001–010 |
 | [0.4.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.4) | Scoped direct lineage, declared relationships and typed inner joins | 001–010 |
 | [0.4.0-alpha.3](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.3) | Atomic private exercise receipts, scoped source evidence and LocalNet worker controls | 001–009 |
 | [0.4.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.2) | DAR metadata, compound sorting, package upgrades, remote HTTPS and schema sync | 001–008 |
@@ -20,18 +21,18 @@ inner joins, with explicit destination migration 010.
 | [0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1) | LocalNet ingestion and authenticated generic APIs | 001–002 |
 | [0.1.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.1.0-alpha.1) | Fixtures, owned storage and source checks | 001 |
 
-The CLI and nine libraries form the coordinated **0.4.0-alpha.4** release, with
+The CLI and nine libraries form the coordinated **0.4.0-alpha.5** release, with
 package-specific READMEs. Use the [quickstart](guide/quickstart.md) or install the
 prerelease explicitly:
 
 ```bash
-cargo install cantongrid-cli --version 0.4.0-alpha.4 --locked
+cargo install cantongrid-cli --version 0.4.0-alpha.5 --locked
 ```
 
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
 
-## Preparing 0.4.0-alpha.5 (unpublished)
+## 0.4.0-alpha.5 compatibility
 
 M5 adds read-only transaction and projection inspection plus sanitized local
 operator commands. No migration, plan change, model revision or reindex is

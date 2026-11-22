@@ -1,6 +1,6 @@
 # Upgrade impact analysis
 
-Implemented in the **0.4.0-alpha.5 source checkout**, unpublished. This extends
+Available in **0.4.0-alpha.5**. This extends
 `sync plan` and `sync bundle`; it uses the existing DAR reader and model compiler.
 No network, database or ledger credentials are needed.
 

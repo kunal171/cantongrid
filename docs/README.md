@@ -26,7 +26,7 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.4**.
+The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.5**.
 The alpha series adds aggregates, metadata/sync, exercises, direct lineage,
 declared relationships and typed inner joins. Stable 0.3.0 includes LocalNet ingestion, model projections,
 generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
@@ -57,10 +57,9 @@ transport (#22), and command-driven schema synchronization (#24).
    [M2 direct lineage](design/lineage.md) is verified on the pinned LocalNet in this
    checkout. [M3 declared relationships](design/relationships.md) is implemented in this checkout;
    [M4 typed inner joins](design/joins.md) is implemented with owned PostgreSQL/mock-source checks.
-   [M5 developer inspector](design/inspector.md) is implemented in the alpha.5
-   source checkout. Historical queries and durable streams follow their own gates.
+   [M5 developer inspector](design/inspector.md) ships in alpha.5. Historical queries and durable streams follow their own gates.
 3. [M6 upgrade impact analysis](guide/upgrade-impact.md) extends existing
-   metadata/sync in the alpha.5 source checkout. Durable streams and historical
+   metadata/sync in alpha.5. Durable streams and historical
    queries remain later milestones.
    Outcomia factory/clubs contract work remains a separate repository track.
 

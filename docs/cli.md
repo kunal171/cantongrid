@@ -5,7 +5,7 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 
 | Command | Purpose |
 | --- | --- |
-| `sync plan <old.dar> <new.dar> <models.json>` | Offline compatibility/dependency/API/rebuild report; M6 additions in unpublished alpha.5 |
+| `sync plan <old.dar> <new.dar> <models.json>` | Offline compatibility/dependency/API/rebuild report; M6 additions in alpha.5 |
 | `sync summary <old.dar> <new.dar> <models.json>` | Concise offline impact summary |
 | `sync evaluate <old.dar> <new.dar> <models.json> <fixtures.json>` | Sanitized old/new projection sample comparison; no LF execution |
 | `sync bundle <old.dar> <new.dar> <models.json> <output-directory>` | Offline generation of review bundle (models, SQL, GraphQL, TS); refuses overwriting |
