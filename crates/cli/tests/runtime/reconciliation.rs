@@ -218,25 +218,43 @@ fn reconciliation_transports_pin_policies_and_fail_closed_on_scope_or_state_chan
         metadata["policies"][0]["policyFingerprint"],
         policy.fingerprint()
     );
+    let discovery = request(
+        &rt,
+        &graph,
+        Some(&ab),
+        Some(json!({"query": "
+        query Policies {
+            reconciliationPolicies {
+                name
+                namespace
+                model
+                modelRevision
+                modelFingerprint
+                policyName
+                policyRevision
+                policyFingerprint
+            }
+        }
+    "})),
+    )
+    .1;
+    assert!(discovery.get("errors").is_none(), "{discovery}");
+    assert_eq!(
+        discovery["data"]["reconciliationPolicies"],
+        metadata["policies"]
+    );
     let (status, result) = request(&rt, &rest, Some(&ab), Some(json!({})));
     assert_eq!(status, 200);
     assert_eq!(result["comparison"], "satisfied");
     assert_eq!(result["contracts"], "1");
     // 0.1 + 0.2 equals 0.1 * 3 exactly, with identical typed results over both transports.
-    let fields = "
-        formatVersion
-        policy { name revision fingerprint }
-        model { namespace name revision fingerprint }
-        definitionFingerprint
-        status
-        comparison
-        coverage
-        completeWithinConfiguredScope
-        contracts
-        checks { name satisfied violated unavailable }
-    ";
-    let query = format!("{{ reconciliation(name: \"backing\") {{ {fields} }} }}");
-    let (status, gql) = request(&rt, &graph, Some(&ab), Some(json!({"query":query})));
+    let query = include_str!("../../assets/reconciliation/query.graphql");
+    let (status, gql) = request(
+        &rt,
+        &graph,
+        Some(&ab),
+        Some(json!({"query":query,"variables":{"name":"backing"}})),
+    );
     assert_eq!(status, 200);
     assert!(gql.get("errors").is_none(), "{gql}");
     assert_eq!(gql["data"]["reconciliation"], result);
