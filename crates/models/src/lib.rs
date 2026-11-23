@@ -34,3 +34,6 @@ mod join_tests;
 
 mod diagnostic;
 pub use diagnostic::ModelDiagnostic;
+
+/// Offline policy diagnostics are explicitly unverified; live reconciliation is a separate track.
+pub mod reconciliation;

@@ -2,7 +2,7 @@
 
 - Active task: next-track proposal and offline exact-value reconciliation policies
   on feat/reconciliation-policies, following stable 0.4.0. The default is a bounded
-  offline compiler/evaluator; a feature-preference question is pending. Follow
+  offline compiler/evaluator, continued by the user. Follow
   docs/design/reconciliation.md. Live authorized reconciliation, migrations,
   financial all-clear claims, dependencies, ledger writes and publication are
   outside this first slice. Keep focused commits and detailed function/type comments.
