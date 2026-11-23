@@ -16,6 +16,72 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## Offline reconciliation policies — 2026-11-23
+
+Unreleased `0.5.0-alpha.1` on `feat/reconciliation-policies`. This implements
+versioned policy compilation and explicit fixture evaluation only; every report
+remains unverified. See the [guide](guide/reconciliation.md) and
+[live-track gate](design/reconciliation.md#live-track-gate).
+
+| Check | Result |
+| --- | --- |
+| Rust | 139 default workspace tests pass; formatting and strict all-target Clippy pass |
+| Policy controls | 11 tests cover canonical identity, strict parsing, work bounds, exact comparisons, negative zero, scale mismatch, missing inputs, arithmetic overflow and redacted failures |
+| CLI | Offline integration passes outside the checkout with unusable live credentials, unchanged inputs and rejected extra arguments |
+| Existing behavior | 82 storage, one model/PostgreSQL and 15 HTTP integration tests pass against the owned destination; existing model validation and projection output match the stable 0.4.0 CLI |
+| Helpers/security | 38 development-helper and seven PoC-helper tests pass; RustSec, dependency policy, actionlint and history/tree secret scans pass |
+| Packaging | All ten workspace package dry runs and archive checks pass, including README, legal files and self-contained fixture assets; nothing uploaded |
+
+No new dependency, migration or live-source verification is included. SQL tests
+use the separate owned destination; no LocalNet transactions or source-grant
+changes are performed. Fixture comparisons do not establish complete source
+coverage, authorized live balances or economic correctness of a supplied formula.
+
+## Offline model-policy preflight — 2026-11-23
+
+Same unreleased branch/version as the policy slice. Preflight validates one exact
+projected model schema and produces a domain-separated definition identity; it
+checks no active binding, source authorization or indexed contract data.
+
+- All 145 default workspace tests, formatting and strict all-target Clippy pass.
+  The policy suite now has 16 tests, including five preflight controls; two CLI
+  integration tests pass outside the checkout with unusable live credentials.
+- Controls cover exact types/scales, nested-vs-projected paths, missing/optional
+  inputs, constant-only checks, revision/selection/namespace changes, catalog
+  ordering, explicit model selection, redaction and strict/bounded file inputs.
+- All ten workspace package dry runs and archive checks pass at `9c8cd13`,
+  including the packaged model example and test assets. Nothing is uploaded.
+- Existing SQL/runtime code, migrations and dependency versions are unchanged.
+  The previous owned-PostgreSQL evidence above is not a new live-source run.
+
+At that check, indexed-contract evaluation was still unimplemented. Its separately
+authorized plan is in the [design](design/reconciliation.md#indexed-contract-slice-implemented-owned-postgresql-evidence).
+
+## Indexed per-contract reconciliation — 2026-11-23
+
+Unreleased `0.5.0-alpha.1` on `feat/reconciliation-policies`. Storage-only
+`Store::read_reconciliation` checks one exact active model over a complete
+retained indexed prefix. These results use owned PostgreSQL 17.12 and synthetic
+source/caller authority, not LocalNet or remote Canton evidence.
+
+| Check | Result |
+| --- | --- |
+| Default Rust | All 145 workspace tests, formatting and strict all-target Clippy pass |
+| SQL/runtime regression | All 92 storage tests, one model/PostgreSQL test and 15 HTTP integration tests pass |
+| Packaging | All ten workspace dry runs and self-contained archive checks pass at `9fddaee`; no upload |
+| New reconciliation controls | Ten owned-database tests cover exact lifecycle/filter/replay, redaction, scope-before-membership denial, wrong source context, raw-path rejection, projection drift/missing/extra rows, complete/stale/pruned/unknown coverage, selection floors, empty sets, 128/129 input limits and byte budgets |
+| Concurrent reads | A separate connection archives/creates and promotes a model while an in-flight read retains its original canonical inputs and model revision; a later read rejects the old binding |
+| Source expiry | A barrier proves the read snapshot was acquired before the lease expires; the completed result is discarded |
+| Exact arithmetic | Values above 2^53 and last-digit differences remain exact; valid native Numeric columns that overflow policy arithmetic produce an unavailable overall comparison |
+| Security | RustSec, dependency license/bans/source checks, actionlint and history/tree secret scans pass; no new dependency or migration |
+
+Reports contain configured identities and string counts, with no payload values,
+contract IDs, witnesses or global source offsets. Coverage is independent from
+arithmetic outcome; complete inputs can still yield unavailable calculations.
+No public route, source-grant change, DAR deployment, ledger transaction, persisted
+result registry, cross-contract total or financial certification is included.
+See the [guide](guide/reconciliation.md#indexed-per-contract-checks-rust-storage-api).
+
 ## 0.4.0 promotion — 2026-11-23
 
 Regular release of the [scoped node-local profile](releases.md#040-supported-scope-and-acceptance).

@@ -17,6 +17,9 @@ Usage:
   cantongrid ops check-config <runtime.json> --profile localnet|testnet|mainnet
   cantongrid ops preflight <runtime.json> --profile localnet|testnet|mainnet
   cantongrid ops prune-deliveries <runtime.json> --retain <1..100000> --limit <1..256>
+  cantongrid reconcile validate <policy.json>
+  cantongrid reconcile evaluate <policy.json> <fixture.json>
+  cantongrid reconcile preflight <policy.json> <catalog.json> <namespace> <model>
   cantongrid inspect evaluate <models.json> <model-name> <payload.json>
   cantongrid inspect progress <runtime.json>
   cantongrid sync plan <old.dar> <new.dar> <models.json>
@@ -72,6 +75,9 @@ fn main() -> ExitCode {
 /// Accept exact command shapes before dispatching fixture, source or operator actions.
 fn run(args: Vec<String>) -> Result<(), String> {
     match args.as_slice() {
+        [command, action, rest @ ..] if command == "reconcile" => {
+            commands::reconciliation::run(action, rest)
+        }
         [command, action, rest @ ..] if command == "ops" => commands::operations::run(action, rest),
         [command, action, rest @ ..] if command == "inspect" => {
             commands::inspector::run(action, rest)

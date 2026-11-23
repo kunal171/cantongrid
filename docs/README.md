@@ -20,6 +20,7 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
 | [Temporal state](guide/temporal.md) | Bounded canonical as-of reads |
 | [Durable delivery](guide/delivery.md) | Private subscriptions, replay, ACK and explicit gaps |
+| [Reconciliation (0.5 source)](guide/reconciliation.md) | Offline policies, schema preflight and bounded indexed per-contract checks |
 | [Bootstrap](guide/bootstrap.md) | Opaque fixed baseline paired with a durable feed |
 | [Remote setup](guide/remote-source.md) | HTTPS, restricted PQS tunnel and preflight checks |
 | [Recovery](guide/recovery.md) | Private isolated backup/restore validation |
@@ -31,7 +32,7 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-Latest stable: **0.4.0**. Latest prerelease: **0.4.0-alpha.7**.
+Latest stable: **0.4.0**. Latest prerelease: **0.5.0-alpha.1**.
 0.4.0 promotes alpha.7's implementation without changing runtime code or migrations.
 Its supported live profile is authorized node-local Canton 3.5.7, Scribe 3.5.4
 schema041 and PostgreSQL 17.12, with snapshot-forward partial history.
@@ -48,6 +49,11 @@ Historical model bindings, model CDC, interfaces/reassignments, public Scan,
 hosted multi-tenancy and arbitrary processing plugins are not implemented.
 Remote/TestNet and production acceptance remain unverified. Local HTTPS certificate,
 backup and benchmark controls do not establish live-network or production readiness.
+
+Prerelease **0.5.0-alpha.1** adds
+[reconciliation policies](guide/reconciliation.md), schema preflight and storage-only
+indexed per-contract checks. Fixture reports remain unverified; indexed checks
+cover a bounded retained prefix. Public APIs and cross-contract totals remain later work.
 
 ## Milestones
 

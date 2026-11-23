@@ -23,7 +23,8 @@ mod model_installation;
 pub use model_installation::ModelInstallation;
 mod model_projection;
 pub use model_projection::{
-    BoundModel, ModelBinding, ModelPage, RebuildAction, RebuildStatus, RelationshipQuery,
+    BoundModel, ModelBinding, ModelPage, RebuildAction, RebuildStatus, ReconciliationReport,
+    RelationshipQuery,
 };
 mod store;
 pub use error::StoreError;

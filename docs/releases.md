@@ -1,6 +1,6 @@
 # Releases and publication
 
-Latest stable release: **0.4.0**. Latest prerelease: **0.4.0-alpha.7**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.4.0**. Latest prerelease: **0.5.0-alpha.1**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
 Release **0.4.0** promotes the tested alpha.7 implementation for the node-local
@@ -8,6 +8,7 @@ contracts profile. Runtime code and migrations are unchanged from alpha.7.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.5.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.5.0-alpha.1) | Offline policies, model preflight and bounded storage-only indexed reconciliation | 001–012 |
 | [0.4.0](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0) | Verified node-local profile, scoped APIs/composition and durable canonical bootstrap | 001–012 |
 | [0.4.0-alpha.7](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.7) | Atomic canonical bootstrap and opaque pinned snapshot paging | 001–012 |
 | [0.4.0-alpha.6](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.6) | Canonical as-of reads, durable lifecycle feed and local hardening | 001–011 |
@@ -34,6 +35,18 @@ cargo install cantongrid-cli --version 0.4.0 --locked
 
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
+
+## 0.5.0-alpha.1 reconciliation scope
+
+The source branch adds offline exact policies/fixtures, model-schema preflight and
+storage-only indexed per-contract reconciliation. Indexed reads require complete
+source/caller scope, a completed retained prefix, exact active model revision and
+consistent projections; empty, stale or incomplete evidence cannot yield all-clear.
+No new migration or dependency. Public reconciliation APIs, persisted results,
+cross-contract totals and asset/unit inference are not implemented. Adding
+`StoreError::ReconciliationUnavailable` requires updating exhaustive downstream
+error matches. This is a prerelease; stable 0.4.0 remains available.
+See the [guide](guide/reconciliation.md).
 
 ## 0.4.0 supported scope and acceptance
 

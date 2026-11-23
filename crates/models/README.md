@@ -1,13 +1,13 @@
 # cantongrid-models
 
-This README describes CantonGrid 0.4.0.
+This README describes the 0.5.0-alpha.1 prerelease.
 Declarative Daml contract projections, exact calculations, SQL and client type generation.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-models = "=0.4.0"
+cantongrid-models = "=0.5.0-alpha.1"
 ```
 
 The library exposes `Catalog`, `Model`, exact typed expressions, SQL plans and
@@ -47,3 +47,11 @@ PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
+
+Version 0.5.0-alpha.1 exposes `reconciliation::Policy` for versioned offline
+exact-value policies. `evaluate_fixture` returns sanitized, always-unverified
+fixture comparisons, not authenticated ledger findings. It reuses existing model
+expressions and does not change model fingerprints, SQL or source permissions.
+`preflight_model(namespace, model)` checks projected field types and binds both
+definition identities without checking installation, active state or permissions.
+See the [guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/reconciliation.md).
