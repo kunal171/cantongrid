@@ -33,6 +33,18 @@ cargo install cantongrid-cli --version 0.4.0-alpha.6 --locked
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
 
+## Unreleased alpha.7 compatibility
+
+The source branch adds [atomic canonical bootstrap](guide/bootstrap.md) and
+migration **012**, leaving 001–011 unchanged. Back up first, stop older processes,
+explicitly run `storage init` on the owned destination, and upgrade worker/API
+binaries together. Older binaries reject migration 012. Rollback needs the
+pre-upgrade database/configuration/keys; never delete migration records.
+
+Bootstrap metadata is private. The feature does not widen temporal limits, add
+model CDC or establish remote/production acceptance. Source-interval parsing is
+shared and strict, including duplicate/unknown field rejection.
+
 ## 0.4.0-alpha.6 compatibility
 
 This release adds M7 bounded canonical temporal reads, M8 durable REST

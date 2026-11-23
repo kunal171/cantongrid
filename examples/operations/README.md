@@ -16,6 +16,11 @@ The PoC must already have five or more active example contracts. Do not run its
 ledger-writing setup again merely to run this helper. Source inventory is read
 through the existing restricted PQS role; product ingestion and HTTP APIs use Rust.
 
+The alpha.7 checkout also checks an opaque bootstrap snapshot against the source,
+restarts the API between snapshot pages, and confirms the paired feed omits the
+baseline. It performs no concurrent ledger writes; interleaved lifecycle tests
+run separately against owned storage and the HTTP mock-source fixture.
+
 Checks cover full source-inventory equality at the snapshot offset, temporal
 paging, API restart/replay, durable ACK, explicit visible retention loss and
 preservation of canonical history. Recovery uses a quiescent controlled fixture;

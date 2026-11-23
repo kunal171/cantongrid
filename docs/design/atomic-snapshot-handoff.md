@@ -59,8 +59,9 @@ current consumer/party binding. Its cursor domain includes the subscription ID.
 Public snapshot provenance omits source checkpoints, floors and global offsets.
 
 Migration 012 stores the private baseline offset and original delivery anchor on
-the subscription; ordinary registrations cannot reuse bootstrap names. Expired
-same-name bootstrap retries fail rather than silently capturing another baseline.
+the subscription; ordinary registrations cannot reuse bootstrap names. Retained expired
+same-name bootstrap retries fail; name cleanup bounds idempotency to the live
+subscription lifetime. Clients must not reuse expired or cancelled names.
 Visible retention loss returns `coverage: gap`; unavailable temporal coverage
 returns `coverage: unavailable`. Post-baseline ACKs prevent restarting that same
 baseline. Clients need a new name for explicit resynchronization.

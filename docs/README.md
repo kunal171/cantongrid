@@ -20,6 +20,7 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
 | [Temporal state](guide/temporal.md) | Bounded canonical as-of reads |
 | [Durable delivery](guide/delivery.md) | Private subscriptions, replay, ACK and explicit gaps |
+| [Bootstrap (alpha.7 source)](guide/bootstrap.md) | Opaque fixed baseline paired with a durable feed |
 | [Remote setup](guide/remote-source.md) | HTTPS, restricted PQS tunnel and preflight checks |
 | [Recovery](guide/recovery.md) | Private isolated backup/restore validation |
 | [Operations](guide/operations.md) | Readiness, pressure, troubleshooting and disk usage |
@@ -49,6 +50,10 @@ local tests; they are not evidence of a live remote source.
 **Alpha.6** adds the bounded M7 temporal
 prototype, M8 canonical lifecycle long polling and M9 local hardening/validation.
 See [verification](verification.md) for limits and pending remote acceptance.
+
+The **unreleased alpha.7 source** adds [atomic canonical bootstrap](guide/bootstrap.md),
+with private baseline metadata in migration 012. This remains a bounded canonical
+prototype with owned-database/mock-source checks; model CDC is not included.
 
 ## Milestones
 

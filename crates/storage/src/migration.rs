@@ -341,7 +341,7 @@ mod tests {
             tx.query_one("SELECT count(*) FROM cantongrid.runtime_migrations", &[])
                 .unwrap()
                 .get::<_, i64>(0),
-            10
+            11
         );
         tx.execute(
             "INSERT INTO cantongrid.runtime_migrations VALUES(99,'synthetic-unknown-version')",

@@ -88,7 +88,9 @@ pruning does not manufacture a gap. Retention is bounded work, not a disk quota;
 monitor queue growth and consumer lag through [operations](operations.md).
 
 A gap requires an independently verified application baseline and a new
-subscription. There is no atomic snapshot/feed handoff in this slice. Reading a
+subscription. Published alpha.6 has no atomic snapshot/feed handoff. The
+[unreleased alpha.7 bootstrap API](bootstrap.md) pairs its baseline and feed
+transactionally; it still reports explicit loss when retention invalidates a handoff. Reading a
 snapshot then starting `now` during concurrent writes can lose changes. The
 [LocalNet helper](../../examples/operations/README.md) demonstrates resynchronization
 only on a controlled quiescent fixture. Do not use that sequence as a trading
