@@ -1,5 +1,6 @@
 # cantongrid-cli
 
+This README describes the alpha.6 source checkout (unreleased).
 CantonGrid CLI for authorized Daml contract indexing, model generation and query services.
 
 The executable is named `cantongrid`. Run `cantongrid --help` for commands.

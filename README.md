@@ -34,7 +34,10 @@ rollout and unsupported cases.
   and query-bound cursors, verified on LocalNet with the standalone PoC and Outcomia.
 - Staged rebuilds passed 261-contract LocalNet acceptance with source revocation,
   concurrent events, promotion and rollback. PQS/destination fixtures use PostgreSQL 17.12.
-- Durable streams remain planned.
+- The unreleased alpha.6 source adds [bounded temporal reads](docs/guide/temporal.md),
+  [durable lifecycle delivery](docs/guide/delivery.md), local recovery/hardening and
+  [remote setup checks](docs/guide/remote-source.md). Model CDC and an atomic
+  snapshot/feed handoff remain outside this slice.
 - Remote/devnet/production deployment is unverified.
 
 ```bash

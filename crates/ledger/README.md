@@ -1,12 +1,13 @@
 # cantongrid-ledger
 
+This README describes the alpha.6 source checkout (unreleased).
 Current Canton Ledger API user and party-grant verification for CantonGrid.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-ledger = "=0.4.0-alpha.5"
+cantongrid-ledger = "=0.4.0-alpha.6"
 ```
 
 Use `GrantChecker` with the configured source scope and wrap it in

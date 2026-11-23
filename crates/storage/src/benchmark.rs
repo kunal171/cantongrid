@@ -16,6 +16,7 @@ fn timings(mut samples: Vec<u128>) -> serde_json::Value {
     serde_json::json!({"unit":"microseconds","iterations":samples.len(),"p50":rank(50),"p95":rank(95),"max":samples.last().unwrap().to_string()})
 }
 
+/// Measure a fixed dataset after warmup; fixture cleanup is scoped to its synthetic source.
 #[test]
 #[ignore = "manual owned PostgreSQL benchmark; synthetic authority, not a production capacity test"]
 fn operations_benchmark() {

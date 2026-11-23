@@ -1,11 +1,12 @@
 # cantongrid-metadata
 
+This README describes the alpha.6 source checkout (unreleased).
 Offline, bounded DAR/DALF signature extraction for CantonGrid. Metadata does not
 authorize access, prove deployment, validate contract execution or apply migrations.
 
 ```toml
 [dependencies]
-cantongrid-metadata = "=0.4.0-alpha.5"
+cantongrid-metadata = "=0.4.0-alpha.6"
 ```
 
 ```rust,no_run

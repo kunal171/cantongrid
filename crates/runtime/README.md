@@ -1,12 +1,13 @@
 # cantongrid-runtime
 
+This README describes the alpha.6 source checkout (unreleased).
 Authenticated CantonGrid indexing workers and REST/GraphQL query services.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-runtime = "=0.4.0-alpha.5"
+cantongrid-runtime = "=0.4.0-alpha.6"
 ```
 
 The library exposes `index`, `serve`, `bind_model` and bounded `rebuild`
@@ -25,8 +26,11 @@ These require a prepared runtime configuration and databases; they are not a
 standalone fixture. Follow the [LocalNet guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet-source.md)
 and [API guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/api.md).
 
-Authenticated model queries are available through `/models/graphql`. Real-time
-stream delivery is planned and is not provided by this release.
+Authenticated model queries are available through `/models/graphql`. Alpha.6 adds
+bounded canonical as-of queries and durable REST lifecycle long polling with
+monotonic ACKs and explicit retention gaps. These do not provide model CDC or
+an atomic snapshot/feed handoff. See the
+[delivery guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/delivery.md).
 
 Opt-in direct lineage is available through `/v1/contracts/{contractId}/lineage`
 and `contractLineage` on the generic GraphQL API. Responses contain partial
