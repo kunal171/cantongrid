@@ -1,14 +1,14 @@
 # Working on CantonGrid
 
-- Active task: M7 temporal prototype, M8 durable delivery and M9 hardening on
-  feat/temporal-streams-hardening, authorized together by the user. Follow
-  docs/design/temporal-streams-hardening.md. Keep changes in focused commits.
-  No remote source exists yet: the user requested validation checks and a precise
-  remote setup guide. Do not claim live TestNet or production acceptance.
-  The user authorized PR/CI/merge, alpha.6 GitHub/crates.io publication and GitBook
-  updates, followed by a new atomic snapshot/feed handoff branch. No ledger writes
-  or Outcomia changes are authorized.
-- Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
+- Active task: atomic canonical snapshot/feed handoff on
+  feat/atomic-snapshot-handoff, following publication of 0.4.0-alpha.6.
+  Follow docs/design/atomic-snapshot-handoff.md and keep focused commits.
+  The user authorized continuing this feature on a new branch. No new runtime
+  dependencies, ledger writes or Outcomia changes are part of this scope.
+  Do not advertise atomic handoff until its storage/API concurrency controls pass.
+  No authorized remote source exists; live TestNet/production acceptance is pending.
+- Existing baseline: 0.4.0-alpha.6 adds bounded temporal queries, durable canonical
+  delivery and local operational hardening. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading remains later work; canonical durable delivery is now implemented.
   Use docs/README.md for scope and docs/verification.md for dated evidence;

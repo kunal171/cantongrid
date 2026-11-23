@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0-alpha.7 — 2026-11-23 (unreleased)
+
+- Start atomic canonical snapshot/feed handoff work; the bootstrap API is not
+  implemented yet. The design pins a complete boundary and durable feed together.
+
 ## 0.4.0-alpha.6 — 2026-11-23
 
 - M7 bounded canonical state at an acknowledged source offset, with current
