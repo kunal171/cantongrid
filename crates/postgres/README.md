@@ -1,13 +1,13 @@
 # cantongrid-postgres
 
-This README describes CantonGrid 0.4.0.
+This README describes the 0.5.0-alpha.1 source checkout (unreleased).
 Restricted PostgreSQL connections and redacted database errors for CantonGrid.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-postgres = "=0.4.0"
+cantongrid-postgres = "=0.5.0-alpha.1"
 ```
 
 ```rust

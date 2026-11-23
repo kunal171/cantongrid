@@ -1,13 +1,13 @@
 # cantongrid-pqs
 
-This README describes CantonGrid 0.4.0.
+This README describes the 0.5.0-alpha.1 source checkout (unreleased).
 Read-only authorized Canton Participant Query Store snapshot and update paging.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-pqs = "=0.4.0"
+cantongrid-pqs = "=0.5.0-alpha.1"
 ```
 
 Use `inspect_env` to check a dedicated PQS reader's schema and retained boundary.

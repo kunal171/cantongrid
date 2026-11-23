@@ -1,13 +1,13 @@
 # cantongrid-storage
 
-This README describes CantonGrid 0.4.0.
+This README describes the 0.5.0-alpha.1 source checkout (unreleased).
 Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections for CantonGrid.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-storage = "=0.4.0"
+cantongrid-storage = "=0.5.0-alpha.1"
 ```
 
 `initialize_env` applies destination migrations explicitly. `Store` manages

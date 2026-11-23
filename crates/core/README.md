@@ -1,6 +1,6 @@
 # CantonGrid core
 
-This README describes CantonGrid 0.4.0.
+This README describes the 0.5.0-alpha.1 source checkout (unreleased).
 The Rust library contains source-neutral configuration, exact fixture values,
 visibility/lease decisions, lifecycle state and deterministic replay. It uses
 Serde/serde_json at the document boundary, with no network or database access.
@@ -20,7 +20,7 @@ source-authorization lease, HTTP middleware or data-serving implementation.
 
 ```toml
 [dependencies]
-cantongrid-core = "=0.4.0"
+cantongrid-core = "=0.5.0-alpha.1"
 ```
 
 ```rust

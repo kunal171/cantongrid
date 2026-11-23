@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0-alpha.1 — 2026-11-23 (unreleased)
+
+- Start bounded offline exact-value reconciliation policy work. Supplied fixtures
+  do not prove authorization or source completeness; no live checks are claimed.
+
 ## 0.4.0 — 2026-11-23
 
 - Promote the verified node-local contracts profile from alpha.7 with unchanged

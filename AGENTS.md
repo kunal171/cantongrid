@@ -1,13 +1,12 @@
 # Working on CantonGrid
 
-- Active task: publish alpha.7 and promote the verified node-local profile to
-  stable 0.4.0 after CI, with coordinated crates, GitBook and optimized CLI checks.
-  Follow docs/design/atomic-snapshot-handoff.md and keep focused commits.
-  The user authorized push/PR/CI/merge, alpha.7 publication and a scoped stable
-  0.4.0 release with crate/GitBook updates and an optimized CLI build. No new runtime
-  dependencies, ledger writes or Outcomia changes are part of this scope.
-  Do not advertise atomic handoff until its storage/API concurrency controls pass.
-  No authorized remote source exists; live TestNet/production acceptance is pending.
+- Active task: next-track proposal and offline exact-value reconciliation policies
+  on feat/reconciliation-policies, following stable 0.4.0. The default is a bounded
+  offline compiler/evaluator; a feature-preference question is pending. Follow
+  docs/design/reconciliation.md. Live authorized reconciliation, migrations,
+  financial all-clear claims, dependencies, ledger writes and publication are
+  outside this first slice. Keep focused commits and detailed function/type comments.
+  The live track needs a separate source-completeness/authorization risk review.
 - Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical
   delivery and local operational hardening. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
