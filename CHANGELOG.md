@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — 2026-11-23
+
+- Promote the verified node-local contracts profile from alpha.7 with unchanged
+  runtime implementation and migrations 001–012.
+- Include scoped composition/inspection, durable lifecycle delivery and canonical
+  bootstrap with each feature's verification level documented.
+- Canonical temporal reconstruction remains a bounded experimental prototype.
+  Remote/TestNet and production acceptance remain pending authorized access.
+- From 0.3.0, back up before explicitly applying owned migrations through 012.
+  Existing alpha.7 installations need no migration or automatic reindex.
+
 ## 0.4.0-alpha.7 — 2026-11-23
 
 - Add authenticated atomic canonical bootstrap: pair a fixed baseline and durable

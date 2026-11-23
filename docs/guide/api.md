@@ -223,7 +223,7 @@ automatic indexes are created. Recorded query acceptance is in
 The [aggregate API](aggregates.md#query) uses separate roots/cursors
 and requires the full configured source-party scope, including for single groups.
 
-## Compound row sorting (unreleased alpha.2)
+## Compound row sorting
 
 REST `sort` accepts the existing object or an ordered list of one to four keys:
 
@@ -254,7 +254,7 @@ Release alpha.4 supports opt-in one-hop contract lineage
 through REST and the generic GraphQL API. See the [lineage guide](lineage.md)
 for configuration, queries, partial coverage and endpoint visibility rules.
 
-## Atomic bootstrap (alpha.7)
+## Atomic bootstrap (0.4.0)
 
 `POST /v1/subscriptions/bootstrap` and
 `GET /v1/subscriptions/{id}/snapshot` pair a pinned canonical baseline with a

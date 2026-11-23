@@ -80,7 +80,7 @@ permissions. Keep API issuer/audience specific to your organization.
 
 ## Validate before running
 
-Use alpha.6 (`cargo install cantongrid-cli --version 0.4.0-alpha.6 --locked`)
+Use 0.4.0 (`cargo install cantongrid-cli --version 0.4.0 --locked`)
 or build the matching source tag; these commands are not in alpha.5.
 
 ```bash

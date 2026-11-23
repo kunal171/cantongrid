@@ -1,13 +1,14 @@
 # Releases and publication
 
-Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.7**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.4.0**. Latest prerelease: **0.4.0-alpha.7**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
-Release **0.4.0-alpha.7** adds atomic canonical bootstrap over a private pinned
-baseline and durable feed. Destination migration 012 is explicit.
+Release **0.4.0** promotes the tested alpha.7 implementation for the node-local
+contracts profile. Runtime code and migrations are unchanged from alpha.7.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.4.0](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0) | Verified node-local profile, scoped APIs/composition and durable canonical bootstrap | 001–012 |
 | [0.4.0-alpha.7](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.7) | Atomic canonical bootstrap and opaque pinned snapshot paging | 001–012 |
 | [0.4.0-alpha.6](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.6) | Canonical as-of reads, durable lifecycle feed and local hardening | 001–011 |
 | [0.4.0-alpha.5](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.5) | Scoped developer inspection, upgrade impact/dependency reports and local sample evaluation | 001–010 |
@@ -23,16 +24,44 @@ baseline and durable feed. Destination migration 012 is explicit.
 | [0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1) | LocalNet ingestion and authenticated generic APIs | 001–002 |
 | [0.1.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.1.0-alpha.1) | Fixtures, owned storage and source checks | 001 |
 
-The CLI and nine libraries form the coordinated **0.4.0-alpha.7** release, with
+The CLI and nine libraries form the coordinated **0.4.0** release, with
 package-specific READMEs. Use the [quickstart](guide/quickstart.md) or install the
-prerelease explicitly:
+release explicitly:
 
 ```bash
-cargo install cantongrid-cli --version 0.4.0-alpha.7 --locked
+cargo install cantongrid-cli --version 0.4.0 --locked
 ```
 
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
+
+## 0.4.0 supported scope and acceptance
+
+This is a regular 0.x release of the tested node-local contracts profile, promoted
+from alpha.7 without changing runtime code or migration SQL. It does not mark
+all Phase 4 or M9 remote/production gates complete.
+
+| Area | Supported scope / evidence |
+| --- | --- |
+| Live source profile | Canton 3.5.7, Scribe 3.5.4/schema041, PostgreSQL 17.12, authorized node-local PQS and snapshot-forward partial history |
+| Core ingestion/API | Current source/caller grants, exact contract values, durable checkpoints, authenticated REST/GraphQL; retained LocalNet acceptance |
+| Composition/debugging | Relationships, joins, aggregates and inspector controls have per-feature owned-PostgreSQL/mock-source evidence; see verification |
+| Delivery/bootstrap | At-least-once canonical lifecycle feed, private snapshot pairing, replay/ACK/retention guards; owned SQL/HTTP interleaving and retained LocalNet baseline/restart controls |
+| Bounded experimental features | Canonical temporal reconstruction and bootstrap retain 4,096-page / 8,192-event / 64-baseline limits and explicit unavailable/gap outcomes |
+| Unsupported or unverified | Historical model bindings, model CDC, interfaces/reassignments, hosted multi-tenancy, public Scan, live remote/TestNet and production deployment |
+
+Release checks: PR CI, default Rust and owned PostgreSQL suites, read-only retained
+LocalNet evidence, security/license checks, clean self-contained crate archives,
+registry checksums/rendered READMEs and CLI smoke outside the checkout. The stable
+promotion changes only coordinated versions and documentation; runtime and
+migration files must compare equal to the alpha.7 tag. An optimized CLI build and
+offline smoke are recorded separately from registry installation.
+
+From 0.3.0, back up before explicit owned migrations through 012. From alpha.7,
+no migration or reindex is needed. Upgrade matching binaries together. Never point
+storage initialization at the PQS source. Rollback uses the matching pre-upgrade
+database/configuration/keys. Local benchmark/restore checks do not establish
+production capacity, RPO or RTO. Remote validation remains pending source access.
 
 ## 0.4.0-alpha.7 compatibility
 
