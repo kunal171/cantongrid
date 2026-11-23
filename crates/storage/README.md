@@ -64,3 +64,10 @@ Alpha.7 source adds `Store::bootstrap_subscription` and `Store::read_bootstrap`:
 a private fixed canonical baseline is paired with a durable feed in one writer-locked
 transaction. Explicit migration 012 adds its private metadata. Use matching API
 binaries and the repository bootstrap guide; use the matching release.
+
+The unreleased 0.5 source adds `Store::read_reconciliation` for exact per-contract
+checks over one complete retained indexed prefix and active model revision.
+It requires complete trusted caller/source scope and verifies native projection
+consistency. Reports contain identities/counts, not contract IDs or financial
+values; they do not certify asset units or economic correctness. See the
+[reconciliation guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/reconciliation.md).

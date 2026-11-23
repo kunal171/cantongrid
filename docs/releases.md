@@ -37,10 +37,14 @@ older source releases. GitHub releases do not upload crates automatically.
 
 ## Unreleased 0.5.0-alpha.1
 
-The source branch adds bounded offline reconciliation policies and CLI fixture
-diagnostics. It adds no migration, source-plan change, live data access or public
-API. Existing model fingerprints/expressions remain compatible. Fixture results
-always retain unverified coverage; this is not a live financial certification.
+The source branch adds offline exact policies/fixtures, model-schema preflight and
+storage-only indexed per-contract reconciliation. Indexed reads require complete
+source/caller scope, a completed retained prefix, exact active model revision and
+consistent projections; empty, stale or incomplete evidence cannot yield all-clear.
+No new migration or dependency. Public reconciliation APIs, persisted results,
+cross-contract totals and asset/unit inference are not implemented. Adding
+`StoreError::ReconciliationUnavailable` requires updating exhaustive downstream
+error matches. No version/tag/crate is published by these source changes.
 See the [guide](guide/reconciliation.md).
 
 ## 0.4.0 supported scope and acceptance

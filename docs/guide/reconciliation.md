@@ -1,10 +1,10 @@
-# Offline reconciliation policies
+# Reconciliation
 
-Available in the **unreleased 0.5.0-alpha.1 source checkout**. This first slice
-validates versioned exact-value policies, compares supplied local fixtures and
-preflights policies against explicit projected model schemas.
-It does not inspect indexed models, authenticate source data or certify balances.
-No dependency, database migration or API route is added.
+Available in the **unreleased 0.5.0-alpha.1 source checkout**: offline exact
+policies, model-schema preflight and storage-only indexed per-contract checks.
+The CLI commands read explicit local files; the Rust storage interface below
+separately checks authorized indexed inputs. Neither infers economic correctness.
+No dependency, database migration or public API route is added.
 
 ```bash
 cantongrid reconcile validate examples/reconciliation/backing-policy.json
@@ -113,12 +113,80 @@ sum/group query is performed. This fingerprint is not an authorization token.
 Output includes configured model/namespace/policy identities; keep their names
 nonsecret. Errors omit raw catalog paths and definitions.
 
-## Live checks are a separate step
+## Indexed per-contract checks (Rust storage API)
 
-Before live reconciliation, the [design gate](../design/reconciliation.md#live-track-gate)
-requires coherent source/model-revision evidence, complete configured party scope
-before any reads/counts, exact asset/unit selection, current authorization and
-revocation checks, and unavailable/incomplete outcomes for source gaps. Global
-source positions must stay operator-private or use opaque evidence handles.
-There is no live REST/GraphQL, persisted invariant-result store or financial
-all-clear endpoint in this slice. Fixture arithmetic cannot stand in for that work.
+The same unreleased source also implements `Store::read_reconciliation`:
+
+```rust
+let report = store.read_reconciliation(
+    &plan, &caller, &source_lease, &active_binding, &policy,
+)?;
+```
+
+This is a trusted backend interface, with no new CLI network command or HTTP
+route. Authenticate `CallerGrants` independently and obtain `SourceLease` from the
+existing trusted source checker. Select an exact `BoundModel` through current
+binding discovery; the read rechecks its installed definition and active revision.
+A policy/preflight document cannot provide any of these permissions.
+
+Reads require **every configured source party** for both source authority and the
+caller, before any data/count lookup. Narrow callers are denied regardless of
+input membership. One read-only repeatable-read transaction covers the completed
+schema041 prefix, retained journal coverage, fresh ingestion observation, active
+model, canonical inputs and native projection rows. A concurrent ingestion or
+model promotion cannot mix revisions within a report. Source leases are rechecked
+before and after commit; an HTTP adapter must separately reauthenticate current
+caller/source grants before encoding a future public response.
+
+Limits: 128 active canonical contracts for the selected template **before model
+filtering**, 8 MiB of canonical input plus expected projection encoding, existing
+model/policy expression limits and the destination's five-second statement
+timeout. Retained coverage uses the existing bounded temporal verifier (4,096
+batches, 8,192 events and 64 selection upgrades). Excess work, empty/all-filtered
+selections, partial snapshots/intervals, stale observations, missing history,
+changed bindings or inconsistent projections return
+`StoreError::ReconciliationUnavailable` without partial counts. Source/caller
+scope failures return `StoreError::Authorization`.
+
+Canonical reevaluation and native PostgreSQL record equality detect missing,
+different or extra contributions, including filtered/archived rows. No repair or
+freshness update is performed. Int64/Numeric values never pass through floats.
+
+A successful report contains configured policy/model identities,
+`definitionFingerprint`, exact string counts and these separate fields:
+
+```json
+{
+  "status": "evaluated",
+  "comparison": "satisfied",
+  "coverage": "retained_indexed_prefix",
+  "completeWithinConfiguredScope": true,
+  "contracts": "2",
+  "checks": [
+    {"name": "collateral_backing", "satisfied": "2", "violated": "0", "unavailable": "0"}
+  ]
+}
+```
+
+`comparison` is unavailable if any required calculation fails; otherwise any
+violation dominates satisfaction. For example, one satisfied input and one
+arithmetic overflow yield unavailable, even though input coverage is complete.
+Coverage is only this exact model's selected per-contract inputs at a complete
+retained indexed prefix, not the latest ledger head or history before the initial
+snapshot. This does not check cross-contract totals, asset agreement or economic
+correctness. The definition fingerprint identifies schemas/formulas, not a source
+snapshot, replay cursor or signed receipt. Reports omit global offsets, contract
+IDs, witnesses, payloads and financial values; configured names must be nonsecret.
+
+Database controls use synthetic source authority with real owned PostgreSQL:
+
+```bash
+python3 scripts/dev.py storage up
+# Configure CANTONGRID_DESTINATION_URL for this owned test database; see quickstart.
+cargo test -p cantongrid-storage model_projection::reconciliation --locked --offline -- --ignored --test-threads=1
+python3 scripts/dev.py storage stop
+```
+
+These checks are separate from LocalNet/remote evidence. There is no new
+REST/GraphQL endpoint, persisted invariant-result registry or financial all-clear.
+Cross-model/group reconciliation and public API delivery remain future slices.

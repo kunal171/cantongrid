@@ -49,3 +49,8 @@ See the [preflight guide](../../docs/guide/reconciliation.md#preflight-a-project
 The matching copies under crate `assets/reconciliation` keep registry-package
 tests self-contained. `scripts/dev.py release check` checks them against these
 canonical example files. See the [policy guide](../../docs/guide/reconciliation.md).
+
+The [Rust storage interface](../../docs/guide/reconciliation.md#indexed-per-contract-checks-rust-storage-api)
+also checks one exact active model against complete indexed inputs. Its database
+tests use these synthetic declarations, explicit filters and mock source grants.
+No DAR is deployed and no LocalNet/remote reconciliation claim is made.

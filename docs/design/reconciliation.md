@@ -1,9 +1,9 @@
-# Reconciliation policies: offline first slice
+# Reconciliation policies and indexed checks
 
-Next-track proposal after stable 0.4.0, based on T8 in the supplied roadmap.
-This first slice compiles versioned arithmetic comparison policies and evaluates
-explicit local fixtures. It adds no runtime dependency, database migration,
-network access, source grant, ledger write or public API.
+Unreleased work after stable 0.4.0, based on T8 in the supplied roadmap.
+Implemented: offline policy compilation/evaluation, model-schema preflight and
+storage-only per-contract checks over one retained indexed prefix. No new runtime
+dependency, migration, source grant, ledger write or public API.
 
 ## Policy and evaluator
 
@@ -26,7 +26,7 @@ assumption; this slice does not authenticate units or infer economic formulas.
 
 ## Evidence and privacy
 
-Every report remains `status: unverified`, `coverage: supplied_fixture_only`,
+Every fixture report remains `status: unverified`, `coverage: supplied_fixture_only`,
 with no verified source scope/offset and `completeWithinConfiguredScope: false`.
 Individual fixture comparisons may be satisfied, violated or unavailable. CLI
 success means the command produced a diagnostic, not a financial all-clear.
@@ -83,9 +83,9 @@ CLI tests run outside the checkout and cannot acquire source authority, mutate
 files or contact services. Authorization/revocation acceptance is a live-track
 gate, not a test outcome inferred from offline arithmetic.
 
-## Indexed-contract slice (authorized implementation)
+## Indexed-contract slice (implemented; owned-PostgreSQL evidence)
 
-The user continued after reviewing this proposal on 2026-11-23. This authorizes
+The user continued after the proposal on 2026-11-23. This authorized
 the storage-only slice below and owned-PostgreSQL controls.
 
 Start with **per-contract checks over one exact active model revision**, not

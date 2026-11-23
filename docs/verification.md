@@ -55,7 +55,7 @@ checks no active binding, source authorization or indexed contract data.
   The previous owned-PostgreSQL evidence above is not a new live-source run.
 
 At that check, indexed-contract evaluation was still unimplemented. Its separately
-authorized plan is in the [design](design/reconciliation.md#indexed-contract-slice-authorized-implementation).
+authorized plan is in the [design](design/reconciliation.md#indexed-contract-slice-implemented-owned-postgresql-evidence).
 
 ## 0.4.0 promotion — 2026-11-23
 
