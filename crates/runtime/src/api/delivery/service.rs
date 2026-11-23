@@ -24,6 +24,7 @@ impl Service {
             Consumer::from_verified(principal, binding.clone()).map_err(Failure::storage)?
         };
         let domain = match &operation {
+            Operation::Snapshot { id, .. } => Some(format!("bootstrap:{id}")),
             Operation::Read { id, .. } | Operation::Acknowledge { id, .. } => {
                 Some(format!("delivery:{id}"))
             }
@@ -31,6 +32,10 @@ impl Service {
         };
         let after = match &operation {
             Operation::Read {
+                cursor: Some(cursor),
+                ..
+            }
+            | Operation::Snapshot {
                 cursor: Some(cursor),
                 ..
             }
@@ -57,6 +62,28 @@ impl Service {
                 let mut store = Store::open_env(&project.destination_database_env)
                     .map_err(|_| unavailable())?;
                 match operation {
+                    Operation::Bootstrap { name } => store
+                        .bootstrap_subscription(
+                            &project.plan,
+                            &identity.caller,
+                            lease,
+                            &consumer,
+                            &name,
+                        )
+                        .map(Stored::Bootstrapped),
+                    Operation::Snapshot { id, limit, .. } => store
+                        .read_bootstrap(
+                            &project.plan,
+                            &identity.caller,
+                            lease,
+                            &consumer,
+                            DeliveryQuery {
+                                subscription: &id,
+                                after: after.as_deref(),
+                                limit,
+                            },
+                        )
+                        .map(Stored::Snapshot),
                     Operation::Register { name, start } => store
                         .subscribe(
                             &project.plan,
@@ -105,6 +132,37 @@ impl Service {
         }
         let source = current_source(&project).await.map_err(|_| unavailable())?;
         let data = match stored {
+            Stored::Bootstrapped(sub) => {
+                let cursor = auth::cursor(
+                    &project,
+                    &current,
+                    &format!("delivery:{}", sub.id),
+                    sub.receipt,
+                )
+                .map_err(|_| unavailable())?;
+                serde_json::json!({"id":sub.id,"cursor":cursor,
+                    "snapshotUrl":format!("/v1/subscriptions/{}/snapshot",sub.id),
+                    "expiresAtSeconds":sub.expires_at_seconds,"formatVersion":1,
+                    "delivery":"at_least_once","atomicHandoff":true,"coverage":"observed_retained"})
+            }
+            Stored::Snapshot(page) => {
+                let cursor = page
+                    .next_after
+                    .map(|after| {
+                        auth::cursor(
+                            &project,
+                            &current,
+                            domain.as_deref().unwrap_or("invalid"),
+                            after,
+                        )
+                    })
+                    .transpose()
+                    .map_err(|_| unavailable())?;
+                // ReadPage also carries operator-only checkpoints. Never serialize that whole value.
+                serde_json::json!({"items":page.items,"visibleTotal":page.visible_total.to_string(),
+                    "nextCursor":cursor,"formatVersion":1,
+                    "provenance":{"coverage":"observed_retained","snapshot":"pinned_subscription_baseline","currentGrantsRequired":true}})
+            }
             Stored::Registered(sub) => {
                 let cursor = auth::cursor(
                     &project,

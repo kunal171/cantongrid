@@ -1,13 +1,14 @@
 # Releases and publication
 
-Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.6**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.3.0**. Latest prerelease: **0.4.0-alpha.7**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
-Release **0.4.0-alpha.6** adds bounded temporal reads, durable lifecycle delivery
-and local operational hardening. Destination migration 011 is explicit.
+Release **0.4.0-alpha.7** adds atomic canonical bootstrap over a private pinned
+baseline and durable feed. Destination migration 012 is explicit.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.4.0-alpha.7](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.7) | Atomic canonical bootstrap and opaque pinned snapshot paging | 001–012 |
 | [0.4.0-alpha.6](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.6) | Canonical as-of reads, durable lifecycle feed and local hardening | 001–011 |
 | [0.4.0-alpha.5](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.5) | Scoped developer inspection, upgrade impact/dependency reports and local sample evaluation | 001–010 |
 | [0.4.0-alpha.4](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.4) | Scoped direct lineage, declared relationships and typed inner joins | 001–010 |
@@ -22,16 +23,28 @@ and local operational hardening. Destination migration 011 is explicit.
 | [0.2.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.2.0-alpha.1) | LocalNet ingestion and authenticated generic APIs | 001–002 |
 | [0.1.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.1.0-alpha.1) | Fixtures, owned storage and source checks | 001 |
 
-The CLI and nine libraries form the coordinated **0.4.0-alpha.6** release, with
+The CLI and nine libraries form the coordinated **0.4.0-alpha.7** release, with
 package-specific READMEs. Use the [quickstart](guide/quickstart.md) or install the
 prerelease explicitly:
 
 ```bash
-cargo install cantongrid-cli --version 0.4.0-alpha.6 --locked
+cargo install cantongrid-cli --version 0.4.0-alpha.7 --locked
 ```
 
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
+
+## 0.4.0-alpha.7 compatibility
+
+This release adds [atomic canonical bootstrap](guide/bootstrap.md) and
+migration **012**, leaving 001–011 unchanged. Back up first, stop older processes,
+explicitly run `storage init` on the owned destination, and upgrade worker/API
+binaries together. Older binaries reject migration 012. Rollback needs the
+pre-upgrade database/configuration/keys; never delete migration records.
+
+Bootstrap metadata is private. The feature does not widen temporal limits, add
+model CDC or establish remote/production acceptance. Source-interval parsing is
+shared and strict, including duplicate/unknown field rejection.
 
 ## 0.4.0-alpha.6 compatibility
 

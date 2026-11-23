@@ -144,6 +144,32 @@ def run():
 
     try:
         child = start()
+        # A fixed opaque snapshot handle replaces the unsafe snapshot-then-start-now sequence.
+        status, bootstrap = request(base, token, '/v1/subscriptions/bootstrap', {'name': 'atomic-baseline'})
+        assert status == 200 and bootstrap['atomicHandoff'] is True
+        assert not {'asOfOffset', 'checkpoint', 'baseline_offset', 'baseline_after'} & bootstrap.keys()
+        bootstrap_id = bootstrap['id']
+        private_boundary = query(destination, 'SELECT baseline_offset FROM cantongrid.delivery_subscriptions WHERE id=' + sql_literal(bootstrap_id))
+        assert int(private_boundary) == int(boundary)
+        baseline_rows, baseline_cursor, baseline_pages = [], None, 0
+        while True:
+            baseline_path = bootstrap['snapshotUrl'] + '?limit=3' + (f'&cursor={baseline_cursor}' if baseline_cursor else '')
+            status, page = request(base, token, baseline_path)
+            assert status == 200 and page['provenance']['coverage'] == 'observed_retained'
+            baseline_rows.extend({'contractId': row['contractId'], 'payload': json.loads(row['payload']['value'])} for row in page['items'])
+            baseline_pages += 1
+            baseline_cursor = page['nextCursor']
+            if baseline_pages == 1:
+                # Persisted baseline metadata and page cursors survive a process restart.
+                child.kill()
+                child.wait()
+                child = start()
+            if baseline_cursor is None:
+                break
+        assert baseline_rows == source_rows and baseline_pages >= 2
+        assert request(base, token, f'/v1/subscriptions/{bootstrap_id}/events')[1]['events'] == []
+        assert request(base, token, '/v1/subscriptions/bootstrap', {'name': 'atomic-baseline'})[1]['id'] == bootstrap_id
+        assert request(base, token, f'/v1/subscriptions/{bootstrap_id}/cancel', {})[0] == 200
         rows, cursor, historical_pages = [], None, 0
         while True:
             page_path = f'/v1/contracts/as-of?asOfOffset={boundary}&limit=3' + (f'&cursor={cursor}' if cursor else '')
@@ -190,7 +216,10 @@ def run():
                   'source_inventory_equal': True, 'historical_paging': True, 'api_restart_replay': True,
                   'durable_ack': True, 'explicit_retention_gap': True, 'outbox_rows_pruned': removed,
                   'canonical_history_preserved': True, 'quiescent_fixture_baseline_resync': True,
-                  'atomic_snapshot_stream_handoff': False, 'ledger_writes': False,
+                  'atomic_snapshot_stream_handoff': False,
+                  'atomic_bootstrap_inventory_equal': True, 'atomic_bootstrap_api_restart': True,
+                  'atomic_bootstrap_feed_anchored': True, 'bootstrap_snapshot_pages': baseline_pages,
+                  'atomic_bootstrap_concurrent_ledger_writes_tested': False, 'ledger_writes': False,
                   'ledger_grants_changed': False, 'remote_testnet_verified': False}
         write_private(directory / 'recovery.json', {'config': str(path), 'subscription': recovered['id'],
                       'boundary': boundary, 'source': identity})

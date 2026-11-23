@@ -1,13 +1,13 @@
 # cantongrid-models
 
-This README describes CantonGrid 0.4.0-alpha.6.
+This README describes CantonGrid 0.4.0-alpha.7.
 Declarative Daml contract projections, exact calculations, SQL and client type generation.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-models = "=0.4.0-alpha.6"
+cantongrid-models = "=0.4.0-alpha.7"
 ```
 
 The library exposes `Catalog`, `Model`, exact typed expressions, SQL plans and

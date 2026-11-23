@@ -1,13 +1,13 @@
 # cantongrid-runtime
 
-This README describes CantonGrid 0.4.0-alpha.6.
+This README describes CantonGrid 0.4.0-alpha.7.
 Authenticated CantonGrid indexing workers and REST/GraphQL query services.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-runtime = "=0.4.0-alpha.6"
+cantongrid-runtime = "=0.4.0-alpha.7"
 ```
 
 The library exposes `index`, `serve`, `bind_model` and bounded `rebuild`
@@ -59,3 +59,9 @@ Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
 Version 0.4.0-alpha.4 also exposes reviewed package upgrade planning and staged
 application. See the [upgrade guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/upgrades.md)
 for source checks, publication gates, resume/cancel and model rollback.
+
+Alpha.7 adds `POST /v1/subscriptions/bootstrap` and
+`GET /v1/subscriptions/{id}/snapshot`. The source offset stays private; snapshot
+and feed cursors bind independently to the same authorized subscription. See the
+[bootstrap guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/bootstrap.md)
+for migration 012, retries, retention gaps and application transaction requirements.

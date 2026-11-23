@@ -1,0 +1,14 @@
+{
+  "recorded": "2026-11-23",
+  "scope": "existing_localnet_read_only_ledger",
+  "tested_commit": "710f57f2db756715dd9f1c835ca17bbe65246fe8",
+  "contracts_compared": 7,
+  "bootstrap_snapshot_pages": 3,
+  "atomic_bootstrap_inventory_equal": true,
+  "atomic_bootstrap_api_restart": true,
+  "atomic_bootstrap_feed_anchored": true,
+  "atomic_bootstrap_concurrent_ledger_writes_tested": false,
+  "ledger_writes": false,
+  "ledger_grants_changed": false,
+  "remote_testnet_verified": false
+}

@@ -1,4 +1,5 @@
 //! Private durable consumer progress. Public cursors use random receipts, never outbox sequence IDs.
+mod bootstrap;
 mod read;
 mod retention;
 mod subscriptions;
@@ -59,6 +60,32 @@ pub struct Subscription {
     pub expires_at_seconds: String,
 }
 
+/// Validate stable client names before any metadata lookup or mutation.
+fn name(value: &str) -> Result<(), StoreError> {
+    if value.is_empty()
+        || value.len() > 64
+        || !value.as_bytes()[0].is_ascii_alphabetic()
+        || !value
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || c == b'_' || c == b'-')
+    {
+        return Err(StoreError::ModelQuery);
+    }
+    Ok(())
+}
+/// Expire unused metadata under the source writer lock; never widen a principal's policy binding.
+fn cleanup(tx: &mut Transaction<'_>, key: &str, consumer: &Consumer) -> Result<(), StoreError> {
+    tx.execute("DELETE FROM cantongrid.delivery_subscriptions WHERE stream_key=$1 AND (expires_at<=now() OR (principal_fingerprint=$2 AND authorization_binding<>$3))", &[&key,&consumer.principal,&consumer.binding])?;
+    Ok(())
+}
+/// Shared finite metadata budget applies equally to ordinary and bootstrap registrations.
+fn capacity(tx: &mut Transaction<'_>, key: &str, consumer: &Consumer) -> Result<(), StoreError> {
+    let row = tx.query_one("SELECT count(*),count(*) FILTER(WHERE principal_fingerprint=$2) FROM cantongrid.delivery_subscriptions WHERE stream_key=$1", &[&key,&consumer.principal])?;
+    if row.get::<_, i64>(0) >= 256 || row.get::<_, i64>(1) >= 16 {
+        return Err(StoreError::DeliveryBackpressure);
+    }
+    Ok(())
+}
 /// Exact current party scope is checked again inside storage and after each transaction.
 fn parties(
     plan: &Plan,

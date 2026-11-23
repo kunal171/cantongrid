@@ -121,7 +121,11 @@ pub(in crate::api) async fn cancel(
     execute(service, headers, Operation::Cancel { id }).await
 }
 /// Metadata writes and event reads share the same final authority/encoding guard.
-async fn execute(service: Service, headers: HeaderMap, operation: Operation) -> Response {
+pub(super) async fn execute(
+    service: Service,
+    headers: HeaderMap,
+    operation: Operation,
+) -> Response {
     let token = match bearer(&headers) {
         Ok(t) => t,
         Err(status) => return error(status),

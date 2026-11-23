@@ -125,3 +125,6 @@ mod read_controls;
 
 #[path = "retention_tests.rs"]
 mod retention_controls;
+
+#[path = "bootstrap_tests.rs"]
+mod bootstrap_controls;

@@ -13,6 +13,7 @@
 * [Typed inner joins](guide/joins.md)
 * [Historical canonical state](guide/temporal.md)
 * [Durable lifecycle delivery](guide/delivery.md)
+* [Atomic baseline bootstrap](guide/bootstrap.md)
 * [Remote source configuration](guide/remote-source.md)
 * [Backup and recovery](guide/recovery.md)
 * [Developer inspector](guide/inspector.md)

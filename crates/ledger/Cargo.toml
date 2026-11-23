@@ -14,7 +14,7 @@ description = "Current Canton Ledger API user and party-grant verification for C
 categories = ["database"]
 
 [dependencies]
-cantongrid-core = { path = "../core", version = "=0.4.0-alpha.6" }
+cantongrid-core = { path = "../core", version = "=0.4.0-alpha.7" }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls"] }
 jsonwebtoken = { version = "12.0.0", default-features = false }
 serde = { version = "1.0", features = ["derive"] }

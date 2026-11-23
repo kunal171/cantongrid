@@ -40,3 +40,5 @@ pub use selection_upgrade::{
 
 #[cfg(test)]
 mod benchmark;
+
+mod source_position;

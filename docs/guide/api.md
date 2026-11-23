@@ -253,3 +253,11 @@ old internal row-key formats are rejected rather than misread.
 Release alpha.4 supports opt-in one-hop contract lineage
 through REST and the generic GraphQL API. See the [lineage guide](lineage.md)
 for configuration, queries, partial coverage and endpoint visibility rules.
+
+## Atomic bootstrap (alpha.7)
+
+`POST /v1/subscriptions/bootstrap` and
+`GET /v1/subscriptions/{id}/snapshot` pair a pinned canonical baseline with a
+durable lifecycle feed under current authority. They use opaque subscription-bound
+cursors and keep global source progress private. See [bootstrap](bootstrap.md)
+for the full sequence, migration 012, retry/expiry rules and failure responses.

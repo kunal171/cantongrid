@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0-alpha.7 — 2026-11-23
+
+- Add authenticated atomic canonical bootstrap: pair a fixed baseline and durable
+  feed under one writer lock, with opaque snapshot URLs and current-grant checks.
+- Migration 012 privately stores the baseline offset/anchor; retries cannot move
+  the baseline or reset acknowledged effects. Retention loss fails explicitly.
+- Share strict schema041 position validation between temporal coverage and package
+  upgrade boundaries, rejecting duplicate/unknown fields and incomplete ties.
+
 ## 0.4.0-alpha.6 — 2026-11-23
 
 - M7 bounded canonical state at an acknowledged source offset, with current

@@ -11,19 +11,15 @@ impl crate::Store {
         request: SubscriptionRequest<'_>,
     ) -> Result<Subscription, StoreError> {
         let current = parties(plan, caller, lease)?;
-        if request.name.is_empty()
-            || request.name.len() > 64
-            || !request.name.as_bytes()[0].is_ascii_alphabetic()
-            || !request
-                .name
-                .bytes()
-                .all(|c| c.is_ascii_alphanumeric() || c == b'_' || c == b'-')
-        {
-            return Err(StoreError::ModelQuery);
-        }
+        name(request.name)?;
         let mut tx = self.client.transaction()?;
         let key = lock(&mut tx, plan)?;
-        tx.execute("DELETE FROM cantongrid.delivery_subscriptions WHERE stream_key=$1 AND (expires_at<=now() OR (principal_fingerprint=$2 AND authorization_binding<>$3))",&[&key,&consumer.principal,&consumer.binding])?;
+        // An expired bootstrap name still cannot silently become an ordinary subscription.
+        let bootstrap: bool = tx.query_one("SELECT EXISTS(SELECT 1 FROM cantongrid.delivery_subscriptions WHERE stream_key=$1 AND principal_fingerprint=$2 AND authorization_binding=$3 AND client_name=$4 AND baseline_offset IS NOT NULL)", &[&key,&consumer.principal,&consumer.binding,&request.name])?.get(0);
+        if bootstrap {
+            return Err(StoreError::BootstrapConflict);
+        }
+        cleanup(&mut tx, &key, consumer)?;
         let existing=tx.query_opt("SELECT id,start_mode FROM cantongrid.delivery_subscriptions WHERE stream_key=$1 AND principal_fingerprint=$2 AND authorization_binding=$3 AND client_name=$4",&[&key,&consumer.principal,&consumer.binding,&request.name])?;
         let id: String = if let Some(row) = existing {
             if row.get::<_, String>(1) != request.start.as_str() {
@@ -31,10 +27,7 @@ impl crate::Store {
             }
             row.get(0)
         } else {
-            let row=tx.query_one("SELECT count(*),count(*) FILTER(WHERE principal_fingerprint=$2) FROM cantongrid.delivery_subscriptions WHERE stream_key=$1",&[&key,&consumer.principal])?;
-            if row.get::<_, i64>(0) >= 256 || row.get::<_, i64>(1) >= 16 {
-                return Err(StoreError::DeliveryBackpressure);
-            }
+            capacity(&mut tx, &key, consumer)?;
             let row=tx.query_one("SELECT min(delivery_id),max(delivery_id) FROM cantongrid.outbox WHERE stream_key=$1",&[&key])?;
             let anchor = match request.start {
                 DeliveryStart::Now => row.get::<_, Option<i64>>(1).unwrap_or(0),

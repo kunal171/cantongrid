@@ -89,7 +89,7 @@ pub async fn preflight(path: &Path, profile: NetworkProfile) -> Result<serde_jso
         let bounds=cantongrid_pqs::bounds_env(&project.source_database_env,&project.plan,lease).map_err(|_|"restricted source schema or bounds unavailable")?;
         Store::open_env(&project.destination_database_env).map_err(|_|"owned destination unavailable; initialize or review it explicitly")?;
         if lease.source_parties(&project.plan.context().binding(),std::time::Instant::now()).is_none(){return Err("source authorization expired".into());}
-        Ok::<_,String>(serde_json::json!({"operation":"source_preflight","configured":config,"selectedPackagesAvailable":true,"selectedTemplateEntitiesIndependentlyVerified":false,"currentSourceRightsVerified":true,"exporterReady":true,"restrictedPqs":bounds,"ownedDestinationVerified":true,"destinationMigration":11,"ledgerWrites":false,"actualNetworkVerified":false,"liveAcceptanceComplete":false}))
+        Ok::<_,String>(serde_json::json!({"operation":"source_preflight","configured":config,"selectedPackagesAvailable":true,"selectedTemplateEntitiesIndependentlyVerified":false,"currentSourceRightsVerified":true,"exporterReady":true,"restrictedPqs":bounds,"ownedDestinationVerified":true,"destinationMigration":12,"ledgerWrites":false,"actualNetworkVerified":false,"liveAcceptanceComplete":false}))
     }).await.map_err(|_|"preflight worker unavailable")??;
     let current = Project::load(path)?;
     validate(&current, profile)?;
