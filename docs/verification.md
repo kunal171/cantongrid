@@ -18,7 +18,7 @@ PostgreSQL 14's support status and the upgrade requirement are in [operations](g
 
 ## Atomic canonical bootstrap — recorded 2026-11-23
 
-Unreleased alpha.7 on `feat/atomic-snapshot-handoff`. Migration 012 privately
+Alpha.7 acceptance on `feat/atomic-snapshot-handoff`. Migration 012 privately
 pairs a canonical baseline with its durable feed under the existing writer lock.
 Public registration/snapshot responses and signed cursors omit the source boundary
 and global queue ordinals. This does not add model CDC or historical model bindings.

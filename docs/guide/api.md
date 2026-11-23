@@ -254,7 +254,7 @@ Release alpha.4 supports opt-in one-hop contract lineage
 through REST and the generic GraphQL API. See the [lineage guide](lineage.md)
 for configuration, queries, partial coverage and endpoint visibility rules.
 
-## Atomic bootstrap (unreleased alpha.7)
+## Atomic bootstrap (alpha.7)
 
 `POST /v1/subscriptions/bootstrap` and
 `GET /v1/subscriptions/{id}/snapshot` pair a pinned canonical baseline with a

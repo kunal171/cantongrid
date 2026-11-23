@@ -1,6 +1,6 @@
 # cantongrid-pqs
 
-This README describes the 0.4.0-alpha.7 source checkout (unreleased).
+This README describes CantonGrid 0.4.0-alpha.7.
 Read-only authorized Canton Participant Query Store snapshot and update paging.
 
 ## Usage

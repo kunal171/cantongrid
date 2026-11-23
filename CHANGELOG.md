@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0-alpha.7 — 2026-11-23 (unreleased)
+## 0.4.0-alpha.7 — 2026-11-23
 
 - Add authenticated atomic canonical bootstrap: pair a fixed baseline and durable
   feed under one writer lock, with opaque snapshot URLs and current-grant checks.

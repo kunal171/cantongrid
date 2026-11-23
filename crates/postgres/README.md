@@ -1,6 +1,6 @@
 # cantongrid-postgres
 
-This README describes the 0.4.0-alpha.7 source checkout (unreleased).
+This README describes CantonGrid 0.4.0-alpha.7.
 Restricted PostgreSQL connections and redacted database errors for CantonGrid.
 
 ## Usage

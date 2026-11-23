@@ -20,7 +20,7 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
 | [Temporal state](guide/temporal.md) | Bounded canonical as-of reads |
 | [Durable delivery](guide/delivery.md) | Private subscriptions, replay, ACK and explicit gaps |
-| [Bootstrap (alpha.7 source)](guide/bootstrap.md) | Opaque fixed baseline paired with a durable feed |
+| [Bootstrap](guide/bootstrap.md) | Opaque fixed baseline paired with a durable feed |
 | [Remote setup](guide/remote-source.md) | HTTPS, restricted PQS tunnel and preflight checks |
 | [Recovery](guide/recovery.md) | Private isolated backup/restore validation |
 | [Operations](guide/operations.md) | Readiness, pressure, troubleshooting and disk usage |
@@ -31,7 +31,7 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.6**.
+The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.7**.
 The alpha series adds aggregates, metadata/sync, exercises, direct lineage,
 declared relationships and typed inner joins. Stable 0.3.0 includes LocalNet ingestion, model projections,
 generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
@@ -51,7 +51,7 @@ local tests; they are not evidence of a live remote source.
 prototype, M8 canonical lifecycle long polling and M9 local hardening/validation.
 See [verification](verification.md) for limits and pending remote acceptance.
 
-The **unreleased alpha.7 source** adds [atomic canonical bootstrap](guide/bootstrap.md),
+**Alpha.7** adds [atomic canonical bootstrap](guide/bootstrap.md),
 with private baseline metadata in migration 012. This remains a bounded canonical
 prototype with owned-database/mock-source checks; model CDC is not included.
 
@@ -65,7 +65,8 @@ Alpha.6 covers M7 bounded canonical temporal reads and M8 durable
 lifecycle delivery. M9 local hardening, backup/restore, benchmark and remote
 validation tooling are recorded in [verification](verification.md). Actual
 remote/TestNet and production checks await an authorized source. Historical model
-queries, model CDC and atomic snapshot/feed handoff remain outside this slice.
+queries and model CDC remain outside this slice. Alpha.7 adds canonical atomic
+bootstrap; historical temporal/model limits still apply.
 Outcomia factory/clubs contracts remain a separate repository track.
 
 ## Publishing

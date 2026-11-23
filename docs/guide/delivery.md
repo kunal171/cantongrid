@@ -89,7 +89,7 @@ monitor queue growth and consumer lag through [operations](operations.md).
 
 A gap requires an independently verified application baseline and a new
 subscription. Published alpha.6 has no atomic snapshot/feed handoff. The
-[unreleased alpha.7 bootstrap API](bootstrap.md) pairs its baseline and feed
+[alpha.7 bootstrap API](bootstrap.md) pairs its baseline and feed
 transactionally; it still reports explicit loss when retention invalidates a handoff. Reading a
 snapshot then starting `now` during concurrent writes can lose changes. The
 [LocalNet helper](../../examples/operations/README.md) demonstrates resynchronization

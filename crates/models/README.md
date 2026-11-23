@@ -1,6 +1,6 @@
 # cantongrid-models
 
-This README describes the 0.4.0-alpha.7 source checkout (unreleased).
+This README describes CantonGrid 0.4.0-alpha.7.
 Declarative Daml contract projections, exact calculations, SQL and client type generation.
 
 ## Usage

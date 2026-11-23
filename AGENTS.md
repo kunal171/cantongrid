@@ -3,7 +3,8 @@
 - Active task: atomic canonical snapshot/feed handoff on
   feat/atomic-snapshot-handoff, following publication of 0.4.0-alpha.6.
   Follow docs/design/atomic-snapshot-handoff.md and keep focused commits.
-  The user authorized continuing this feature on a new branch. No new runtime
+  The user authorized push/PR/CI/merge, alpha.7 publication and a scoped stable
+  0.4.0 release with crate/GitBook updates and an optimized CLI build. No new runtime
   dependencies, ledger writes or Outcomia changes are part of this scope.
   Do not advertise atomic handoff until its storage/API concurrency controls pass.
   No authorized remote source exists; live TestNet/production acceptance is pending.

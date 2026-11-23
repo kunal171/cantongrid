@@ -1,6 +1,6 @@
 # Bootstrap consumer example
 
-Use the unreleased alpha.7 source API and owned migration 012. See the
+Use the alpha.7 API and owned migration 012. See the
 [bootstrap guide](../../docs/guide/bootstrap.md) for the protocol and limits.
 `client.ts` contains transport/endpoint methods; `consumer.ts` contains the
 baseline-to-feed sequence. No npm runtime packages are required.

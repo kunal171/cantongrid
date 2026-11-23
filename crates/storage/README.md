@@ -1,6 +1,6 @@
 # cantongrid-storage
 
-This README describes the 0.4.0-alpha.7 source checkout (unreleased).
+This README describes CantonGrid 0.4.0-alpha.7.
 Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections for CantonGrid.
 
 ## Usage
@@ -63,4 +63,4 @@ before migration. See the repository delivery and recovery guides for limits.
 Alpha.7 source adds `Store::bootstrap_subscription` and `Store::read_bootstrap`:
 a private fixed canonical baseline is paired with a durable feed in one writer-locked
 transaction. Explicit migration 012 adds its private metadata. Use matching API
-binaries and the repository bootstrap guide; the source checkout is unreleased.
+binaries and the repository bootstrap guide; use the matching release.
