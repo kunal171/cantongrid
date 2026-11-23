@@ -1,6 +1,6 @@
 # cantongrid-storage
 
-This README describes the 0.5.0-alpha.1 source checkout (unreleased).
+This README describes the 0.5.0-alpha.1 prerelease.
 Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections for CantonGrid.
 
 ## Usage
@@ -65,7 +65,7 @@ a private fixed canonical baseline is paired with a durable feed in one writer-l
 transaction. Explicit migration 012 adds its private metadata. Use matching API
 binaries and the repository bootstrap guide; use the matching release.
 
-The unreleased 0.5 source adds `Store::read_reconciliation` for exact per-contract
+Version 0.5.0-alpha.1 adds `Store::read_reconciliation` for exact per-contract
 checks over one complete retained indexed prefix and active model revision.
 It requires complete trusted caller/source scope and verifies native projection
 consistency. Reports contain identities/counts, not contract IDs or financial

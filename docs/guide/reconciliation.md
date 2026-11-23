@@ -1,6 +1,6 @@
 # Reconciliation
 
-Available in the **unreleased 0.5.0-alpha.1 source checkout**: offline exact
+Available in **0.5.0-alpha.1**: offline exact
 policies, model-schema preflight and storage-only indexed per-contract checks.
 The CLI commands read explicit local files; the Rust storage interface below
 separately checks authorized indexed inputs. Neither infers economic correctness.
@@ -115,7 +115,7 @@ nonsecret. Errors omit raw catalog paths and definitions.
 
 ## Indexed per-contract checks (Rust storage API)
 
-The same unreleased source also implements `Store::read_reconciliation`:
+The same prerelease also implements `Store::read_reconciliation`:
 
 ```rust
 let report = store.read_reconciliation(

@@ -1,6 +1,6 @@
 # cantongrid-runtime
 
-This README describes the 0.5.0-alpha.1 source checkout (unreleased).
+This README describes the 0.5.0-alpha.1 prerelease.
 Authenticated CantonGrid indexing workers and REST/GraphQL query services.
 
 ## Usage

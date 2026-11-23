@@ -1,6 +1,6 @@
 # cantongrid-pqs
 
-This README describes the 0.5.0-alpha.1 source checkout (unreleased).
+This README describes the 0.5.0-alpha.1 prerelease.
 Read-only authorized Canton Participant Query Store snapshot and update paging.
 
 ## Usage

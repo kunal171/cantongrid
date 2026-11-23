@@ -1,6 +1,6 @@
 # cantongrid-models
 
-This README describes the 0.5.0-alpha.1 source checkout (unreleased).
+This README describes the 0.5.0-alpha.1 prerelease.
 Declarative Daml contract projections, exact calculations, SQL and client type generation.
 
 ## Usage
@@ -48,7 +48,7 @@ source or caller access. See the guide for setup, limits and the LocalNet PoC.
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
 
-The unreleased 0.5 source exposes `reconciliation::Policy` for versioned offline
+Version 0.5.0-alpha.1 exposes `reconciliation::Policy` for versioned offline
 exact-value policies. `evaluate_fixture` returns sanitized, always-unverified
 fixture comparisons, not authenticated ledger findings. It reuses existing model
 expressions and does not change model fingerprints, SQL or source permissions.

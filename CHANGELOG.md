@@ -1,16 +1,14 @@
 # Changelog
 
-## 0.5.0-alpha.1 — 2026-11-23 (unreleased)
+## 0.5.0-alpha.1 — 2026-11-23
 
 - Add bounded versioned exact-value reconciliation policies with canonical
   fingerprints, checked numeric comparisons and sanitized fixture reports.
 - Add offline `reconcile validate` / `reconcile evaluate` and synthetic backing /
   supply examples. Supplied fixtures do not prove authorization or source
-  completeness; no live checks or financial all-clear are claimed.
-
+  completeness or a financial all-clear.
 - Add offline `reconcile preflight` to validate policy references against an exact
   projected model definition; bind identities without checking source or active state.
-
 - Add storage-only indexed per-contract reconciliation with complete source/caller
   scope, coherent active-model snapshots, retained coverage, projection checks
   and bounded redacted summaries. No public route, migration or new dependency.

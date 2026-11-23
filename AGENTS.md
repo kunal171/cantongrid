@@ -6,8 +6,10 @@
   docs/design/reconciliation.md. Keep full source/caller scope before any reads,
   complete retained indexed boundaries, exact active revisions and bounded work.
   Indexed reads are now owned-PostgreSQL-tested; LocalNet/remote evidence and HTTP
-  exposure remain later work. No new dependency, migration, public API, ledger
-  write, publication or financial all-clear claim is authorized by this slice.
+  exposure remain later work. The user now authorizes pushing/opening/merging the
+  PR, publishing the 0.5.0-alpha.1 prerelease and all ten crates, then starting
+  authenticated reconciliation APIs on a new branch. No new dependency, migration,
+  ledger write or financial all-clear claim is authorized.
   Keep focused commits and detailed function/type comments.
 - Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical
   delivery and local operational hardening. Release 0.3.0 includes PostgreSQL

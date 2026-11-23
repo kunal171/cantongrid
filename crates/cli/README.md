@@ -1,6 +1,6 @@
 # cantongrid-cli
 
-This README describes the 0.5.0-alpha.1 source checkout (unreleased).
+This README describes the 0.5.0-alpha.1 prerelease.
 CantonGrid CLI for authorized Daml contract indexing, model generation and query services.
 
 The executable is named `cantongrid`. Run `cantongrid --help` for commands.
@@ -12,7 +12,7 @@ The example below installs stable 0.4.0. Build this unreleased checkout with
 `cargo build -p cantongrid-cli --locked`.
 
 ```bash
-cargo install cantongrid-cli --version 0.4.0 --locked
+cargo install cantongrid-cli --version 0.5.0-alpha.1 --locked
 cantongrid --help
 cantongrid init ./my-demo
 cantongrid validate ./my-demo/cantongrid.json

@@ -1,6 +1,6 @@
 # Offline reconciliation fixtures
 
-Requires the unreleased 0.5.0-alpha.1 source checkout:
+Requires the 0.5.0-alpha.1 checkout or CLI prerelease:
 
 ```bash
 cargo build -p cantongrid-cli --locked
