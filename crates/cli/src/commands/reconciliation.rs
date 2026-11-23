@@ -1,4 +1,5 @@
 //! Offline diagnostics never load runtime configuration, read credentials or acquire source authority.
+use cantongrid_models::Catalog;
 use cantongrid_models::reconciliation::Policy;
 use std::path::Path;
 
@@ -30,8 +31,24 @@ pub fn run(action: &str, args: &[String]) -> Result<(), String> {
                 "ledgerExecution": "not_performed"
             }))
         }
+        ("preflight", [path, catalog, namespace, name]) => {
+            let policy = load(path)?;
+            let bytes = cantongrid_runtime::config::read(Path::new(catalog), 65536)?;
+            let text = std::str::from_utf8(&bytes).map_err(|_| "invalid model catalog encoding")?;
+            let catalog = Catalog::parse(text).map_err(|_| "invalid reconciliation model catalog")?;
+            let model = catalog.models().iter().find(|model| model.name == *name)
+                .ok_or("unknown reconciliation model selection")?;
+            let preflight = policy.preflight_model(namespace, model)
+                .map_err(|_| "incompatible reconciliation policy/model schema or namespace")?;
+            crate::print_json(&serde_json::json!({
+                "operation": "reconciliation_model_preflight",
+                "preflight": preflight,
+                "sourceAccess": "not_performed",
+                "ledgerExecution": "not_performed"
+            }))
+        }
         _ => Err(
-            "expected reconcile validate <policy.json> or reconcile evaluate <policy.json> <fixture.json>"
+            "expected reconcile validate <policy.json>, reconcile evaluate <policy.json> <fixture.json> or reconcile preflight <policy.json> <catalog.json> <namespace> <model>"
                 .into(),
         ),
     }

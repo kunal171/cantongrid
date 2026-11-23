@@ -4,19 +4,31 @@ use std::{
     fs,
     path::PathBuf,
     process::{Command, Output},
+    sync::atomic::{AtomicUsize, Ordering},
 };
+
+/// Separate test invocations may run concurrently inside one integration-test process.
+static NEXT_SCRATCH: AtomicUsize = AtomicUsize::new(0);
 
 /// Own a unique temporary directory; cleanup removes only this test's supplied local inputs.
 struct Scratch(PathBuf);
 impl Scratch {
     /// Copy packaged fixtures so the command cannot depend on the repository working directory.
     fn new() -> Self {
-        let directory =
-            std::env::temp_dir().join(format!("cantongrid-reconciliation-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!(
+            "cantongrid-reconciliation-{}-{}",
+            std::process::id(),
+            NEXT_SCRATCH.fetch_add(1, Ordering::Relaxed)
+        ));
         fs::create_dir(&directory).unwrap();
         fs::write(
             directory.join("policy.json"),
             include_str!("../assets/reconciliation/backing-policy.json"),
+        )
+        .unwrap();
+        fs::write(
+            directory.join("model.json"),
+            include_str!("../assets/reconciliation/backing-model.json"),
         )
         .unwrap();
         fs::write(
@@ -40,6 +52,83 @@ impl Scratch {
             .unwrap()
     }
 }
+
+/// Select models explicitly and fail closed on ambiguous/unbounded documents without accessing sources.
+#[test]
+fn model_preflight_checks_the_selected_schema_without_installation_or_source_access() {
+    let s = Scratch::new();
+    let policy = fs::read(s.0.join("policy.json")).unwrap();
+    let mut catalog: Json =
+        serde_json::from_str(include_str!("../assets/reconciliation/backing-model.json")).unwrap();
+    let mut incompatible = catalog["models"][0].clone();
+    incompatible["name"] = "aaa_incompatible".into();
+    incompatible["fields"]["free"]["as"]["scale"] = 9.into();
+    catalog["models"].as_array_mut().unwrap().push(incompatible);
+    let document = catalog.to_string();
+    fs::write(s.0.join("model.json"), &document).unwrap();
+    let arguments = [
+        "reconcile",
+        "preflight",
+        "policy.json",
+        "model.json",
+        "example-org",
+        "synthetic_backing",
+    ];
+    let result = s.run(&arguments);
+    assert!(result.status.success());
+    let diagnostic: Json = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(diagnostic["operation"], "reconciliation_model_preflight");
+    assert_eq!(
+        diagnostic["preflight"]["model"]["name"],
+        "synthetic_backing"
+    );
+    assert_eq!(diagnostic["preflight"]["status"], "schema_compatible");
+    assert_eq!(diagnostic["preflight"]["activeBindingChecked"], false);
+    assert_eq!(diagnostic["sourceAccess"], "not_performed");
+    assert_eq!(diagnostic["ledgerExecution"], "not_performed");
+    for selected in ["aaa_incompatible", "missing_private_model"] {
+        let mut args = arguments;
+        args[5] = selected;
+        let failed = s.run(&args);
+        assert!(!failed.status.success());
+        assert!(failed.stdout.is_empty());
+        assert!(!String::from_utf8_lossy(&failed.stderr).contains(selected));
+    }
+    assert_eq!(fs::read(s.0.join("policy.json")).unwrap(), policy);
+    assert_eq!(
+        fs::read_to_string(s.0.join("model.json")).unwrap(),
+        document
+    );
+    for output in [&result.stdout, &result.stderr] {
+        let text = String::from_utf8_lossy(output);
+        for secret in [
+            "private_balances",
+            "SyntheticReconciliation",
+            "model.json",
+            "private-credential-sentinel",
+            "private-database-sentinel",
+        ] {
+            assert!(!text.contains(secret));
+        }
+    }
+    let mut extra = arguments.to_vec();
+    extra.push("--install");
+    assert!(!s.run(&extra).status.success());
+    for invalid in [
+        br#"{"version":1,"version":1,"models":[]}"#.to_vec(),
+        b"private-catalog-sentinel".to_vec(),
+        vec![b' '; 65537],
+        vec![0xff],
+    ] {
+        fs::write(s.0.join("model.json"), &invalid).unwrap();
+        let failed = s.run(&arguments);
+        assert!(!failed.status.success());
+        assert!(failed.stdout.is_empty());
+        let error = String::from_utf8_lossy(&failed.stderr);
+        assert!(!error.contains("private-catalog-sentinel") && !error.contains("model.json"));
+        assert_eq!(fs::read(s.0.join("model.json")).unwrap(), invalid);
+    }
+}
 impl Drop for Scratch {
     /// Temporary input cleanup is confined to this process's dedicated test directory.
     fn drop(&mut self) {
@@ -51,6 +140,7 @@ impl Drop for Scratch {
 fn offline_policy_commands_remain_unverified_redacted_and_do_not_mutate_inputs() {
     let s = Scratch::new();
     let before = fs::read(s.0.join("policy.json")).unwrap();
+    let initial_files = fs::read_dir(&s.0).unwrap().count();
     let validation = s.run(&["reconcile", "validate", "policy.json"]);
     assert!(validation.status.success());
     let valid: Json = serde_json::from_slice(&validation.stdout).unwrap();
@@ -133,6 +223,6 @@ fn offline_policy_commands_remain_unverified_redacted_and_do_not_mutate_inputs()
     let failure = s.run(&["reconcile", "validate", "policy.json"]);
     assert!(!failure.status.success());
     assert!(!String::from_utf8_lossy(&failure.stderr).contains("private-policy-sentinel"));
-    assert_eq!(fs::read_dir(&s.0).unwrap().count(), 2);
+    assert_eq!(fs::read_dir(&s.0).unwrap().count(), initial_files);
     assert!(!before.is_empty());
 }

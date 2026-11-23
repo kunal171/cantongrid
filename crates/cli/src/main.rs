@@ -19,6 +19,7 @@ Usage:
   cantongrid ops prune-deliveries <runtime.json> --retain <1..100000> --limit <1..256>
   cantongrid reconcile validate <policy.json>
   cantongrid reconcile evaluate <policy.json> <fixture.json>
+  cantongrid reconcile preflight <policy.json> <catalog.json> <namespace> <model>
   cantongrid inspect evaluate <models.json> <model-name> <payload.json>
   cantongrid inspect progress <runtime.json>
   cantongrid sync plan <old.dar> <new.dar> <models.json>
