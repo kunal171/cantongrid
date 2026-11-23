@@ -50,27 +50,18 @@ The **alpha.6 source checkout is unreleased**. It adds the bounded M7 temporal
 prototype, M8 canonical lifecycle long polling and M9 local hardening/validation.
 See [verification](verification.md) for limits and pending remote acceptance.
 
-## Next
+## Milestones
 
-Release 0.4.0-alpha.4 includes [direct lineage](guide/lineage.md).
-The published alpha.3 provides internal exercise receipts. Both retain
-0.4.0-alpha.2's offline DAR inspection (#23),
-compound sorting (#21), reviewed package upgrades (#25), verified remote HTTPS
-transport (#22), and command-driven schema synchronization (#24).
+Published alpha.5 covers M0–M6: source feasibility, exercise receipts, direct
+lineage, declared relationships, typed inner joins, developer inspection and
+upgrade impact analysis. Each guide distinguishes fixture and LocalNet evidence.
 
-1. [M0 exercise-source feasibility](design/exercise-source.md) is verified on the
-   pinned LocalNet: four party scopes match Ledger Effects, with transient and
-   nested controls. General immediate-parent proof remains unsupported.
-2. [M1 internal exercise receipts](design/exercise-ingestion.md) is implemented
-   in this checkout with explicit tree-mode opt-in and destination migration 009.
-   [M2 direct lineage](design/lineage.md) is verified on the pinned LocalNet in this
-   checkout. [M3 declared relationships](design/relationships.md) is implemented in this checkout;
-   [M4 typed inner joins](design/joins.md) is implemented with owned PostgreSQL/mock-source checks.
-   [M5 developer inspector](design/inspector.md) ships in alpha.5. Historical queries and durable streams follow their own gates.
-3. [M6 upgrade impact analysis](guide/upgrade-impact.md) extends existing
-   metadata/sync in alpha.5. Durable streams and historical
-   queries remain later milestones.
-   Outcomia factory/clubs contract work remains a separate repository track.
+The alpha.6 source covers M7 bounded canonical temporal reads and M8 durable
+lifecycle delivery. M9 local hardening, backup/restore, benchmark and remote
+validation tooling are recorded in [verification](verification.md). Actual
+remote/TestNet and production checks await an authorized source. Historical model
+queries, model CDC and atomic snapshot/feed handoff remain outside this slice.
+Outcomia factory/clubs contracts remain a separate repository track.
 
 ## Publishing
 

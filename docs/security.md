@@ -27,7 +27,7 @@ the latter requires both permissions. Typed inner joins check both active endpoi
 policies before counts, fanout, selected-value encoding and paging. Their cursors
 hash only the caller-visible selected result: a hidden update cannot invalidate
 someone else's page. Outer/anti joins are not exposed. Aggregates still require
-the complete configured source-party scope. Future streams must retain every
+the complete configured source-party scope. Streams must retain every
 input's visibility dependencies.
 
 Schema041 archives have empty witnesses. The prior-create policy requires an
@@ -83,5 +83,26 @@ grants. During publication/cancellation, generic reads, discovery, model queries
 and ingestion are gated for that stream. Each page is bounded; the final transaction
 promotes the complete selection and model aliases. Cancellation removes only
 unpublished rows. Completed upgrades retain canonical history and use model
-rebuilds for rollback. Outbox entries remain private; future stream delivery must
+rebuilds for rollback. Outbox entries remain private; stream delivery must
 respect this gate before exposing staged events.
+
+## Alpha.6 temporal and delivery controls
+
+Canonical historical reads use current grants and bounded retained evidence; they
+never infer historical model bindings. Durable lifecycle subscriptions bind a
+private random ID and random receipt cursors to the current caller/source/policy.
+JWT signatures do not encrypt claims, so global outbox ordinals are never included.
+At-least-once processing requires application deduplication before ACK. Receipt
+and subscription budgets cap retained private consumer metadata.
+
+Pruning classifies visible unacknowledged loss separately for each subscriber;
+hidden-only pruning cannot create public false gaps. Long polls have independent
+admission limits and reauthorize periodically. Source health and an ingestion
+heartbeat within 30 seconds are both required for live readiness. Operator counters
+are not returned by public readiness or party-scoped feeds.
+
+Remote preflight validates configured HTTPS/current grants and restricted source
+access, not independent network identity or participant pairing. Local certificate
+controls do not establish TestNet acceptance. Backups contain private data and
+must remain owner-only; recovery targets a separate empty restricted-owner database.
+No atomic snapshot/feed handoff or production disaster-recovery guarantee is claimed.

@@ -8,6 +8,8 @@ The executable is named `cantongrid`. Run `cantongrid --help` for commands.
 ## Install and try it
 
 Requires Rust 1.100.0 or newer. The package installs the `cantongrid` executable.
+The example below installs published alpha.5. Build this source checkout with
+`cargo build -p cantongrid-cli --locked` to use the unreleased alpha.6 commands.
 
 ```bash
 cargo install cantongrid-cli --version 0.4.0-alpha.5 --locked

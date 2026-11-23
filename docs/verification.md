@@ -16,6 +16,57 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## M7–M9 source checkout — recorded 2026-11-23
+
+Unreleased alpha.6 on `feat/temporal-streams-hardening`. M7 is bounded canonical
+as-of state, not historical model bindings. M8 is durable REST lifecycle delivery,
+not model CDC or an atomic snapshot/feed handoff. M9 local checks and remote setup
+are implemented; actual remote/TestNet and production acceptance remain pending.
+The user confirmed no authorized remote source is available.
+
+| Check | Result |
+| --- | --- |
+| Rust quality | Workspace formatting, strict all-target Clippy and default workspace tests pass |
+| Owned PostgreSQL | 76 storage tests (including the bounded benchmark), 13 runtime API tests, one model test, three CLI recovery/registry/install tests and source-owner rejection pass |
+| Python controls | 37 development-helper tests and seven PoC-helper tests pass; operations helpers compile |
+| Source inventory | Seven retained LocalNet PoC contracts match historical API inventory at the acknowledged snapshot boundary, across three historical pages and seven ingestion pages |
+| Durable LocalNet feed | API restart/replay, durable ACK and reconnect pass; pruning six isolated outbox rows reports explicit authorized loss while canonical history remains queryable |
+| Baseline recovery | A controlled quiescent fixture baseline and new subscription pass; concurrent atomic snapshot/feed handoff is **not** established |
+| Owned backup/restore | 34 tables, 2,962 rows and three sequences match exactly in a separate empty restricted-owner database; current migrations/ACLs verified |
+| Restored application | Worker resumes against existing read-only LocalNet source; API readiness, seven historical contracts and durable ACK resume without cursor pass |
+| Restore guards | Same physical database is rejected, including normalized port spelling; populated target rejected before archive creation/restore |
+| TLS | Real local CA/server controls: valid certificate succeeds; untrusted CA, wrong host and HTTPS-to-HTTP redirect do not forward credential-bearing HTTP requests |
+| Availability/privacy | Source revocation during long poll fails closed; new event delivery/restart passes; stale worker blocks live readiness/feed while authorized historical reads remain available; health discloses no counters |
+| Limits | Storage/API checks cover receipt pressure, monotonic late ACKs, expiry, hidden-only pruning, cross-principal/cursor denial, poll fairness and cancellation cleanup |
+| Remote preparation | Placeholder TestNet configuration passes offline `ops check-config`; current-rights/package/source/destination `preflight` passed on LocalNet only; actual network/participant pairing not attested |
+| Security | Fresh RustSec audit (1,561 advisories; 317 locked dependencies), dependency license/bans/source checks, actionlint and history/worktree secret scans pass; existing duplicate-version warnings remain |
+
+Sanitized [LocalNet/restore evidence](../examples/operations/evidence.json) records
+scope and limitations. Its LocalNet run identifies commit `b4d021f`; the subsequent
+recovery run used the same implementation. Private runtime files, dumps, source
+credentials and raw row fingerprints remain ignored under `.local`.
+No DAR upload, ledger transaction or source-grant modification was performed.
+Failures encountered here were our fixture startup/configuration or benchmark
+setup, not evidence of an upstream defect.
+
+### Bounded database measurements
+
+Recorded debug-build results on x86_64/12 logical CPUs, PostgreSQL 17.12 loopback,
+one reused connection, 256 contracts in four batches, one caller party and
+25-row pages. Five warmups precede 50 measured iterations. Native SQL and JSON
+decoding are included; HTTP/source-network authorization and concurrency are not.
+
+| Operation | p50 | p95 | maximum |
+| --- | --- | --- | --- |
+| Canonical temporal first page | 35.440 ms | 37.555 ms | 39.156 ms |
+| Unacknowledged delivery replay | 5.608 ms | 6.431 ms | 6.727 ms |
+
+See [raw sanitized measurements](../examples/operations/benchmark.json) and
+[reproduction](../examples/operations/README.md). These are a small local regression
+baseline, not a production throughput, RPO or RTO claim. Live remote certificate,
+source inventory, failure/recovery and capacity evidence await configured access;
+follow [remote setup](guide/remote-source.md).
+
 ## M6 upgrade impact analysis — 2026-11-22
 
 Shipped in alpha.5 after combined M5/M6 PR #30.
