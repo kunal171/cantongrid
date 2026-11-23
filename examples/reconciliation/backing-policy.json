@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "policy": {
+    "name": "collateral_backing",
+    "revision": 1,
+    "fields": {
+      "collateral": {
+        "op": "add",
+        "left": {
+          "op": "field",
+          "path": [
+            "free"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "right": {
+          "op": "field",
+          "path": [
+            "locked"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        }
+      },
+      "liability": {
+        "op": "multiply",
+        "left": {
+          "op": "field",
+          "path": [
+            "payout"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "right": {
+          "op": "field",
+          "path": [
+            "contracts"
+          ],
+          "as": {
+            "type": "int64"
+          }
+        }
+      }
+    },
+    "checks": [
+      {
+        "name": "collateral_backing",
+        "left": "collateral",
+        "operator": "gte",
+        "right": "liability"
+      }
+    ]
+  }
+}

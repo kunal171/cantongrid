@@ -145,3 +145,31 @@ fn diagnostics_and_debug_never_echo_inputs_paths_or_literals() {
         assert!(!format!("{policy:?}").contains(secret));
     }
 }
+
+/// Both repository examples are synthetic and remain unverified even when their exact equations hold.
+#[test]
+fn packaged_examples_satisfy_their_fixture_equations_without_certifying_source_state() {
+    for (policy, fixture) in [
+        (
+            include_str!("../../assets/reconciliation/backing-policy.json"),
+            include_str!("../../assets/reconciliation/backing-fixture.json"),
+        ),
+        (
+            include_str!("../../assets/reconciliation/supply-policy.json"),
+            include_str!("../../assets/reconciliation/supply-fixture.json"),
+        ),
+    ] {
+        let compiled = Policy::parse(policy).unwrap();
+        let report = compiled.evaluate_fixture(fixture);
+        assert!(
+            report
+                .checks()
+                .iter()
+                .all(|c| c.fixture_comparison == FixtureResult::Satisfied)
+        );
+        assert_eq!(
+            serde_json::to_value(report).unwrap()["status"],
+            "unverified"
+        );
+    }
+}

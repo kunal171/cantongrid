@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "policy": {
+    "name": "supply_conservation",
+    "revision": 1,
+    "fields": {
+      "issued": {
+        "op": "field",
+        "path": [
+          "issued"
+        ],
+        "as": {
+          "type": "numeric",
+          "scale": 10
+        }
+      },
+      "accounted": {
+        "op": "add",
+        "left": {
+          "op": "field",
+          "path": [
+            "circulating"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "right": {
+          "op": "field",
+          "path": [
+            "redeemed"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        }
+      }
+    },
+    "checks": [
+      {
+        "name": "supply_conservation",
+        "left": "issued",
+        "operator": "eq",
+        "right": "accounted"
+      }
+    ]
+  }
+}
