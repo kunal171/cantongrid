@@ -223,6 +223,27 @@ fn indexed_reconciliation_tracks_exact_lifecycle_and_never_returns_private_rows(
 #[ignore = "requires owned PostgreSQL; synthetic source authority; run serially"]
 fn full_scope_authorization_precedes_empty_state_metadata_and_rows() {
     let s = scenario();
+    let absent = BoundModel {
+        namespace: s.namespace.clone(),
+        model: s.models[0].clone(),
+        fingerprint: s.models[0].fingerprint().unwrap(),
+    };
+    assert_eq!(
+        s.open()
+            .read_reconciliation(
+                &s.plans[0],
+                &caller(&s, &["A"]),
+                &authority(&s),
+                &absent,
+                &policy()
+            )
+            .unwrap_err(),
+        StoreError::Authorization
+    );
+    assert_eq!(
+        read(&s, &absent).unwrap_err(),
+        StoreError::ReconciliationUnavailable
+    );
     seed(&s);
     let binding = bind(&s);
     for narrow in [&["A"][..], &["B"][..], &[][..]] {
@@ -333,5 +354,62 @@ fn projection_missing_drift_and_extra_rows_fail_without_partial_counts() {
     assert_eq!(
         read(&s, &binding).unwrap_err(),
         StoreError::ReconciliationUnavailable
+    );
+}
+
+mod arithmetic;
+mod concurrency;
+mod coverage;
+
+/// Indexed checks must use projected schemas and matching source contexts, regardless of valid fixture math.
+#[test]
+#[ignore = "requires owned PostgreSQL; synthetic source authority; run serially"]
+fn raw_payload_policies_and_mismatched_source_contexts_cannot_be_reused() {
+    let s = scenario();
+    seed(&s);
+    let binding = bind(&s);
+    let mut definition: Json = serde_json::from_str(include_str!(
+        "../../../assets/reconciliation/backing-policy.json"
+    ))
+    .unwrap();
+    definition["policy"]["fields"]["collateral"]["left"]["path"] =
+        json!(["private_balances", "free"]);
+    let raw = Policy::parse(&definition.to_string()).unwrap();
+    assert_eq!(
+        s.open()
+            .read_reconciliation(
+                &s.plans[0],
+                &caller(&s, &["A", "B"]),
+                &authority(&s),
+                &binding,
+                &raw
+            )
+            .unwrap_err(),
+        StoreError::ReconciliationUnavailable
+    );
+    let other = Plan::pqs(
+        cantongrid_core::config::SourceContext::new(
+            "different-source".into(),
+            "synthetic".into(),
+            1,
+        )
+        .unwrap(),
+        [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()].into(),
+        [s.models[0].template.clone()].into(),
+    )
+    .unwrap()
+    .with_source_binding("a".repeat(64));
+    let wrong = lease(&other, vec!["A", "B"]);
+    assert_eq!(
+        s.open()
+            .read_reconciliation(
+                &s.plans[0],
+                &caller(&s, &["A", "B"]),
+                &wrong,
+                &binding,
+                &policy()
+            )
+            .unwrap_err(),
+        StoreError::Authorization
     );
 }
