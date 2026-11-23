@@ -20,6 +20,8 @@ mod lineage;
 mod model_cleanup;
 #[path = "runtime/projection_inspector.rs"]
 mod projection_inspector;
+#[path = "runtime/reconciliation.rs"]
+mod reconciliation;
 #[path = "runtime/relationships.rs"]
 mod relationships;
 #[path = "runtime/temporal.rs"]
@@ -87,6 +89,16 @@ fn source(
     allowed: Arc<AtomicBool>,
     healthy: Arc<AtomicBool>,
 ) -> (String, thread::JoinHandle<()>) {
+    source_with_hook(stop, allowed, healthy, |_| {})
+}
+
+/// A local test barrier changes mock policy during a current grant request; production has no hook.
+fn source_with_hook(
+    stop: Arc<AtomicBool>,
+    allowed: Arc<AtomicBool>,
+    healthy: Arc<AtomicBool>,
+    on_request: impl Fn(&str) + Send + 'static,
+) -> (String, thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = format!("http://{}", listener.local_addr().unwrap());
     listener.set_nonblocking(true).unwrap();
@@ -113,6 +125,7 @@ fn source(
             }
             let request = String::from_utf8_lossy(&bytes);
             let head = request.lines().next().unwrap_or("");
+            on_request(head);
             let (status, body) = if head.starts_with("GET /readyz ") {
                 (
                     200,
