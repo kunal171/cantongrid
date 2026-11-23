@@ -55,6 +55,10 @@ Prerelease **0.5.0-alpha.1** adds
 indexed per-contract checks. Fixture reports remain unverified; indexed checks
 cover a bounded retained prefix. Public APIs and cross-contract totals remain later work.
 
+Unreleased **0.5.0-alpha.2** adds operator-pinned authenticated reconciliation
+REST/GraphQL. Build its source checkout; the published alpha.1 release contains
+the offline commands and storage interface described above.
+
 ## Milestones
 
 M0–M6 add source feasibility, exercise receipts, direct lineage, declared links,

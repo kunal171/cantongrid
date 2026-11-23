@@ -36,6 +36,15 @@ cargo install cantongrid-cli --version 0.4.0 --locked
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
 
+## Unreleased 0.5.0-alpha.2
+
+Adds optional `reconciliation_file` configuration and authenticated REST/GraphQL
+over server-pinned policies. Existing configuration remains valid when omitted.
+Upgrade binaries before adding the setting; older versions reject it. No migration,
+reindex or dependency change. Bounds and report semantics remain those of alpha.1.
+Acceptance uses owned PostgreSQL/mock authority; LocalNet/remote reconciliation
+remains unverified. See the [API guide](guide/reconciliation.md#authenticated-api-050-alpha2-source).
+
 ## 0.5.0-alpha.1 reconciliation scope
 
 The source branch adds offline exact policies/fixtures, model-schema preflight and

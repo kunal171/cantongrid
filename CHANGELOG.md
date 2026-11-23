@@ -2,8 +2,10 @@
 
 ## 0.5.0-alpha.2 — 2026-11-23 (unreleased)
 
-- Begin authenticated reconciliation APIs with operator-pinned policies and
-  current source/caller checks. No new dependency or migration is planned.
+- Add an optional bounded operator manifest pinning policies to exact model revisions.
+- Expose configured reconciliation through authenticated REST and typed GraphQL.
+- Recheck full source/caller scope, configuration and active identities before
+  delivery; discard whole GraphQL operations on errors. No new dependency or migration.
 
 ## 0.5.0-alpha.1 — 2026-11-23
 

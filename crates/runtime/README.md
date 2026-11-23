@@ -65,3 +65,7 @@ Alpha.7 adds `POST /v1/subscriptions/bootstrap` and
 and feed cursors bind independently to the same authorized subscription. See the
 [bootstrap guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/bootstrap.md)
 for migration 012, retries, retention gaps and application transaction requirements.
+
+Unreleased alpha.2 adds an optional `reconciliation_file` manifest and authenticated
+configured reconciliation in REST/GraphQL, with full source/caller scope and final
+configuration/revision checks. [Setup and bounds](https://github.com/kunal171/cantongrid/blob/main/docs/guide/reconciliation.md#authenticated-api-050-alpha2-source).

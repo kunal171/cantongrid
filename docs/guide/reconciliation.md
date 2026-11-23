@@ -190,3 +190,73 @@ python3 scripts/dev.py storage stop
 These checks are separate from LocalNet/remote evidence. There is no new
 REST/GraphQL endpoint, persisted invariant-result registry or financial all-clear.
 Cross-model/group reconciliation and public API delivery remain future slices.
+
+## Authenticated API (0.5.0-alpha.2 source)
+
+Build this branch with `cargo build -p cantongrid-cli --locked`. Add an optional
+setting to the existing runtime configuration:
+
+```json
+{"reconciliation_file": "reconciliation/policies.json"}
+```
+
+The path resolves relative to `runtime.json`. The
+[example manifest](../../examples/reconciliation/policies.json) contains 1–16
+uniquely named bindings, each with `namespace`, `model`, `model_revision`,
+`model_fingerprint`, `policy_file` and `policy_fingerprint`. Policy paths resolve
+relative to the manifest. Both files have a 64 KiB bound. Reuse one policy under
+different aliases if needed. Obtain the pins from model preflight and deliberately
+update them when promoting a model or policy revision. The example's zero package
+ID and namespace are synthetic; substitute your installed model's identity.
+
+Run the usual `cantongrid serve runtime.json` with an organization caller bearer
+covering every configured source party. No additional SQL, migration or source
+grant is required. Omitting the setting disables the catalog; an invalid manifest
+or inactive/incompatible pin makes reconciliation unavailable. Other endpoints
+and ingestion do not load optional policy contents.
+
+| Transport | Operation |
+| --- | --- |
+| `GET /v1/reconciliation` | Sanitized configured identities |
+| `POST /v1/reconciliation/{name}/query` | Evaluate the named binding; body must be exactly `{}` |
+| `POST /reconciliation/graphql` | Typed `reconciliationPolicies` and `reconciliation(name: String!)` |
+
+```bash
+curl -H "Authorization: Bearer $CANTONGRID_API_TOKEN" \
+  -H 'Content-Type: application/json' -d '{}' \
+  http://127.0.0.1:8090/v1/reconciliation/backing/query
+```
+
+Use your configured API port. The [complete GraphQL query](../../examples/reconciliation/query.graphql)
+takes `{"name":"backing"}` variables and selects the same report as REST:
+
+```graphql
+query Reconcile($name: String!) {
+  reconciliation(name: $name) {
+    comparison
+    contracts
+    checks {
+      name
+      satisfied
+      violated
+      unavailable
+    }
+  }
+}
+```
+
+Requests cannot supply formulas, paths, model selections, party claims or input
+filters. Authorization precedes catalog/policy lookup, including for unknown
+names. Admission and a final refresh check caller grants, exact source scope,
+policy identities, source plan and active model identities. Final serialization
+also rechecks local config/caller bindings and the live lease. No-store headers,
+existing request/database limits and the 2 MiB response bound apply. GraphQL
+allows at most two roots per operation, disables introspection and clears its
+entire `data` on any resolver error.
+
+REST uses 401 for invalid/changed caller bindings or a final delivery-guard
+failure, 403 for incomplete scope, 400 for unsupported input, 404 for an unknown
+alias after full-scope checks, and 503 for unavailable source/configuration/pins
+or indexed evidence. GraphQL validation/resolver errors use its `errors` array;
+always inspect it. An arithmetic `comparison: unavailable` is a successful HTTP
+200 diagnostic with complete inputs, using the storage semantics above.

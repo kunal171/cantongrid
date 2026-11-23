@@ -82,6 +82,30 @@ No public route, source-grant change, DAR deployment, ledger transaction, persis
 result registry, cross-contract total or financial certification is included.
 See the [guide](guide/reconciliation.md#indexed-per-contract-checks-rust-storage-api).
 
+## Authenticated reconciliation API — 2026-11-23
+
+Unreleased `0.5.0-alpha.2`, branch `feat/reconciliation-api`. The operator manifest
+and endpoints are implemented; all evidence below uses owned PostgreSQL 17.12
+and mock read-only source authority, with no Canton transaction or grant change.
+
+- All 147 default workspace tests and strict all-target Clippy pass. Two new
+  manifest tests cover bounds, strict documents, relative files, immutable pins,
+  alias reuse and sanitized errors without a source/database connection.
+- All 16 HTTP integration tests pass. The reconciliation control checks typed
+  REST/GraphQL equality and discovery, the packaged query/variables, no-store,
+  redaction, scope denial before existing/unknown lookup, strict `{}` bodies,
+  policy pins, active promotion, stale/pruned evidence and arithmetic unavailable.
+- A counted mock-source barrier changes policy files, caller grants, source
+  permission and model revision during the final refresh, after evaluation.
+  Every case discards the old result; GraphQL resolver/complexity errors return
+  no sibling data. The barrier firing is asserted independently of the status.
+- Storage/evaluator source and migration SQL are unchanged from published alpha.1;
+  its lower-level SQL evidence above is not claimed as a new run here.
+
+Real LocalNet/remote reconciliation remains unverified. This branch is separate
+from released alpha.1; no alpha.2 release, crate upload or public site update is
+performed by these checks. See the [API guide](guide/reconciliation.md#authenticated-api-050-alpha2-source).
+
 ## 0.4.0 promotion — 2026-11-23
 
 Regular release of the [scoped node-local profile](releases.md#040-supported-scope-and-acceptance).
