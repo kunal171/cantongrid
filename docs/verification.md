@@ -57,6 +57,30 @@ checks no active binding, source authorization or indexed contract data.
 At that check, indexed-contract evaluation was still unimplemented. Its separately
 authorized plan is in the [design](design/reconciliation.md#indexed-contract-slice-implemented-owned-postgresql-evidence).
 
+## Indexed per-contract reconciliation — 2026-11-23
+
+Unreleased `0.5.0-alpha.1` on `feat/reconciliation-policies`. Storage-only
+`Store::read_reconciliation` checks one exact active model over a complete
+retained indexed prefix. These results use owned PostgreSQL 17.12 and synthetic
+source/caller authority, not LocalNet or remote Canton evidence.
+
+| Check | Result |
+| --- | --- |
+| Default Rust | All 145 workspace tests, formatting and strict all-target Clippy pass |
+| SQL/runtime regression | All 92 storage tests, one model/PostgreSQL test and 15 HTTP integration tests pass |
+| New reconciliation controls | Ten owned-database tests cover exact lifecycle/filter/replay, redaction, scope-before-membership denial, wrong source context, raw-path rejection, projection drift/missing/extra rows, complete/stale/pruned/unknown coverage, selection floors, empty sets, 128/129 input limits and byte budgets |
+| Concurrent reads | A separate connection archives/creates and promotes a model while an in-flight read retains its original canonical inputs and model revision; a later read rejects the old binding |
+| Source expiry | A barrier proves the read snapshot was acquired before the lease expires; the completed result is discarded |
+| Exact arithmetic | Values above 2^53 and last-digit differences remain exact; valid native Numeric columns that overflow policy arithmetic produce an unavailable overall comparison |
+| Security | RustSec, dependency license/bans/source checks, actionlint and history/tree secret scans pass; no new dependency or migration |
+
+Reports contain configured identities and string counts, with no payload values,
+contract IDs, witnesses or global source offsets. Coverage is independent from
+arithmetic outcome; complete inputs can still yield unavailable calculations.
+No public route, source-grant change, DAR deployment, ledger transaction, persisted
+result registry, cross-contract total or financial certification is included.
+See the [guide](guide/reconciliation.md#indexed-per-contract-checks-rust-storage-api).
+
 ## 0.4.0 promotion — 2026-11-23
 
 Regular release of the [scoped node-local profile](releases.md#040-supported-scope-and-acceptance).
