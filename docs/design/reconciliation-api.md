@@ -14,3 +14,21 @@ See [verification](../verification.md#authenticated-reconciliation-api--2026-11-
 - Leave real LocalNet/remote acceptance and public publication separate from this implementation.
 
 Implemented in alpha.2 source. Catalog-wide pin validation is conservative: any configured inactive/incompatible entry makes this endpoint unavailable. The final synchronous delivery guard retains the existing 401 failure behavior. Evidence is recorded in docs/verification.md.
+
+
+## Read-only LocalNet acceptance
+
+Use the existing PoC contracts and verified source rights; submit no Daml command,
+DAR upload, party allocation or grant update. Reuse the operations runner's
+isolated destination stream and source inventory rather than adding another
+infrastructure setup script. Register/bind the existing PoC model only in a new
+owned namespace. Keep original PoC files and bindings intact.
+
+At a completed PQS boundary, compare its active inventory with an authorized
+Ledger snapshot at that same offset. Use exact integers for Numeric coefficients
+and Int64 values. Check `priceTick * 10000 == priceTickBps` and `quantityLot > 0`
+through REST and the typed GraphQL endpoint, including restart, narrow-scope
+existing/unknown-name denial and isolated application-grant revocation. This
+validates arithmetic/data plumbing, not collateral, trading or economic solvency.
+Cap the reconciliation inventory at 128 and keep private source data/config under
+`.local`; publish only counts, booleans, versions and source-code identity.
