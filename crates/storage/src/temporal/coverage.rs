@@ -4,13 +4,13 @@ use crate::{StoreError, upgrade_boundary};
 use cantongrid_postgres::postgres::Transaction;
 
 /// Exact coverage for this configured selection; additive baselines raise the common floor.
-pub(super) struct Coverage {
+pub(crate) struct Coverage {
     pub floor_position: String,
     pub through: i64,
 }
 /// Check every bounded journal position and indexed event origin in one stable read snapshot.
 /// This prototype deliberately fails above its budget instead of silently truncating history.
-pub(super) fn observed(
+pub(crate) fn observed(
     tx: &mut Transaction<'_>,
     key: &str,
     revision: i64,

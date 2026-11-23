@@ -235,6 +235,28 @@ mod tests {
         tx.batch_execute("DROP TABLE cantongrid.delivery_receipts,cantongrid.delivery_subscriptions; DROP INDEX cantongrid.outbox_stream_delivery; DELETE FROM cantongrid.runtime_migrations WHERE version IN (11,12); DROP TABLE cantongrid.lineage_outbox,cantongrid.lineage_edges,cantongrid.creation_events,cantongrid.lineage_pages; DELETE FROM cantongrid.runtime_migrations WHERE version=10; DROP TABLE cantongrid.exercise_outbox,cantongrid.exercise_events,cantongrid.exercise_pages; DELETE FROM cantongrid.runtime_migrations WHERE version=9; DROP TABLE cantongrid.selection_upgrade_pages,cantongrid.selection_upgrade_jobs,cantongrid.selection_upgrades; DELETE FROM cantongrid.runtime_migrations WHERE version IN (7,8)").unwrap();
     }
 
+    /// An intact alpha.6 installation requires explicit migration and retains every consumer row.
+    #[test]
+    #[ignore = "requires owned PostgreSQL; run serially"]
+    fn bootstrap_migration_upgrades_alpha6_without_resetting_delivery_state() {
+        initialize_env("CANTONGRID_DESTINATION_URL").unwrap();
+        let mut client = connect_env("CANTONGRID_DESTINATION_URL").unwrap();
+        let mut tx = client.transaction().unwrap();
+        let before: i64 = tx
+            .query_one(
+                "SELECT count(*) FROM cantongrid.delivery_subscriptions",
+                &[],
+            )
+            .unwrap()
+            .get(0);
+        tx.batch_execute("ALTER TABLE cantongrid.delivery_subscriptions DROP CONSTRAINT delivery_bootstrap_pair, DROP COLUMN baseline_offset, DROP COLUMN baseline_after; DELETE FROM cantongrid.runtime_migrations WHERE version=12").unwrap();
+        assert_eq!(check_schema(&mut tx), Err(StoreError::Schema));
+        upgrade_models(&mut tx).unwrap();
+        let unchanged: bool = tx.query_one("SELECT count(*)=$1 AND count(baseline_offset)=0 AND count(baseline_after)=0 FROM cantongrid.delivery_subscriptions", &[&before]).unwrap().get(0);
+        assert!(unchanged);
+        tx.rollback().unwrap();
+    }
+
     #[test]
     #[ignore = "requires owned PostgreSQL; run serially"]
     fn canonical_schema_tables_columns_and_sequences_reject_nonowner_grants() {
