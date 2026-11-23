@@ -5,10 +5,12 @@
   docs/design/temporal-streams-hardening.md. Keep changes in focused commits.
   No remote source exists yet: the user requested validation checks and a precise
   remote setup guide. Do not claim live TestNet or production acceptance.
-  No publication, ledger writes, Outcomia changes or later features in this task.
+  The user authorized PR/CI/merge, alpha.6 GitHub/crates.io publication and GitBook
+  updates, followed by a new atomic snapshot/feed handoff branch. No ledger writes
+  or Outcomia changes are authorized.
 - Existing baseline: Phase 4 model integration. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
-  acceptance. Funded trading and streams remain later work.
+  acceptance. Funded trading remains later work; canonical durable delivery is now implemented.
   Use docs/README.md for scope and docs/verification.md for dated evidence;
   do not claim full Phase 4 or production acceptance.
 - Aggregate reads require callers to cover the complete configured source-party

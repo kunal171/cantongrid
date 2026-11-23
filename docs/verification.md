@@ -18,7 +18,7 @@ PostgreSQL 14's support status and the upgrade requirement are in [operations](g
 
 ## M7–M9 source checkout — recorded 2026-11-23
 
-Unreleased alpha.6 on `feat/temporal-streams-hardening`. M7 is bounded canonical
+Alpha.6 acceptance on `feat/temporal-streams-hardening`. M7 is bounded canonical
 as-of state, not historical model bindings. M8 is durable REST lifecycle delivery,
 not model CDC or an atomic snapshot/feed handoff. M9 local checks and remote setup
 are implemented; actual remote/TestNet and production acceptance remain pending.

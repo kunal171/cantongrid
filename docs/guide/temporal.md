@@ -1,6 +1,6 @@
 # Historical canonical state
 
-Available in the unpublished alpha.6 source checkout. Queries reconstruct immutable
+Available in 0.4.0-alpha.6. Queries reconstruct immutable
 contract membership at a source-local offset using retained create/archive evidence.
 They enforce current organization grants and source authorization.
 

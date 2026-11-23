@@ -1,6 +1,6 @@
 # cantongrid-sync
 
-This README describes the alpha.6 source checkout (unreleased).
+This README describes CantonGrid 0.4.0-alpha.6.
 Offline schema comparison and generated model bundles from verified DAR metadata
 and explicit developer projections. Reports trace selected LF fields through filters,
 aggregates, relationship keys and joins, with exact generated API/table identities

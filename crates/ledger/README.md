@@ -1,6 +1,6 @@
 # cantongrid-ledger
 
-This README describes the alpha.6 source checkout (unreleased).
+This README describes CantonGrid 0.4.0-alpha.6.
 Current Canton Ledger API user and party-grant verification for CantonGrid.
 
 ## Usage

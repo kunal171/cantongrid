@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0-alpha.6 — 2026-11-23 (unreleased)
+## 0.4.0-alpha.6 — 2026-11-23
 
 - M7 bounded canonical state at an acknowledged source offset, with current
   authorization, exact values and explicit unavailable-history responses.

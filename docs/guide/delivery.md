@@ -1,6 +1,6 @@
 # Durable lifecycle delivery
 
-Available in the alpha.6 source checkout (unpublished). Run the ingestion worker
+Available in 0.4.0-alpha.6. Run the ingestion worker
 and API against the same reviewed runtime. Migration 011 adds private subscription
 and receipt tables; [back up before migrating](recovery.md).
 

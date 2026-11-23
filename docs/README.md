@@ -30,7 +30,7 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.5**.
+The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.6**.
 The alpha series adds aggregates, metadata/sync, exercises, direct lineage,
 declared relationships and typed inner joins. Stable 0.3.0 includes LocalNet ingestion, model projections,
 generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
@@ -46,7 +46,7 @@ Scan, hosted multi-tenancy and arbitrary processing plugins are not implemented.
 Remote/TestNet and production deployment are unverified. Certificate controls have
 local tests; they are not evidence of a live remote source.
 
-The **alpha.6 source checkout is unreleased**. It adds the bounded M7 temporal
+**Alpha.6** adds the bounded M7 temporal
 prototype, M8 canonical lifecycle long polling and M9 local hardening/validation.
 See [verification](verification.md) for limits and pending remote acceptance.
 
@@ -56,7 +56,7 @@ Published alpha.5 covers M0–M6: source feasibility, exercise receipts, direct
 lineage, declared relationships, typed inner joins, developer inspection and
 upgrade impact analysis. Each guide distinguishes fixture and LocalNet evidence.
 
-The alpha.6 source covers M7 bounded canonical temporal reads and M8 durable
+Alpha.6 covers M7 bounded canonical temporal reads and M8 durable
 lifecycle delivery. M9 local hardening, backup/restore, benchmark and remote
 validation tooling are recorded in [verification](verification.md). Actual
 remote/TestNet and production checks await an authorized source. Historical model

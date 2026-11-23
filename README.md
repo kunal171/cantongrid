@@ -11,10 +11,11 @@ Outcomia is the first application example; the engine is reusable.
 
 ## Current status
 
-The **0.4.0-alpha.5** prerelease adds the read-only
+The **0.4.0-alpha.6** prerelease adds bounded temporal reads, durable lifecycle
+delivery and local operational hardening. It also includes the read-only
 [developer inspector](docs/guide/inspector.md) and offline
 [upgrade impact analysis](docs/guide/upgrade-impact.md).
-Install with `cargo install cantongrid-cli --version 0.4.0-alpha.5 --locked`.
+Install with `cargo install cantongrid-cli --version 0.4.0-alpha.6 --locked`.
 
 The **0.4.0-alpha.4** prerelease adds opt-in, one-hop
 [direct lineage](docs/guide/lineage.md), migration 010 and generic/Outcomia LocalNet
@@ -34,7 +35,7 @@ rollout and unsupported cases.
   and query-bound cursors, verified on LocalNet with the standalone PoC and Outcomia.
 - Staged rebuilds passed 261-contract LocalNet acceptance with source revocation,
   concurrent events, promotion and rollback. PQS/destination fixtures use PostgreSQL 17.12.
-- The unreleased alpha.6 source adds [bounded temporal reads](docs/guide/temporal.md),
+- Alpha.6 adds [bounded temporal reads](docs/guide/temporal.md),
   [durable lifecycle delivery](docs/guide/delivery.md), local recovery/hardening and
   [remote setup checks](docs/guide/remote-source.md). Model CDC and an atomic
   snapshot/feed handoff remain outside this slice.

@@ -1,6 +1,6 @@
 # cantongrid-storage
 
-This README describes the alpha.6 source checkout (unreleased).
+This README describes CantonGrid 0.4.0-alpha.6.
 Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections for CantonGrid.
 
 ## Usage
