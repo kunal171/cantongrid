@@ -17,6 +17,11 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `validate <project.json>` | Validate fixture configuration without reading events or connecting |
 | `fixture run <project.json> [--party A]...` | In-memory fixture replay with simulated grants |
 | `storage init --database-env CANTONGRID_DESTINATION_URL` | Explicit owned destination migrations |
+| `storage check --database-env CANTONGRID_DESTINATION_URL` | Read-only migration/checksum/ACL validation |
+| `ops check-config <runtime> --profile localnet\|testnet\|mainnet` | Offline network/transport policy check |
+| `ops preflight <runtime> --profile localnet\|testnet\|mainnet` | Read-only source/package/rights/health and destination checks |
+| `ops status <runtime>` | Operator-local progress and delivery pressure |
+| `ops prune-deliveries <runtime> --retain <1..100000> --limit <1..256>` | Bounded outbox maintenance; canonical history retained |
 | `fixture index <project.json> --database-env <variable>` | Persist fixture deliveries |
 | `fixture status <project.json> --database-env <variable>` | Operator counts/progress |
 | `fixture query <project.json> --database-env <variable> [--party A]...` | Query stored fixture journal with simulated grants |
@@ -48,6 +53,6 @@ configuration to 64 KiB. Unknown/duplicate fields and unsupported versions fail
 with redacted errors. Runtime, fixture and model JSON are different schemas.
 
 Workflows: [fixtures/PostgreSQL](guide/quickstart.md), [LocalNet](guide/localnet-source.md),
-[API](guide/api.md), [models](guide/models.md). `dev`, `doctor`, live `status`,
-stream commands are not implemented. Generated model reads use `/models/graphql`;
+[API](guide/api.md), [models](guide/models.md). `dev`, `doctor` and top-level `status` are not implemented.
+Subscription operations use the [REST delivery API](guide/delivery.md). Generated model reads use `/models/graphql`;
 see the [PoC](guide/poc.md) for a released example.

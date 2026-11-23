@@ -18,7 +18,11 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [Declared relationships](guide/relationships.md) | Versioned application links with independent endpoint visibility |
 | [Aggregates](guide/aggregates.md) | Grouped counts/sums with full-source authorization |
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
-| [Operations](guide/operations.md) | Recovery, troubleshooting and disk usage |
+| [Temporal state](guide/temporal.md) | Bounded canonical as-of reads |
+| [Durable delivery](guide/delivery.md) | Private subscriptions, replay, ACK and explicit gaps |
+| [Remote setup](guide/remote-source.md) | HTTPS, restricted PQS tunnel and preflight checks |
+| [Recovery](guide/recovery.md) | Private isolated backup/restore validation |
+| [Operations](guide/operations.md) | Readiness, pressure, troubleshooting and disk usage |
 
 Reference: [architecture](architecture.md), [security](security.md),
 [commands](cli.md), [fixture format](fixtures.md), [verification](verification.md),
@@ -39,7 +43,12 @@ maintained projections, generated APIs and complete-source access checks.
 Phase 4 model integration remains in progress. History starts at an active
 snapshot and continues forward. Published 0.3.0 does not include aggregates or joins. Interfaces/reassignments,
 Scan, hosted multi-tenancy and arbitrary processing plugins are not implemented.
-Remote/TLS, devnet and production deployment are unverified.
+Remote/TestNet and production deployment are unverified. Certificate controls have
+local tests; they are not evidence of a live remote source.
+
+The **alpha.6 source checkout is unreleased**. It adds the bounded M7 temporal
+prototype, M8 canonical lifecycle long polling and M9 local hardening/validation.
+See [verification](verification.md) for limits and pending remote acceptance.
 
 ## Next
 

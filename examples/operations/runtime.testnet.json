@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "authorization": {
+    "endpoint": "https://ledger.example.invalid",
+    "user": "replace-with-existing-read-only-user",
+    "source": "my-application-testnet",
+    "network": "testnet",
+    "generation": 1,
+    "parties": [
+      "replace-with-authorized-party"
+    ],
+    "credential_env": "CANTONGRID_SOURCE_TOKEN",
+    "transport": "remote_https",
+    "expected_issuer": "https://issuer.example.invalid",
+    "identity_provider_id": ""
+  },
+  "source_database_env": "CANTONGRID_PQS_URL",
+  "destination_database_env": "CANTONGRID_DESTINATION_URL",
+  "source_health": "https://pqs.example.invalid/readyz",
+  "templates": [
+    {
+      "package_id": "0000000000000000000000000000000000000000000000000000000000000000",
+      "module": "Example",
+      "entity": "Record"
+    }
+  ],
+  "page_size": 8,
+  "history": "snapshot_forward_partial",
+  "archive_policy": "prior_create_current_grants",
+  "payload": "raw_json",
+  "retention": "retain_while_authorized",
+  "api": {
+    "bind": "127.0.0.1:8080",
+    "issuer": "your-organization",
+    "audience": "cantongrid-api",
+    "token_key_env": "CANTONGRID_API_KEY",
+    "cursor_key_env": "CANTONGRID_CURSOR_KEY",
+    "grants_file": "grants.json"
+  }
+}
