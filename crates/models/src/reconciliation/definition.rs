@@ -100,6 +100,13 @@ impl Policy {
     pub fn check_count(&self) -> usize {
         self.definition.checks.len()
     }
+    /// Configured, canonical check names support sanitized summaries without exposing expressions.
+    pub fn check_names(&self) -> impl ExactSizeIterator<Item = &str> {
+        self.definition
+            .checks
+            .iter()
+            .map(|check| check.name.as_str())
+    }
 }
 impl Definition {
     /// Numeric operands must agree exactly in type/scale; optional/missing values never mean zero.

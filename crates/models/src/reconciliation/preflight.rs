@@ -28,6 +28,13 @@ pub struct ModelPreflight {
     active_binding_checked: bool,
 }
 
+impl ModelPreflight {
+    /// Bind a schema diagnostic to both definitions; this identity conveys no source authority.
+    pub fn fingerprint(&self) -> &str {
+        &self.fingerprint
+    }
+}
+
 impl Policy {
     /// Resolve each policy leaf against projected output types, never the model's raw payload paths.
     /// Example: a model's amount may come from balances.amount; the policy still reads only amount.
