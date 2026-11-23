@@ -37,3 +37,6 @@ mod selection_upgrade;
 pub use selection_upgrade::{
     UpgradeBinding, UpgradeManifest, UpgradeResult, UpgradeStatus, upgrade_boundary,
 };
+
+#[cfg(test)]
+mod benchmark;
