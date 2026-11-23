@@ -28,7 +28,7 @@ The user confirmed no authorized remote source is available.
 | --- | --- |
 | Rust quality | Workspace formatting, strict all-target Clippy and default workspace tests pass |
 | Owned PostgreSQL | 76 storage tests (including the bounded benchmark), 13 runtime API tests, one model test, three CLI recovery/registry/install tests and source-owner rejection pass |
-| Python controls | 37 development-helper tests and seven PoC-helper tests pass; operations helpers compile |
+| Python controls | 38 development-helper tests and seven PoC-helper tests pass; operations helpers compile |
 | Source inventory | Seven retained LocalNet PoC contracts match historical API inventory at the acknowledged snapshot boundary, across three historical pages and seven ingestion pages |
 | Durable LocalNet feed | API restart/replay, durable ACK and reconnect pass; pruning six isolated outbox rows reports explicit authorized loss while canonical history remains queryable |
 | Baseline recovery | A controlled quiescent fixture baseline and new subscription pass; concurrent atomic snapshot/feed handoff is **not** established |

@@ -43,6 +43,21 @@ def sql(environment, statement):
     return result.stdout.strip()
 
 
+def check_toolchain(environment):
+    """Fail explicitly before dumping when host tools cannot read this server/archive version."""
+    server_major = int(sql(environment, 'SHOW server_version_num;')) // 10000
+    versions = {}
+    for tool in ('pg_dump', 'pg_restore'):
+        result = subprocess.run([tool, '--version'], text=True, stdout=subprocess.PIPE,
+                                stderr=subprocess.DEVNULL, timeout=5)
+        match = re.search(r'\(PostgreSQL\) (\d+)\.', result.stdout)
+        if result.returncode or not match:
+            raise ValueError('Cannot verify PostgreSQL backup tool versions')
+        versions[tool] = int(match[1])
+    if versions['pg_dump'] < server_major or versions['pg_restore'] < versions['pg_dump']:
+        raise ValueError('Backup requires pg_dump at least as new as the server and pg_restore at least as new as pg_dump')
+
+
 def fingerprint(environment):
     """Hash exact PostgreSQL row text and sequence state; financial values never pass through Python floats."""
     tables = sql(environment, "SELECT quote_ident(n.nspname)||'.'||quote_ident(c.relname) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN ('cantongrid','cantongrid_models') AND c.relkind='r' ORDER BY 1").splitlines()
@@ -98,6 +113,7 @@ def verify(source_variable, restore_variable, output):
     empty = sql(restore_env, "SELECT NOT EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT LIKE 'pg_%' AND n.nspname<>'information_schema' AND c.relkind IN ('r','p','v','m','f','S'));")
     if safe != 't' or empty != 't':
         raise ValueError('Restore target must be an empty separately owned database under a restricted role')
+    check_toolchain(source_env)
     before = fingerprint(source_env)
     archive = output / 'owned-destination.dump'
     # The directory is 0700 and the archive is 0600 before any private record is written.

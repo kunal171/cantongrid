@@ -31,6 +31,11 @@ python3 scripts/dev.py recovery verify \
   --output .local/recovery/new-private-run
 ```
 
+Install `psql`, `pg_dump` and `pg_restore` first. `pg_dump` must be at least
+as new as the source server, and `pg_restore` at least as new as `pg_dump`.
+The helper rejects incompatible major versions before dumping. CI uses the
+same pinned PostgreSQL 17 image for its backup tools and fixture.
+
 The output directory must not exist. Connections require explicit numeric-loopback
 host, port, user, password and database fields. The restore role must own the empty
 database and have no elevated attributes or role memberships. The source and target
