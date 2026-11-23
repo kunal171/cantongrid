@@ -16,6 +16,27 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## Offline reconciliation policies — 2026-11-23
+
+Unreleased `0.5.0-alpha.1` on `feat/reconciliation-policies`. This implements
+versioned policy compilation and explicit fixture evaluation only; every report
+remains unverified. See the [guide](guide/reconciliation.md) and
+[live-track gate](design/reconciliation.md#live-track-gate).
+
+| Check | Result |
+| --- | --- |
+| Rust | 139 default workspace tests pass; formatting and strict all-target Clippy pass |
+| Policy controls | 11 tests cover canonical identity, strict parsing, work bounds, exact comparisons, negative zero, scale mismatch, missing inputs, arithmetic overflow and redacted failures |
+| CLI | Offline integration passes outside the checkout with unusable live credentials, unchanged inputs and rejected extra arguments |
+| Existing behavior | 82 storage, one model/PostgreSQL and 15 HTTP integration tests pass against the owned destination; existing model validation and projection output match the stable 0.4.0 CLI |
+| Helpers/security | 38 development-helper and seven PoC-helper tests pass; RustSec, dependency policy, actionlint and history/tree secret scans pass |
+| Packaging | All ten workspace package dry runs and archive checks pass, including README, legal files and self-contained fixture assets; nothing uploaded |
+
+No new dependency, migration or live-source verification is included. SQL tests
+use the separate owned destination; no LocalNet transactions or source-grant
+changes are performed. Fixture comparisons do not establish complete source
+coverage, authorized live balances or economic correctness of a supplied formula.
+
 ## 0.4.0 promotion — 2026-11-23
 
 Regular release of the [scoped node-local profile](releases.md#040-supported-scope-and-acceptance).
