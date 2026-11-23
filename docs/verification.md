@@ -105,9 +105,31 @@ and mock read-only source authority, with no Canton transaction or grant change.
 - Storage/evaluator source and migration SQL are unchanged from published alpha.1;
   its lower-level SQL evidence above is not claimed as a new run here.
 
-Real LocalNet/remote reconciliation remains unverified. This branch is separate
+At that check, real LocalNet/remote reconciliation remained unverified. This branch is separate
 from released alpha.1; no alpha.2 release, crate upload or public site update is
 performed by these checks. See the [API guide](guide/reconciliation.md#authenticated-api-050-alpha2-source).
+
+## Read-only LocalNet reconciliation — 2026-11-23
+
+[Sanitized evidence](../examples/reconciliation/localnet-evidence.json) records
+clean commit `8476c0b`, the actual CLI binary hash and seven existing PoC contracts.
+Ledger and restricted PQS active inventories match at the same completed indexed
+boundary, including exact Numeric/Int64 terms. The isolated destination uses the
+existing model in a new namespace; original PoC files and bindings stay unchanged.
+
+REST and typed GraphQL agree for `priceTick * 10000 == priceTickBps` and
+`quantityLot > 0`. Deliberately changing the policy multiplier to 10001 makes all
+seven basis-point checks violated; restoring the policy restores the original
+report. Narrow-scope existing/unknown-name denial, isolated application-caller
+revocation and API restart pass against real current source authorization.
+No DAR upload, party allocation, Ledger command or Ledger-rights change occurs.
+These term checks do not test collateral, trading, cross-contract totals or
+remote/TestNet sources.
+
+The shared default operations acceptance also passes on seven retained contracts
+after the helper refactor (commit `4e7006f`). Seven PoC and five new operations
+unit tests pass without Docker/HTTP. CI now runs both helper suites; workflow
+static checks pass. Private runtime/configuration/identity data remain in `.local`.
 
 ## 0.4.0 promotion — 2026-11-23
 

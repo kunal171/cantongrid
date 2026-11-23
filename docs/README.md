@@ -56,7 +56,8 @@ indexed per-contract checks. Fixture reports remain unverified; indexed checks
 cover a bounded retained prefix. Public APIs and cross-contract totals remain later work.
 
 Unreleased **0.5.0-alpha.2** adds operator-pinned authenticated reconciliation
-REST/GraphQL. Build its source checkout; the published alpha.1 release contains
+REST/GraphQL, now checked against seven retained LocalNet PoC contracts without
+ledger writes. Build its source checkout; the published alpha.1 release contains
 the offline commands and storage interface described above.
 
 ## Milestones

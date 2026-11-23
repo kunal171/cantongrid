@@ -11,7 +11,7 @@ See [verification](../verification.md#authenticated-reconciliation-api--2026-11-
 - Before returning, reload manifest/config, compare immutable policy/catalog/source identities and active model definitions, refresh current source authority and caller grants. Guard serialization on both sides. Discard the whole GraphQL data object on any resolver or final-guard failure; at most two evaluation roots per operation.
 - REST responses: 401 bad caller identity; 403 incomplete caller scope before lookup; 400 unsupported body/input; 404 unknown configured policy only after full-scope authorization; 503 invalid config, inactive pin, source failure or unavailable indexed evidence. Arithmetic unavailable is a successful diagnostic, not a financial all-clear.
 - Test with owned PostgreSQL and mock source authority: exact REST/GraphQL equality, narrow-scope existing/unknown policy denial, malformed/unknown fields and no arbitrary policy execution, pin/config changes, active revision promotion, source and caller revocation, stale/incomplete evidence, overflow, multi-root failure and redaction. No ledger writes, dependency additions or source grant changes.
-- Leave real LocalNet/remote acceptance and public publication separate from this implementation.
+- Record LocalNet evidence separately from mock controls; remote acceptance and public publication remain later work.
 
 Implemented in alpha.2 source. Catalog-wide pin validation is conservative: any configured inactive/incompatible entry makes this endpoint unavailable. The final synchronous delivery guard retains the existing 401 failure behavior. Evidence is recorded in docs/verification.md.
 

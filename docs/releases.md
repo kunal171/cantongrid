@@ -42,8 +42,8 @@ Adds optional `reconciliation_file` configuration and authenticated REST/GraphQL
 over server-pinned policies. Existing configuration remains valid when omitted.
 Upgrade binaries before adding the setting; older versions reject it. No migration,
 reindex or dependency change. Bounds and report semantics remain those of alpha.1.
-Acceptance uses owned PostgreSQL/mock authority; LocalNet/remote reconciliation
-remains unverified. See the [API guide](guide/reconciliation.md#authenticated-api-050-alpha2-source).
+Acceptance includes owned PostgreSQL/mock controls and seven retained LocalNet
+contracts with real read-only authorization. Remote reconciliation remains unverified. See the [API guide](guide/reconciliation.md#authenticated-api-050-alpha2-source).
 
 ## 0.5.0-alpha.1 reconciliation scope
 

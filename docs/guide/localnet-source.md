@@ -2,7 +2,8 @@
 
 Requires Docker/Compose, Python 3.11+ and the [built CLI](quickstart.md).
 This profile uses Canton 3.5.7 and Scribe 3.5.4/schema041. It supports exact
-contract templates and raw payloads, not interfaces/reassignments or remote TLS.
+contract templates and raw payloads; interfaces/reassignments are unsupported.
+For authorized remote HTTPS setup, see [remote sources](remote-source.md).
 
 ## Start infrastructure
 

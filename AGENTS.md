@@ -9,7 +9,9 @@
   The API slice is owned-PostgreSQL/mock-source-tested. Current continuation is
   read-only LocalNet acceptance using existing PoC contracts and rights, with
   isolated owned destination writes only; follow the design acceptance section.
-  No DAR/party/ledger/grant writes. Remote reconciliation remains unverified. Work in small commits with
+  LocalNet acceptance passed on seven retained contracts, including controlled
+  policy violations/restoration and preservation of PoC files/bindings. No
+  DAR/party/ledger/grant writes. Remote reconciliation remains unverified. Work in small commits with
   function/type/calculation comments. Publication of
   this new branch is not part of the alpha.1 release.
 - Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical

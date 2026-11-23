@@ -260,3 +260,26 @@ alias after full-scope checks, and 503 for unavailable source/configuration/pins
 or indexed evidence. GraphQL validation/resolver errors use its `errors` array;
 always inspect it. An arithmetic `comparison: unavailable` is a successful HTTP
 200 diagnostic with complete inputs, using the storage semantics above.
+
+## Verify retained LocalNet contracts
+
+With this checkout and the existing PoC source/destination running:
+
+```bash
+cargo build -p cantongrid-cli --locked
+python3 examples/operations/localnet.py --allow-owned-writes --reconciliation
+```
+
+Commit reviewed changes first so the evidence identifies a clean source commit.
+The helper uses existing contracts and read-only Ledger/PQS rights, writes a new
+isolated destination stream/model namespace, and preserves the original PoC files
+and bindings. It compares Ledger and PQS inventories at the same boundary, then
+checks term arithmetic through both APIs, a deliberate violation/restoration,
+narrow-scope denial, isolated caller revocation and API restart. The independent
+Ledger control refuses 100 or more stream entries; no inventory is truncated to
+produce success. It submits no ledger commands or rights changes.
+
+Full private reports/configuration remain under `.local/operations`; only the
+[sanitized evidence](../../examples/reconciliation/localnet-evidence.json) contains
+reviewable counts, booleans and source/binary identities. Seven retained contracts
+passed; these are unfunded term checks, not a collateral/trading demonstration.
