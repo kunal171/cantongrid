@@ -155,6 +155,12 @@ fn bootstrap_rejects_ordinary_names_wrong_owners_partial_intervals_missing_histo
     let a = caller(&s);
     let c = consumer();
     let mut store = s.open();
+    assert_eq!(
+        store
+            .bootstrap_subscription(plan, &a, &s.lease(), &c, "not-ready")
+            .err(),
+        Some(StoreError::TemporalUnavailable)
+    );
     store
         .apply_authorized(plan, &creates(&s, 10, &["a"], true), &s.lease())
         .unwrap();

@@ -56,7 +56,13 @@ impl Store {
         let current = parties(plan, caller, lease)?;
         name(client_name)?;
         let mut tx = self.client.transaction()?;
-        let key = lock(&mut tx, plan)?;
+        let key = lock(&mut tx, plan).map_err(|error| {
+            if error == StoreError::SubscriptionUnavailable {
+                StoreError::TemporalUnavailable
+            } else {
+                error
+            }
+        })?;
         if !crate::operations::fresh(&mut tx, &key)? {
             return Err(StoreError::DeliveryStale);
         }

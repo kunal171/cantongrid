@@ -21,7 +21,7 @@ test('stage full baseline before events; ACK only committed effects; retry unack
     let response;
     if (url.pathname.endsWith('/bootstrap')) response = { id, formatVersion: 1, atomicHandoff: true };
     else if (url.pathname.endsWith('/snapshot')) response = {
-      formatVersion: 1, items: [contract(url.searchParams.has('cursor') ? 'z' : 'a')],
+      formatVersion: 1, visibleTotal: "2", items: [contract(url.searchParams.has('cursor') ? 'z' : 'a')],
       nextCursor: url.searchParams.has('cursor') ? null : 'page-two',
     };
     else if (url.pathname.endsWith('/events')) response = { formatVersion: 1, events: [{ eventId: 'create-new' }], nextCursor: 'receipt', more: false };
@@ -61,5 +61,23 @@ test('a baseline coverage gap aborts staging without publication or implicit res
     };
     await assert.rejects(installBaseline(api, sink), e => e instanceof ApiError && e.status === 409 && e.coverage === 'gap');
     assert.deepEqual(order, ['begin', 'abort']);
+  } finally { global.fetch = originalFetch; }
+});
+
+
+test('a prematurely terminated baseline never replaces committed state', async () => {
+  const order = [], originalFetch = global.fetch;
+  global.fetch = async url => url.pathname.endsWith('/bootstrap')
+    ? Response.json({ id, formatVersion: 1, atomicHandoff: true })
+    : Response.json({ formatVersion: 1, items: [contract('a')], visibleTotal: '2', nextCursor: null });
+  try {
+    const api = new BootstrapApi('http://127.0.0.1:8080', async () => 'local-fixture-only');
+    const sink = {
+      async beginBaseline() { order.push('begin'); }, async stage() { order.push('stage'); },
+      async commitBaseline() { order.push('publish'); }, async abortBaseline() { order.push('abort'); },
+      async applyPage() { order.push('apply'); },
+    };
+    await assert.rejects(installBaseline(api, sink), /Incomplete baseline/);
+    assert.deepEqual(order, ['begin', 'stage', 'abort']);
   } finally { global.fetch = originalFetch; }
 });

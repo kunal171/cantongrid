@@ -19,20 +19,40 @@ export async function installBaseline(
   api: BootstrapApi, sink: Sink, name = `baseline-${crypto.randomUUID()}`, signal?: AbortSignal,
 ): Promise<string> {
   const registration = await api.register(name, signal);
-  if (registration.formatVersion !== 1 || !registration.atomicHandoff) {
+  if (registration.formatVersion !== 1 || !registration.atomicHandoff ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(registration.id)) {
     throw new Error("Unsupported bootstrap protocol");
   }
   const id = registration.id;
   await sink.beginBaseline(id);
   try {
     let cursor: string | null = null;
+    let expectedTotal: string | undefined;
+    const seen = new Set<string>();
     for (let page = 0; ; page++) {
       if (page >= 512) throw new Error("Baseline exceeded the example's page budget");
       const snapshot = await api.snapshot(id, cursor, signal);
-      if (snapshot.formatVersion !== 1) throw new Error("Unsupported snapshot protocol");
+      if (snapshot.formatVersion !== 1 || !Array.isArray(snapshot.items) ||
+          typeof snapshot.visibleTotal !== "string" || !/^[0-9]{1,20}$/.test(snapshot.visibleTotal) ||
+          !(snapshot.nextCursor === null || typeof snapshot.nextCursor === "string")) {
+        throw new Error("Unsupported snapshot protocol");
+      }
+      if (expectedTotal !== undefined && snapshot.visibleTotal !== expectedTotal) {
+        throw new Error("Pinned snapshot total changed");
+      }
+      expectedTotal = snapshot.visibleTotal;
+      for (const contract of snapshot.items) {
+        if (typeof contract.contractId !== "string" || seen.has(contract.contractId)) {
+          throw new Error("Invalid or repeated baseline contract");
+        }
+        seen.add(contract.contractId);
+      }
       await sink.stage(snapshot.items);
       cursor = snapshot.nextCursor;
-      if (cursor === null) break;
+      if (cursor === null) {
+        if (BigInt(seen.size) !== BigInt(expectedTotal)) throw new Error("Incomplete baseline");
+        break;
+      }
     }
     await sink.commitBaseline(id);
     return id;
