@@ -46,6 +46,7 @@ impl Drop for Scratch {
         let _ = fs::remove_dir_all(&self.0);
     }
 }
+/// CLI success is diagnostic-only, and unsupported modes cannot mutate data or obtain authority.
 #[test]
 fn offline_policy_commands_remain_unverified_redacted_and_do_not_mutate_inputs() {
     let s = Scratch::new();

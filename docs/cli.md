@@ -16,6 +16,8 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `init <new-directory>` | Scaffold a synthetic Visibility fixture; refuses an existing directory |
 | `validate <project.json>` | Validate fixture configuration without reading events or connecting |
 | `fixture run <project.json> [--party A]...` | In-memory fixture replay with simulated grants |
+| `reconcile validate <policy.json>` | Offline exact policy validation; 0.5 source |
+| `reconcile evaluate <policy.json> <fixture.json>` | Sanitized fixture comparisons; always unverified |
 | `storage init --database-env CANTONGRID_DESTINATION_URL` | Explicit owned destination migrations |
 | `storage check --database-env CANTONGRID_DESTINATION_URL` | Read-only migration/checksum/ACL validation |
 | `ops check-config <runtime> --profile localnet\|testnet\|mainnet` | Offline network/transport policy check |

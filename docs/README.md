@@ -20,6 +20,7 @@ caller-scoped REST/GraphQL. Outcomia is the first application example.
 | [Outcomia](guide/outcomia.md) | Prediction-market mappings and application acceptance |
 | [Temporal state](guide/temporal.md) | Bounded canonical as-of reads |
 | [Durable delivery](guide/delivery.md) | Private subscriptions, replay, ACK and explicit gaps |
+| [Offline reconciliation (0.5 source)](guide/reconciliation.md) | Versioned exact fixture policies; no live balance certification |
 | [Bootstrap](guide/bootstrap.md) | Opaque fixed baseline paired with a durable feed |
 | [Remote setup](guide/remote-source.md) | HTTPS, restricted PQS tunnel and preflight checks |
 | [Recovery](guide/recovery.md) | Private isolated backup/restore validation |
@@ -48,6 +49,10 @@ Historical model bindings, model CDC, interfaces/reassignments, public Scan,
 hosted multi-tenancy and arbitrary processing plugins are not implemented.
 Remote/TestNet and production acceptance remain unverified. Local HTTPS certificate,
 backup and benchmark controls do not establish live-network or production readiness.
+
+The **unreleased 0.5.0-alpha.1 source** adds
+[offline reconciliation policies](guide/reconciliation.md). Fixture comparisons
+remain unverified; live authorized/model-backed reconciliation is a separate gate.
 
 ## Milestones
 

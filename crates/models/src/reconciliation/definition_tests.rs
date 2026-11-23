@@ -15,6 +15,7 @@ pub(super) fn definition() -> Json {
         "checks":[{"name":"balanced","left":"left","operator":"eq","right":"right"}]}})
 }
 
+/// Canonical policy identity follows semantics/revision rather than input presentation.
 #[test]
 fn canonical_fingerprints_ignore_formatting_map_order_and_check_order_but_bind_revision() {
     let mut p = definition();
@@ -37,6 +38,7 @@ fn canonical_fingerprints_ignore_formatting_map_order_and_check_order_but_bind_r
         Policy::parse(&p.to_string()).unwrap().fingerprint()
     );
 }
+/// Reject ambiguous documents and unsupported scalar relationships before fixture evaluation.
 #[test]
 fn malformed_policies_reject_unsupported_types_scales_references_and_ambiguous_schema() {
     let base = definition();
@@ -84,6 +86,7 @@ fn malformed_policies_reject_unsupported_types_scales_references_and_ambiguous_s
         Err(ModelError::Limit)
     ));
 }
+/// Bound combined expression work so many small fields cannot bypass the policy budget.
 #[test]
 fn work_limits_apply_to_the_whole_policy_not_only_individual_expressions() {
     let mut p = definition();

@@ -40,3 +40,9 @@ PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
+
+Unreleased 0.5 source adds `reconcile validate <policy.json>` and
+`reconcile evaluate <policy.json> <fixture.json>`. These commands read supplied
+local files without source credentials or database access. Diagnostic success
+never means a verified financial all-clear. See the repository reconciliation
+examples and guide for exact arithmetic, limits and evidence semantics.

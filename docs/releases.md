@@ -35,6 +35,14 @@ cargo install cantongrid-cli --version 0.4.0 --locked
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
 
+## Unreleased 0.5.0-alpha.1
+
+The source branch adds bounded offline reconciliation policies and CLI fixture
+diagnostics. It adds no migration, source-plan change, live data access or public
+API. Existing model fingerprints/expressions remain compatible. Fixture results
+always retain unverified coverage; this is not a live financial certification.
+See the [guide](guide/reconciliation.md).
+
 ## 0.4.0 supported scope and acceptance
 
 This is a regular 0.x release of the tested node-local contracts profile, promoted

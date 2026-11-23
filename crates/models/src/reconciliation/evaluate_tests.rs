@@ -11,12 +11,14 @@ fn finding(definition: &Json, payload: &str) -> (FixtureResult, Option<&'static 
     let check = &report.checks()[0];
     (check.fixture_comparison, check.error_code)
 }
+/// Values above 2^53 and their final decimal digit retain exact comparison meaning.
 #[test]
 fn exact_large_values_and_last_decimal_digit_never_round_to_equality() {
     let p = definition();
     assert_eq!(finding(&p,r#"{"left":"12345678901234567890.0000000001","right":"12345678901234567890.0000000001"}"#).0,FixtureResult::Satisfied);
     assert_eq!(finding(&p,r#"{"left":"12345678901234567890.0000000001","right":"12345678901234567890.0000000000"}"#).0,FixtureResult::Violated);
 }
+/// Exercise the existing checked arithmetic path through a compiled policy.
 #[test]
 fn checked_arithmetic_reuses_decimal_addition_and_integer_multiplication() {
     let mut p = definition();
@@ -34,6 +36,7 @@ fn checked_arithmetic_reuses_decimal_addition_and_integer_multiplication() {
         FixtureResult::Satisfied
     );
 }
+/// Check total ordering without a potentially overflowing difference calculation.
 #[test]
 fn ordered_comparisons_cover_negative_zero_and_extreme_coefficients_without_subtraction() {
     for (left, right, order) in [("-1", "0", -1), ("0", "0", 0), ("1", "0", 1)] {
@@ -58,6 +61,10 @@ fn ordered_comparisons_cover_negative_zero_and_extreme_coefficients_without_subt
             );
         }
     }
+    assert_eq!(
+        finding(&definition(), r#"{"left":"-0.0000000000","right":"0"}"#).0,
+        FixtureResult::Satisfied
+    );
     let mut p = definition();
     for side in ["left", "right"] {
         p["policy"]["fields"][side]["as"]["scale"] = 0.into();
@@ -73,6 +80,7 @@ fn ordered_comparisons_cover_negative_zero_and_extreme_coefficients_without_subt
         FixtureResult::Satisfied
     );
 }
+/// Malformed or absent required data leaves the mathematical comparisons unavailable.
 #[test]
 fn invalid_required_inputs_never_become_zero_balances_or_partial_success() {
     let p = definition();
@@ -96,6 +104,7 @@ fn invalid_required_inputs_never_become_zero_balances_or_partial_success() {
         (FixtureResult::Unavailable, Some("limit"))
     );
 }
+/// Both i64 limits and the Numeric precision bound reject overflow instead of wrapping.
 #[test]
 fn integer_and_decimal_arithmetic_overflow_fail_without_wrapping() {
     for kind in [json!({"type":"int64"}), json!({"type":"numeric","scale":0})] {
@@ -112,8 +121,20 @@ fn integer_and_decimal_arithmetic_overflow_fail_without_wrapping() {
             finding(&p, &json!({"a":maximum,"b":"1","zero":"0"}).to_string()),
             (FixtureResult::Unavailable, Some("overflow"))
         );
+        p["policy"]["fields"]["left"]["op"] = "multiply".into();
+        p["policy"]["fields"]["left"]["right"] = field("b", json!({"type":"int64"}));
+        let maximum = if kind["type"] == "int64" {
+            i64::MAX.to_string()
+        } else {
+            "9".repeat(38)
+        };
+        assert_eq!(
+            finding(&p, &json!({"a":maximum,"b":"2","zero":"0"}).to_string()),
+            (FixtureResult::Unavailable, Some("overflow"))
+        );
     }
 }
+/// Untrusted data cannot manufacture source scope or a financial success receipt.
 #[test]
 fn fixture_metadata_cannot_claim_authorization_completeness_or_a_live_all_clear() {
     let policy = Policy::parse(&definition().to_string()).unwrap();
@@ -130,6 +151,7 @@ fn fixture_metadata_cannot_claim_authorization_completeness_or_a_live_all_clear(
     assert!(!output.to_string().contains("private-party-sentinel"));
     assert!(!output.to_string().contains("secret-offset-sentinel"));
 }
+/// Keep source values and expression paths out of normal and Debug diagnostics.
 #[test]
 fn diagnostics_and_debug_never_echo_inputs_paths_or_literals() {
     let mut p = definition();

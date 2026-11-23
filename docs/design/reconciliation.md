@@ -53,7 +53,8 @@ payload claims such as `complete: true` cannot confer verified evidence.
 Before querying actual models, approve a separate plan covering a coherent source
 boundary and active model revisions, complete configured party scope before any
 read/count, same-asset/unit/group selection, retained coverage and source pruning,
-current caller/source grants and revocation before response encoding. Scope gaps
+current caller/source grants and revocation before response encoding. Keep global
+source offsets operator-private or represent them with opaque evidence handles. Scope gaps
 must return unavailable/incomplete, never all-clear. A user-supplied fixture cannot
 supply this evidence. No live REST/GraphQL or `invariant_results` storage is part
 of this branch's first slice.

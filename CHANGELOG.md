@@ -2,8 +2,11 @@
 
 ## 0.5.0-alpha.1 — 2026-11-23 (unreleased)
 
-- Start bounded offline exact-value reconciliation policy work. Supplied fixtures
-  do not prove authorization or source completeness; no live checks are claimed.
+- Add bounded versioned exact-value reconciliation policies with canonical
+  fingerprints, checked numeric comparisons and sanitized fixture reports.
+- Add offline `reconcile validate` / `reconcile evaluate` and synthetic backing /
+  supply examples. Supplied fixtures do not prove authorization or source
+  completeness; no live checks or financial all-clear are claimed.
 
 ## 0.4.0 — 2026-11-23
 
