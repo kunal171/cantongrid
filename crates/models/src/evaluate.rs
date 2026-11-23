@@ -11,26 +11,7 @@ impl Model {
     /// invalid/missing values are errors, never a fabricated empty row or zero balance.
     pub fn evaluate(&self, payload: &str) -> Result<Option<BTreeMap<String, Value>>, ModelError> {
         self.validate()?;
-        if payload.len() > 65536 {
-            return Err(ModelError::Limit);
-        }
-        let root: serde_json::Value =
-            cantongrid_core::document::parse(payload).map_err(|_| ModelError::Type)?;
-        if !root.is_object() {
-            return Err(ModelError::Type);
-        }
-        let fields: BTreeMap<_, _> = self
-            .fields
-            .iter()
-            .map(|(name, expr)| evaluate(expr, &root).map(|value| (name.clone(), value)))
-            .collect::<Result<_, _>>()?;
-        if serde_json::to_vec(&fields)
-            .map_err(|_| ModelError::Type)?
-            .len()
-            > 1024 * 1024
-        {
-            return Err(ModelError::Limit);
-        }
+        let fields = project(&self.fields, payload)?;
         if self
             .filter
             .as_ref()
@@ -40,6 +21,34 @@ impl Model {
         }
         Ok(Some(fields))
     }
+}
+
+/// Evaluate a validated expression map without source identity, SQL planning or model publication.
+/// Model and reconciliation callers validate types/work limits before entering this shared primitive.
+pub(crate) fn project(
+    expressions: &BTreeMap<String, Expression>,
+    payload: &str,
+) -> Result<BTreeMap<String, Value>, ModelError> {
+    if payload.len() > 65536 {
+        return Err(ModelError::Limit);
+    }
+    let root: serde_json::Value =
+        cantongrid_core::document::parse(payload).map_err(|_| ModelError::Type)?;
+    if !root.is_object() {
+        return Err(ModelError::Type);
+    }
+    let fields: BTreeMap<_, _> = expressions
+        .iter()
+        .map(|(name, expr)| evaluate(expr, &root).map(|value| (name.clone(), value)))
+        .collect::<Result<_, _>>()?;
+    if serde_json::to_vec(&fields)
+        .map_err(|_| ModelError::Type)?
+        .len()
+        > 1024 * 1024
+    {
+        return Err(ModelError::Limit);
+    }
+    Ok(fields)
 }
 
 /// Resolve only validated object-field paths; an unexpected scalar ancestor is a type error.

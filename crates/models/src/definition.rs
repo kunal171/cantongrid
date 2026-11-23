@@ -227,7 +227,11 @@ impl Expression {
         self.output_type_at(0, &mut 0)
     }
     /// Count expression work while rejecting unsupported arithmetic pairs and excessive recursion.
-    fn output_type_at(&self, depth: usize, nodes: &mut usize) -> Result<FieldType, ModelError> {
+    pub(crate) fn output_type_at(
+        &self,
+        depth: usize,
+        nodes: &mut usize,
+    ) -> Result<FieldType, ModelError> {
         *nodes += 1;
         if depth > 16 || *nodes > 256 {
             return Err(ModelError::Limit);
