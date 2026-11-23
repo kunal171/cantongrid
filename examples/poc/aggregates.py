@@ -9,27 +9,10 @@ import queries
 
 def ledger_totals():
     """Expected values come from a real authorized Ledger snapshot, independently of projections."""
-    data = s.state()
     offset = s.get(s.BASE, '/v2/state/ledger-end', s.token())['offset']
-    expected_template = data['package'] + ':Market:PredictionMarket'
-    template = s.TEMPLATE  # This JSON Ledger API requires package-name input identifiers.
-    selection = {'cumulative': [{'identifierFilter': {'TemplateFilter': {'value': {'templateId': template}}}}]}
-    entries = s.request(s.BASE, '/v2/state/active-contracts?limit=100', s.token(s.USERS['ab']), body={
-        'activeAtOffset': offset, 'eventFormat': {
-            'filtersByParty': {p: selection for p in data['parties'].values()}, 'verbose': True}})
-    if len(entries) >= 100:
-        raise ValueError('Fixture exceeds the bounded Ledger snapshot budget')
     counts = Counter(); totals = defaultdict(int)
-    for entry in entries:
-        contract = entry.get('contractEntry', {})
-        if 'JsActiveContract' not in contract:
-            if contract and 'JsEmpty' not in contract:
-                raise ValueError('Unsupported incomplete/reassigned contract in aggregate check')
-            continue
-        event = contract['JsActiveContract']['createdEvent']
-        if event['templateId'] != expected_template:
-            raise ValueError('Ledger snapshot returned an unexpected package/template')
-        payload = event['createArgument']
+    for contract in s.ledger_snapshot(offset):
+        payload = contract['payload']
         counts[payload['state']] += 1
         # Python integers are arbitrary precision: adding two Int64 maxima never rounds.
         if not isinstance(payload['quantityLot'], (int, str)) or isinstance(payload['quantityLot'], bool):
