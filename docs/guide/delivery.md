@@ -1,6 +1,6 @@
 # Durable lifecycle delivery
 
-Available in 0.4.0-alpha.6. Run the ingestion worker
+Available in 0.4.0. Run the ingestion worker
 and API against the same reviewed runtime. Migration 011 adds private subscription
 and receipt tables; [back up before migrating](recovery.md).
 
@@ -89,7 +89,7 @@ monitor queue growth and consumer lag through [operations](operations.md).
 
 A gap requires an independently verified application baseline and a new
 subscription. Published alpha.6 has no atomic snapshot/feed handoff. The
-[alpha.7 bootstrap API](bootstrap.md) pairs its baseline and feed
+[0.4.0 bootstrap API](bootstrap.md) pairs its baseline and feed
 transactionally; it still reports explicit loss when retention invalidates a handoff. Reading a
 snapshot then starting `now` during concurrent writes can lose changes. The
 [LocalNet helper](../../examples/operations/README.md) demonstrates resynchronization

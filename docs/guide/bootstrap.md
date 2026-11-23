@@ -1,6 +1,6 @@
 # Bootstrap a baseline and durable feed
 
-Available in **0.4.0-alpha.7**. Build matching worker/API
+Available in **0.4.0** (introduced in alpha.7). Build matching worker/API
 binaries and explicitly apply owned migration 012 after backing up. Migrations
 001–011 remain unchanged. Older binaries reject the new installation; rollback
 requires the pre-upgrade database and matching configuration/keys.

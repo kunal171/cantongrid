@@ -1,13 +1,13 @@
 # cantongrid-ledger
 
-This README describes CantonGrid 0.4.0-alpha.7.
+This README describes CantonGrid 0.4.0.
 Current Canton Ledger API user and party-grant verification for CantonGrid.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-ledger = "=0.4.0-alpha.7"
+cantongrid-ledger = "=0.4.0"
 ```
 
 Use `GrantChecker` with the configured source scope and wrap it in

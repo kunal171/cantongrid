@@ -1,14 +1,14 @@
 # Working on CantonGrid
 
-- Active task: atomic canonical snapshot/feed handoff on
-  feat/atomic-snapshot-handoff, following publication of 0.4.0-alpha.6.
+- Active task: publish alpha.7 and promote the verified node-local profile to
+  stable 0.4.0 after CI, with coordinated crates, GitBook and optimized CLI checks.
   Follow docs/design/atomic-snapshot-handoff.md and keep focused commits.
   The user authorized push/PR/CI/merge, alpha.7 publication and a scoped stable
   0.4.0 release with crate/GitBook updates and an optimized CLI build. No new runtime
   dependencies, ledger writes or Outcomia changes are part of this scope.
   Do not advertise atomic handoff until its storage/API concurrency controls pass.
   No authorized remote source exists; live TestNet/production acceptance is pending.
-- Existing baseline: 0.4.0-alpha.6 adds bounded temporal queries, durable canonical
+- Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical
   delivery and local operational hardening. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
   acceptance. Funded trading remains later work; canonical durable delivery is now implemented.

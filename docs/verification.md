@@ -16,6 +16,21 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## 0.4.0 promotion — 2026-11-23
+
+Regular release of the [scoped node-local profile](releases.md#040-supported-scope-and-acceptance).
+Runtime code, tests, packaged fixtures and migration SQL are unchanged from alpha.7;
+only coordinated versions and documentation change. Alpha.7's CI and per-feature
+evidence below remain the implementation evidence, with CI/package checks rerun
+for the stable metadata. Published registry/CLI verification is attached to the
+[GitHub release](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0).
+The optimized CLI is built from the same clean source; its offline smoke and hash
+are recorded separately from registry installation in that report.
+
+The release does not complete the pending M9 remote/production gates. Experimental
+temporal limits, unsupported lifecycle types and all evidence distinctions remain
+in force. A regular version does not imply full Phase 4 or production acceptance.
+
 ## Atomic canonical bootstrap — recorded 2026-11-23
 
 Alpha.7 acceptance on `feat/atomic-snapshot-handoff`. Migration 012 privately

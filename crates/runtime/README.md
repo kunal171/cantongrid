@@ -1,13 +1,13 @@
 # cantongrid-runtime
 
-This README describes CantonGrid 0.4.0-alpha.7.
+This README describes CantonGrid 0.4.0.
 Authenticated CantonGrid indexing workers and REST/GraphQL query services.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-runtime = "=0.4.0-alpha.7"
+cantongrid-runtime = "=0.4.0"
 ```
 
 The library exposes `index`, `serve`, `bind_model` and bounded `rebuild`

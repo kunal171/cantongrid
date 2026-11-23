@@ -4,58 +4,38 @@ A Rust indexer for authorized Daml contracts on Canton. It maintains active
 contracts and lifecycle history in PostgreSQL and serves caller-scoped REST/GraphQL.
 Outcomia is the first application example; the engine is reusable.
 
-[Runnable PoC](docs/guide/poc.md) · [Developer guide](docs/README.md) · [Architecture](docs/architecture.md) ·
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+[Runnable PoC](docs/guide/poc.md) · [Developer guide](docs/README.md) ·
+[Architecture](docs/architecture.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-[Latest release: 0.3.0](https://github.com/kunal171/cantongrid/releases/tag/v0.3.0)
+[Latest stable release: 0.4.0](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0)
 
 ## Current status
 
-The **0.4.0-alpha.7** prerelease adds bounded temporal reads, durable lifecycle
-delivery and local operational hardening. It also includes the read-only
-[developer inspector](docs/guide/inspector.md) and offline
-[upgrade impact analysis](docs/guide/upgrade-impact.md).
-Install with `cargo install cantongrid-cli --version 0.4.0-alpha.7 --locked`.
+**0.4.0** promotes the tested alpha.7 implementation for the authorized node-local
+Canton 3.5.7 / Scribe 3.5.4 schema041 / PostgreSQL 17.12 profile. See the
+[release scope and upgrade steps](docs/releases.md#040-supported-scope-and-acceptance).
 
-The **0.4.0-alpha.4** prerelease adds opt-in, one-hop
-[direct lineage](docs/guide/lineage.md), migration 010 and generic/Outcomia LocalNet
-acceptance. Declared relationships and typed inner joins have owned-PostgreSQL
-and mock-source API verification.
+- Snapshot-forward ingestion, atomic checkpoints and current source/caller grants.
+- Exact model projections, generated TypeScript/GraphQL, filters, sorting and staged rebuilds.
+- Declared relationships, typed joins, aggregates, source evidence and developer inspection,
+  with per-feature verification levels recorded in the [guide](docs/verification.md).
+- Durable lifecycle delivery and [atomic canonical bootstrap](docs/guide/bootstrap.md),
+  including replay, monotonic ACKs, private cursors and explicit retention gaps.
+- Readiness/preflight, private backup/restore checks and local benchmark evidence.
 
-The **0.4.0-alpha.3** prerelease adds opt-in internal exercise
-receipts and atomic transaction ingestion, verified on the pinned LocalNet.
-See the [receipt profile](docs/design/exercise-ingestion.md) for migration 009,
-rollout and unsupported cases.
-
-- LocalNet PQS snapshot/update ingestion, atomic checkpoints and authenticated
-  generic APIs are verified for the [tested profile](docs/verification.md).
-- Model validation, exact calculations, registry and private table installation are available.
-- Bounded model backfill/promotion and atomic live projections have owned-Postgres tests.
-- Generated REST/GraphQL model queries support exact filters, sorting, discovery
-  and query-bound cursors, verified on LocalNet with the standalone PoC and Outcomia.
-- Staged rebuilds passed 261-contract LocalNet acceptance with source revocation,
-  concurrent events, promotion and rollback. PQS/destination fixtures use PostgreSQL 17.12.
-- Alpha.6 adds [bounded temporal reads](docs/guide/temporal.md),
-  [durable lifecycle delivery](docs/guide/delivery.md), local recovery/hardening and
-  [remote setup checks](docs/guide/remote-source.md). Alpha.7 adds [atomic canonical bootstrap](docs/guide/bootstrap.md);
-  model CDC remains outside this slice.
-- Remote/devnet/production deployment is unverified.
+Canonical temporal reconstruction remains a bounded experimental prototype.
+Historical model bindings, model CDC, interfaces/reassignments, hosted multi-tenancy
+and public Scan are outside this release's scope. Remote/TestNet and production
+acceptance remain unverified; the stable version does not imply full Phase 4 completion.
 
 ```bash
-cargo install cantongrid-cli --version 0.3.0 --locked
+cargo install cantongrid-cli --version 0.4.0 --locked
 cantongrid init ./my-demo
 cantongrid fixture run ./my-demo/cantongrid.json --party A
 ```
 
-See the [quickstart](docs/guide/quickstart.md) for setup and examples, and the
-[next steps](docs/README.md#next) for remaining work. Runtime code is Rust; Python scripts
-are local development tools. Licensed under [Apache-2.0](LICENSE).
-
-Alpha.4 also includes [declared relationships](docs/guide/relationships.md):
-versioned application links over exact model keys, with independently visible
-endpoints and generated REST/GraphQL client contracts. They are separate from
-source-proven lineage. See the [example](examples/relationships/README.md).
-
-[M4 typed inner joins](docs/guide/joins.md) add explicitly selected values from both
-independently visible models, with exact generated types and cursors invalidated
-only by visible result changes. See the [example](examples/joins/README.md).
+The [quickstart](docs/guide/quickstart.md) covers setup and examples. Back up before
+explicitly migrating an older owned destination through 012; source PQS is never
+migrated. Alpha.7 installations need no new migration or reindex for 0.4.0.
+Runtime code is Rust; Python scripts are local development tools.
+Licensed under [Apache-2.0](LICENSE).

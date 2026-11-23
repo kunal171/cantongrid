@@ -31,43 +31,31 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-The latest stable release is **0.3.0**; the latest prerelease is **0.4.0-alpha.7**.
-The alpha series adds aggregates, metadata/sync, exercises, direct lineage,
-declared relationships and typed inner joins. Stable 0.3.0 includes LocalNet ingestion, model projections,
-generated TypeScript/GraphQL, filters, sorting, discovery and staged rebuilds.
-PostgreSQL 17.12 compatibility and large real-ledger rebuild acceptance pass.
-See [verification](verification.md) for the exact environments and checks.
+Latest stable: **0.4.0**. Latest prerelease: **0.4.0-alpha.7**.
+0.4.0 promotes alpha.7's implementation without changing runtime code or migrations.
+Its supported live profile is authorized node-local Canton 3.5.7, Scribe 3.5.4
+schema041 and PostgreSQL 17.12, with snapshot-forward partial history.
+See [release scope](releases.md#040-supported-scope-and-acceptance) and the
+per-feature [verification record](verification.md).
 
-The [aggregate slice](guide/aggregates.md) adds count/sum queries over
-maintained projections, generated APIs and complete-source access checks.
+The release includes exact models/generated queries, scoped composition and
+inspection, durable lifecycle delivery and [atomic canonical bootstrap](guide/bootstrap.md).
+Some composition/concurrency checks use owned PostgreSQL and mock source authority;
+retained LocalNet evidence is documented separately. Canonical temporal queries
+remain a bounded experimental prototype with explicit unavailable coverage.
 
-Phase 4 model integration remains in progress. History starts at an active
-snapshot and continues forward. Published 0.3.0 does not include aggregates or joins. Interfaces/reassignments,
-Scan, hosted multi-tenancy and arbitrary processing plugins are not implemented.
-Remote/TestNet and production deployment are unverified. Certificate controls have
-local tests; they are not evidence of a live remote source.
-
-**Alpha.6** adds the bounded M7 temporal
-prototype, M8 canonical lifecycle long polling and M9 local hardening/validation.
-See [verification](verification.md) for limits and pending remote acceptance.
-
-**Alpha.7** adds [atomic canonical bootstrap](guide/bootstrap.md),
-with private baseline metadata in migration 012. This remains a bounded canonical
-prototype with owned-database/mock-source checks; model CDC is not included.
+Historical model bindings, model CDC, interfaces/reassignments, public Scan,
+hosted multi-tenancy and arbitrary processing plugins are not implemented.
+Remote/TestNet and production acceptance remain unverified. Local HTTPS certificate,
+backup and benchmark controls do not establish live-network or production readiness.
 
 ## Milestones
 
-Published alpha.5 covers M0–M6: source feasibility, exercise receipts, direct
-lineage, declared relationships, typed inner joins, developer inspection and
-upgrade impact analysis. Each guide distinguishes fixture and LocalNet evidence.
-
-Alpha.6 covers M7 bounded canonical temporal reads and M8 durable
-lifecycle delivery. M9 local hardening, backup/restore, benchmark and remote
-validation tooling are recorded in [verification](verification.md). Actual
-remote/TestNet and production checks await an authorized source. Historical model
-queries and model CDC remain outside this slice. Alpha.7 adds canonical atomic
-bootstrap; historical temporal/model limits still apply.
-Outcomia factory/clubs contracts remain a separate repository track.
+M0–M6 add source feasibility, exercise receipts, direct lineage, declared links,
+typed joins, developer inspection and upgrade impact. M7/M8 add bounded canonical
+temporal reads and durable delivery; alpha.7 adds atomic bootstrap. M9 local
+hardening/tooling is included, while its remote/production gates remain pending.
+Phase 4 and Outcomia factory/clubs contracts remain separate continuing work.
 
 ## Publishing
 
