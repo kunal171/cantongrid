@@ -76,20 +76,10 @@ fn compatible(before: &Plan, after: &Plan) -> Result<(), StoreError> {
 }
 /// Handoff only at a fully acknowledged interval boundary, never halfway through offset/PK ties.
 pub fn upgrade_boundary(checkpoint: &str) -> Result<i64, StoreError> {
-    let c: serde_json::Value =
-        serde_json::from_str(checkpoint).map_err(|_| StoreError::InvalidBatch)?;
-    let boundary = c["boundary"]
-        .as_i64()
-        .filter(|b| *b >= 0)
-        .ok_or(StoreError::InvalidBatch)?;
-    if c["snapshot"] != false
-        || c["through"] != boundary
-        || c["offset"] != boundary
-        || c["pk"] != i64::MAX
-    {
-        return Err(StoreError::InvalidBatch);
-    }
-    Ok(boundary)
+    crate::source_position::PqsPosition::decode(checkpoint)
+        .map_err(|_| StoreError::InvalidBatch)?
+        .complete_boundary()
+        .ok_or(StoreError::InvalidBatch)
 }
 impl Store {
     /// Build a read-only reviewed plan from already registered/installed model revisions.

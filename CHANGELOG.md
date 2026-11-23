@@ -4,6 +4,8 @@
 
 - Start atomic canonical snapshot/feed handoff work; the bootstrap API is not
   implemented yet. The design pins a complete boundary and durable feed together.
+- Share strict schema041 position validation between temporal coverage and package
+  upgrade boundaries, rejecting duplicate/unknown fields and incomplete ties.
 
 ## 0.4.0-alpha.6 — 2026-11-23
 

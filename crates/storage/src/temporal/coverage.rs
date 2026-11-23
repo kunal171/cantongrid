@@ -1,35 +1,8 @@
 //! Validate observed source intervals without turning a missing journal into an empty history.
+use crate::source_position::PqsPosition as Position;
 use crate::{StoreError, upgrade_boundary};
 use cantongrid_postgres::postgres::Transaction;
-use serde::Deserialize;
 
-/// The supported schema041 cursor profile. Other position formats have no temporal proof here.
-#[derive(Clone, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Position {
-    snapshot: bool,
-    boundary: i64,
-    through: i64,
-    offset: i64,
-    pk: i64,
-}
-impl Position {
-    /// Source offsets are ordered locally; PKs break same-offset ties and are never public cursors.
-    fn decode(text: &str) -> Result<Self, StoreError> {
-        let p: Self = serde_json::from_str(text).map_err(|_| StoreError::TemporalUnavailable)?;
-        if p.boundary < 0
-            || p.through < p.boundary
-            || p.offset < p.boundary
-            || p.offset > p.through
-            || p.pk < 0
-            || (p.snapshot && p.boundary != p.through)
-            || (!p.snapshot && p.through == p.boundary && p.pk != i64::MAX)
-        {
-            return Err(StoreError::TemporalUnavailable);
-        }
-        Ok(p)
-    }
-}
 /// Exact coverage for this configured selection; additive baselines raise the common floor.
 pub(super) struct Coverage {
     pub floor_position: String,
