@@ -37,6 +37,24 @@ use the separate owned destination; no LocalNet transactions or source-grant
 changes are performed. Fixture comparisons do not establish complete source
 coverage, authorized live balances or economic correctness of a supplied formula.
 
+## Offline model-policy preflight — 2026-11-23
+
+Same unreleased branch/version as the policy slice. Preflight validates one exact
+projected model schema and produces a domain-separated definition identity; it
+checks no active binding, source authorization or indexed contract data.
+
+- All 145 default workspace tests, formatting and strict all-target Clippy pass.
+  The policy suite now has 16 tests, including five preflight controls; two CLI
+  integration tests pass outside the checkout with unusable live credentials.
+- Controls cover exact types/scales, nested-vs-projected paths, missing/optional
+  inputs, constant-only checks, revision/selection/namespace changes, catalog
+  ordering, explicit model selection, redaction and strict/bounded file inputs.
+- Existing SQL/runtime code, migrations and dependency versions are unchanged.
+  The previous owned-PostgreSQL evidence above is not a new live-source run.
+
+The indexed-contract proposal remains approval-pending in the
+[design](design/reconciliation.md#proposed-indexed-contract-slice-approval-pending).
+
 ## 0.4.0 promotion — 2026-11-23
 
 Regular release of the [scoped node-local profile](releases.md#040-supported-scope-and-acceptance).

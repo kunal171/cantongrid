@@ -48,13 +48,14 @@ payload claims such as `complete: true` cannot confer verified evidence.
 - Existing model fingerprints, SQL, source plans, API behavior and migrations stay
   unchanged. Package versions advance only for unreleased development.
 
-## Model preflight: next offline slice
+## Model preflight: implemented offline slice
 
-Add `reconcile preflight <policy.json> <catalog.json> <namespace> <model>`.
-Validate one explicitly selected model, not the first catalog entry. Every policy
+`reconcile preflight <policy.json> <catalog.json> <namespace> <model>` validates
+one explicitly selected model, not the first catalog entry. Every policy
 field reference must name exactly one projected field with the same required
 Int64/Numeric type and scale. Reject nested/raw-payload paths, missing fields and
-literal-only policies. Constants and checked arithmetic remain supported.
+constant-only checks, including when unused source expressions exist. Constants
+and checked arithmetic remain supported.
 
 The result binds the namespace, full immutable model fingerprint/revision and
 policy fingerprint/revision into a domain-separated identity. It confirms schema
@@ -105,7 +106,9 @@ Cross-model/group reconciliation needs its own asset/unit selection design.
    from the checks. Excess work fails unavailable, without a truncated success.
 4. Evaluate the same compiled exact policy per selected contract. Return only
    configured identities and finite summary counts/outcomes, with no payloads,
-   contract IDs, witnesses, group keys or global source offsets. An empty selection
+   contract IDs, witnesses, group keys or global source offsets. Coverage refers
+   only to the retained indexed prefix, never the latest ledger head or history
+   before its initial snapshot. An empty selection
    is explicitly unavailable, never vacuous success. Even satisfied scoped checks
    do not certify balances, economic correctness or overall financial health.
 5. Recheck source lease and complete caller scope before returning. A future HTTP

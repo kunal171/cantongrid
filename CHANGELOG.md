@@ -8,6 +8,9 @@
   supply examples. Supplied fixtures do not prove authorization or source
   completeness; no live checks or financial all-clear are claimed.
 
+- Add offline `reconcile preflight` to validate policy references against an exact
+  projected model definition; bind identities without checking source or active state.
+
 ## 0.4.0 — 2026-11-23
 
 - Promote the verified node-local contracts profile from alpha.7 with unchanged

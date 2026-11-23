@@ -32,8 +32,19 @@ It is not a financial all-clear or a deployment/CI approval signal.
 Policy/check names and fingerprints are intentional report metadata. Payloads,
 amounts, field paths and raw errors are not echoed. Keep sensitive data out of
 policy/check names. Fixtures cannot add verified evidence by declaring `complete`
-or `sourceScope` fields. Commands read only the two supplied local files; no
+or `sourceScope` fields. Commands read only explicitly supplied local files; no
 runtime config, credentials, database, HTTP service or ledger transaction is used.
+
+The synthetic [model catalog](backing-model.json) projects nested input fields
+into the backing policy's names. Check compatibility without installing it:
+
+```bash
+cantongrid reconcile preflight examples/reconciliation/backing-policy.json examples/reconciliation/backing-model.json example-org synthetic_backing
+```
+
+This returns `schema_compatible` with `activeBindingChecked: false`; it does not
+check actual indexed contracts. The zero package ID is a placeholder, not a DAR.
+See the [preflight guide](../../docs/guide/reconciliation.md#preflight-a-projected-model-schema).
 
 The matching copies under crate `assets/reconciliation` keep registry-package
 tests self-contained. `scripts/dev.py release check` checks them against these

@@ -1,7 +1,8 @@
 # Offline reconciliation policies
 
 Available in the **unreleased 0.5.0-alpha.1 source checkout**. This first slice
-validates versioned exact-value policies and compares supplied local fixtures.
+validates versioned exact-value policies, compares supplied local fixtures and
+preflights policies against explicit projected model schemas.
 It does not inspect indexed models, authenticate source data or certify balances.
 No dependency, database migration or API route is added.
 
@@ -81,6 +82,36 @@ Reports include configured names, revision, fingerprint and finite codes; they
 omit payload values, paths, source parties, contract IDs and raw parser errors.
 Keep secrets out of configured policy/check names. The shared evaluator preserves
 existing model fingerprints and projection behavior.
+
+## Preflight a projected model schema
+
+```bash
+cantongrid reconcile preflight \
+  examples/reconciliation/backing-policy.json \
+  examples/reconciliation/backing-model.json example-org synthetic_backing
+```
+
+Select a model by name from the bounded catalog. Every policy field path must
+name exactly one projected field with the same required scalar type and Numeric
+scale. A model may read `private_balances.free` from a raw payload while exposing
+`free`; the policy must reference `free`. Nested/raw paths, missing fields,
+optional/type/scale mismatches and constant-only checks fail. Constants remain
+valid thresholds when the check also depends on a model field. All policy
+expressions are validated, including unused ones.
+
+The diagnostic's `preflight.fingerprint` binds the full policy and model
+identities plus namespace. Changing the model filter, template, expression,
+revision or namespace changes it. Catalog formatting/order does not. The
+namespace uses the registry's syntax: 1–64 ASCII characters, an initial letter,
+then letters, digits, underscores or hyphens.
+
+`status: schema_compatible`, `sourceAccess: not_performed` and
+`activeBindingChecked: false` mean only offline schema compatibility. No model
+is installed or bound; no database state, source coverage or permissions are
+checked. Aggregate declarations still describe per-contract inputs here; no
+sum/group query is performed. This fingerprint is not an authorization token.
+Output includes configured model/namespace/policy identities; keep their names
+nonsecret. Errors omit raw catalog paths and definitions.
 
 ## Live checks are a separate step
 

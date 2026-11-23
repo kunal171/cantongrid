@@ -52,4 +52,6 @@ The unreleased 0.5 source exposes `reconciliation::Policy` for versioned offline
 exact-value policies. `evaluate_fixture` returns sanitized, always-unverified
 fixture comparisons, not authenticated ledger findings. It reuses existing model
 expressions and does not change model fingerprints, SQL or source permissions.
+`preflight_model(namespace, model)` checks projected field types and binds both
+definition identities without checking installation, active state or permissions.
 See the [guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/reconciliation.md).

@@ -46,3 +46,7 @@ Unreleased 0.5 source adds `reconcile validate <policy.json>` and
 local files without source credentials or database access. Diagnostic success
 never means a verified financial all-clear. See the repository reconciliation
 examples and guide for exact arithmetic, limits and evidence semantics.
+
+`cantongrid reconcile preflight <policy.json> <catalog.json> <namespace> <model>`
+checks projected field compatibility and exact definition identities offline.
+It does not install/bind models or check indexed data.
