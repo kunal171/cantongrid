@@ -73,11 +73,15 @@ def run(*, reconciliation=False):
     """Check retained LocalNet data through isolated destination operations or exact reconciliation."""
     if reconciliation and subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip():
         raise ValueError('Commit reviewed changes before recording LocalNet reconciliation evidence')
-    original_files = [support.DIRECTORY / name for name in ('runtime.json', 'models.json', 'grants.json', 'state.json')]
+    original_files = ([support.DIRECTORY / name for name in ('runtime.json', 'models.json', 'grants.json', 'state.json')]
+                      if reconciliation else [])
     original_digests = [hashlib.sha256(path.read_bytes()).hexdigest() for path in original_files]
     config = json.loads((ROOT / '.local/poc/runtime.json').read_text())
     if config['authorization']['network'] != 'localnet' or config['authorization'].get('transport', 'localnet_http') != 'localnet_http':
         raise ValueError('Only the existing disposable LocalNet PoC is supported')
+    if reconciliation and (config['authorization']['user'] != support.USERS['ab'] or
+            set(config['authorization']['parties']) != set(support.state()['parties'].values()) or len(config['templates']) != 1):
+        raise ValueError('Reconciliation requires the exact retained AB PoC source scope')
     identity = 'ops-acceptance-' + uuid.uuid4().hex
     directory = ROOT / '.local/operations' / identity
     directory.mkdir(parents=True, mode=0o700)
@@ -108,9 +112,11 @@ def run(*, reconciliation=False):
 
     cli('ops', 'preflight', path, '--profile', 'localnet')
     destination = environment[config['destination_database_env']]
-    original_namespace = support.state()['namespace']
-    original_bindings_sql = "SELECT COALESCE(jsonb_agg(to_jsonb(b) ORDER BY stream_key,name),'[]') FROM cantongrid.model_bindings b WHERE namespace=" + sql_literal(original_namespace)
-    original_bindings = query(destination, original_bindings_sql)
+    original_bindings_sql = original_bindings = None
+    if reconciliation:
+        original_namespace = support.state()['namespace']
+        original_bindings_sql = "SELECT COALESCE(jsonb_agg(to_jsonb(b) ORDER BY stream_key,name),'[]') FROM cantongrid.model_bindings b WHERE namespace=" + sql_literal(original_namespace)
+        original_bindings = query(destination, original_bindings_sql)
     selected = 'definition->>\'source\'=' + sql_literal(identity)
     for pages in range(1, 1025):
         cli('index', path, '--once')
