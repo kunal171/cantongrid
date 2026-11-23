@@ -14,9 +14,9 @@ description = "Offline Daml contract schema synchronization and reviewed model a
 categories = ["development-tools"]
 
 [dependencies]
-cantongrid-core = { path = "../core", version = "=0.5.0-alpha.1" }
-cantongrid-metadata = { path = "../metadata", version = "=0.5.0-alpha.1" }
-cantongrid-models = { path = "../models", version = "=0.5.0-alpha.1" }
+cantongrid-core = { path = "../core", version = "=0.5.0-alpha.2" }
+cantongrid-metadata = { path = "../metadata", version = "=0.5.0-alpha.2" }
+cantongrid-models = { path = "../models", version = "=0.5.0-alpha.2" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.11.1"

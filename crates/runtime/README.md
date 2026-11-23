@@ -1,13 +1,13 @@
 # cantongrid-runtime
 
-This README describes the 0.5.0-alpha.1 prerelease.
+This README describes the 0.5.0-alpha.2 source checkout (unreleased).
 Authenticated CantonGrid indexing workers and REST/GraphQL query services.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-runtime = "=0.5.0-alpha.1"
+cantongrid-runtime = "=0.5.0-alpha.2"
 ```
 
 The library exposes `index`, `serve`, `bind_model` and bounded `rebuild`

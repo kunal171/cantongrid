@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0-alpha.2 — 2026-11-23 (unreleased)
+
+- Begin authenticated reconciliation APIs with operator-pinned policies and
+  current source/caller checks. No new dependency or migration is planned.
+
 ## 0.5.0-alpha.1 — 2026-11-23
 
 - Add bounded versioned exact-value reconciliation policies with canonical
