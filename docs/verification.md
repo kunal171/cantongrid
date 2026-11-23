@@ -49,6 +49,8 @@ checks no active binding, source authorization or indexed contract data.
 - Controls cover exact types/scales, nested-vs-projected paths, missing/optional
   inputs, constant-only checks, revision/selection/namespace changes, catalog
   ordering, explicit model selection, redaction and strict/bounded file inputs.
+- All ten workspace package dry runs and archive checks pass at `9c8cd13`,
+  including the packaged model example and test assets. Nothing is uploaded.
 - Existing SQL/runtime code, migrations and dependency versions are unchanged.
   The previous owned-PostgreSQL evidence above is not a new live-source run.
 
