@@ -5,7 +5,8 @@
   continuation authorizes the documented storage-only indexed-contract slice in
   docs/design/reconciliation.md. Keep full source/caller scope before any reads,
   complete retained indexed boundaries, exact active revisions and bounded work.
-  Use owned PostgreSQL fixtures; no new dependency, migration, public API, ledger
+  Indexed reads are now owned-PostgreSQL-tested; LocalNet/remote evidence and HTTP
+  exposure remain later work. No new dependency, migration, public API, ledger
   write, publication or financial all-clear claim is authorized by this slice.
   Keep focused commits and detailed function/type comments.
 - Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical

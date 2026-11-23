@@ -68,6 +68,7 @@ source/caller authority, not LocalNet or remote Canton evidence.
 | --- | --- |
 | Default Rust | All 145 workspace tests, formatting and strict all-target Clippy pass |
 | SQL/runtime regression | All 92 storage tests, one model/PostgreSQL test and 15 HTTP integration tests pass |
+| Packaging | All ten workspace dry runs and self-contained archive checks pass at `9fddaee`; no upload |
 | New reconciliation controls | Ten owned-database tests cover exact lifecycle/filter/replay, redaction, scope-before-membership denial, wrong source context, raw-path rejection, projection drift/missing/extra rows, complete/stale/pruned/unknown coverage, selection floors, empty sets, 128/129 input limits and byte budgets |
 | Concurrent reads | A separate connection archives/creates and promotes a model while an in-flight read retains its original canonical inputs and model revision; a later read rejects the old binding |
 | Source expiry | A barrier proves the read snapshot was acquired before the lease expires; the completed result is discarded |
