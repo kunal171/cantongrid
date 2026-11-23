@@ -97,25 +97,32 @@ fn source_evidence_expiring_during_the_read_discards_the_result() {
     let s = scenario();
     seed(&s);
     let binding = bind(&s);
+    let mut store = s.open();
+    let reached_snapshot = std::cell::Cell::new(false);
     let now = Instant::now();
     let authority = SourceLease::from_verified(
         s.plans[0].context().binding(),
         [PartyId::new("A").unwrap(), PartyId::new("B").unwrap()],
         now,
-        Duration::from_millis(100),
-        now + Duration::from_secs(1),
+        Duration::from_secs(1),
+        now + Duration::from_secs(2),
     )
     .unwrap();
-    let result = s.open().read_reconciliation_checked(
+    let result = store.read_reconciliation_checked(
         &s.plans[0],
         &caller(&s, &["A", "B"]),
         &authority,
         &binding,
         &policy(),
         || {
-            std::thread::sleep(Duration::from_millis(150));
+            reached_snapshot.set(true);
+            std::thread::sleep(Duration::from_millis(1100));
             Ok(())
         },
+    );
+    assert!(
+        reached_snapshot.get(),
+        "expiry must occur after authorization and snapshot acquisition"
     );
     assert_eq!(result.unwrap_err(), StoreError::Authorization);
 }
