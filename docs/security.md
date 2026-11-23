@@ -106,3 +106,19 @@ access, not independent network identity or participant pairing. Local certifica
 controls do not establish TestNet acceptance. Backups contain private data and
 must remain owner-only; recovery targets a separate empty restricted-owner database.
 No atomic snapshot/feed handoff or production disaster-recovery guarantee is claimed.
+
+## Bootstrap baseline privacy (alpha.7 source)
+
+The private baseline offset and delivery anchor are committed under the ingestion
+writer lock. API clients receive an opaque subscription-bound snapshot URL;
+responses and signed cursors do not expose global offsets, retained floors or
+queue ordinals. Snapshot and feed cursors have separate subscription-bound domains.
+Current authorities and the exact stored party set are required on each request.
+
+Retrying a live, unconsumed bootstrap cannot recapture a later baseline. Once
+post-baseline work is ACKed, that snapshot cannot be used as a new reset. Visible
+retention loss and unsupported coverage fail explicitly; hidden-only pruning does
+not create false gaps. Metadata cleanup bounds name idempotency to the subscription
+lifetime. Clients need durable local staging/progress and must not reuse expired
+or cancelled names for automatic retries. No exactly-once cross-database guarantee
+is made. See [bootstrap](guide/bootstrap.md).

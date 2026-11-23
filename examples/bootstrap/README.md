@@ -44,7 +44,7 @@ CANTONGRID_EXAMPLE_BUILD="$PWD/.local/bootstrap-example" \
 ```
 
 The offline checks prove full staging precedes publication, exact amount strings
-survive transport, failed processing sends no ACK, and a coverage gap aborts staging.
+survive transport, failed processing sends no ACK, a coverage gap aborts staging, and an incomplete baseline is never published.
 Rust storage/API tests cover the server behavior. The
 [operations helper](../operations/README.md) checks the retained LocalNet fixture
 without submitting ledger transactions.

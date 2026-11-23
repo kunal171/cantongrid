@@ -16,6 +16,31 @@ The current implementation and remaining work are listed in the [overview](READM
 This is the tested LocalNet profile, not general SDK/runtime compatibility.
 PostgreSQL 14's support status and the upgrade requirement are in [operations](guide/operations.md#postgresql-support).
 
+## Atomic canonical bootstrap — recorded 2026-11-23
+
+Unreleased alpha.7 on `feat/atomic-snapshot-handoff`. Migration 012 privately
+pairs a canonical baseline with its durable feed under the existing writer lock.
+Public registration/snapshot responses and signed cursors omit the source boundary
+and global queue ordinals. This does not add model CDC or historical model bindings.
+See the [guide](guide/bootstrap.md) and [design](design/atomic-snapshot-handoff.md).
+
+| Check | Result |
+| --- | --- |
+| Rust quality | 127 default workspace tests, formatting and strict all-target Clippy pass |
+| Owned PostgreSQL | All 82 storage tests and 15 HTTP/API integration tests pass |
+| Bootstrap storage controls | Interleaved archive/create from a separate connection, stable paged baseline, retry identity, ACK/restart, shared writer exclusion/caps, hidden-only pruning, explicit visible loss, expiry, unavailable startup/history, source-scope denial and raised package floors pass |
+| HTTP controls | Pinned snapshot across updates/restart, matching post-baseline feed, opaque progress, cross-cursor/owner denial, invalid input, source/caller revocation and explicit retention gaps pass |
+| Migration | Intact alpha.6 requires explicit migration; consumer rows persist, new metadata defaults null, and non-owner baseline-column grants are rejected |
+| Real retained LocalNet | Seven authorized PoC contracts match the bootstrap baseline across three pages; API restart between pages and paired feed exclusion pass |
+| Example | Strict TypeScript compilation and three offline Node tests pass: full staging before publication, no ACK after failed effects, explicit gap handling and rejection of a prematurely terminated baseline |
+| Security | RustSec audit, dependency license/bans/source checks, actionlint and history/tree secret scans pass; no new dependencies |
+
+[Sanitized LocalNet evidence](../examples/bootstrap/localnet-evidence.json) identifies
+the tested commit. That run submits no ledger transactions and changes no source
+grants. Concurrent lifecycle controls use synthetic authority with real owned SQL
+and HTTP; real concurrent Daml writes and remote/TestNet acceptance are not claimed.
+The complete-boundary and temporal work limits remain in force.
+
 ## M7–M9 source checkout — recorded 2026-11-23
 
 Alpha.6 acceptance on `feat/temporal-streams-hardening`. M7 is bounded canonical

@@ -59,3 +59,8 @@ Alpha.6 adds bounded `Store::read_as_of` canonical history and private lifecycle
 subscriptions, random receipt cursors, monotonic ACKs and authorized outbox
 retention. Migration 011 is explicit; canonical events remain retained. Back up
 before migration. See the repository delivery and recovery guides for limits.
+
+Alpha.7 source adds `Store::bootstrap_subscription` and `Store::read_bootstrap`:
+a private fixed canonical baseline is paired with a durable feed in one writer-locked
+transaction. Explicit migration 012 adds its private metadata. Use matching API
+binaries and the repository bootstrap guide; the source checkout is unreleased.
