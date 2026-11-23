@@ -83,7 +83,10 @@ CLI tests run outside the checkout and cannot acquire source authority, mutate
 files or contact services. Authorization/revocation acceptance is a live-track
 gate, not a test outcome inferred from offline arithmetic.
 
-## Proposed indexed-contract slice (approval pending)
+## Indexed-contract slice (authorized implementation)
+
+The user continued after reviewing this proposal on 2026-11-23. This authorizes
+the storage-only slice below and owned-PostgreSQL controls.
 
 Start with **per-contract checks over one exact active model revision**, not
 cross-contract totals or economic asset inference. The existing model template,
@@ -123,3 +126,23 @@ including data-independent denial; expired/revoked/mismatched source leases; and
 redaction. Use isolated owned-PostgreSQL fixtures first. LocalNet/remote claims
 require separately recorded source evidence. No new dependency, migration,
 persisted result registry, ledger write, network credential change or publication.
+
+
+### Read-risk review
+
+Require full scope independently of membership, so hidden inputs cannot change
+whether an otherwise identical narrow request succeeds. Snapshot the completed
+prefix, active binding, canonical inputs and native projection rows together;
+never join pages read at different boundaries. Bound the canonical template set
+before applying the model filter, then verify every expected projection row and
+the complete native row count. This detects missing, filtered, archived or extra
+contributions instead of silently dropping them. Reevaluate canonical payloads
+with the installed model and compare native records without float conversion.
+
+A successful storage report uses `status: evaluated`, a separate exact
+`comparison` (satisfied/violated/unavailable), and coverage limited to the retained
+indexed prefix. Arithmetic failures dominate the overall comparison. An empty
+selection or failed coverage/projection/budget checks return unavailable, with no
+partial report. Current source leases are checked before and after the read.
+Trusted backend callers remain responsible for authenticating caller grants;
+there is no new executable network command or HTTP route in this slice.

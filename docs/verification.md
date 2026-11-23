@@ -54,8 +54,8 @@ checks no active binding, source authorization or indexed contract data.
 - Existing SQL/runtime code, migrations and dependency versions are unchanged.
   The previous owned-PostgreSQL evidence above is not a new live-source run.
 
-The indexed-contract proposal remains approval-pending in the
-[design](design/reconciliation.md#proposed-indexed-contract-slice-approval-pending).
+At that check, indexed-contract evaluation was still unimplemented. Its separately
+authorized plan is in the [design](design/reconciliation.md#indexed-contract-slice-authorized-implementation).
 
 ## 0.4.0 promotion — 2026-11-23
 

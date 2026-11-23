@@ -1,12 +1,13 @@
 # Working on CantonGrid
 
-- Active task: next-track proposal and offline exact-value reconciliation policies
-  on feat/reconciliation-policies, following stable 0.4.0. The default is a bounded
-  offline compiler/evaluator and model-schema preflight, continued by the user. Follow
-  docs/design/reconciliation.md. Live authorized reconciliation, migrations,
-  financial all-clear claims, dependencies, ledger writes and publication are
-  outside this first slice. Keep focused commits and detailed function/type comments.
-  The live track needs a separate source-completeness/authorization risk review.
+- Active task: exact-value reconciliation on feat/reconciliation-policies after
+  stable 0.4.0. Offline policies and model preflight are implemented. The user's
+  continuation authorizes the documented storage-only indexed-contract slice in
+  docs/design/reconciliation.md. Keep full source/caller scope before any reads,
+  complete retained indexed boundaries, exact active revisions and bounded work.
+  Use owned PostgreSQL fixtures; no new dependency, migration, public API, ledger
+  write, publication or financial all-clear claim is authorized by this slice.
+  Keep focused commits and detailed function/type comments.
 - Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical
   delivery and local operational hardening. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild
