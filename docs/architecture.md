@@ -236,3 +236,24 @@ The same compiler generates compatible bundles. Read-only sample evaluation uses
 the model evaluator and M5 sanitized diagnostics. It does not interpret LF or
 connect to sources/storage. See the [contract](design/impact.md) and
 [guide](guide/upgrade-impact.md) for bounds and explicit activation gates.
+
+## Temporal state and durable delivery (alpha.6 source)
+
+M7 reconstructs canonical membership at an acknowledged source-local offset from
+immutable create/archive evidence under current grants. Bounded coverage checks
+fail unavailable for incomplete, missing or excessive retained history; historical
+model bindings are not inferred. See [temporal reads](guide/temporal.md).
+
+M8 reuses the transactional lifecycle outbox. Migration 011 stores private
+caller/policy-bound subscriptions and random receipt cursors. Reads, monotonic
+ACKs and bounded retention serialize on the source writer lock. Pruning marks
+loss only for unacknowledged events visible to each subscriber; canonical history
+is retained. Long polls reauthorize while waiting and before response encoding.
+This is canonical REST delivery, not model CDC or atomic snapshot/feed handoff.
+See [delivery](guide/delivery.md).
+
+M9 separates source health from worker freshness and public readiness from
+operator-only pressure counters. Remote profile/preflight checks and isolated
+backup/restore helpers are documented, with local evidence only. No authorized
+remote source exists yet. See [operations](guide/operations.md) and the
+[bounded design](design/temporal-streams-hardening.md).

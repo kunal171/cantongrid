@@ -32,6 +32,21 @@ cargo install cantongrid-cli --version 0.4.0-alpha.5 --locked
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
 
+## Unreleased alpha.6 compatibility
+
+The working branch adds M7 bounded canonical temporal reads, M8 durable REST
+lifecycle subscriptions and M9 operator/local hardening checks. There is no
+alpha.6 publication yet. Current grants apply to all historical and stream reads.
+Historical models, model CDC and an atomic snapshot/feed handoff are not included.
+Remote/TestNet and production acceptance remain pending.
+
+Migration **011** adds private delivery subscriptions/receipts and supporting
+indexes. Migrations 001–010 remain unchanged. Back up the owned destination, stop
+older processes, explicitly run `storage init`, then start matching binaries.
+Source PQS is never migrated. Older binaries reject migration 011. Rollback means
+restoring the pre-upgrade backup with its matching configuration/keys, not deleting
+migration records. See [recovery](guide/recovery.md).
+
 ## 0.4.0-alpha.5 compatibility
 
 M5 adds read-only transaction and projection inspection plus sanitized local

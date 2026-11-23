@@ -1,9 +1,17 @@
 # Changelog
 
-## 0.4.0-alpha.6 — 2026-11-22 (unreleased)
+## 0.4.0-alpha.6 — 2026-11-23 (unreleased)
 
 - M7 bounded canonical state at an acknowledged source offset, with current
   authorization, exact values and explicit unavailable-history responses.
+- M8 canonical lifecycle long polling with private subscriptions, durable monotonic
+  ACKs, opaque receipt cursors, bounded backpressure and visible-only retention gaps.
+  Migration 011 is explicit; canonical history remains retained.
+- M9 worker freshness/readiness, operator pressure reports, offline profile checks,
+  read-only source preflight, isolated exact backup/restore and local benchmarks.
+- Read-only-ledger LocalNet temporal/replay/recovery controls and stronger local TLS
+  credential-forwarding tests. Remote/TestNet validation is pending an authorized
+  source; setup instructions are included. No production capacity claim.
 
 ## 0.4.0-alpha.5 — 2026-11-22
 

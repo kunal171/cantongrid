@@ -24,3 +24,36 @@ it does not prove an atomic snapshot/subscription handoff during concurrent trad
 Evidence and recovery state are written under an owner-only `.local/operations`
 directory. They contain private runtime configuration; never upload that directory
 or database dumps. Only the sanitized `evidence.json` is suitable for review.
+
+## Configuration and recovery
+
+Use [remote source setup](../../docs/guide/remote-source.md) with
+`runtime.testnet.json` and `grants.example.json`. These contain placeholders, no
+working remote endpoint. `ops check-config --profile testnet` is offline;
+`ops preflight --profile testnet` needs authorized source access. A successful
+preflight does not independently attest the actual Canton network or the
+Ledger/PQS participant pairing.
+
+The [recovery helper](../../docs/guide/recovery.md) verifies an owned database
+backup in a separate empty restricted-owner database. It compares native
+PostgreSQL rows and sequences, preserving exact numeric values. CI runs this
+against the owned fixture. Private dumps are never uploaded as artifacts.
+
+## Database benchmark
+
+With the owned destination running and its connection in the named environment:
+
+```bash
+CANTONGRID_DESTINATION_URL='host=127.0.0.1 port=5442 user=cantongrid_owner password=local-cantongrid-only dbname=cantongrid' \
+  cargo test -p cantongrid-storage operations_benchmark --locked --offline \
+  -- --ignored --nocapture
+```
+
+This creates and cleans up its own synthetic stream. Four batches contain 256
+contracts visible to one party. On one reused loopback connection it times the
+first 25-row temporal page and an unacknowledged 25-event delivery replay, with
+five warmups and 50 measured iterations. Percentiles use nearest rank. Each call
+includes SQL and JSON decoding; HTTP, source authorization network calls, concurrent
+clients and production-sized history are excluded. `BENCHMARK` is a one-line JSON
+report suitable for collecting with environment/build details. Do not interpret
+these debug-build timings as a throughput guarantee.
