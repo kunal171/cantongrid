@@ -1,5 +1,7 @@
 //! Private current-state projections. Canonical lifecycle, model rows and progress share a commit.
 mod aggregate;
+mod reconciliation;
+pub use reconciliation::ReconciliationReport;
 mod joins;
 pub(crate) mod relationships;
 pub use relationships::RelationshipQuery;
