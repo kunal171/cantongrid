@@ -1,0 +1,51 @@
+{
+  "recorded": "2026-11-23",
+  "localnet": {
+    "format_version": 1,
+    "scope": "existing_localnet_read_only_ledger",
+    "tested_commit": "b4d021ff68d00e5c56ff7872b18869badf05d1d8",
+    "contracts_compared": 7,
+    "snapshot_pages": 7,
+    "historical_pages": 3,
+    "source_inventory_equal": true,
+    "historical_paging": true,
+    "api_restart_replay": true,
+    "durable_ack": true,
+    "explicit_retention_gap": true,
+    "outbox_rows_pruned": 6,
+    "canonical_history_preserved": true,
+    "quiescent_fixture_baseline_resync": true,
+    "atomic_snapshot_stream_handoff": false,
+    "ledger_writes": false,
+    "ledger_grants_changed": false,
+    "remote_testnet_verified": false
+  },
+  "restore": {
+    "format_version": 1,
+    "scope": "owned_loopback_backup_restore",
+    "exact_rows_and_sequences_equal": true,
+    "verified_tables": 34,
+    "verified_rows": 2962,
+    "verified_sequences": 3,
+    "destination_checks_passed": true,
+    "source_unchanged": true,
+    "archive_mode": "0600",
+    "archive_private": true,
+    "runtime_key_backup": "separate_operator_responsibility",
+    "ledger_writes": false,
+    "remote_disaster_recovery_verified": false
+  },
+  "restored_api": {
+    "format_version": 1,
+    "scope": "isolated_restore_existing_localnet_read_only_source",
+    "restored_worker_resumed": true,
+    "restored_health_ready": true,
+    "durable_ack_resume_without_cursor": true,
+    "canonical_history_contracts": 7,
+    "ledger_writes": false,
+    "grant_changes": false,
+    "remote_verified": false
+  },
+  "remote_source_available": false,
+  "production_acceptance": false
+}

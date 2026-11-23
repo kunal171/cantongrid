@@ -1,5 +1,6 @@
 # cantongrid-cli
 
+This README describes CantonGrid 0.4.0-alpha.6.
 CantonGrid CLI for authorized Daml contract indexing, model generation and query services.
 
 The executable is named `cantongrid`. Run `cantongrid --help` for commands.
@@ -7,9 +8,11 @@ The executable is named `cantongrid`. Run `cantongrid --help` for commands.
 ## Install and try it
 
 Requires Rust 1.100.0 or newer. The package installs the `cantongrid` executable.
+Build from source with `cargo build -p cantongrid-cli --locked`, or install the
+matching prerelease below.
 
 ```bash
-cargo install cantongrid-cli --version 0.4.0-alpha.5 --locked
+cargo install cantongrid-cli --version 0.4.0-alpha.6 --locked
 cantongrid --help
 cantongrid init ./my-demo
 cantongrid validate ./my-demo/cantongrid.json

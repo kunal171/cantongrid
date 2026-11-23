@@ -19,6 +19,7 @@ const UPGRADES: &str = include_str!("../migrations/007_selection_upgrades.sql");
 const UPGRADE_JOBS: &str = include_str!("../migrations/008_upgrade_jobs.sql");
 const EXERCISES: &str = include_str!("../migrations/009_exercise_receipts.sql");
 const LINEAGE: &str = include_str!("../migrations/010_direct_lineage.sql");
+const DELIVERY: &str = include_str!("../migrations/011_durable_delivery.sql");
 const MIGRATION_LOCK: i64 = 0x43475249444d4947;
 
 /// Initialize only a separately owned destination; repeat calls verify the immutable migration.
@@ -75,14 +76,14 @@ pub(crate) fn check_schema(client: &mut impl GenericClient) -> Result<(), StoreE
     check_base(client)?;
     check_runtime_versions(client, true)?;
     let owned: bool = client.query_one(
-        "SELECT count(*) = 23 AND bool_and(relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))
+        "SELECT count(*) = 25 AND bool_and(relkind='r' AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user))
          FROM pg_class WHERE oid IN (to_regclass('cantongrid.schema_version'),
              to_regclass('cantongrid.streams'),to_regclass('cantongrid.batches'),
              to_regclass('cantongrid.contracts'),to_regclass('cantongrid.events'),
              to_regclass('cantongrid.outbox'),to_regclass('cantongrid.runtime_migrations'),
              to_regclass('cantongrid.model_revisions'),
              to_regclass('cantongrid.model_tables'), to_regclass('cantongrid.model_installations'), to_regclass('cantongrid.model_bindings'),
-             to_regclass('cantongrid.model_rebuilds'),to_regclass('cantongrid.model_rebuild_dirty'),to_regclass('cantongrid.selection_upgrades'),to_regclass('cantongrid.selection_upgrade_jobs'),to_regclass('cantongrid.selection_upgrade_pages'),to_regclass('cantongrid.exercise_pages'),to_regclass('cantongrid.exercise_events'),to_regclass('cantongrid.exercise_outbox'),to_regclass('cantongrid.lineage_pages'),to_regclass('cantongrid.creation_events'),to_regclass('cantongrid.lineage_edges'),to_regclass('cantongrid.lineage_outbox'))",
+             to_regclass('cantongrid.model_rebuilds'),to_regclass('cantongrid.model_rebuild_dirty'),to_regclass('cantongrid.selection_upgrades'),to_regclass('cantongrid.selection_upgrade_jobs'),to_regclass('cantongrid.selection_upgrade_pages'),to_regclass('cantongrid.exercise_pages'),to_regclass('cantongrid.exercise_events'),to_regclass('cantongrid.exercise_outbox'),to_regclass('cantongrid.lineage_pages'),to_regclass('cantongrid.creation_events'),to_regclass('cantongrid.lineage_edges'),to_regclass('cantongrid.lineage_outbox'),to_regclass('cantongrid.delivery_subscriptions'),to_regclass('cantongrid.delivery_receipts'))",
         &[],
     )?.get(0);
     if !owned {
@@ -104,6 +105,7 @@ fn upgrade_models(client: &mut impl GenericClient) -> Result<(), StoreError> {
         (8, UPGRADE_JOBS),
         (9, EXERCISES),
         (10, LINEAGE),
+        (11, DELIVERY),
     ] {
         if !versions.contains(&version) {
             client.batch_execute(sql)?;
@@ -141,7 +143,7 @@ fn check_runtime_versions(
     let mut versions = Vec::new();
     for (index, row) in rows.into_iter().enumerate() {
         let version: i32 = row.get(0);
-        if [2, 3, 4, 5, 6, 7, 8, 9, 10].get(index) != Some(&version) {
+        if [2, 3, 4, 5, 6, 7, 8, 9, 10, 11].get(index) != Some(&version) {
             return Err(StoreError::Schema);
         }
         let expected = runtime_checksum(version).ok_or(StoreError::Schema)?;
@@ -150,7 +152,7 @@ fn check_runtime_versions(
         }
         versions.push(version);
     }
-    if versions.is_empty() || (require_current && versions.len() != 9) {
+    if versions.is_empty() || (require_current && versions.len() != 10) {
         return Err(StoreError::Schema);
     }
     Ok(versions)
@@ -168,6 +170,7 @@ fn runtime_checksum(version: i32) -> Option<String> {
         8 => UPGRADE_JOBS,
         9 => EXERCISES,
         10 => LINEAGE,
+        11 => DELIVERY,
         _ => return None,
     };
     Some(
@@ -226,7 +229,7 @@ mod tests {
     /// Newer tables must be removed with their migration entries when reconstructing an old
     /// schema inside a rollback-only test. Leaving newer entries is intentionally rejected.
     fn drop_upgrade_schema(tx: &mut cantongrid_postgres::postgres::Transaction<'_>) {
-        tx.batch_execute("DROP TABLE cantongrid.lineage_outbox,cantongrid.lineage_edges,cantongrid.creation_events,cantongrid.lineage_pages; DELETE FROM cantongrid.runtime_migrations WHERE version=10; DROP TABLE cantongrid.exercise_outbox,cantongrid.exercise_events,cantongrid.exercise_pages; DELETE FROM cantongrid.runtime_migrations WHERE version=9; DROP TABLE cantongrid.selection_upgrade_pages,cantongrid.selection_upgrade_jobs,cantongrid.selection_upgrades; DELETE FROM cantongrid.runtime_migrations WHERE version IN (7,8)").unwrap();
+        tx.batch_execute("DROP TABLE cantongrid.delivery_receipts,cantongrid.delivery_subscriptions; DROP INDEX cantongrid.outbox_stream_delivery; DELETE FROM cantongrid.runtime_migrations WHERE version=11; DROP TABLE cantongrid.lineage_outbox,cantongrid.lineage_edges,cantongrid.creation_events,cantongrid.lineage_pages; DELETE FROM cantongrid.runtime_migrations WHERE version=10; DROP TABLE cantongrid.exercise_outbox,cantongrid.exercise_events,cantongrid.exercise_pages; DELETE FROM cantongrid.runtime_migrations WHERE version=9; DROP TABLE cantongrid.selection_upgrade_pages,cantongrid.selection_upgrade_jobs,cantongrid.selection_upgrades; DELETE FROM cantongrid.runtime_migrations WHERE version IN (7,8)").unwrap();
     }
 
     #[test]
@@ -239,6 +242,8 @@ mod tests {
             "GRANT SELECT ON cantongrid.contracts TO PUBLIC",
             "GRANT SELECT ON cantongrid.exercise_events TO PUBLIC",
             "GRANT SELECT ON cantongrid.lineage_edges TO PUBLIC",
+            "GRANT SELECT ON cantongrid.delivery_receipts TO PUBLIC",
+            "GRANT SELECT(parties) ON cantongrid.delivery_subscriptions TO PUBLIC",
             "GRANT SELECT(envelope) ON cantongrid.exercise_pages TO PUBLIC",
             "GRANT SELECT(payload) ON cantongrid.contracts TO PUBLIC",
             "GRANT SELECT(definition) ON cantongrid.model_revisions TO PUBLIC",
@@ -310,7 +315,7 @@ mod tests {
             tx.query_one("SELECT count(*) FROM cantongrid.runtime_migrations", &[])
                 .unwrap()
                 .get::<_, i64>(0),
-            9
+            10
         );
         tx.execute(
             "INSERT INTO cantongrid.runtime_migrations VALUES(99,'synthetic-unknown-version')",

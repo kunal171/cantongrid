@@ -13,6 +13,10 @@ use std::{
 const HELP: &str = "CantonGrid — local ingestion and storage reference
 
 Usage:
+  cantongrid ops status <runtime.json>
+  cantongrid ops check-config <runtime.json> --profile localnet|testnet|mainnet
+  cantongrid ops preflight <runtime.json> --profile localnet|testnet|mainnet
+  cantongrid ops prune-deliveries <runtime.json> --retain <1..100000> --limit <1..256>
   cantongrid inspect evaluate <models.json> <model-name> <payload.json>
   cantongrid inspect progress <runtime.json>
   cantongrid sync plan <old.dar> <new.dar> <models.json>
@@ -40,6 +44,7 @@ Usage:
   cantongrid init <new-directory>
   cantongrid validate <project.json>
   cantongrid fixture run <project.json> [--party <synthetic-party>]...
+  cantongrid storage check --database-env <CANTONGRID_VARIABLE>
   cantongrid storage init --database-env <CANTONGRID_VARIABLE>
   cantongrid fixture index <project.json> --database-env <CANTONGRID_VARIABLE>
   cantongrid fixture status <project.json> --database-env <CANTONGRID_VARIABLE>
@@ -67,6 +72,7 @@ fn main() -> ExitCode {
 /// Accept exact command shapes before dispatching fixture, source or operator actions.
 fn run(args: Vec<String>) -> Result<(), String> {
     match args.as_slice() {
+        [command, action, rest @ ..] if command == "ops" => commands::operations::run(action, rest),
         [command, action, rest @ ..] if command == "inspect" => {
             commands::inspector::run(action, rest)
         }
@@ -165,6 +171,11 @@ fn run(args: Vec<String>) -> Result<(), String> {
             // Validation intentionally does not open the fixture or acquire credentials.
             let _ = plan;
             Ok(())
+        }
+        [command, action, flag, variable]
+            if command == "storage" && action == "check" && flag == "--database-env" =>
+        {
+            commands::storage::check(variable)
         }
         [command, action, flag, variable]
             if command == "storage" && action == "init" && flag == "--database-env" =>

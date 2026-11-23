@@ -1,0 +1,31 @@
+{
+  "batches": 4,
+  "caller_parties": 1,
+  "connection": "reused_loopback",
+  "contracts": 256,
+  "delivery_replay": {
+    "iterations": 50,
+    "max": "6727",
+    "p50": "5608",
+    "p95": "6431",
+    "unit": "microseconds"
+  },
+  "format_version": 1,
+  "http_included": false,
+  "page_size": 25,
+  "production_capacity_verified": false,
+  "scope": "owned_postgres_synthetic_authority",
+  "temporal": {
+    "iterations": 50,
+    "max": "39156",
+    "p50": "35440",
+    "p95": "37555",
+    "unit": "microseconds"
+  },
+  "date": "2026-11-23",
+  "build": "debug",
+  "postgres": "17.12 fixture",
+  "architecture": "x86_64",
+  "logical_cpus": 12,
+  "tested_commit": "bc22a7cca4056166971da5f201fec9973e255877"
+}

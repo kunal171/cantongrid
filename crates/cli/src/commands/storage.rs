@@ -15,6 +15,14 @@ pub fn initialize(variable: &str) -> Result<(), String> {
     )
 }
 
+/// Verify the owned destination without creating schemas, changing grants or running migrations.
+pub fn check(variable: &str) -> Result<(), String> {
+    Store::open_env(variable).map_err(|e| e.to_string())?;
+    crate::print_json(
+        &serde_json::json!({"operation":"destination_checked","owned":true,"currentMigrationsVerified":true,"writesPerformed":false}),
+    )
+}
+
 /// Index complete synthetic input batch-by-batch; query grants remain explicitly simulated.
 pub fn fixture(action: &str, path: &Path, variable: &str, flags: &[String]) -> Result<(), String> {
     let plan = crate::load_plan(path)?;

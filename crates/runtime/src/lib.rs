@@ -6,6 +6,7 @@ pub use index::index;
 
 mod api;
 mod auth;
+pub use api::delivery::{DeliveryEvent, DeliveryEvidence, DeliveryKind};
 pub use api::serve;
 
 mod model_binding;
@@ -19,3 +20,6 @@ pub use selection_upgrade::{UpgradeFiles, apply_upgrade, plan_upgrade, upgrade_j
 
 mod inspector;
 pub use inspector::inspect_progress;
+
+mod operations;
+pub use operations::{NetworkProfile, check_configuration, preflight, prune_deliveries, status};

@@ -38,7 +38,7 @@ jobs:
       - name: Inspect source-only package archives
         run: python3 scripts/dev.py packages verify
       - name: Python syntax
-        run: python3 -m compileall -q scripts repros
+        run: python3 -m compileall -q scripts repros examples/operations
       - name: Start separate owned PostgreSQL fixture
         run: python3 scripts/dev.py storage up
       - name: PostgreSQL transaction and executable recovery tests
@@ -53,6 +53,30 @@ jobs:
           # Runtime fixtures share the destination installation lock.
           cargo +1.100.0 test -p cantongrid-cli --test runtime --locked --offline -- --ignored --test-threads=1
           cargo +1.100.0 test -p cantongrid-pqs destination_owner_cannot_be_used_as_a_source_reader --locked --offline -- --ignored
+      - name: Use pinned PostgreSQL tools for backup compatibility
+        run: |
+          mkdir -p .local/pg-tools
+          for tool in pg_dump pg_restore; do
+            cat > ".local/pg-tools/$tool" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          exec docker run --rm -i --network host --log-driver none \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE \
+            -e PGSSLMODE -e PGCONNECT_TIMEOUT -e PGTZ -e PGCLIENTENCODING -e PGOPTIONS \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE:ro" -w "$PWD" \
+            postgres@sha256:b60e90042aa6b8dbecd58e224b3e36114dbf8ad754465264c2476ad58a86e45c \
+            "$(basename "$0")" "$@"
+          SH
+            chmod 700 ".local/pg-tools/$tool"
+          done
+          echo "$PWD/.local/pg-tools" >> "$GITHUB_PATH"
+      - name: Isolated owned backup restore (no source writes)
+        env:
+          CANTONGRID_DESTINATION_URL: host=127.0.0.1 port=5442 user=cantongrid_owner password=local-cantongrid-only dbname=cantongrid
+          CANTONGRID_RESTORE_URL: host=127.0.0.1 port=5442 user=cantongrid_owner password=local-cantongrid-only dbname=cantongrid_recovery
+        run: |
+          docker compose -p cantongrid-storage -f dev/storage.compose.yaml exec -T postgres createdb -U postgres -O cantongrid_owner cantongrid_recovery
+          python3 scripts/dev.py recovery verify --source-env CANTONGRID_DESTINATION_URL --restore-env CANTONGRID_RESTORE_URL --output .local/ci-recovery
       - name: Stop owned database fixture
         if: always()
         run: python3 scripts/dev.py storage stop

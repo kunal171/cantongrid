@@ -8,11 +8,43 @@ A committed checkpoint survives restart. Failed pages roll back; continuous
 indexing retries every two seconds. `--once` returns after one page or failure.
 See [storage behavior](../architecture.md#destination-and-recovery).
 
+## Readiness and pressure
+
+```bash
+cantongrid ops check-config runtime.json --profile localnet
+cantongrid ops preflight runtime.json --profile localnet
+cantongrid ops status runtime.json
+```
+
+`check-config` is offline policy validation. `preflight` checks current source
+rights, selected package availability, readiness, restricted PQS bounds and the
+already initialized owned destination. Neither migrates a database. A network
+label is operator configuration, not independently verified network identity.
+Use [remote setup](remote-source.md) for TestNet/MainNet HTTPS and PQS tunneling.
+
+`ops status` is an operator-local full-source report, not a public metrics route.
+It includes ingestion observation age/freshness, queue/subscription/receipt counts,
+recorded visible delivery loss and fixed work budgets. Its source/destination
+observations are separate, not one atomic snapshot. Keep reports private.
+Authenticated `GET /v1/health` returns only readiness and format version; it never
+returns party names, payloads, counters or global positions.
+
+A source that is healthy while the worker has stopped is insufficient. Live health
+and delivery fail closed once the last ingestion observation exceeds 30 seconds.
+Retained historical reads and ACK/cancel operations can continue under current
+authority. Consumer activity cannot manufacture worker freshness. Run and monitor
+the worker continuously; `index --once` alone is not a live service.
+
+[Delivery](delivery.md) documents retention, gaps, 429 backpressure and consumer
+limits. [Recovery](recovery.md) covers private backup/restore and migration rollback.
+The [operations example](../../examples/operations/README.md) records reproducible
+read-only-ledger LocalNet acceptance and a bounded synthetic database benchmark.
+
 ## Troubleshooting
 
 | Symptom | Action |
 | --- | --- |
-| Unsupported command | Check `--help`; `dev`, `doctor`, live `status` and subscriptions are not implemented |
+| Unsupported command | Check `--help`; `dev`, `doctor`, top-level `status` are not implemented; use `ops status` |
 | `init` refuses a directory | Use a new directory; it does not overwrite |
 | Runtime JSON fails fixture validation | Use `index`/`serve`; configuration schemas differ |
 | Indexing pauses | Check token expiry, exact rights, PQS readiness and destination connectivity |
@@ -70,7 +102,7 @@ python3 scripts/dev.py storage status
 Container logs are capped at 10 MiB × 3 files, with INFO defaults. Apply changed
 limits using the corresponding `up` helper; it recreates containers and retains
 volumes. Reuse one Cargo target. Do not truncate Docker-managed logs or globally
-prune volumes. Retained history grows; automatic erasure is not implemented.
+prune volumes. Canonical history grows; outbox retention does not erase canonical records.
 
 In November 2026, unrotated DEBUG logs consumed about 176 GiB and prevented
 PostgreSQL recovery. Container recreation with rotation freed space without a

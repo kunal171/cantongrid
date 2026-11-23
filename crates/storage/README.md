@@ -1,12 +1,13 @@
 # cantongrid-storage
 
+This README describes CantonGrid 0.4.0-alpha.6.
 Owned PostgreSQL lifecycle persistence, checkpoints and typed model projections for CantonGrid.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-storage = "=0.4.0-alpha.5"
+cantongrid-storage = "=0.4.0-alpha.6"
 ```
 
 `initialize_env` applies destination migrations explicitly. `Store` manages
@@ -53,3 +54,8 @@ PQS data and snapshot-forward partial history. Model declarations do not grant
 source or caller access. See the guide for setup, limits and the LocalNet PoC.
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
+
+Alpha.6 adds bounded `Store::read_as_of` canonical history and private lifecycle
+subscriptions, random receipt cursors, monotonic ACKs and authorized outbox
+retention. Migration 011 is explicit; canonical events remain retained. Back up
+before migration. See the repository delivery and recovery guides for limits.
