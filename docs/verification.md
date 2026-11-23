@@ -127,9 +127,10 @@ These term checks do not test collateral, trading, cross-contract totals or
 remote/TestNet sources.
 
 The shared default operations acceptance also passes on seven retained contracts
-after the helper refactor (commit `4e7006f`). Seven PoC and five new operations
-unit tests pass without Docker/HTTP. CI now runs both helper suites; workflow
-static checks pass. Private runtime/configuration/identity data remain in `.local`.
+after the helper refactor (commit `4e7006f`). All 50 offline helper tests pass
+(38 development, seven PoC and five operations). CI now runs both example suites.
+RustSec, dependency/license policy, actionlint and history/tree secret scans pass.
+Private runtime/configuration/identity data remain in `.local`.
 
 ## 0.4.0 promotion — 2026-11-23
 
