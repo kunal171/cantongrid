@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "name": "synthetic_backing",
+      "revision": 1,
+      "template": {
+        "package_id": "0000000000000000000000000000000000000000000000000000000000000000",
+        "module": "SyntheticReconciliation",
+        "entity": "Backing"
+      },
+      "fields": {
+        "free": {
+          "op": "field",
+          "path": [
+            "private_balances",
+            "free"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "locked": {
+          "op": "field",
+          "path": [
+            "private_balances",
+            "locked"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "payout": {
+          "op": "field",
+          "path": [
+            "private_balances",
+            "payout"
+          ],
+          "as": {
+            "type": "numeric",
+            "scale": 10
+          }
+        },
+        "contracts": {
+          "op": "field",
+          "path": [
+            "private_balances",
+            "contracts"
+          ],
+          "as": {
+            "type": "int64"
+          }
+        }
+      }
+    }
+  ]
+}
