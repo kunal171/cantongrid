@@ -12,9 +12,9 @@ all lifecycle effects through B. The per-stream writer lock serializes this with
 ingestion, selection upgrades and retention. Caller/source authority is checked
 before committing and again before returning a signed response.
 
-The response supplies the exact string B and the private subscription. Clients
-page canonical as-of B using the existing API, stage the baseline locally, then
-consume the subscription. Every visible event after B must be available for
+B stays private: exposing the current global offset would reveal hidden-party
+activity. The response supplies the private subscription and its bound snapshot
+URL. Clients page that fixed baseline, stage it locally, then consume the subscription. Every visible event after B must be available for
 replay or produce an explicit retention gap. Baseline paging never advances ACKs.
 Clients commit baseline/effects and deduplication durably before acknowledging.
 
@@ -48,3 +48,19 @@ pruning has removed visible post-baseline events.
    stays read-only. Keep remote/TestNet acceptance pending configured access.
 
 Do not advertise atomic handoff until storage/API concurrency controls pass.
+
+## API and failure decisions
+
+`POST /v1/subscriptions/bootstrap` accepts only a client name. It returns a random
+subscription ID, signed delivery receipt and subscription-bound snapshot URL;
+neither response nor snapshot cursor includes B or an outbox ordinal.
+`GET /v1/subscriptions/{id}/snapshot` pages the pinned baseline under the exact
+current consumer/party binding. Its cursor domain includes the subscription ID.
+Public snapshot provenance omits source checkpoints, floors and global offsets.
+
+Migration 012 stores the private baseline offset and original delivery anchor on
+the subscription; ordinary registrations cannot reuse bootstrap names. Expired
+same-name bootstrap retries fail rather than silently capturing another baseline.
+Visible retention loss returns `coverage: gap`; unavailable temporal coverage
+returns `coverage: unavailable`. Post-baseline ACKs prevent restarting that same
+baseline. Clients need a new name for explicit resynchronization.
