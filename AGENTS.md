@@ -6,7 +6,9 @@
   full source/caller scope before lookup and current authorization/configuration
   checks before encoding. No new dependency, migration or ledger write. Keep
   LocalNet/remote evidence separate from owned-PostgreSQL/mock-source tests.
-  Work in small commits with function/type/calculation comments. Publication of
+  The API slice is implemented and owned-PostgreSQL/mock-source-tested; real
+  LocalNet/remote reconciliation remains unverified. Work in small commits with
+  function/type/calculation comments. Publication of
   this new branch is not part of the alpha.1 release.
 - Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical
   delivery and local operational hardening. Release 0.3.0 includes PostgreSQL

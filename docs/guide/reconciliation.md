@@ -222,9 +222,9 @@ and ingestion do not load optional policy contents.
 | `POST /reconciliation/graphql` | Typed `reconciliationPolicies` and `reconciliation(name: String!)` |
 
 ```bash
-curl -H "Authorization: Bearer $CANTONGRID_API_TOKEN" \
+curl -H "Authorization: Bearer $CANTONGRID_CALLER_TOKEN" \
   -H 'Content-Type: application/json' -d '{}' \
-  http://127.0.0.1:8090/v1/reconciliation/backing/query
+  http://127.0.0.1:8080/v1/reconciliation/backing/query
 ```
 
 Use your configured API port. The [complete GraphQL query](../../examples/reconciliation/query.graphql)

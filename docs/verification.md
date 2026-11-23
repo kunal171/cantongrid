@@ -99,6 +99,9 @@ and mock read-only source authority, with no Canton transaction or grant change.
   permission and model revision during the final refresh, after evaluation.
   Every case discards the old result; GraphQL resolver/complexity errors return
   no sibling data. The barrier firing is asserted independently of the status.
+- RustSec, dependency license/bans/source checks, actionlint and history/tree
+  secret scans pass. All ten package dry runs and self-contained archive checks
+  pass at `d99e96e`, including the query asset and package READMEs; no upload.
 - Storage/evaluator source and migration SQL are unchanged from published alpha.1;
   its lower-level SQL evidence above is not claimed as a new run here.
 

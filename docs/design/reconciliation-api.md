@@ -1,5 +1,8 @@
 # Authenticated reconciliation API slice
 
+Implemented in alpha.2 source; owned-PostgreSQL/mock-source controls pass.
+See [verification](../verification.md#authenticated-reconciliation-api--2026-11-23).
+
 - Runtime configuration gains an optional reconciliation manifest path, resolved relative to runtime.json. Omission preserves existing behavior; ingestion does not load policy contents.
 - The bounded version-1 manifest holds 1–16 entries, each with a unique configured name and pinning namespace, model name/revision/fingerprint, policy file and policy fingerprint. Policy files resolve relative to the manifest and use the existing strict 64 KiB compiler. Duplicate names and pin mismatches fail closed. No SQL policy registry/migration.
 - New module api/reconciliation owns services, REST and GraphQL. GET /v1/reconciliation lists sanitized configured identities; POST /v1/reconciliation/{name}/query accepts exactly {} and executes one server-configured policy. Requests never supply party grants, formulas, schemas or paths.
