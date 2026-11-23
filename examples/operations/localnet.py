@@ -170,7 +170,7 @@ def run(*, reconciliation=False):
         child = start()
         if reconciliation:
             report, expected = checks.verify(config, directory, source_rows, environment, base, token,
-                                             reconciliation_context, request, bearer)
+                                             reconciliation_context, request, bearer, cli)
             child.kill(); child.wait(); child = start()
             status, repeated = request(base, token, '/v1/reconciliation/poc_terms/query', {})
             if status != 200 or repeated != expected:

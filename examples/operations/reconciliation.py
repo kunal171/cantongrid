@@ -84,10 +84,10 @@ def configure(config, directory, namespace, cli, source_rows, boundary):
     write_private(directory / 'grants.json', grants)
     config['reconciliation_file'] = 'policies.json'
     write_private(directory / 'runtime.json', config)
-    return {'grants': grants, 'definition': preflight['fingerprint']}
+    return {'grants': grants, 'definition': preflight['fingerprint'], 'manifest': manifest}
 
 
-def verify(config, directory, source_rows, environment, base, token, context, request, bearer):
+def verify(config, directory, source_rows, environment, base, token, context, request, bearer, cli):
     """Compare exact expected summaries and both transports; mutate only the isolated application grant file."""
     endpoint = '/v1/reconciliation/poc_terms/query'
     status, report = request(base, token, endpoint, {})
@@ -121,6 +121,30 @@ def verify(config, directory, source_rows, environment, base, token, context, re
         write_private(directory / 'grants.json', {**grants, 'epoch': grants['epoch'] + 2})
     if request(base, token, endpoint, {}) != (200, report):
         raise ValueError('Restored local application grants changed the exact indexed report')
+    # A nonzero tick times 10001 must differ from the model's times-10000 value, even at its last digit.
+    incorrect = policy(); incorrect['policy']['revision'] = 2
+    incorrect['policy']['fields']['scaled']['right']['value']['value'] = '10001'
+    try:
+        write_private(directory / 'policy.json', incorrect)
+        validated = cli('reconcile', 'validate', directory / 'policy.json')
+        changed = json.loads(json.dumps(context['manifest']))
+        changed['policies'][0]['policy_fingerprint'] = validated['policy']['fingerprint']
+        write_private(directory / 'policies.json', changed)
+        status, violated = request(base, token, endpoint, {})
+        if status != 200 or violated['comparison'] != 'violated' or violated['policy']['revision'] != '2':
+            raise ValueError('Controlled false condition did not produce a complete violated comparison')
+        expected_violations = [{'name': 'basis_points', 'satisfied': '0', 'violated': str(len(source_rows)), 'unavailable': '0'},
+                               {'name': 'positive_lot', 'satisfied': str(len(source_rows)), 'violated': '0', 'unavailable': '0'}]
+        if violated['checks'] != expected_violations or violated['definitionFingerprint'] == report['definitionFingerprint']:
+            raise ValueError('Controlled violation counts or policy identity did not change')
+        status, graphql = request(base, token, '/reconciliation/graphql', {'query': document, 'variables': {'name': 'poc_terms'}})
+        if status != 200 or graphql.get('errors') or graphql['data']['reconciliation'] != violated:
+            raise ValueError('Controlled violation differs between REST and GraphQL')
+    finally:
+        write_private(directory / 'policy.json', policy())
+        write_private(directory / 'policies.json', context['manifest'])
+    if request(base, token, endpoint, {}) != (200, report):
+        raise ValueError('Restored policy did not restore the complete original report')
     # Whole report is intentionally private: its configured namespace identifies this isolated run.
     write_private(directory / 'reconciliation-report.json', report)
     return {'format_version': 1, 'scope': 'existing_localnet_read_only_ledger',
@@ -128,5 +152,6 @@ def verify(config, directory, source_rows, environment, base, token, context, re
             'ledger_pqs_inventory_equal': True, 'same_source_boundary': True, 'exact_source_terms_equal': True,
             'complete_retained_indexed_coverage': True, 'rest_graphql_equal': True, 'pinned_definition': True,
             'narrow_scope_denial': True, 'isolated_caller_revocation': True,
+            'controlled_violation': True, 'policy_restore_equal': True,
             'ledger_writes': False, 'ledger_grants_changed': False, 'funded_assets_or_trades': False,
             'remote_testnet_verified': False}, report
