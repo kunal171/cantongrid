@@ -2,6 +2,8 @@
 //! No Canton party, ledger transaction or upstream database mutation occurs in this test.
 #[path = "runtime/aggregates.rs"]
 mod aggregates;
+#[path = "runtime/bootstrap.rs"]
+mod bootstrap;
 #[path = "runtime/delivery.rs"]
 mod delivery;
 #[path = "runtime/fixture.rs"]

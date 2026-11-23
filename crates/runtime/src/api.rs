@@ -697,6 +697,11 @@ pub async fn serve(path: &Path) -> Result<(), String> {
     let router = Router::new()
         .route("/v1/health", get(health::readiness))
         .route("/v1/subscriptions", post(delivery::subscribe))
+        .route("/v1/subscriptions/bootstrap", post(delivery::bootstrap))
+        .route(
+            "/v1/subscriptions/{subscriptionId}/snapshot",
+            get(delivery::snapshot),
+        )
         .route(
             "/v1/subscriptions/{subscriptionId}/events",
             get(delivery::events),
