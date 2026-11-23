@@ -179,3 +179,6 @@ fn evaluate(
     }
     Ok((selected, counters))
 }
+
+#[cfg(test)]
+mod tests;
