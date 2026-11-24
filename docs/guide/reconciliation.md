@@ -123,8 +123,7 @@ let report = store.read_reconciliation(
 )?;
 ```
 
-This is a trusted backend interface, with no new CLI network command or HTTP
-route. Authenticate `CallerGrants` independently and obtain `SourceLease` from the
+This is the trusted backend interface used by the authenticated API below. Authenticate `CallerGrants` independently and obtain `SourceLease` from the
 existing trusted source checker. Select an exact `BoundModel` through current
 binding discovery; the read rechecks its installed definition and active revision.
 A policy/preflight document cannot provide any of these permissions.
@@ -135,8 +134,8 @@ input membership. One read-only repeatable-read transaction covers the completed
 schema041 prefix, retained journal coverage, fresh ingestion observation, active
 model, canonical inputs and native projection rows. A concurrent ingestion or
 model promotion cannot mix revisions within a report. Source leases are rechecked
-before and after commit; an HTTP adapter must separately reauthenticate current
-caller/source grants before encoding a future public response.
+before and after commit; the API layer also reauthenticates current caller/source
+grants before encoding the response.
 
 Limits: 128 active canonical contracts for the selected template **before model
 filtering**, 8 MiB of canonical input plus expected projection encoding, existing
@@ -187,13 +186,13 @@ cargo test -p cantongrid-storage model_projection::reconciliation --locked --off
 python3 scripts/dev.py storage stop
 ```
 
-These checks are separate from LocalNet/remote evidence. There is no new
-REST/GraphQL endpoint, persisted invariant-result registry or financial all-clear.
-Cross-model/group reconciliation and public API delivery remain future slices.
+These storage controls are separate from the LocalNet evidence below. The API
+exposes the same bounded checks. Persisted findings, cross-model/group
+reconciliation and economic correctness checks remain later work.
 
 ## Authenticated API (0.5.0-alpha.2)
 
-Install with `cargo install cantongrid-cli --version 0.5.0-alpha.2` or build the matching tag with
+Install with `cargo install cantongrid-cli --version 0.5.0-alpha.2 --locked` or build the matching tag with
 `cargo build -p cantongrid-cli --locked`. Add an optional
 setting to the existing runtime configuration:
 
