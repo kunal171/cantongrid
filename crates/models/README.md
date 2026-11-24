@@ -1,6 +1,6 @@
 # cantongrid-models
 
-This README describes the 0.5.0-alpha.2 source checkout (unreleased).
+This README describes the 0.5.0-alpha.2 prerelease.
 Declarative Daml contract projections, exact calculations, SQL and client type generation.
 
 ## Usage

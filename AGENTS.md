@@ -1,19 +1,11 @@
 # Working on CantonGrid
 
-- Active task: authenticated reconciliation APIs on feat/reconciliation-api,
-  following published 0.5.0-alpha.1 (PR #35). User requested continuation after
-  release. Follow docs/design/reconciliation-api.md; use operator-pinned policies,
-  full source/caller scope before lookup and current authorization/configuration
-  checks before encoding. No new dependency, migration or ledger write. Keep
-  LocalNet/remote evidence separate from owned-PostgreSQL/mock-source tests.
-  The API slice is owned-PostgreSQL/mock-source-tested. Current continuation is
-  read-only LocalNet acceptance using existing PoC contracts and rights, with
-  isolated owned destination writes only; follow the design acceptance section.
-  LocalNet acceptance passed on seven retained contracts, including controlled
-  policy violations/restoration and preservation of PoC files/bindings. No
-  DAR/party/ledger/grant writes. Remote reconciliation remains unverified. Work in small commits with
-  function/type/calculation comments. Publication of
-  this new branch is not part of the alpha.1 release.
+- Active task: user explicitly authorizes opening/merging the reconciliation API
+  PR after CI, publishing 0.5.0-alpha.2 and all ten crates, and syncing GitBook.
+  Branch feat/reconciliation-api contains authenticated APIs and read-only
+  LocalNet acceptance on seven retained contracts. Preserve focused commits.
+  No new runtime dependency, migration, ledger write or source-right change.
+  Keep remote/TestNet evidence separate; no production-readiness claim.
 - Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical
   delivery and local operational hardening. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild

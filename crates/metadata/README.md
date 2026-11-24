@@ -1,6 +1,6 @@
 # cantongrid-metadata
 
-This README describes the 0.5.0-alpha.2 source checkout (unreleased).
+This README describes the 0.5.0-alpha.2 prerelease.
 Offline, bounded DAR/DALF signature extraction for CantonGrid. Metadata does not
 authorize access, prove deployment, validate contract execution or apply migrations.
 

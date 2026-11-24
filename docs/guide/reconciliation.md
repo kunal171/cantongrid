@@ -191,9 +191,10 @@ These checks are separate from LocalNet/remote evidence. There is no new
 REST/GraphQL endpoint, persisted invariant-result registry or financial all-clear.
 Cross-model/group reconciliation and public API delivery remain future slices.
 
-## Authenticated API (0.5.0-alpha.2 source)
+## Authenticated API (0.5.0-alpha.2)
 
-Build this branch with `cargo build -p cantongrid-cli --locked`. Add an optional
+Install with `cargo install cantongrid-cli --version 0.5.0-alpha.2` or build the matching tag with
+`cargo build -p cantongrid-cli --locked`. Add an optional
 setting to the existing runtime configuration:
 
 ```json

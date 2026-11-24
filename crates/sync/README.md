@@ -1,6 +1,6 @@
 # cantongrid-sync
 
-This README describes the 0.5.0-alpha.2 source checkout (unreleased).
+This README describes the 0.5.0-alpha.2 prerelease.
 Offline schema comparison and generated model bundles from verified DAR metadata
 and explicit developer projections. Reports trace selected LF fields through filters,
 aggregates, relationship keys and joins, with exact generated API/table identities

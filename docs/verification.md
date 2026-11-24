@@ -107,7 +107,7 @@ and mock read-only source authority, with no Canton transaction or grant change.
 
 At that check, real LocalNet/remote reconciliation remained unverified. This branch is separate
 from released alpha.1; no alpha.2 release, crate upload or public site update is
-performed by these checks. See the [API guide](guide/reconciliation.md#authenticated-api-050-alpha2-source).
+performed by these checks. See the [API guide](guide/reconciliation.md#authenticated-api-050-alpha2).
 
 ## Read-only LocalNet reconciliation — 2026-11-23
 

@@ -63,7 +63,7 @@ clients and production-sized history are excluded. `BENCHMARK` is a one-line JSO
 report suitable for collecting with environment/build details. Do not interpret
 these debug-build timings as a throughput guarantee.
 
-## Reconciliation acceptance (alpha.2 source)
+## Reconciliation acceptance (alpha.2)
 
 From a clean reviewed checkout, use the same existing LocalNet/PQS/PoC setup:
 

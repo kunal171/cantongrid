@@ -1,6 +1,6 @@
 # cantongrid-cli
 
-This README describes the 0.5.0-alpha.2 source checkout (unreleased).
+This README describes the 0.5.0-alpha.2 prerelease.
 CantonGrid CLI for authorized Daml contract indexing, model generation and query services.
 
 The executable is named `cantongrid`. Run `cantongrid --help` for commands.
@@ -8,11 +8,11 @@ The executable is named `cantongrid`. Run `cantongrid --help` for commands.
 ## Install and try it
 
 Requires Rust 1.100.0 or newer. The package installs the `cantongrid` executable.
-The install command uses published alpha.1. Build this checkout with
+Install the prerelease explicitly, or build this checkout with
 `cargo build -p cantongrid-cli --locked`.
 
 ```bash
-cargo install cantongrid-cli --version 0.5.0-alpha.1 --locked
+cargo install cantongrid-cli --version 0.5.0-alpha.2 --locked
 cantongrid --help
 cantongrid init ./my-demo
 cantongrid validate ./my-demo/cantongrid.json
@@ -41,7 +41,7 @@ source or caller access. See the guide for setup, limits and the LocalNet PoC.
 
 Licensed under Apache-2.0; see `LICENSE` and `NOTICE`.
 
-Unreleased 0.5 source adds `reconcile validate <policy.json>` and
+Version 0.5.0-alpha.1 adds `reconcile validate <policy.json>` and
 `reconcile evaluate <policy.json> <fixture.json>`. These commands read supplied
 local files without source credentials or database access. Diagnostic success
 never means a verified financial all-clear. See the repository reconciliation

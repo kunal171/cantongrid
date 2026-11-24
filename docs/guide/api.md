@@ -262,6 +262,6 @@ durable lifecycle feed under current authority. They use opaque subscription-bou
 cursors and keep global source progress private. See [bootstrap](bootstrap.md)
 for the full sequence, migration 012, retry/expiry rules and failure responses.
 
-Alpha.2 source also provides [configured reconciliation](reconciliation.md#authenticated-api-050-alpha2-source)
+Alpha.2 source also provides [configured reconciliation](reconciliation.md#authenticated-api-050-alpha2)
 through REST and `/reconciliation/graphql`, using these caller keys/grants and
 requiring the complete configured source-party scope.
