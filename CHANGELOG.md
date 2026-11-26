@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0-alpha.2 — 2026-11-24
+
+- Add an optional bounded operator manifest pinning policies to exact model revisions.
+- Expose configured reconciliation through authenticated REST and typed GraphQL.
+- Recheck full source/caller scope, configuration and active identities before
+  delivery; discard whole GraphQL operations on errors. No new dependency or migration.
+- Verify seven retained LocalNet contracts against Ledger/PQS at the same boundary,
+  including controlled violations, policy restoration, caller denial and restart.
+
 ## 0.5.0-alpha.1 — 2026-11-23
 
 - Add bounded versioned exact-value reconciliation policies with canonical

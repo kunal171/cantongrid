@@ -1,13 +1,13 @@
 # cantongrid-models
 
-This README describes the 0.5.0-alpha.1 prerelease.
+This README describes the 0.5.0-alpha.2 prerelease.
 Declarative Daml contract projections, exact calculations, SQL and client type generation.
 
 ## Usage
 
 ```toml
 [dependencies]
-cantongrid-models = "=0.5.0-alpha.1"
+cantongrid-models = "=0.5.0-alpha.2"
 ```
 
 The library exposes `Catalog`, `Model`, exact typed expressions, SQL plans and

@@ -2,6 +2,7 @@
 pub(crate) mod delivery;
 mod health;
 mod model_api;
+mod reconciliation;
 mod resources;
 mod temporal;
 
@@ -721,6 +722,12 @@ pub async fn serve(path: &Path) -> Result<(), String> {
         .route("/v1/events", get(history))
         .route("/graphql", post(graphql))
         .route("/models/graphql", post(model_api::graphql))
+        .route("/reconciliation/graphql", post(reconciliation::graphql))
+        .route("/v1/reconciliation", get(reconciliation::list))
+        .route(
+            "/v1/reconciliation/{name}/query",
+            post(reconciliation::query),
+        )
         .route("/v1/models", get(model_api::list))
         .route("/v1/models/{namespace}/{name}", get(model_api::describe))
         .route("/v1/models/{namespace}/{name}/query", post(model_api::rows))

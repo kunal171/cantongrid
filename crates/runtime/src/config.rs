@@ -17,6 +17,8 @@ struct Document {
     source_database_env: String,
     destination_database_env: String,
     source_health: String,
+    /// Optional operator manifest; its policies are loaded only by reconciliation requests.
+    reconciliation_file: Option<PathBuf>,
     /// Explicit operator assertion of exporter shape; empty SQL is not evidence of tree mode.
     exercise_source: Option<String>,
     lineage_source: Option<String>,
@@ -49,6 +51,7 @@ pub struct Project {
     pub source_database_env: String,
     pub destination_database_env: String,
     pub source_health: String,
+    pub reconciliation_file: Option<PathBuf>,
     pub api: Api,
     pub page_size: usize,
 }
@@ -180,7 +183,15 @@ impl Project {
                 .unwrap_or(Path::new("."))
                 .join(&api.grants_file);
         }
+        let reconciliation_file = doc.reconciliation_file.map(|file| {
+            if file.is_relative() {
+                path.parent().unwrap_or(Path::new(".")).join(file)
+            } else {
+                file
+            }
+        });
         Ok(Self {
+            reconciliation_file,
             authorization,
             plan,
             source_database_env: doc.source_database_env,

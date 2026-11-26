@@ -54,3 +54,8 @@ The [Rust storage interface](../../docs/guide/reconciliation.md#indexed-per-cont
 also checks one exact active model against complete indexed inputs. Its database
 tests use these synthetic declarations, explicit filters and mock source grants.
 No DAR is deployed and no LocalNet/remote reconciliation claim is made.
+
+Alpha.2 adds an optional authenticated API. [policies.json](policies.json)
+pins this synthetic model/policy; replace its identities with your actual preflight
+output. [query.graphql](query.graphql) is the complete typed request, exercised by
+the HTTP regression test. See [API setup](../../docs/guide/reconciliation.md#authenticated-api-050-alpha2).

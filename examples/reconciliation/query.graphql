@@ -1,0 +1,28 @@
+query Reconcile($name: String!) {
+  reconciliation(name: $name) {
+    formatVersion
+    policy {
+      name
+      revision
+      fingerprint
+    }
+    model {
+      namespace
+      name
+      revision
+      fingerprint
+    }
+    definitionFingerprint
+    status
+    comparison
+    coverage
+    completeWithinConfiguredScope
+    contracts
+    checks {
+      name
+      satisfied
+      violated
+      unavailable
+    }
+  }
+}

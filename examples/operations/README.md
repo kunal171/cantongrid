@@ -62,3 +62,25 @@ includes SQL and JSON decoding; HTTP, source authorization network calls, concur
 clients and production-sized history are excluded. `BENCHMARK` is a one-line JSON
 report suitable for collecting with environment/build details. Do not interpret
 these debug-build timings as a throughput guarantee.
+
+## Reconciliation acceptance (alpha.2)
+
+From a clean reviewed checkout, use the same existing LocalNet/PQS/PoC setup:
+
+```bash
+python3 examples/operations/localnet.py --allow-owned-writes --reconciliation
+```
+
+This mode needs existing PoC contracts, uses a bounded exact-offset Ledger snapshot
+and writes only a new owned stream/model namespace and local API configuration.
+It checks `priceTick * 10000 == priceTickBps`, positive lots, controlled violations,
+REST/GraphQL equality, scope denial, local caller revocation and restart. Original
+PoC files/bindings remain intact. No DAR, party, Ledger command or rights changes.
+See [reconciliation evidence](../reconciliation/localnet-evidence.json).
+The existing default operations mode retains its bootstrap/delivery checks.
+
+Offline helper controls:
+
+```bash
+python3 -m unittest discover -s examples/operations -p 'test_*.py' -v
+```

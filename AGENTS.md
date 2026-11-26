@@ -1,16 +1,11 @@
 # Working on CantonGrid
 
-- Active task: exact-value reconciliation on feat/reconciliation-policies after
-  stable 0.4.0. Offline policies and model preflight are implemented. The user's
-  continuation authorizes the documented storage-only indexed-contract slice in
-  docs/design/reconciliation.md. Keep full source/caller scope before any reads,
-  complete retained indexed boundaries, exact active revisions and bounded work.
-  Indexed reads are now owned-PostgreSQL-tested; LocalNet/remote evidence and HTTP
-  exposure remain later work. The user now authorizes pushing/opening/merging the
-  PR, publishing the 0.5.0-alpha.1 prerelease and all ten crates, then starting
-  authenticated reconciliation APIs on a new branch. No new dependency, migration,
-  ledger write or financial all-clear claim is authorized.
-  Keep focused commits and detailed function/type comments.
+- Active task: user explicitly authorizes opening/merging the reconciliation API
+  PR after CI, publishing 0.5.0-alpha.2 and all ten crates, and syncing GitBook.
+  Branch feat/reconciliation-api contains authenticated APIs and read-only
+  LocalNet acceptance on seven retained contracts. Preserve focused commits.
+  No new runtime dependency, migration, ledger write or source-right change.
+  Keep remote/TestNet evidence separate; no production-readiness claim.
 - Existing baseline: 0.4.0 promotes alpha.7. Alpha.6 added bounded temporal queries, durable canonical
   delivery and local operational hardening. Release 0.3.0 includes PostgreSQL
   17.12 source/destination compatibility and 261-contract LocalNet staged rebuild

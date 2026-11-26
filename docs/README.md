@@ -32,7 +32,7 @@ Reference: [architecture](architecture.md), [security](security.md),
 
 ## Current scope
 
-Latest stable: **0.4.0**. Latest prerelease: **0.5.0-alpha.1**.
+Latest stable: **0.4.0**. Latest prerelease: **0.5.0-alpha.2**.
 0.4.0 promotes alpha.7's implementation without changing runtime code or migrations.
 Its supported live profile is authorized node-local Canton 3.5.7, Scribe 3.5.4
 schema041 and PostgreSQL 17.12, with snapshot-forward partial history.
@@ -54,6 +54,10 @@ Prerelease **0.5.0-alpha.1** adds
 [reconciliation policies](guide/reconciliation.md), schema preflight and storage-only
 indexed per-contract checks. Fixture reports remain unverified; indexed checks
 cover a bounded retained prefix. Public APIs and cross-contract totals remain later work.
+
+Prerelease **0.5.0-alpha.2** adds operator-pinned authenticated reconciliation
+REST/GraphQL, now checked against seven retained LocalNet PoC contracts without
+ledger writes. Install alpha.2 explicitly to use its configured reconciliation APIs.
 
 ## Milestones
 

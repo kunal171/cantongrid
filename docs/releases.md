@@ -1,6 +1,6 @@
 # Releases and publication
 
-Latest stable release: **0.4.0**. Latest prerelease: **0.5.0-alpha.1**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
+Latest stable release: **0.4.0**. Latest prerelease: **0.5.0-alpha.2**. [CHANGELOG.md](https://github.com/kunal171/cantongrid/blob/main/CHANGELOG.md)
 is the maintained change history; the links below retain each release's original notes.
 
 Release **0.4.0** promotes the tested alpha.7 implementation for the node-local
@@ -8,6 +8,7 @@ contracts profile. Runtime code and migrations are unchanged from alpha.7.
 
 | Version | Delivered scope | Destination migrations |
 | --- | --- | --- |
+| [0.5.0-alpha.2](https://github.com/kunal171/cantongrid/releases/tag/v0.5.0-alpha.2) | Authenticated configured reconciliation REST/GraphQL and retained LocalNet verification | 001–012 |
 | [0.5.0-alpha.1](https://github.com/kunal171/cantongrid/releases/tag/v0.5.0-alpha.1) | Offline policies, model preflight and bounded storage-only indexed reconciliation | 001–012 |
 | [0.4.0](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0) | Verified node-local profile, scoped APIs/composition and durable canonical bootstrap | 001–012 |
 | [0.4.0-alpha.7](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0-alpha.7) | Atomic canonical bootstrap and opaque pinned snapshot paging | 001–012 |
@@ -35,6 +36,15 @@ cargo install cantongrid-cli --version 0.4.0 --locked
 
 Historical `release/crates-<version>` branches contain publication packaging for
 older source releases. GitHub releases do not upload crates automatically.
+
+## 0.5.0-alpha.2 authenticated reconciliation
+
+Adds optional `reconciliation_file` configuration and authenticated REST/GraphQL
+over server-pinned policies. Existing configuration remains valid when omitted.
+Upgrade binaries before adding the setting; older versions reject it. No migration,
+reindex or dependency change. Bounds and report semantics remain those of alpha.1.
+Acceptance includes owned PostgreSQL/mock controls and seven retained LocalNet
+contracts with real read-only authorization. Remote reconciliation remains unverified. See the [API guide](guide/reconciliation.md#authenticated-api-050-alpha2).
 
 ## 0.5.0-alpha.1 reconciliation scope
 

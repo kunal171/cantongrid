@@ -178,3 +178,29 @@ def metrics():
     cmd = ['docker', 'compose', '-p', 'cantongrid-storage', '-f', str(ROOT / 'dev/storage.compose.yaml'), 'exec', '-T', 'postgres', 'psql', '-XqAt', '-U', 'cantongrid_owner', '-d', 'cantongrid', '-v', 'ON_ERROR_STOP=1', '-v', 'source=' + data['source']]
     result = subprocess.run(cmd, input=sql, env=ENV, text=True, capture_output=True, check=True)
     return json.loads(result.stdout)
+
+
+def ledger_snapshot(offset):
+    """Read existing PoC contracts at an exact Ledger offset; reject truncation or unexpected templates."""
+    data = state()
+    expected = data['package'] + ':Market:PredictionMarket'
+    selection = {'cumulative': [{'identifierFilter': {'TemplateFilter': {'value': {'templateId': TEMPLATE}}}}]}
+    entries = request(BASE, '/v2/state/active-contracts?limit=100', token(USERS['ab']), body={
+        'activeAtOffset': offset, 'eventFormat': {
+            'filtersByParty': {party: selection for party in data['parties'].values()}, 'verbose': True}})
+    if not isinstance(entries, list) or len(entries) >= 100:
+        raise ValueError('Ledger snapshot exceeds the bounded PoC acceptance inventory')
+    contracts = []
+    for entry in entries:
+        contract = entry.get('contractEntry', {})
+        if 'JsActiveContract' not in contract:
+            if contract and 'JsEmpty' not in contract:
+                raise ValueError('Unsupported incomplete/reassigned contract in PoC snapshot')
+            continue
+        created = contract['JsActiveContract']['createdEvent']
+        if created['templateId'] != expected:
+            raise ValueError('Ledger snapshot returned an unexpected package/template')
+        contracts.append({'contractId': created['contractId'], 'payload': created['createArgument']})
+    if len(contracts) != len({contract['contractId'] for contract in contracts}):
+        raise ValueError('Ledger snapshot contains duplicate contract identities')
+    return sorted(contracts, key=lambda contract: contract['contractId'])

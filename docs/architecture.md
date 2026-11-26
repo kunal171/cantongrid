@@ -27,6 +27,7 @@ flowchart LR
 | `runtime` | Worker, caller authentication and REST/GraphQL |
 | `models` | Declarative definitions, exact evaluation and schema/client generation |
 | `metadata` | Bounded offline DAR/LF 2.1 signature extraction |
+| `sync` | Reviewed DAR-driven model/schema synchronization and compatibility reports |
 | `cli` | Command dispatch |
 
 ## Source adapter
@@ -52,7 +53,7 @@ paged reads. SDK compatibility observations are in [verification](verification.m
 
 ## Destination and recovery
 
-`storage init` explicitly applies checksummed migrations 001–010. Opening a store
+`storage init` explicitly applies checksummed migrations 001–012. Opening a store
 only verifies it. Source-scoped advisory locks coordinate writers; expected
 checkpoint comparisons reject stale workers. Canonical state, evidence/history,
 model changes, checkpoint and outbox commit together. Exact duplicate deliveries
@@ -172,13 +173,13 @@ parameter and derive their provider context through authenticated Ledger handlin
 An explicit expected token issuer and returned provider must both match; no issuer
 or provider is inferred from an endpoint hostname.
 
-## Next event foundation milestone
+## Exercise event foundation
 
 [M0 exercise-source feasibility](design/exercise-source.md) is verified on the
 pinned LocalNet. PQS tree-mode receipts match authorized Ledger Effects in four
 party scopes. Partial views can disclose children without their factory exercise;
-general immediate-parent proof remains unsupported. M1 should extend the existing
-PQS adapter with internal exercise receipts while preserving archive ownership.
+general immediate-parent proof remains unsupported. The opt-in receipt slice
+extends the existing PQS adapter while preserving archive ownership.
 M0 adds no production event variant, destination migration or public API.
 The [M1 receipt slice](design/exercise-ingestion.md) adds opt-in atomic forward
 transactions and private receipt/outbox tables in migration 009. Existing

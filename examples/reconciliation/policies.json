@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "policies": [
+    {
+      "name": "backing",
+      "namespace": "example-org",
+      "model": "synthetic_backing",
+      "model_revision": 1,
+      "model_fingerprint": "e430ad73250b95e2a016e7d8bd0e8c4f01d0231224124ac1668cf922cad99b6c",
+      "policy_file": "backing-policy.json",
+      "policy_fingerprint": "c06a7a98de3bda1074f6d3bfa6cfd50f7c512215a7eeab35b5a780db3eb88774"
+    }
+  ]
+}

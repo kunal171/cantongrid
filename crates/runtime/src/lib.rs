@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 pub mod config;
 mod index;
+mod reconciliation;
 pub use index::index;
 
 mod api;

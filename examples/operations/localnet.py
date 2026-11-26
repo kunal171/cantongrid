@@ -42,12 +42,12 @@ def query(connection, sql):
     return result.stdout.strip()
 
 
-def bearer(key, issuer, audience):
+def bearer(key, issuer, audience, subject='reader'):
     """Mint only a short-lived local organization fixture bearer, never a Canton command credential."""
     encode = lambda data: base64.urlsafe_b64encode(json.dumps(data).encode()).rstrip(b'=').decode()
     now = int(time.time())
     head = encode({'alg': 'HS256', 'typ': 'JWT'})
-    body = encode({'sub': 'reader', 'iss': issuer, 'aud': audience, 'iat': now, 'exp': now + 900})
+    body = encode({'sub': subject, 'iss': issuer, 'aud': audience, 'iat': now, 'exp': now + 900})
     signature = base64.urlsafe_b64encode(hmac.new(key.encode(), f'{head}.{body}'.encode(), hashlib.sha256).digest()).rstrip(b'=').decode()
     return f'{head}.{body}.{signature}'
 
@@ -69,11 +69,19 @@ def request(base, token, path, body=None):
     return status, json.loads(payload)
 
 
-def run():
-    """Compare source inventory, historical state, replay/ACK/restart and an explicit retention gap."""
+def run(*, reconciliation=False):
+    """Check retained LocalNet data through isolated destination operations or exact reconciliation."""
+    if reconciliation and subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip():
+        raise ValueError('Commit reviewed changes before recording LocalNet reconciliation evidence')
+    original_files = ([support.DIRECTORY / name for name in ('runtime.json', 'models.json', 'grants.json', 'state.json')]
+                      if reconciliation else [])
+    original_digests = [hashlib.sha256(path.read_bytes()).hexdigest() for path in original_files]
     config = json.loads((ROOT / '.local/poc/runtime.json').read_text())
     if config['authorization']['network'] != 'localnet' or config['authorization'].get('transport', 'localnet_http') != 'localnet_http':
         raise ValueError('Only the existing disposable LocalNet PoC is supported')
+    if reconciliation and (config['authorization']['user'] != support.USERS['ab'] or
+            set(config['authorization']['parties']) != set(support.state()['parties'].values()) or len(config['templates']) != 1):
+        raise ValueError('Reconciliation requires the exact retained AB PoC source scope')
     identity = 'ops-acceptance-' + uuid.uuid4().hex
     directory = ROOT / '.local/operations' / identity
     directory.mkdir(parents=True, mode=0o700)
@@ -104,6 +112,11 @@ def run():
 
     cli('ops', 'preflight', path, '--profile', 'localnet')
     destination = environment[config['destination_database_env']]
+    original_bindings_sql = original_bindings = None
+    if reconciliation:
+        original_namespace = support.state()['namespace']
+        original_bindings_sql = "SELECT COALESCE(jsonb_agg(to_jsonb(b) ORDER BY stream_key,name),'[]') FROM cantongrid.model_bindings b WHERE namespace=" + sql_literal(original_namespace)
+        original_bindings = query(destination, original_bindings_sql)
     selected = 'definition->>\'source\'=' + sql_literal(identity)
     for pages in range(1, 1025):
         cli('index', path, '--once')
@@ -118,11 +131,22 @@ def run():
                             " AND split_part(c.template_fqn,':',2)=" + sql_literal(t['module']) +
                             " AND split_part(c.template_fqn,':',3)=" + sql_literal(t['entity']) + ')'
                             for t in config['templates'])
+    source_select = (
+        "SELECT c.contract_id,c.payload FROM public.active(NULL," + str(int(boundary)) + ") c "
+        "WHERE NOT c.divulged_only AND c.payload_type::text='template' AND "
+        f'c.witnesses && {parties} AND ({selection})')
+    if reconciliation:
+        source_select += ' ORDER BY c.contract_id LIMIT 129'
     source_rows = json.loads(query(environment[config['source_database_env']],
-        "SELECT COALESCE(jsonb_agg(jsonb_build_object('contractId',c.contract_id,'payload',c.payload) ORDER BY c.contract_id),'[]') "
-        f'FROM public.active(NULL,{int(boundary)}) c WHERE NOT c.divulged_only AND c.payload_type::text=\'template\' AND c.witnesses && {parties} AND ({selection})'))
-    if len(source_rows) < 5:
-        raise ValueError('Acceptance needs at least five existing PoC contracts; no ledger writes were performed')
+        "SELECT COALESCE(jsonb_agg(jsonb_build_object('contractId',c.contract_id,'payload',c.payload) "
+        "ORDER BY c.contract_id),'[]') FROM (" + source_select + ') c'))
+    minimum = 1 if reconciliation else 5
+    if len(source_rows) < minimum:
+        raise ValueError('Acceptance lacks the required existing PoC inventory; no ledger writes were performed')
+    reconciliation_context = None
+    if reconciliation:
+        import reconciliation as checks
+        reconciliation_context = checks.configure(config, directory, identity, cli, source_rows, boundary)
     token = bearer(environment[config['api']['token_key_env']], config['api']['issuer'], config['api']['audience'])
     base = f'http://127.0.0.1:{port}'
     child = None
@@ -144,6 +168,22 @@ def run():
 
     try:
         child = start()
+        if reconciliation:
+            report, expected = checks.verify(config, directory, source_rows, environment, base, token,
+                                             reconciliation_context, request, bearer, cli)
+            child.kill(); child.wait(); child = start()
+            status, repeated = request(base, token, '/v1/reconciliation/poc_terms/query', {})
+            if status != 200 or repeated != expected:
+                raise ValueError('Reconciliation changed after API restart at the same indexed boundary')
+            if original_digests != [hashlib.sha256(path.read_bytes()).hexdigest() for path in original_files] or query(destination, original_bindings_sql) != original_bindings:
+                raise ValueError('Original PoC files or model bindings changed during isolated acceptance')
+            report.update(original_poc_files_unchanged=True, original_poc_bindings_unchanged=True,
+                          binary_sha256=hashlib.sha256(support.BINARY.read_bytes()).hexdigest())
+            report.update(api_restart_equal=True, tested_commit=subprocess.check_output(
+                ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip())
+            write_private(directory / 'evidence.json', report)
+            print(json.dumps({'evidence_directory': str(directory), 'result': report}, indent=2))
+            return
         # A fixed opaque snapshot handle replaces the unsafe snapshot-then-start-now sequence.
         status, bootstrap = request(base, token, '/v1/subscriptions/bootstrap', {'name': 'atomic-baseline'})
         assert status == 200 and bootstrap['atomicHandoff'] is True
@@ -235,7 +275,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--allow-owned-writes', action='store_true',
                         help='Allow isolated destination ingestion, subscription progress and outbox retention')
+    parser.add_argument('--reconciliation', action='store_true',
+                        help='Check exact PoC policies through REST/GraphQL, without subscriptions or source writes')
     args = parser.parse_args()
     if not args.allow_owned_writes:
         parser.error('this acceptance modifies an isolated owned destination stream; use --allow-owned-writes')
-    run()
+    run(reconciliation=args.reconciliation)
