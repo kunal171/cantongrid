@@ -1,6 +1,6 @@
 $schema: https://api.gitbook.com/gitbook-docs.yaml
 site:
-  title: Shady Docs
+  title: CantonGrid
   structure:
     - type: space
       key: space-1
@@ -8,4 +8,4 @@ site:
       path: documentation
       default: true
       content:
-        directory: ./documentation
+        directory: ./docs
