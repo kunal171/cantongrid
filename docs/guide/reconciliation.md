@@ -1,285 +1,135 @@
 # Reconciliation
 
-Available in **0.5.0-alpha.1**: offline exact
-policies, model-schema preflight and storage-only indexed per-contract checks.
-The CLI commands read explicit local files; the Rust storage interface below
-separately checks authorized indexed inputs. Neither infers economic correctness.
-No dependency, database migration or public API route is added.
+Prerelease 0.5 checks exact per-contract invariants (for example, collateral ≥
+liability) against indexed contracts.
+- **0.5.0-alpha.1:** offline policies, schema preflight and storage-level indexed
+  checks.
+- **0.5.0-alpha.2:** authenticated REST and GraphQL.
+- **What it doesn't do:** infer economic correctness or check totals across
+  contracts.
 
 ```bash
-cantongrid reconcile validate examples/reconciliation/backing-policy.json
-cantongrid reconcile evaluate examples/reconciliation/backing-policy.json examples/reconciliation/backing-fixture.json
-```
-
-[Examples](../../examples/reconciliation/README.md) include synthetic collateral
-backing and supply conservation. They are not deployed Daml/Outcomia scenarios.
-
-## Define a policy
-
-A strict version-1 document contains one `policy` with `name`, positive `revision`,
-`fields` and `checks`. Fields reuse the existing [model expressions](models.md):
-object-field paths, typed literals, checked add/subtract and supported multiply.
-Only required Int64 or Numeric outputs are allowed. Check operands name fields:
-
-```json
-{
-  "name": "collateral_backing",
-  "left": "collateral",
-  "operator": "gte",
-  "right": "liability"
-}
-```
-
-Operators are `eq`, `ne`, `lt`, `lte`, `gt` and `gte`. Both operands must have
-exactly the same scalar type and Numeric scale. Int64/Numeric mixed comparison,
-optional defaults, floating-point amounts, approximate equality and arbitrary SQL
-are unsupported. Asset/unit agreement is a developer assumption in this offline
-slice, not an inference made from matching Numeric scales.
-
-| Bound | Limit |
-| --- | --- |
-| Policy / fixture bytes | 64 KiB each |
-| Named fields | 1–32 |
-| Checks | 1–16, unique names |
-| Expression depth / total nodes | 16 / 256 across the whole policy |
-| Numeric scale / precision | 0–37 / at most 38 digits |
-
-Names follow the existing model identifier rules. Unknown schema fields,
-duplicate JSON keys, nonpositive revisions and unsupported operators/types fail
-validation. A policy fingerprint includes its revision and complete definition;
-formatting, field-map order and check order do not affect it. The compiler does
-not register identities persistently or enforce cross-file revision immutability.
-Use a new revision when a policy changes.
-
-## Interpret the result
-
-`validate` confirms only the policy definition and prints its identity/check count.
-`evaluate` prints `report.checks`, with a `fixtureComparison` for each named check:
-`satisfied`, `violated` or `unavailable`, plus a finite `errorCode` where needed.
-Missing/null values, wrong types/scales and arithmetic overflow make **all** checks
-unavailable rather than producing partial success. Required inputs never default
-to zero. Values above 2^53 and last-decimal-digit differences remain exact.
-
-Every report has:
-
-```json
-{
-  "status": "unverified",
-  "coverage": "supplied_fixture_only",
-  "sourceScope": null,
-  "sourceOffset": null,
-  "completeWithinConfiguredScope": false
-}
-```
-
-CLI success means a diagnostic was produced; it does not mean the comparisons
-were satisfied. Malformed policies, unsupported command shapes and local file
-read/encoding/size errors exit unsuccessfully. Commands never load runtime source
-configuration or obtain database/ledger permissions. Fixtures cannot override
-report evidence by supplying their own coverage or authorization claims.
-
-Reports include configured names, revision, fingerprint and finite codes; they
-omit payload values, paths, source parties, contract IDs and raw parser errors.
-Keep secrets out of configured policy/check names. The shared evaluator preserves
-existing model fingerprints and projection behavior.
-
-## Preflight a projected model schema
-
-```bash
-cantongrid reconcile preflight \
-  examples/reconciliation/backing-policy.json \
+cargo install cantongrid-cli --version 0.5.0-alpha.2 --locked
+cantongrid reconcile validate  examples/reconciliation/backing-policy.json
+cantongrid reconcile evaluate  examples/reconciliation/backing-policy.json examples/reconciliation/backing-fixture.json
+cantongrid reconcile preflight examples/reconciliation/backing-policy.json \
   examples/reconciliation/backing-model.json example-org synthetic_backing
 ```
 
-Select a model by name from the bounded catalog. Every policy field path must
-name exactly one projected field with the same required scalar type and Numeric
-scale. A model may read `private_balances.free` from a raw payload while exposing
-`free`; the policy must reference `free`. Nested/raw paths, missing fields,
-optional/type/scale mismatches and constant-only checks fail. Constants remain
-valid thresholds when the check also depends on a model field. All policy
-expressions are validated, including unused ones.
+The examples are synthetic collateral backing and supply conservation, not
+deployed scenarios.
 
-The diagnostic's `preflight.fingerprint` binds the full policy and model
-identities plus namespace. Changing the model filter, template, expression,
-revision or namespace changes it. Catalog formatting/order does not. The
-namespace uses the registry's syntax: 1–64 ASCII characters, an initial letter,
-then letters, digits, underscores or hyphens.
+## Policies
 
-`status: schema_compatible`, `sourceAccess: not_performed` and
-`activeBindingChecked: false` mean only offline schema compatibility. No model
-is installed or bound; no database state, source coverage or permissions are
-checked. Aggregate declarations still describe per-contract inputs here; no
-sum/group query is performed. This fingerprint is not an authorization token.
-Output includes configured model/namespace/policy identities; keep their names
-nonsecret. Errors omit raw catalog paths and definitions.
-
-## Indexed per-contract checks (Rust storage API)
-
-The same prerelease also implements `Store::read_reconciliation`:
-
-```rust
-let report = store.read_reconciliation(
-    &plan, &caller, &source_lease, &active_binding, &policy,
-)?;
-```
-
-This is the trusted backend interface used by the authenticated API below. Authenticate `CallerGrants` independently and obtain `SourceLease` from the
-existing trusted source checker. Select an exact `BoundModel` through current
-binding discovery; the read rechecks its installed definition and active revision.
-A policy/preflight document cannot provide any of these permissions.
-
-Reads require **every configured source party** for both source authority and the
-caller, before any data/count lookup. Narrow callers are denied regardless of
-input membership. One read-only repeatable-read transaction covers the completed
-schema041 prefix, retained journal coverage, fresh ingestion observation, active
-model, canonical inputs and native projection rows. A concurrent ingestion or
-model promotion cannot mix revisions within a report. Source leases are rechecked
-before and after commit; the API layer also reauthenticates current caller/source
-grants before encoding the response.
-
-Limits: 128 active canonical contracts for the selected template **before model
-filtering**, 8 MiB of canonical input plus expected projection encoding, existing
-model/policy expression limits and the destination's five-second statement
-timeout. Retained coverage uses the existing bounded temporal verifier (4,096
-batches, 8,192 events and 64 selection upgrades). Excess work, empty/all-filtered
-selections, partial snapshots/intervals, stale observations, missing history,
-changed bindings or inconsistent projections return
-`StoreError::ReconciliationUnavailable` without partial counts. Source/caller
-scope failures return `StoreError::Authorization`.
-
-Canonical reevaluation and native PostgreSQL record equality detect missing,
-different or extra contributions, including filtered/archived rows. No repair or
-freshness update is performed. Int64/Numeric values never pass through floats.
-
-A successful report contains configured policy/model identities,
-`definitionFingerprint`, exact string counts and these separate fields:
+A strict version-1 document has one `policy` with `name`, `revision`, `fields`
+and `checks`.
+- **Fields:** they reuse [model expressions](models.md) and must produce required
+  Int64 or Numeric values.
+- **Checks:** they compare two fields:
 
 ```json
-{
-  "status": "evaluated",
-  "comparison": "satisfied",
-  "coverage": "retained_indexed_prefix",
-  "completeWithinConfiguredScope": true,
-  "contracts": "2",
-  "checks": [
-    {"name": "collateral_backing", "satisfied": "2", "violated": "0", "unavailable": "0"}
-  ]
-}
+{ "name": "collateral_backing", "left": "collateral", "operator": "gte", "right": "liability" }
 ```
 
-`comparison` is unavailable if any required calculation fails; otherwise any
-violation dominates satisfaction. For example, one satisfied input and one
-arithmetic overflow yield unavailable, even though input coverage is complete.
-Coverage is only this exact model's selected per-contract inputs at a complete
-retained indexed prefix, not the latest ledger head or history before the initial
-snapshot. This does not check cross-contract totals, asset agreement or economic
-correctness. The definition fingerprint identifies schemas/formulas, not a source
-snapshot, replay cursor or signed receipt. Reports omit global offsets, contract
-IDs, witnesses, payloads and financial values; configured names must be nonsecret.
+**Rules.**
+- **Operators:** `eq`, `ne`, `lt`, `lte`, `gt` and `gte`.
+- **Types:** both sides must be the same type and scale.
+- **Not supported:** mixing Int64 and Numeric, defaults, floats, approximate
+  equality and SQL.
+- **Units:** matching scales don't prove that the assets or units match; that's
+  your assumption.
 
-Database controls use synthetic source authority with real owned PostgreSQL:
+**Limits.**
+- **Size:** at most 64 KiB per policy or fixture.
+- **Shape:** 1–32 fields and 1–16 checks.
+- **Expressions:** depth 16, with 256 nodes in total.
+- **Numbers:** scale 0–37, with at most 38 digits.
 
-```bash
-python3 scripts/dev.py storage up
-# Configure CANTONGRID_DESTINATION_URL for this owned test database; see quickstart.
-cargo test -p cantongrid-storage model_projection::reconciliation --locked --offline -- --ignored --test-threads=1
-python3 scripts/dev.py storage stop
-```
+**Fingerprint.**
+- **Coverage:** it covers the revision and the full definition, but not formatting
+  or order.
+- **Changes:** change a policy by bumping its revision.
 
-These storage controls are separate from the LocalNet evidence below. The API
-exposes the same bounded checks. Persisted findings, cross-model/group
-reconciliation and economic correctness checks remain later work.
+## Results
 
-## Authenticated API (0.5.0-alpha.2)
+**Offline (`evaluate`).**
+- **Per check:** each check reports `satisfied`, `violated` or `unavailable`.
+- **Bad input:** a missing value, wrong type or overflow makes **every** check
+  `unavailable`. Inputs never default to zero.
+- **Report header:** every report is `status: unverified` with
+  `coverage: supplied_fixture_only`.
+- **Exit code:** a successful exit means a diagnostic was produced, not that the
+  checks passed.
 
-Install with `cargo install cantongrid-cli --version 0.5.0-alpha.2 --locked` or build the matching tag with
-`cargo build -p cantongrid-cli --locked`. Add an optional
-setting to the existing runtime configuration:
+**Preflight.**
+- **Fields:** every policy field must name exactly one projected model field of
+  the same type and scale (use `free`, not `private_balances.free`).
+- **Passing result:** `status: schema_compatible` with `sourceAccess: not_performed`.
+  It's an offline schema check only.
+- **Fingerprint:** `preflight.fingerprint` ties the policy, the model and the
+  namespace together.
+
+**Indexed (`Store::read_reconciliation`, and the API).**
+- **Access:** requires **every configured source party**, for both the source and
+  the caller. Narrower callers are denied.
+- **One snapshot:** a single repeatable-read transaction covers the completed
+  prefix, the active model, the canonical inputs and the projection rows, so a
+  promotion can't mix revisions.
+- **What it detects:** re-evaluating the canonical inputs catches missing,
+  different or extra projection rows.
+- **Limits:** 128 active contracts before model filtering, 8 MiB of input, a 5 s
+  statement timeout, and the historical-state budget.
+- **When it's unavailable:** over budget, empty or fully filtered, partial or
+  stale, or a changed binding. There are no partial counts in that case.
 
 ```json
-{"reconciliation_file": "reconciliation/policies.json"}
+{ "status": "evaluated", "comparison": "satisfied", "coverage": "retained_indexed_prefix",
+  "completeWithinConfiguredScope": true, "contracts": "2",
+  "checks": [{ "name": "collateral_backing", "satisfied": "2", "violated": "0", "unavailable": "0" }] }
 ```
 
-The path resolves relative to `runtime.json`. The
-[example manifest](../../examples/reconciliation/policies.json) contains 1–16
-uniquely named bindings, each with `namespace`, `model`, `model_revision`,
-`model_fingerprint`, `policy_file` and `policy_fingerprint`. Policy paths resolve
-relative to the manifest. Both files have a 64 KiB bound. Reuse one policy under
-different aliases if needed. Obtain the pins from model preflight and deliberately
-update them when promoting a model or policy revision. The example's zero package
-ID and namespace are synthetic; substitute your installed model's identity.
+- **Comparison:** `comparison` is unavailable if any calculation failed.
+  Otherwise any violation wins.
+- **What's left out:** reports never include offsets, contract IDs, payloads or
+  values, so keep configured names free of secrets.
 
-Run the usual `cantongrid serve runtime.json` with an organization caller bearer
-covering every configured source party. No additional SQL, migration or source
-grant is required. Omitting the setting disables the catalog; an invalid manifest
-or inactive/incompatible pin makes reconciliation unavailable. Other endpoints
-and ingestion do not load optional policy contents.
+## API (0.5.0-alpha.2)
 
-| Transport | Operation |
+Add `"reconciliation_file": "reconciliation/policies.json"` to `runtime.json`.
+- **Bindings:** the manifest holds 1–16 named bindings, each pinning `namespace`,
+  `model`, `model_revision`, `model_fingerprint`, `policy_file` and
+  `policy_fingerprint`.
+- **Where pins come from:** preflight. Update them when you promote a model or
+  policy.
+- **Bad or stale manifest:** an invalid manifest or a stale pin makes
+  reconciliation unavailable.
+
+| Request | Purpose |
 | --- | --- |
-| `GET /v1/reconciliation` | Sanitized configured identities |
-| `POST /v1/reconciliation/{name}/query` | Evaluate the named binding; body must be exactly `{}` |
-| `POST /reconciliation/graphql` | Typed `reconciliationPolicies` and `reconciliation(name: String!)` |
+| `GET /v1/reconciliation` | The configured identities |
+| `POST /v1/reconciliation/{name}/query` with `{}` | Evaluate one binding |
+| `POST /reconciliation/graphql` | `reconciliationPolicies`, `reconciliation(name)` |
 
-```bash
-curl -H "Authorization: Bearer $CANTONGRID_CALLER_TOKEN" \
-  -H 'Content-Type: application/json' -d '{}' \
-  http://127.0.0.1:8080/v1/reconciliation/backing/query
-```
+**Request rules.**
+- **Inputs:** requests can't supply formulas, paths, models or party claims.
+- **Order of checks:** authorization comes before any lookup.
+- **Limits:** responses are `no-store` and at most 2 MiB. GraphQL allows at most
+  2 roots.
 
-Use your configured API port. The [complete GraphQL query](../../examples/reconciliation/query.graphql)
-takes `{"name":"backing"}` variables and selects the same report as REST:
+**Status codes.**
+- **401:** an invalid caller.
+- **403:** an incomplete scope.
+- **400:** bad input.
+- **404:** an unknown name (only after the scope check).
+- **503:** something is unavailable.
 
-```graphql
-query Reconcile($name: String!) {
-  reconciliation(name: $name) {
-    comparison
-    contracts
-    checks {
-      name
-      satisfied
-      violated
-      unavailable
-    }
-  }
-}
-```
+An arithmetic `unavailable` is still an HTTP 200 diagnostic.
 
-Requests cannot supply formulas, paths, model selections, party claims or input
-filters. Authorization precedes catalog/policy lookup, including for unknown
-names. Admission and a final refresh check caller grants, exact source scope,
-policy identities, source plan and active model identities. Final serialization
-also rechecks local config/caller bindings and the live lease. No-store headers,
-existing request/database limits and the 2 MiB response bound apply. GraphQL
-allows at most two roots per operation, disables introspection and clears its
-entire `data` on any resolver error.
-
-REST uses 401 for invalid/changed caller bindings or a final delivery-guard
-failure, 403 for incomplete scope, 400 for unsupported input, 404 for an unknown
-alias after full-scope checks, and 503 for unavailable source/configuration/pins
-or indexed evidence. GraphQL validation/resolver errors use its `errors` array;
-always inspect it. An arithmetic `comparison: unavailable` is a successful HTTP
-200 diagnostic with complete inputs, using the storage semantics above.
-
-## Verify retained LocalNet contracts
-
-With this checkout and the existing PoC source/destination running:
-
-```bash
-cargo build -p cantongrid-cli --locked
-python3 examples/operations/localnet.py --allow-owned-writes --reconciliation
-```
-
-Commit reviewed changes first so the evidence identifies a clean source commit.
-The helper uses existing contracts and read-only Ledger/PQS rights, writes a new
-isolated destination stream/model namespace, and preserves the original PoC files
-and bindings. It compares Ledger and PQS inventories at the same boundary, then
-checks term arithmetic through both APIs, a deliberate violation/restoration,
-narrow-scope denial, isolated caller revocation and API restart. The independent
-Ledger control refuses 100 or more stream entries; no inventory is truncated to
-produce success. It submits no ledger commands or rights changes.
-
-Full private reports/configuration remain under `.local/operations`; only the
-[sanitized evidence](../../examples/reconciliation/localnet-evidence.json) contains
-reviewable counts, booleans and source/binary identities. Seven retained contracts
-passed; these are unfunded term checks, not a collateral/trading demonstration.
+**LocalNet check:**
+`python3 examples/operations/localnet.py --allow-owned-writes --reconciliation`.
+- **Method:** it compares the Ledger and PQS inventories at one boundary, checks
+  both APIs, a deliberate violation, a narrow-scope denial, a revocation and a
+  restart.
+- **Writes:** it makes no ledger writes.
+- **Result:** 7 retained PoC contracts passed. These were unfunded term checks,
+  not collateral.
