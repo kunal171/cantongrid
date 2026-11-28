@@ -47,4 +47,4 @@ synthetic LF signatures. The second verifies the public CLI with the built PoC
 DAR, JSON/summary/bundle parity, exact sample comparison and overwrite refusal.
 It is an offline unchanged-DAR baseline, not evidence of a deployed upgrade.
 
-See the [guide](../../docs/guide/upgrade-impact.md) for report fields and activation gates.
+See the [guide](../../docs/guide/upgrades.md#analyse-impact) for report fields and activation gates.

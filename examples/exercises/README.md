@@ -1,6 +1,6 @@
 # Exercise evidence fixture (M0)
 
-Generic Daml controls for [source feasibility](../../docs/design/exercise-source.md).
+Generic Daml controls for [source feasibility](../../docs/design/exercises.md).
 This example has no tokens, markets or Outcomia-specific processing.
 
 | Control | Expected IDE-ledger result | What still needs source verification |
@@ -134,7 +134,7 @@ both generic and Outcomia runs. Restricted protocol observers do not acquire
 visibility into an unindexed market endpoint. Transient creations can support
 internal proof but do not become materialized public contracts.
 
-See the [lineage guide](../../docs/guide/lineage.md) for configuration, partial
+See the [lineage guide](../../docs/guide/composition.md#direct-lineage) for configuration, partial
 coverage and endpoint examples. Raw identifiers and credentials stay under
 ignored `.local/`; the public evidence contains counts only. Helpers stop their
 exporter and API child; stop LocalNet and both PostgreSQL services separately,

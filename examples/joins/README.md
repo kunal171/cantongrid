@@ -18,7 +18,7 @@ cargo build -p cantongrid-cli --locked
 For live use, resolve actual package metadata, select both templates and
 register/install/bind both revisions in one namespace. No DAR upload, new party,
 grant change or ledger transaction is needed for the offline commands above.
-The [guide](../../docs/guide/joins.md) covers runtime queries and publication.
+The [guide](../../docs/guide/composition.md#typed-inner-joins) covers runtime queries and publication.
 
 A matching reference remains an application declaration, including a forged
 reference. It never becomes M2 source ancestry. A source observer cannot read a

@@ -19,7 +19,7 @@ This crate verifies the source user's current party grants. API callers require
 separate authentication and grant checks. Only the configured loopback LocalNet
 JSON Ledger API profile is supported in this release.
 
-See the [source setup](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet-source.md)
+See the [source setup](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet.md)
 for endpoint, user and scope configuration.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)

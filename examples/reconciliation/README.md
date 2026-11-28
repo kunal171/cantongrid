@@ -44,13 +44,13 @@ cantongrid reconcile preflight examples/reconciliation/backing-policy.json examp
 
 This returns `schema_compatible` with `activeBindingChecked: false`; it does not
 check actual indexed contracts. The zero package ID is a placeholder, not a DAR.
-See the [preflight guide](../../docs/guide/reconciliation.md#preflight-a-projected-model-schema).
+See the [preflight guide](../../docs/guide/reconciliation.md#results).
 
 The matching copies under crate `assets/reconciliation` keep registry-package
 tests self-contained. `scripts/dev.py release check` checks them against these
 canonical example files. See the [policy guide](../../docs/guide/reconciliation.md).
 
-The [Rust storage interface](../../docs/guide/reconciliation.md#indexed-per-contract-checks-rust-storage-api)
+The [Rust storage interface](../../docs/guide/reconciliation.md#results)
 also checks one exact active model against complete indexed inputs. Its database
 tests use these synthetic declarations, explicit filters and mock source grants.
 No DAR is deployed and no LocalNet/remote reconciliation claim is made.
@@ -58,4 +58,4 @@ No DAR is deployed and no LocalNet/remote reconciliation claim is made.
 Alpha.2 adds an optional authenticated API. [policies.json](policies.json)
 pins this synthetic model/policy; replace its identities with your actual preflight
 output. [query.graphql](query.graphql) is the complete typed request, exercised by
-the HTTP regression test. See [API setup](../../docs/guide/reconciliation.md#authenticated-api-050-alpha2).
+the HTTP regression test. See [API setup](../../docs/guide/reconciliation.md#api-050-alpha2).

@@ -26,9 +26,9 @@ For a configured live project, `cantongrid index runtime.json` ingests contracts
 and `cantongrid serve runtime.json` serves authenticated REST/GraphQL.
 `cantongrid models` validates projections and generates SQL, TypeScript and
 GraphQL definitions. Source credentials and database setup are separate steps;
-follow the [LocalNet PoC](https://github.com/kunal171/cantongrid/blob/main/docs/guide/poc.md).
+follow the [LocalNet PoC](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet.md#the-poc).
 
-Version alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/inspector.md):
+Version alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/operations.md#inspector):
 authorized transaction/projection evidence and sanitized local diagnostics.
 `cantongrid sync plan` reports upgrade dependencies and rebuild/API impact;
 `sync summary` and `sync evaluate` provide offline review and redacted sample checks.

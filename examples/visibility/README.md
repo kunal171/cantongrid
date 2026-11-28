@@ -11,5 +11,5 @@ cd examples/visibility
 ~/.dpm/bin/dpm build
 ```
 
-The package targets LF 2.1. Generated `.daml/` files are ignored. For local deployment and authorization checks, use the [PoC setup](../../docs/guide/poc.md).
+The package targets LF 2.1. Generated `.daml/` files are ignored. For local deployment and authorization checks, use the [PoC setup](../../docs/guide/localnet.md#the-poc).
 Recorded results are in [verification](../../docs/verification.md).

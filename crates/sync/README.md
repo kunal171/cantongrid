@@ -11,7 +11,7 @@ bundle generation; no rename or policy update is inferred.
 samples and returns sanitized findings without values. `impact_summary` provides
 a short review alongside the machine-readable report.
 
-See the [upgrade impact guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/upgrade-impact.md)
+See the [upgrade impact guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/upgrades.md#analyse-impact)
 and [example](https://github.com/kunal171/cantongrid/tree/main/examples/upgrade-impact).
 
 It does not change databases, source grants

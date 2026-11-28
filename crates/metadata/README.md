@@ -20,7 +20,7 @@ Only LF 2.1 is supported. Qualified records, aliases, templates/choices and
 interfaces retain exact package identities and type arguments. The parser checks
 ZIP safety, payload hashes, signature references and fixed resource bounds.
 
-See the [metadata guide](https://github.com/kunal171/cantongrid/blob/feat/dar-metadata/docs/guide/metadata.md)
+See the [metadata guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/upgrades.md#inspect-a-dar)
 for the output contract, limits and unsupported operations.
 Install the matching CLI version for the metadata inspection commands.
 

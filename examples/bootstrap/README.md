@@ -1,7 +1,7 @@
 # Bootstrap consumer example
 
 Use the 0.4.0 API and owned migration 012. See the
-[bootstrap guide](../../docs/guide/bootstrap.md) for the protocol and limits.
+[bootstrap guide](../../docs/guide/delivery.md#bootstrap) for the protocol and limits.
 `client.ts` contains transport/endpoint methods; `consumer.ts` contains the
 baseline-to-feed sequence. No npm runtime packages are required.
 
