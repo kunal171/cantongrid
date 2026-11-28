@@ -1,4 +1,4 @@
-# CLI reference
+# Commands and fixtures
 
 Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 `target/debug/cantongrid --help`. [Quickstart](guide/quickstart.md) covers PATH setup.
@@ -50,12 +50,45 @@ Build with `cargo +1.100.0 build -p cantongrid-cli --locked` and run
 | `models rebuild cancel <runtime.json> <job>` | Request bounded cleanup before activation |
 | `models install <project> <model-name> <revision> --database-env <variable>` | Create/verify a private empty table and link its revision; no activation |
 
-Arguments and ordering are strict. Credentials are read from explicitly named
-`CANTONGRID_*` variables. Fixture documents are bounded to 8 MiB; runtime/model
-configuration to 64 KiB. Unknown/duplicate fields and unsupported versions fail
-with redacted errors. Runtime, fixture and model JSON are different schemas.
+**Input rules.**
+- **Arguments:** argument order is strict.
+- **Credentials:** read only from explicitly named `CANTONGRID_*` variables.
+- **Size limits:** fixtures are capped at 8 MiB, and runtime and model JSON at
+  64 KiB.
+- **Validation:** unknown or duplicate fields and unsupported versions fail with
+  redacted errors.
+- **Schemas:** runtime, fixture and model JSON are different schemas.
 
-Workflows: [fixtures/PostgreSQL](guide/quickstart.md), [LocalNet](guide/localnet-source.md),
-[API](guide/api.md), [models](guide/models.md). `dev`, `doctor` and top-level `status` are not implemented.
-Subscription operations use the [REST delivery API](guide/delivery.md). Generated model reads use `/models/graphql`;
-see the [PoC](guide/poc.md) for a released example.
+Workflows are in [quickstart](guide/quickstart.md), [LocalNet](guide/localnet.md),
+[API](guide/api.md) and [models](guide/models.md).
+
+## Fixture format
+
+Fixtures are synthetic, complete create and archive histories. They never contact
+Canton or authenticate anyone. See `examples/fixtures`.
+
+**`cantongrid.json`.**
+- **Versions:** `version`, `model_version` and `payload_schema_version` are 1, with
+  adapter `fixture`.
+- **Source fields:** an explicit source, network and generation, unique parties,
+  and a relative path to the events file.
+- **Templates:** exact 64-character lowercase package IDs and module/entity names,
+  selecting both create and archive events.
+- **Rejected:** wildcards, live credentials and model declarations.
+
+**Payloads.**
+- **Types:** tagged Text, Party, Bool, Int64, Numeric, Optional, Enum, List and
+  Record values.
+- **Numbers:** they stay canonical strings, with scale 0–37 and 38 digits.
+- **Not a Ledger format:** this isn't the Ledger API wire format.
+
+**Replay.**
+- **Staging:** each batch is staged before it's published.
+- **Duplicates:** an exact duplicate does nothing.
+- **Atomic failures:** conflicting identities, contract reuse, unknown or repeated
+  archives, and out-of-scope evidence fail atomically.
+- **Positions:** ordered by delivery.
+- **Visibility:** reads require every visibility clause to intersect the caller and
+  the source, and `--party` simulates this.
+- **Not supported:** history must start at the origin. Orphan archives, snapshots,
+  exercises and reassignments aren't supported.
