@@ -15,7 +15,7 @@
 - Aggregate reads require callers to cover the complete configured source-party
   scope before any group read. Hiding groups from partial-scope callers can reveal
   hidden membership through disappearance; do not replace this guard with row filtering.
-  See docs/guide/aggregates.md for the implemented count/sum slice and evidence.
+  See docs/guide/models.md#aggregates for the implemented count/sum slice and evidence.
 - Implement the indexer runtime, processing, storage and APIs in Rust. Python
   scripts are local development/verification helpers, not the product runtime.
 - Product: general-purpose, Daml-first Canton indexing infrastructure. Outcomia

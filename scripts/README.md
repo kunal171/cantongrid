@@ -53,5 +53,5 @@ indexer destination. The Outcomia command and its separate write opt-in are in
 [the example guide](../docs/guide/outcomia.md).
 
 For shutdown order, volume retention and log limits, see [operations](../docs/guide/operations.md).
-See [setup](../docs/guide/localnet-source.md), [operations](../docs/guide/operations.md)
+See [setup](../docs/guide/localnet.md), [operations](../docs/guide/operations.md)
 and [verification](../docs/verification.md).

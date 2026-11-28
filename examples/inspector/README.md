@@ -15,7 +15,7 @@ An invalid finding is a successful diagnostic command (exit 0); malformed comman
 arguments, unavailable files/models or source authorization produce a nonzero exit.
 
 To export a finding, redirect stdout to a private local file. The inspector does
-not attach payloads or logs automatically. [Guide](../../docs/guide/inspector.md).
+not attach payloads or logs automatically. [Guide](../../docs/guide/operations.md#inspector).
 
 Owned PostgreSQL/API controls:
 

@@ -31,13 +31,13 @@ for a complete definition and lifecycle.
 
 Version alpha.4 also supports versioned declared relationships over current model
 projections, with independently authorized endpoints. See the
-[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/relationships.md).
+[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/composition.md#declared-relationships).
 
 Version alpha.4 also includes explicit typed inner joins over declared relationships,
 with selected columns and independent input authorization. See the
-[join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/joins.md).
+[join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/composition.md#typed-inner-joins).
 
-Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/inspector.md):
+Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/operations.md#inspector):
 authorized transaction/projection evidence and sanitized local diagnostics.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)

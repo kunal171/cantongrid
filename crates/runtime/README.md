@@ -23,7 +23,7 @@ cantongrid serve runtime.json
 ```
 
 These require a prepared runtime configuration and databases; they are not a
-standalone fixture. Follow the [LocalNet guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet-source.md)
+standalone fixture. Follow the [LocalNet guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet.md)
 and [API guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/api.md).
 
 Authenticated model queries are available through `/models/graphql`. Alpha.6 adds
@@ -35,17 +35,17 @@ an atomic snapshot/feed handoff. See the
 Opt-in direct lineage is available through `/v1/contracts/{contractId}/lineage`
 and `contractLineage` on the generic GraphQL API. Responses contain partial
 one-hop evidence, with caller and source checks before delivery. See the
-[lineage guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/lineage.md).
+[lineage guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/composition.md#direct-lineage).
 
 Version alpha.4 also supports versioned declared relationships over current model
 projections, with independently authorized endpoints. See the
-[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/relationships.md).
+[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/composition.md#declared-relationships).
 
 Version alpha.4 also includes explicit typed inner joins over declared relationships,
 with selected columns and independent input authorization. See the
-[join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/joins.md).
+[join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/composition.md#typed-inner-joins).
 
-Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/inspector.md):
+Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/operations.md#inspector):
 authorized transaction/projection evidence and sanitized local diagnostics.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)
@@ -63,9 +63,9 @@ for source checks, publication gates, resume/cancel and model rollback.
 Alpha.7 adds `POST /v1/subscriptions/bootstrap` and
 `GET /v1/subscriptions/{id}/snapshot`. The source offset stays private; snapshot
 and feed cursors bind independently to the same authorized subscription. See the
-[bootstrap guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/bootstrap.md)
+[bootstrap guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/delivery.md#bootstrap)
 for migration 012, retries, retention gaps and application transaction requirements.
 
 Version 0.5.0-alpha.2 adds an optional `reconciliation_file` manifest and authenticated
 configured reconciliation in REST/GraphQL, with full source/caller scope and final
-configuration/revision checks. [Setup and bounds](https://github.com/kunal171/cantongrid/blob/main/docs/guide/reconciliation.md#authenticated-api-050-alpha2).
+configuration/revision checks. [Setup and bounds](https://github.com/kunal171/cantongrid/blob/main/docs/guide/reconciliation.md#api-050-alpha2).

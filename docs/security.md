@@ -1,124 +1,84 @@
-# Authorization and private data
+# Security
 
-## Source and caller access
+Report vulnerabilities through
+[private reporting](https://github.com/kunal171/cantongrid/blob/main/SECURITY.md).
 
-The Ledger credential authorizes ingestion. A separate organization HS256 bearer
-identifies an API caller; its current grants must be a nonempty subset of the
-configured source parties. Tokens, filters and model definitions cannot add rights.
-The current profile is one organization on numeric loopback with the default
-identity provider. See [API setup](guide/api.md).
+## Two independent authorities
 
-The source checker requires an active user and the exact configured CanReadAs set.
-Leases last at most 15 seconds and cannot outlive the credential. Failed renewal
-clears cached authorization. Unknown rights or unhealthy PQS deny copying and
-serving even when SQL still contains rows. Remote revocation is not instantaneous
-during disconnection. Rights are compared directly; the tested Ledger
-resourceVersion did not change when rights changed.
+- **Source:** the Ledger credential authorizes ingestion.
+  - **Rights check:** it requires an active user and exactly the configured
+    CanReadAs set.
+  - **Leases:** they last at most 15 s and never outlive the credential.
+  - **Failed renewal:** clears the cached authorization.
+  - **Unknown rights or unhealthy PQS:** copying and serving are denied, even if
+    the rows are still in SQL.
+  - **Disconnection:** remote revocation isn't instant while disconnected.
+- **Caller:** a separate organization HS256 bearer identifies the API caller.
+  - **Grants:** the caller's current grants must be a non-empty subset of the
+    source parties.
+  - **No widening:** tokens, filters and model definitions can't add rights.
+  - **Reloading:** grants reload on every request, so disabling a principal denies
+    its existing bearer.
 
-## Visibility and delivery
+**Current profile:** one organization, numeric loopback and the default identity
+provider.
 
-SQL applies source/caller visibility before counts and pagination. All private
-transports check current source/caller authorization before and after response
-encoding; a failed final guard discards the whole body. Local grants reload for
-each request; removing or disabling a principal denies its existing bearer.
+## Visibility
 
-A shared A-or-B contract differs from a row combining A-only and B-only inputs:
-the latter requires both permissions. Typed inner joins check both active endpoint
-policies before counts, fanout, selected-value encoding and paging. Their cursors
-hash only the caller-visible selected result: a hidden update cannot invalidate
-someone else's page. Outer/anti joins are not exposed. Aggregates still require
-the complete configured source-party scope. Streams must retain every
-input's visibility dependencies.
-
-Schema041 archives have empty witnesses. The prior-create policy requires an
-observed matching creation and current rights; absence, pruning or revocation
-never fabricates an archive. History is reauthorized on read. Automatic erasure
-is not implemented.
+- **Order:** SQL applies source and caller visibility before counts and paging.
+- **Final guard:** every private transport checks authorization before and after
+  encoding. If the final guard fails, the whole body is discarded.
+- **Combined rows:** a row built from A-only and B-only inputs needs both
+  permissions. That's different from a shared contract visible to A or B.
+  - **Joins:** they check both endpoints before counts, fanout and encoding.
+  - **Join cursors:** they hash only the visible result, so hidden updates can't
+    invalidate them.
+  - **Aggregates:** they require the full source scope.
+- **Archives:** an archive needs a create that was observed earlier, plus current
+  rights. Absence, pruning or revocation never fabricates an archive.
+- **History:** reauthorized on every read. There's no automatic erasure.
+- **Delivery:**
+  - **Private IDs:** subscriptions and receipts use random IDs. JWT signatures
+    don't encrypt claims, so global outbox positions and baseline offsets never
+    appear in cursors or responses.
+  - **Gaps:** pruning only hidden events never creates a public gap.
+- **Upgrades:** while an upgrade publishes or cancels, reads, discovery, model
+  queries and ingestion on that stream are gated.
+  - **Staged pages:** they stay private.
 
 ## Tokens and limits
 
-- API and cursor keys are distinct, at least 32 bytes and different from the source
-  credential. Issuer/audience match exactly; bearer lifetime is at most one hour.
-- Signed cursors bind principal, source/plan, grants, query and expiry; model cursors
-  also bind namespace, revision and normalized filters/sort. They last at most
-  60 seconds and no longer than the bearer. They are signed, not encrypted.
-- Responses use `Cache-Control: no-store`. Public records/errors omit operator
-  witness sets, persistence envelopes and internal source keys.
-- Pages contain 1–25 rows; requests are limited to 16 KiB and complete encoded
-  responses to 2 MiB. GraphQL depth is 8, complexity 100; model operations have at
-  most two row resolvers. Mutations, subscriptions and introspection are disabled.
-- Admission occurs before body extraction: at most 16 concurrent requests with a
-  30-second deadline, plus at most 16 database tasks. Cancellation does not release
-  a database slot until its blocking task ends.
+| Control | Value |
+| --- | --- |
+| API and cursor keys | Distinct, at least 32 bytes, different from the source credential |
+| Bearer | Exact issuer and audience, at most 1 h |
+| Cursors | Signed (not encrypted), bound to principal, source, grants, query and expiry; at most 60 s |
+| Responses | `Cache-Control: no-store`; no witness sets, envelopes or internal keys |
+| Page / request / response | 1–25 rows / 16 KiB / 2 MiB |
+| GraphQL | Depth 8, complexity 100, 2 model row resolvers; no mutations, subscriptions or introspection |
+| Admission | 16 concurrent requests (counted before reading the body), 30 s deadline, 16 database tasks |
+| Long polls | Separate admission limits, reauthorized every second |
 
 ## Operator boundary
 
-Registration, installation and rebuild commands require the owned database role;
-there are no public registry/job mutation APIs. Namespaces and parent-contract
-foreign keys preserve identity, not permission. Model reads join canonical
-witnesses; staged rows remain private until guarded activation.
+- **Trusted roles:** the database owner and the local operator are trusted.
+  - **Owner-only commands:** registration, installation and rebuilds need the owned
+    database role. There's no public API for registry changes.
+- **Destination checks:**
+  - **Grants:** grants to anyone other than the owner on schemas, relations,
+    sequences or columns are rejected, but never revoked automatically.
+  - **Projections:** the compiled projection schema is verified.
+- **Rollback:** failed evaluation, drift or an expired lease rolls back progress.
+- **Migrations:** applied migrations are immutable.
+- **Source SQL:** keep it SELECT-only and separate from the destination.
+- **Secrets:** never log credentials, payloads or party IDs. Never widen source
+  access to restore availability.
+- **Helpers:** use loopback with no proxies or redirects, and write files with
+  atomic 0600 replacement.
+- **Backups:** they contain private data, so keep them owner-only.
 
-Destination checks reject nonowner schema, relation, sequence and column grants.
-Projection checks also verify the compiled physical schema. Activation and model
-writes share the canonical source lock; failed evaluation, drift or expired
-leases roll back progress. Applied migrations are immutable.
+Remote preflight checks HTTPS, grants and restricted access. It doesn't prove
+network identity.
 
-The database owner and local operator remain trusted and can alter SQL/configuration.
-Keep source SQL SELECT-only and separate from the destination. Store credentials
-and generated state in operator-controlled directories; never log credentials,
-private payloads or party IDs. Helpers use loopback without proxies/redirects and
-atomic 0600 file replacement. Never broaden source access to recover availability.
-
-[Verification](verification.md#security-regressions) records the review findings,
-controls and limitations. PostgreSQL support is tracked in
-[operations](guide/operations.md#postgresql-support).
-Report vulnerabilities through [private reporting](https://github.com/kunal171/cantongrid/blob/main/SECURITY.md).
-
-## Package upgrade staging
-
-Upgrade manifests bind the exact source/party selection, completed checkpoint,
-artifact and installed model fingerprints. Source operations remain read-only.
-Private staged pages require current source authorization and never supply caller
-grants. During publication/cancellation, generic reads, discovery, model queries
-and ingestion are gated for that stream. Each page is bounded; the final transaction
-promotes the complete selection and model aliases. Cancellation removes only
-unpublished rows. Completed upgrades retain canonical history and use model
-rebuilds for rollback. Outbox entries remain private; stream delivery must
-respect this gate before exposing staged events.
-
-## Alpha.6 temporal and delivery controls
-
-Canonical historical reads use current grants and bounded retained evidence; they
-never infer historical model bindings. Durable lifecycle subscriptions bind a
-private random ID and random receipt cursors to the current caller/source/policy.
-JWT signatures do not encrypt claims, so global outbox ordinals are never included.
-At-least-once processing requires application deduplication before ACK. Receipt
-and subscription budgets cap retained private consumer metadata.
-
-Pruning classifies visible unacknowledged loss separately for each subscriber;
-hidden-only pruning cannot create public false gaps. Long polls have independent
-admission limits and reauthorize periodically. Source health and an ingestion
-heartbeat within 30 seconds are both required for live readiness. Operator counters
-are not returned by public readiness or party-scoped feeds.
-
-Remote preflight validates configured HTTPS/current grants and restricted source
-access, not independent network identity or participant pairing. Local certificate
-controls do not establish TestNet acceptance. Backups contain private data and
-must remain owner-only; recovery targets a separate empty restricted-owner database.
-No atomic snapshot/feed handoff or production disaster-recovery guarantee is claimed.
-
-## Bootstrap baseline privacy (alpha.7 source)
-
-The private baseline offset and delivery anchor are committed under the ingestion
-writer lock. API clients receive an opaque subscription-bound snapshot URL;
-responses and signed cursors do not expose global offsets, retained floors or
-queue ordinals. Snapshot and feed cursors have separate subscription-bound domains.
-Current authorities and the exact stored party set are required on each request.
-
-Retrying a live, unconsumed bootstrap cannot recapture a later baseline. Once
-post-baseline work is ACKed, that snapshot cannot be used as a new reset. Visible
-retention loss and unsupported coverage fail explicitly; hidden-only pruning does
-not create false gaps. Metadata cleanup bounds name idempotency to the subscription
-lifetime. Clients need durable local staging/progress and must not reuse expired
-or cancelled names for automatic retries. No exactly-once cross-database guarantee
-is made. See [bootstrap](guide/bootstrap.md).
+Fixed findings and their controls are listed in
+[verification](verification.md#security-regressions-fixed-in-alpha5).

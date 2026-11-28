@@ -1,267 +1,143 @@
-# API authentication and queries
+# API
 
-Start the [LocalNet worker](localnet-source.md) and serve on the default
-`127.0.0.1:8080` bind. Source credentials and API caller identity are independent.
-The server has no login/token-issuing endpoint.
+`cantongrid serve` listens on `127.0.0.1:8080`.
+- **Two identities:** source credentials and API caller identity are separate.
+- **No login:** the server has no login or token endpoint.
+- **Before you start:** run the [LocalNet worker](localnet.md) first.
 
 ## Keys and grants
-
-Generate local keys once and supply the same values to the relevant processes:
 
 ```bash
 export CANTONGRID_API_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
 export CANTONGRID_CURSOR_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
 ```
 
-Each key must contain at least 32 bytes and differ from the other key and source
-credential. Keep keys out of git and browsers. In `.local/my-app/grants.json`:
+- **Key rules:** each key is at least 32 bytes and differs from the other key
+  and from the source credential.
+- **Where keys live:** keep keys out of git and browsers.
+
+`grants.json` maps bearer subjects (not Canton parties) to parties in the source
+scope:
 
 ```json
-{
-  "version": 1,
-  "epoch": 1,
-  "principals": {
-    "alice": {"enabled": true, "parties": ["replace-with-authorized-party"]}
-  }
-}
+{ "version": 1, "epoch": 1,
+  "principals": { "alice": { "enabled": true, "parties": ["<authorized party>"] } } }
 ```
 
-Replace the party placeholder with an exact source-scope member. `alice` is the
-bearer's subject, not a Canton party. Grants are a nonempty, duplicate-free subset.
-Disable/remove a principal to revoke access. For updates, increment `epoch` and
-atomically replace the owner-only file; old cursors become invalid.
+- **Revoking:** disable or remove a principal.
+- **Updating:** increase `epoch` and replace the file atomically. Old cursors
+  stop working.
 
-Use an organization-issued HS256 bearer with exact configured issuer/audience,
-`sub`, `iat` and `exp`. Lifetime is at most one hour, with no expiry leeway.
-For a local operator demo, this standard-library snippet creates a 15-minute bearer:
+**Bearer tokens.**
+- **Format:** callers send an HS256 bearer from your organization, with the exact
+  issuer and audience, `sub`, `iat` and `exp`.
+- **Lifetime:** at most 1 hour, with no expiry leeway.
+- **Generating:** CantonGrid doesn't issue tokens. For local tests, sign one
+  yourself with `CANTONGRID_API_KEY` (standard JWT HS256).
+
+## Generic contracts and history
 
 ```bash
-export CANTONGRID_CALLER_TOKEN="$(python3 - <<'PYTOKEN'
-import base64
-import hashlib
-import hmac
-import json
-import os
-import time
-
-
-def encode(value):
-    """Encode compact JSON as an unpadded JWT segment."""
-    raw = json.dumps(value, separators=(',', ':')).encode()
-    return base64.urlsafe_b64encode(raw).rstrip(b'=')
-
-
-now = int(time.time())
-message = encode({'alg': 'HS256', 'typ': 'JWT'}) + b'.' + encode({
-    'sub': 'alice', 'iss': 'your-organization', 'aud': 'cantongrid-api',
-    'iat': now, 'exp': now + 900,
-})
-signature = hmac.new(os.environ['CANTONGRID_API_KEY'].encode(), message, hashlib.sha256).digest()
-print((message + b'.' + base64.urlsafe_b64encode(signature).rstrip(b'=')).decode())
-PYTOKEN
-)"
+curl --fail-with-body -sS --get 'http://127.0.0.1:8080/v1/contracts' \
+  --data-urlencode 'limit=10' -H "Authorization: Bearer $CANTONGRID_CALLER_TOKEN"
 ```
 
-Match issuer/audience to runtime JSON. This is a local example, not an issuer
-service. Do not print the resulting bearer into reports. The server also needs
-current source rights, healthy PQS and an initialized destination.
+- **Endpoints:**
+  - **REST:** `/v1/contracts` for active contracts and `/v1/events` for history.
+  - **GraphQL:** `POST /graphql` with `activeContracts(limit, cursor)` and
+    `lifecycleEvents(limit, cursor)`.
+- **Response:** each returns `items`, `visibleTotal` (a decimal string),
+  `nextCursor` and `provenance`.
+- **Paging:** pass `cursor` until it is null. Pages hold 1–25 items (default 20).
+- **No overrides:** there's no party override and no SQL filter.
+- **GraphQL:**
+  - **Disabled:** mutations, subscriptions and introspection.
+  - **Errors:** check `errors` even on HTTP 200.
 
-## REST
+**Payloads.**
+- **Encoding:** payloads are tagged `raw_json` and keep the source text exactly.
+- **Numbers:** keep Int64 and Numeric values as strings, and never convert them
+  to a JavaScript `Number`.
+
+**Cursors.**
+- **Binding:** cursors are tied to the principal, grants, query and expiry.
+- **Lifetime:** at most 60 s, and never longer than the bearer.
+- **Rules:** never edit a cursor or share one between users.
+
+**Provenance.**
+- **Source:** source, network and generation.
+- **Progress:** `sourceLocalWatermark` and `historyFromOffset`.
+- **Freshness:** `observedAgeSeconds`.
+- **Coverage:** `bootstrapping`, `partial_history` or `unknown`.
+
+`recently_observed` means within 30 s; it doesn't mean zero ledger lag.
+
+## Model queries
+
+- **Catalog:** `GET /v1/models` lists active bindings with their `queryField`,
+  output types and operators. Being listed doesn't grant access to rows.
+- **Query:** `POST /v1/models/{namespace}/{name}/query`, or
+  `POST /models/graphql` with the generated root.
+  - **Schemas:** `models graphql` and `models typescript` emit the SDL and the
+    TypeScript interfaces.
+  - **Limits:** at most 2 model resolvers per request and 25 rows per page.
 
 ```bash
-curl --fail-with-body --silent --show-error \
-  --get 'http://127.0.0.1:8080/v1/contracts' \
-  --data-urlencode 'limit=10' \
-  --header "Authorization: Bearer $CANTONGRID_CALLER_TOKEN"
+curl --fail-with-body -sS 'http://127.0.0.1:8080/v1/models/demo/records/query' \
+  -H "Authorization: Bearer $CANTONGRID_CALLER_TOKEN" -H 'Content-Type: application/json' \
+  --data '{"limit":10,"filters":{"amount":{"gte":"1.20"},"note":{"isNull":false}},
+           "sort":[{"field":"amount","direction":"desc"}]}'
 ```
 
-Use `/v1/events` for lifecycle history. Both endpoints return `items`,
-`visibleTotal`, `nextCursor` and `provenance`. The total is a caller-scoped decimal
-string. To continue, put the returned cursor in `NEXT_CURSOR` and add
-`--data-urlencode "cursor=$NEXT_CURSOR"` to the same endpoint. Stop at null.
-Limits are 1–25, default 20. There is no party override or arbitrary SQL filter.
+**Filters.**
+- **Limit and logic:** up to 8 predicates, combined with AND.
+- **Operators:** every scalar supports `eq` and `ne`. Int64 and Numeric also
+  support `gt`, `gte`, `lt` and `lte`.
+- **Nulls:** `isNull` handles optional fields, and other comparisons leave out
+  null rows.
+- **Numbers:** they are strings, and scale is checked (`1.2` becomes `1.20`, while
+  `1.234` fails at scale 2).
+- **Strings:** at most 1,024 bytes.
 
-## GraphQL
+**Sorting.**
+- **Keys:** a single object or a list of 1–4 keys. GraphQL uses `sort` or
+  `orderBy`.
+- **Ordering:** native exact ordering, nulls last, then contract ID as the
+  tie-breaker.
+- **Cursor size:** sort keys that can't fit the 4 KiB cursor fail.
+- **Indexes:** none are created automatically.
 
-Save `.local/my-app/contracts.graphql`:
+**Counts and pages.**
+- **Counts:** apply visibility and filters, before pagination.
+- **Snapshots:** each request reads one database snapshot. Later pages see later
+  ingestion.
 
-```graphql
-query Contracts($limit: Int, $cursor: String) {
-  activeContracts(limit: $limit, cursor: $cursor) {
-    items
-    visibleTotal
-    nextCursor
-    provenance
-  }
-}
-```
+**Model cursors.**
+- **Binding:** a model cursor is bound to the normalized options, model revision,
+  principal, grants and source.
+- **Sharing:** equivalent REST and GraphQL queries can share it.
+- **Invalidation:** any change (options, a promotion, a revoked grant) fails closed.
 
-Package and send it without hand-escaping the query:
+| Status | Meaning |
+| --- | --- |
+| 400 | Bad input or cursor |
+| 401 | Invalid caller |
+| 404 | Unknown binding |
+| 429 | Overloaded |
+| 503 | Source or schema unavailable |
+| 504 | Request deadline |
 
-```bash
-python3 - <<'PYREQUEST'
-import json
-from pathlib import Path
+Every response is `no-store`. Transport budgets are in
+[security](../security.md#tokens-and-limits).
 
-path = Path('.local/my-app')
-request = {'query': (path / 'contracts.graphql').read_text(),
-           'variables': {'limit': 10, 'cursor': None}}
-(path / 'contracts-query.json').write_text(json.dumps(request, indent=2) + '\n')
-PYREQUEST
-curl --fail-with-body --silent --show-error 'http://127.0.0.1:8080/graphql' \
-  --header "Authorization: Bearer $CANTONGRID_CALLER_TOKEN" \
-  --header 'Content-Type: application/json' \
-  --data-binary @.local/my-app/contracts-query.json
-```
+## Other APIs
 
-Replace `activeContracts` with `lifecycleEvents` for history, using its own cursor.
-`items` and `provenance` are JSON scalars, not nested typed fields. `/graphql`
-exposes generic roots; use `/models/graphql` for generated model queries below.
-Check GraphQL `errors` even on HTTP 200. Mutations, subscriptions and introspection
-are disabled.
+Each has its own guide:
 
-## Results and pagination
-
-Contract payloads use tagged `raw_json` with exact inner source text. Preserve
-Int64, Numeric and offset strings; do not convert financial values to JavaScript
-`Number`. Use exact integer/decimal handling when calculations are needed.
-
-Cursors bind principal, grants, query kind and expiry. They last at most 60 seconds
-and no longer than the bearer. After expiry or grant changes, start a new page
-sequence. Never edit them or transfer them between users. Generic contract/history cursors
-remain endpoint-specific; matching model queries can share cursors as described below.
-
-Provenance reports source/network/generation, `sourceLocalWatermark`,
-`historyFromOffset`, `observedAgeSeconds` and coverage (`bootstrapping`,
-`partial_history`, `unknown`). `recently_observed` means within 30 seconds, not
-zero ledger lag. Responses are `no-store`; limits and policy are in
-[security](../security.md).
-
-## Generated model queries
-
-Typed model operations use `POST /models/graphql`.
-Use `models graphql` for the model SDL and `models typescript` for exact transport
-interfaces. `/graphql` above retains its generic contract/history schema.
-Model operations use the same independent caller/source checks and no-store policy,
-with a maximum of two model resolvers and 25 rows/page.
-
-## Filter and sort models
-
-Discover active bindings with authenticated `GET /v1/models`. It returns
-`{"models": [...]}`. Each entry contains namespace, name, revision, fingerprint,
-`queryField` and output field types/operators. `GET /v1/models/demo/records`
-returns one entry. The GraphQL `models` field exposes the same metadata.
-This is the organization's active catalog; listing a model does not grant access
-to its rows. Definitions, expressions, literal values and source paths stay private.
-
-Query the bound Visibility example through REST:
-
-```bash
-curl --fail-with-body --silent --show-error \
-  'http://127.0.0.1:8080/v1/models/demo/records/query' \
-  --header "Authorization: Bearer $CANTONGRID_CALLER_TOKEN" \
-  --header 'Content-Type: application/json' \
-  --data '{"limit":10,"filters":{"amount":{"gte":"1.20"},"note":{"isNull":false}},"sort":{"field":"amount","direction":"desc"}}'
-```
-
-For GraphQL, replace `MODEL_QUERY_FIELD` below with discovery's `queryField`
-and send the operation to `/models/graphql` using the request packaging above:
-
-```graphql
-query FilteredRecords($cursor: String) {
-  MODEL_QUERY_FIELD(
-    namespace: "demo"
-    limit: 10
-    cursor: $cursor
-    filters: { amount: { gte: "1.20" }, note: { isNull: false } }
-    sort: { field: "amount", direction: desc }
-  ) {
-    visibleTotal
-    nextCursor
-    fingerprint
-    items {
-      contractId
-      values { amount sequence note }
-    }
-  }
-}
-```
-
-`cantongrid models graphql <models.json>` and `cantongrid models typescript
-<models.json>` emit the filter/sort input definitions and TypeScript query
-interfaces. Both transports use these rules:
-
-- At most eight predicates, combined with AND. All scalar fields support `eq`
-  and `ne`; only Int64/Numeric support `gt`, `gte`, `lt`, `lte`.
-- Use `isNull: true` or `false` for optional fields. Other comparisons exclude
-  null rows, including `ne`. Null comparison arguments are rejected.
-- Financial and integer arguments are strings; booleans are JSON/GraphQL booleans.
-  Decimal scale is checked before SQL casts: `1.2` at scale 2 becomes `1.20`,
-  while `1.234` fails. Filter strings are limited to 1,024 UTF-8 bytes.
-- Sort one declared output field, `asc` by default. Nulls come last in either
-  direction; equal values use contract ID ascending. Without a sort field,
-  ordering is contract ID ascending. Numeric ordering uses native PostgreSQL types.
-- Counts include visibility and filters, before pagination. Page sizes remain
-  1–25, default 20. Each request reads one database snapshot; subsequent pages
-  reflect later ingestion and archives rather than retaining that snapshot.
-
-Pass the same filters/sort with the returned cursor. It binds normalized options,
-model revision, namespace, principal, grants, source and expiry. Equivalent decimal
-spellings share a query identity. Matching REST and model GraphQL queries can share
-cursors; changed options, promotions, revoked grants or invalid tokens fail closed.
-When upgrading from alpha.2, restart model pagination; the older cursor format
-is invalid.
-
-REST returns 400 for invalid query input/cursors, 404 for unknown bindings,
-401 for invalid callers and 503 for source/schema outages. Overload returns 429;
-the request deadline returns 504. GraphQL clients must also check `errors`.
-[Security](../security.md#tokens-and-limits) lists transport budgets. Sort keys
-that cannot fit the 4 KiB internal cursor fail without a partial page. No
-automatic indexes are created. Recorded query acceptance is in
-[verification](../verification.md#recorded-localnet-acceptance).
-
-The [aggregate API](aggregates.md#query) uses separate roots/cursors
-and requires the full configured source-party scope, including for single groups.
-
-## Compound row sorting
-
-REST `sort` accepts the existing object or an ordered list of one to four keys:
-
-```json
-{
-  "sort": [
-    {"field": "price", "direction": "desc"},
-    {"field": "orderId", "direction": "asc"}
-  ]
-}
-```
-
-GraphQL keeps `sort: {field: "price", direction: desc}` and adds
-`orderBy: [{field: "price", direction: desc}, {field: "orderId", direction: asc}]`.
-Use one argument per query. Generated TypeScript describes the REST object/list
-union; generated SDL includes both GraphQL arguments.
-
-Duplicate/unknown keys and lists longer than four fail validation. Each key uses
-native exact ordering and NULLS LAST in either direction; contract ID ascending
-breaks the final tie. Pagination binds the whole ordered tuple, directions, filters,
-principal and model/plan identity. A one-element array and its legacy object produce
-the same normalized query. Start fresh pages after upgrading from older binaries:
-old internal row-key formats are rejected rather than misread.
-
-## Direct lineage
-
-Release alpha.4 supports opt-in one-hop contract lineage
-through REST and the generic GraphQL API. See the [lineage guide](lineage.md)
-for configuration, queries, partial coverage and endpoint visibility rules.
-
-## Atomic bootstrap (0.4.0)
-
-`POST /v1/subscriptions/bootstrap` and
-`GET /v1/subscriptions/{id}/snapshot` pair a pinned canonical baseline with a
-durable lifecycle feed under current authority. They use opaque subscription-bound
-cursors and keep global source progress private. See [bootstrap](bootstrap.md)
-for the full sequence, migration 012, retry/expiry rules and failure responses.
-
-Alpha.2 source also provides [configured reconciliation](reconciliation.md#authenticated-api-050-alpha2)
-through REST and `/reconciliation/graphql`, using these caller keys/grants and
-requiring the complete configured source-party scope.
+| API | Guide |
+| --- | --- |
+| Lineage, relationships, joins, temporal reads | [composition](composition.md) |
+| Aggregates (full source scope required) | [models](models.md#aggregates) |
+| Durable subscriptions and bootstrap | [delivery](delivery.md) |
+| Reconciliation, REST and `/reconciliation/graphql` (0.5 alpha) | [reconciliation](reconciliation.md) |
+| Developer inspector | [operations](operations.md#inspector) |

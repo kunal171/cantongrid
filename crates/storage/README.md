@@ -29,7 +29,7 @@ binding and staged rebuilds are separate explicit operations.
 Version 0.4.0-alpha.4 also supports private exercise receipts through
 `Store::apply_exercise_page`; migration 009 commits their journal/outbox with
 the ordinary lifecycle checkpoint. See the repository's
-[receipt profile](https://github.com/kunal171/cantongrid/blob/main/docs/design/exercise-ingestion.md).
+[receipt profile](https://github.com/kunal171/cantongrid/blob/main/docs/design/exercises.md#m1-exercise-receipts).
 See the [PostgreSQL quickstart](https://github.com/kunal171/cantongrid/blob/main/docs/guide/quickstart.md).
 
 Opt-in `Store::apply_lineage_page` also commits typed creation evidence and
@@ -38,13 +38,13 @@ require both indexed endpoints and all proof dependencies to be visible.
 
 Version alpha.4 also supports versioned declared relationships over current model
 projections, with independently authorized endpoints. See the
-[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/relationships.md).
+[relationship guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/composition.md#declared-relationships).
 
 Version alpha.4 also includes explicit typed inner joins over declared relationships,
 with selected columns and independent input authorization. See the
-[join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/joins.md).
+[join guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/composition.md#typed-inner-joins).
 
-Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/inspector.md):
+Source alpha.5 adds the [read-only developer inspector](https://github.com/kunal171/cantongrid/blob/main/docs/guide/operations.md#inspector):
 authorized transaction/projection evidence and sanitized local diagnostics.
 
 [Repository](https://github.com/kunal171/cantongrid) · [Developer guide](https://shady-3.gitbook.io/cantongrid/)

@@ -4,7 +4,7 @@ This README describes the 0.5.0-alpha.2 prerelease.
 The Rust library contains source-neutral configuration, exact fixture values,
 visibility/lease decisions, lifecycle state and deterministic replay. It uses
 Serde/serde_json at the document boundary, with no network or database access.
-See [fixture contracts](https://github.com/kunal171/cantongrid/blob/main/docs/fixtures.md) and the [CLI](https://github.com/kunal171/cantongrid/blob/main/docs/cli.md).
+See [fixture contracts](https://github.com/kunal171/cantongrid/blob/main/docs/cli.md#fixture-format) and the [CLI](https://github.com/kunal171/cantongrid/blob/main/docs/cli.md).
 
 For one input record, an authorized caller may match any verified witness party.
 For a result derived from several inputs, the caller must match every input's

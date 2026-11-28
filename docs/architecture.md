@@ -1,8 +1,9 @@
 # Architecture
 
-The indexer and APIs are Rust. Python under `scripts/devtools` manages local
-infrastructure and verification. Applications supply selections and model
-mappings; the engine has no Outcomia-specific branches.
+- **Languages:** the indexer and APIs are written in Rust. Python under
+  `scripts/devtools` only manages local infrastructure and checks.
+- **Applications:** they supply template selections and model mappings. The
+  engine has no application-specific branches.
 
 ```mermaid
 flowchart LR
@@ -15,246 +16,146 @@ flowchart LR
     T --> D
 ```
 
-## Modules
-
 | Crate | Responsibility |
 | --- | --- |
-| `core` | Exact values, source identity, lifecycle, visibility and leases |
-| `postgres` | Restricted connections and redacted database errors |
-| `pqs` | Version-checked read-only snapshot/update paging |
-| `ledger` | Current source-user and grant checks |
-| `storage` | Owned migrations, state, history, checkpoints, outbox and projections |
-| `runtime` | Worker, caller authentication and REST/GraphQL |
-| `models` | Declarative definitions, exact evaluation and schema/client generation |
-| `metadata` | Bounded offline DAR/LF 2.1 signature extraction |
-| `sync` | Reviewed DAR-driven model/schema synchronization and compatibility reports |
-| `cli` | Command dispatch |
+| `core` | Exact values, source identity, lifecycle, visibility, leases, lineage proofs |
+| `postgres` | Restricted connections, redacted errors |
+| `pqs` | Version-checked read-only snapshot and update paging |
+| `ledger` | Current source-user and grant checks, HTTPS |
+| `storage` | Migrations, state, history, checkpoints, outbox, projections, relationships, joins, inspector, reconciliation |
+| `runtime` | Worker, caller authentication, REST/GraphQL |
+| `models` | Definitions, exact evaluation, schema and client generation |
+| `metadata` | Offline DAR / LF 2.1 signature extraction |
+| `sync` | DAR-driven schema sync and impact reports |
+| `cli` | Commands |
 
-## Source adapter
+## Source
 
-The [tested profile](verification.md#environment) uses a SELECT-only nonowner PQS
-role and a separate Ledger credential with the exact configured CanReadAs set.
-Source SQL is never a migration target.
+**Access.**
+- **PQS:** a SELECT-only PQS role that isn't the owner.
+- **Ledger:** a separate Ledger credential with exactly the configured CanReadAs
+  set.
+- **No migrations:** the source is never migrated.
 
 | Schema041 interface | Use |
 | --- | --- |
-| `active(qname, offset)` | Active snapshot at a retained source-local boundary |
-| `creates(qname, from, to)` / `archives(qname, from, to)` | Inclusive retained interval; resume after the acknowledged event key |
-| `oldest_offset`, `latest_offset`, `pruned_offset` | Resolve explicit bounds inside the same read-only snapshot |
+| `active(qname, offset)` | Active snapshot at a retained boundary |
+| `creates` / `archives(qname, from, to)` | Inclusive interval, resuming after the acknowledged event key |
+| `oldest_offset`, `latest_offset`, `pruned_offset` | Bounds inside the same snapshot |
 
-Pages use repeatable-read and order by offset plus source event primary key, so
-events sharing an offset are not skipped. Archives require a previously observed
-matching creation because schema041 omits archive witnesses. Missing rows are
-not archives. History starts at the active snapshot and continues forward;
-pruned/regressed bounds stop progress rather than inventing missing history.
+**Paging.**
+- **Ordering:** repeatable-read pages ordered by offset and then the event key,
+  so events at the same offset aren't skipped.
+- **Archives:** schema041 omits archive witnesses, so an archive needs a create
+  that was already observed. A missing row isn't an archive.
+- **Bounds:** history starts at the snapshot and moves forward. Pruned or
+  regressed bounds stop progress.
 
-The adapter uses the PostgreSQL driver for runtime template selection and checked
-paged reads. SDK compatibility observations are in [verification](verification.md#source-observations).
+**Exercises (opt-in tree mode, migration 009).**
+- **Receipts:** atomic forward transactions record exercise receipts.
+- **Lineage:** typed creation metadata feeds direct lineage (migration 010).
+  - **Proof:** an edge is proven only from a complete recorded subtree.
+  - **Partial views:** they can show children without the factory, so a general
+    immediate-parent proof isn't claimed.
 
-## Destination and recovery
+**HTTPS.**
+- **Endpoints:** Ledger and health endpoints may use certificate-verified HTTPS
+  (`reqwest` with Rustls).
+  - **Not allowed:** redirects, proxies and plaintext fallback.
+  - **Identity:** the transport and identity provider are part of the source
+    identity.
+- **PostgreSQL:** stays numeric-loopback, so a tunnel is needed for remote PQS.
+- **Identity provider:** the issuer and the returned identity provider must both
+  match explicit settings.
 
-`storage init` explicitly applies checksummed migrations 001–012. Opening a store
-only verifies it. Source-scoped advisory locks coordinate writers; expected
-checkpoint comparisons reject stale workers. Canonical state, evidence/history,
-model changes, checkpoint and outbox commit together. Exact duplicate deliveries
-have no new effects. After an uncertain commit acknowledgement, reconnect and
-inspect progress before retrying. Outbox sequence gaps are not ledger gaps.
+## Destination
 
-The fixture reference path replays a bounded journal: 256 batches, 1,000 events
-or 1 MiB per batch, 16 MiB journal text per generation. Live indexing updates SQL
-rows directly and does not inherit the full-journal replay cap. Retained history
-grows; automatic retention/erasure is not implemented.
+**Migrations.**
+- **Applying:** `storage init` applies checksummed migrations 001–012.
+- **Opening:** opening a store only verifies them.
 
-Plans bind source/network/generation, templates, parties and physical endpoints/
-database identity. Credential rotation preserves identity; changing a source
-requires a reviewed generation. Source offsets are not global heights or counts.
+**One transaction per page.**
+- **What it contains:** canonical state, evidence, history, model changes, the
+  checkpoint and the outbox.
+- **Locking:** source-scoped advisory locks coordinate writers.
+- **Stale workers:** expected-checkpoint checks reject them.
+- **Duplicates:** an exact duplicate delivery has no effect.
+- **Uncertain commits:** reconnect and inspect before retrying.
+
+**Plans.**
+- **Identity:** a plan binds the source, network, generation, templates, parties
+  and endpoints.
+- **Credential rotation:** it keeps the identity.
+- **Changing source:** needs a reviewed generation.
+- **Offsets:** they're source-local, not global heights.
+
+**Fixture path.**
+- **Journal limits:** 256 batches, with up to 1,000 events or 1 MiB per batch, and
+  16 MiB per generation.
+- **Live indexing:** writes rows directly.
+- **Retention:** history grows, and there's no automatic retention.
 
 ## Models and queries
 
-The registry stores immutable definitions by namespace/name/revision. Installation
-compiles them into private tables and verifies real columns, keys, indexes,
-ownership and grants against the plan. Identical definitions can share a physical
-table; every row retains stream and contract identity. Registration and installation
-do not activate processing or grant access.
+**Registry and install.**
+- **Registry:** immutable definitions by namespace, name and revision.
+- **Install:** compiles a private table and verifies columns, keys, indexes,
+  ownership and grants.
+- **Shared tables:** identical definitions share a table, and every row keeps its
+  stream and contract.
 
-Atomic `models bind` and staged rebuilds use the same source lock as ingestion.
-Reads after acquiring it use READ COMMITTED to observe the preceding writer's
-commit. Workers verify every bound alias and deduplicate shared physical models.
-Create/archive projection updates join the canonical transaction.
+**Binding.**
+- **Locking:** binding and staged rebuilds take the ingestion lock.
+- **Atomic updates:** create and archive updates join the canonical transaction.
+- **Staged targets:** a staged target is filled in pages while ingestion queues
+  changed IDs for catchup.
+- **Activation:** checks the old binding and an empty queue, then switches.
 
-For larger rebuilds, the inactive target is reserved and filled in bounded pages.
-Ingestion transactionally queues changed contract IDs; catchup reconciles their
-current state. Activation checks the expected old binding and empty queue before
-switching metadata. Cleanup deletes unreferenced old rows in later bounded steps;
-aliases retain their rows. Cancellation cleans only the inactive target.
-See [models](guide/models.md) for commands, phases, limits and recovery.
+**Reads.**
+- **Paging:** caller-scoped counts and keyset pagination in one snapshot.
+- **Payloads:** payloads are encoded only for the page.
 
-Generic and model APIs use caller-scoped counts and keyset pagination in one
-request snapshot. Canonical queries count/select authorized identities before
-encoding page payloads. Generated model REST/GraphQL share validation and exact
-native sorting. [API](guide/api.md) documents transport formats;
-[security](security.md) defines authorization, final delivery checks and limits.
+**Composition**, all in `storage::model_projection` and `storage::lineage`:
+- **Relationships:** pin target revisions and resolve only visible endpoints.
+- **Joins:** intersect visibility before fanout, and hash visible results for
+  cursor invalidation.
+- **Inspector:** reads committed provenance and compares SQL records natively.
 
-## Offline DAR metadata (#23)
+**Upgrades.**
+- **Manifest:** binds the old and new additive selection, the checkpoint, the DAR
+  hash and the targets.
+- **Migrations:** 007 keeps handoff evidence and 008 holds paged jobs.
+- **Publication:** reads and ingestion are blocked until a complete prefix is
+  ready. The final page switches the selection and the aliases.
 
-`cantongrid metadata inspect <artifact.dar>` emits versioned JSON from a local
-artifact. The isolated `cantongrid-metadata` crate reads ZIP entries without
-extracting files and uses a metadata-only protobuf projection. It verifies each
-original payload hash, resolves qualified signature references across packages
-and preserves recursive types as references. Expressions and values are skipped;
-this is not an executable LF validator or proof of deployment.
+**Metadata and sync.**
+- **Metadata:** `cantongrid-metadata` reads DAR ZIP entries in memory, checks
+  payload hashes and decodes a metadata-only protobuf projection of the official
+  LF schema (vendored, Apache-2.0, see NOTICE).
+- **Sync:** reuses it, together with the model compiler. Removals and type changes
+  stop generation, and renames are never guessed.
 
-Only LF 2.1 is supported. Input, expansion, traversal and output bounds are in
-[the metadata guide](guide/metadata.md). Unused interned type links are checked
-once without expanding their trees; reachable signature types have separate
-depth and work limits. No Ledger, database, SDK, JVM or protoc is required.
-Offline schema synchronization (#24) is implemented. Reviewed additive activation (#25)
-uses explicit model definitions; see [package upgrades](guide/upgrades.md).
+## Delivery and history
 
-Dependency review and approval, 2026-11-21:
+- **Temporal reads:** rebuild membership at an acknowledged offset from immutable
+  create and archive evidence. Incomplete or over-budget history is unavailable.
+- **Delivery:** reuses the transactional outbox.
+  - **Subscriptions (migration 011):** caller-bound, with random receipt cursors.
+  - **Locking:** reads, ACKs and pruning serialize on the writer lock.
+  - **Gaps:** pruning marks a gap only for unacknowledged visible events.
+- **Bootstrap (migration 012):** captures the baseline and the feed anchor under
+  the writer lock.
+- **Health:** source health, worker freshness, public readiness and operator
+  counters are kept separate.
+
+## Dependencies
+
+New third-party dependencies need review and approval. Recorded decisions:
 
 | Component | Decision |
 | --- | --- |
-| `canton-lf` 0.3.2 | Evaluated at SDK commit `5caaebc3eab380de827196663d4bb18b90ffd6f4`; ZIP 2.x fails current RustSec policy. Not added; no scanner exceptions. |
-| Official LF archive schema | Metadata field projection from that pinned SDK's vendored Digital Asset Apache-2.0 schema. Source paths/checksums are in `crates/metadata/src/wire.rs`; attribution is retained in NOTICE. |
-| `zip` 9.8.1 | Approved; default features disabled, DEFLATE only. Count checked before collecting entry metadata; no disk extraction. |
-| `prost` 0.14.6 | Approved standard protobuf decoder. SHA-256 is checked against original payload bytes before interpretation. |
-| `serde`, `serde_json`, `sha2` | Existing dependencies reused. |
-
-Synthetic corruption/limit tests run in CI. Independent compiler inventory
-comparisons for PoC, Visibility and Outcomia are dated in [verification](verification.md).
-
-## Selection upgrade publication
-
-A reviewed manifest binds the old/new additive selection, checkpoint, DAR hash,
-installed targets and expected previous bindings. Migration 007 retains completed
-handoff evidence; 008 stores private paged jobs. Snapshot staging does not change
-canonical state. Publication/cancellation gate canonical queries, discovery,
-model reads and ingestion until the complete old or new prefix is available.
-
-Each page has its own transaction and source-writer lock. Promotion changes the
-selection and model aliases in the final transaction; source checkpoints and batch
-history remain unchanged. Forward ingestion then reads both package versions.
-Cancellation removes only unpublished baseline rows. After completion, model
-rollback uses the existing rebuild path while retaining the widened selection.
-
-## Remote transport and schema synchronization (#22–#24)
-
-Implemented source policy: retain default numeric-loopback HTTP and support an
-explicit HTTPS policy for Ledger and health endpoints. Validate endpoint shape,
-keep redirects/proxies disabled, preserve bounded timeouts/bodies, and bind the
-transport and identity-provider settings into source/cursor identity. PostgreSQL
-remains a separate numeric-loopback connection (an operator tunnel is possible);
-this does not introduce remote PostgreSQL TLS support or live-network acceptance.
-
-Dependency decision approved on 2026-11-21: enable the existing `reqwest` 0.13.5 `rustls`
-feature in ledger/runtime for certificate-verified HTTPS. This adds its Rustls,
-platform-verifier and AWS-LC dependencies; pin the resolved graph in Cargo.lock and
-run the existing vulnerability/license checks before use. ISC and the trust-anchor data license CDLA-Permissive-2.0 are added to the
-permissive-license allowlist for this approved TLS graph; upstream notices remain
-required. This is not an advisory or license-scanner exemption. No insecure-certificate
-switch, plaintext fallback, new Ledger SDK or runtime executable is proposed.
-The supplied build spec §2 requires approval for new third-party hard dependencies.
-
-Schema sync reuses `cantongrid-metadata` and `cantongrid-models`. Developers
-pin exact old package identities and explicit projections/processing rules. An
-offline command resolves the corresponding new package/template, validates selected
-field paths/types/scales, reports whole-signature changes and emits models, SQL,
-GraphQL, TypeScript and a compatibility report. Missing/ambiguous identities,
-removals and incompatible selected types must stop generation, not guess a rename
-or rewrite a calculation. Installed revisions, databases, grants and source
-checkpoints are untouched. The existing reviewed upgrade command remains the
-separate activation step.
-
-Remote IDP verification uses the pinned Canton 3.5.7 OpenAPI profile and the
-[official JSON API definition](https://docs.digitalasset.com/build/3.5/reference/json-api/openapi.html).
-User reads accept `identity-provider-id`; rights reads do not expose that query
-parameter and derive their provider context through authenticated Ledger handling.
-An explicit expected token issuer and returned provider must both match; no issuer
-or provider is inferred from an endpoint hostname.
-
-## Exercise event foundation
-
-[M0 exercise-source feasibility](design/exercise-source.md) is verified on the
-pinned LocalNet. PQS tree-mode receipts match authorized Ledger Effects in four
-party scopes. Partial views can disclose children without their factory exercise;
-general immediate-parent proof remains unsupported. The opt-in receipt slice
-extends the existing PQS adapter while preserving archive ownership.
-M0 adds no production event variant, destination migration or public API.
-The [M1 receipt slice](design/exercise-ingestion.md) adds opt-in atomic forward
-transactions and private receipt/outbox tables in migration 009. Existing
-create/archive APIs and archive ownership remain unchanged.
-
-## Direct lineage (M2)
-
-Opt-in tree-mode ingestion retains typed creation metadata in addition to
-exercise receipts. `core::lineage` proves bounded direct edges only from complete
-recorded subtrees. `storage::lineage` persists proof dependencies atomically with
-lifecycle changes and the checkpoint. Its read query filters proof dependencies
-and both indexed endpoints before counting or paging. Runtime REST and GraphQL
-share the existing source-health, caller-grant and signed-cursor guards.
-
-This is one-hop, partial recorded evidence; it does not reconstruct missing
-history, follow payload references or expose unindexed transient endpoints.
-See the [design](design/lineage.md) and [API guide](guide/lineage.md).
-
-## Declared relationships (M3)
-
-Model declarations pin the target revision and exact key types. Existing model
-registry fingerprints version the policy; existing atomic projections maintain
-its inputs. `model_projection::relationships` resolves only independently visible
-active endpoints, with a bounded visible fanout. Runtime model APIs bind both
-fingerprints and the root into signed cursors and recheck the catalog before
-response delivery. There is no separate relationship cache or new migration.
-See the [contract](design/relationships.md) and [guide](guide/relationships.md).
-
-## Typed inner joins (M4)
-
-An optional relationship projection selects columns from both registered models.
-`model_projection::joins` intersects endpoint visibility before fanout, hashes
-only visible selected results for cursor invalidation, and reads one page's typed
-values in the same snapshot. Existing atomic projections remain the source of
-truth. Generated schemas include both fingerprints to isolate namespace aliases.
-Aggregate authorization is unchanged. See the [contract](design/joins.md) and
-[guide](guide/joins.md).
-
-## Developer inspector (M5)
-
-`storage::inspector` reads existing committed provenance and model tables in
-read-only snapshots. Transaction ordinals are assigned after independent event/
-endpoint visibility checks. Projection diagnoses compare native SQL records and
-emit only finite status/error codes. Model API catalog and encoding guards apply
-to diagnostics. Global checkpoint/rebuild observations use a local operator
-command and count-free restricted PQS bounds; no global progress API is mounted.
-See the [contract](design/inspector.md) and [guide](guide/inspector.md).
-
-## Upgrade impact analysis (M6)
-
-`cantongrid-sync` extends the existing verified DAR comparison with selected-field
-signatures, downstream projection dependencies and exact generated identities.
-Relationship revision drift is a structured blocker; no pin is silently rewritten.
-The same compiler generates compatible bundles. Read-only sample evaluation uses
-the model evaluator and M5 sanitized diagnostics. It does not interpret LF or
-connect to sources/storage. See the [contract](design/impact.md) and
-[guide](guide/upgrade-impact.md) for bounds and explicit activation gates.
-
-## Temporal state and durable delivery (alpha.6 source)
-
-M7 reconstructs canonical membership at an acknowledged source-local offset from
-immutable create/archive evidence under current grants. Bounded coverage checks
-fail unavailable for incomplete, missing or excessive retained history; historical
-model bindings are not inferred. See [temporal reads](guide/temporal.md).
-
-M8 reuses the transactional lifecycle outbox. Migration 011 stores private
-caller/policy-bound subscriptions and random receipt cursors. Reads, monotonic
-ACKs and bounded retention serialize on the source writer lock. Pruning marks
-loss only for unacknowledged events visible to each subscriber; canonical history
-is retained. Long polls reauthorize while waiting and before response encoding.
-This is canonical REST delivery, not model CDC or atomic snapshot/feed handoff.
-See [delivery](guide/delivery.md).
-
-M9 separates source health from worker freshness and public readiness from
-operator-only pressure counters. Remote profile/preflight checks and isolated
-backup/restore helpers are documented, with local evidence only. No authorized
-remote source exists yet. See [operations](guide/operations.md) and the
-[bounded design](design/temporal-streams-hardening.md).
+| `canton-lf` 0.3.2 | Not added: its ZIP 2.x fails RustSec policy |
+| Official LF archive schema | Vendored metadata projection; paths and checksums in `crates/metadata/src/wire.rs` |
+| `zip` 9.8.1 | Default features off, DEFLATE only, no disk extraction |
+| `prost` 0.14.6 | Decodes only after SHA-256 matches |
+| `reqwest` `rustls` feature | Approved 2026-11-21; adds ISC and CDLA-Permissive-2.0 to the license allowlist |

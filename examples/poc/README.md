@@ -3,7 +3,7 @@
 A standalone Daml prediction-market lifecycle, its projection model, transaction
 runner and local viewer. Product indexing and API execution use the Rust CLI.
 
-Follow the [complete guide](../../docs/guide/poc.md) for startup, DAR deployment,
+Follow the [complete guide](../../docs/guide/localnet.md#the-poc) for startup, DAR deployment,
 type generation, transactions, privacy and recovery checks.
 
 - `daml/Market.daml`: Draft → Open → Resolved, with consuming choices.

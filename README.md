@@ -1,32 +1,18 @@
 # CantonGrid
 
-A Rust indexer for authorized Daml contracts on Canton. It maintains active
-contracts and lifecycle history in PostgreSQL and serves caller-scoped REST/GraphQL.
-Outcomia is the first application example; the engine is reusable.
+A Rust indexer for authorized Daml contracts on Canton.
+- **Storage:** it keeps active contracts and lifecycle history in PostgreSQL.
+- **APIs:** it serves REST and GraphQL scoped to each caller.
+- **Typed models:** it generates typed models with TypeScript and GraphQL clients.
 
-[Runnable PoC](docs/guide/poc.md) · [Developer guide](docs/README.md) ·
-[Architecture](docs/architecture.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+Outcomia is the first application example; the engine is generic.
 
-[Latest stable release: 0.4.0](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0)
+[Guide](docs/README.md) · [Quickstart](docs/guide/quickstart.md) ·
+[PoC](docs/guide/localnet.md#the-poc) · [Architecture](docs/architecture.md) ·
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-## Current status
-
-**0.4.0** promotes the tested alpha.7 implementation for the authorized node-local
-Canton 3.5.7 / Scribe 3.5.4 schema041 / PostgreSQL 17.12 profile. See the
-[release scope and upgrade steps](docs/releases.md#040-supported-scope-and-acceptance).
-
-- Snapshot-forward ingestion, atomic checkpoints and current source/caller grants.
-- Exact model projections, generated TypeScript/GraphQL, filters, sorting and staged rebuilds.
-- Declared relationships, typed joins, aggregates, source evidence and developer inspection,
-  with per-feature verification levels recorded in the [guide](docs/verification.md).
-- Durable lifecycle delivery and [atomic canonical bootstrap](docs/guide/bootstrap.md),
-  including replay, monotonic ACKs, private cursors and explicit retention gaps.
-- Readiness/preflight, private backup/restore checks and local benchmark evidence.
-
-Canonical temporal reconstruction remains a bounded experimental prototype.
-Historical model bindings, model CDC, interfaces/reassignments, hosted multi-tenancy
-and public Scan are outside this release's scope. Remote/TestNet and production
-acceptance remain unverified; the stable version does not imply full Phase 4 completion.
+[Latest stable: 0.4.0](https://github.com/kunal171/cantongrid/releases/tag/v0.4.0)
+· Prerelease: 0.5.0-alpha.2 (reconciliation)
 
 ```bash
 cargo install cantongrid-cli --version 0.4.0 --locked
@@ -34,8 +20,31 @@ cantongrid init ./my-demo
 cantongrid fixture run ./my-demo/cantongrid.json --party A
 ```
 
-The [quickstart](docs/guide/quickstart.md) covers setup and examples. Back up before
-explicitly migrating an older owned destination through 012; source PQS is never
-migrated. Alpha.7 installations need no new migration or reindex for 0.4.0.
-Runtime code is Rust; Python scripts are local development tools.
-Licensed under [Apache-2.0](LICENSE).
+## What it does
+
+- **Ingestion:** reads from the snapshot forward, with atomic checkpoints and
+  separate source and caller grants.
+- **Models:** exact projections, generated TypeScript and GraphQL, filters,
+  sorting, staged rebuilds and aggregates.
+- **Composition:** direct lineage, declared relationships, typed joins and a
+  developer inspector.
+- **Delivery:** at-least-once durable delivery with an atomic bootstrap.
+- **Operations:** readiness checks, preflight, backup and restore checks, and
+  reviewed package upgrades.
+
+**Supported profile.**
+- **Software:** node-local Canton 3.5.7, Scribe 3.5.4 (schema041) and PostgreSQL
+  17.12.
+- **Experimental:** temporal reads.
+- **Not supported:** historical model bindings, model CDC, interfaces and
+  reassignments, multi-tenancy and public Scan.
+- **Unverified:** remote networks (TestNet and MainNet) and production use.
+
+Evidence for each feature is in [verification](docs/verification.md), and upgrade
+steps are in [releases](docs/releases.md#upgrading).
+
+## Notes
+
+- **Language:** the runtime is Rust. The Python scripts are local development
+  tools.
+- **License:** [Apache-2.0](LICENSE).

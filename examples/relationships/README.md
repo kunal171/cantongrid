@@ -25,7 +25,7 @@ For live use, inspect the deployed DAR metadata, replace both package IDs,
 select both templates and register/install/bind `children` and `factories` in one
 namespace. Do not upload a DAR, change parties/grants or submit transactions just
 to run this offline example. Query commands and revision handling are in the
-[guide](../../docs/guide/relationships.md).
+[guide](../../docs/guide/composition.md#declared-relationships).
 
 The owned PostgreSQL and mock-source API tests cover current-state lifecycle,
 A/B/shared visibility, exact numeric keys, paging, replay, projection rollback,

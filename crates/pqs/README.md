@@ -25,7 +25,7 @@ For an operator inspection with the CLI:
 cantongrid source inspect-pqs --database-env CANTONGRID_PQS_URL
 ```
 
-See the [source guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet-source.md)
+See the [source guide](https://github.com/kunal171/cantongrid/blob/main/docs/guide/localnet.md)
 for role setup and supported coverage.
 
 For an explicitly enabled lineage plan, `lineage_page_env` reads typed creation

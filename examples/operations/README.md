@@ -1,6 +1,6 @@
 # Operations acceptance
 
-This helper uses an already prepared [LocalNet PoC](../../docs/guide/poc.md).
+This helper uses an already prepared [LocalNet PoC](../../docs/guide/localnet.md#the-poc).
 It changes only a new isolated stream in the owned destination: ingestion,
 subscription progress and outbox retention. It does not upload DARs, allocate
 parties, submit choices or change Ledger rights.
@@ -32,14 +32,14 @@ or database dumps. Only the sanitized `evidence.json` is suitable for review.
 
 ## Configuration and recovery
 
-Use [remote source setup](../../docs/guide/remote-source.md) with
+Use [remote source setup](../../docs/guide/operations.md#remote-sources) with
 `runtime.testnet.json` and `grants.example.json`. These contain placeholders, no
 working remote endpoint. `ops check-config --profile testnet` is offline;
 `ops preflight --profile testnet` needs authorized source access. A successful
 preflight does not independently attest the actual Canton network or the
 Ledger/PQS participant pairing.
 
-The [recovery helper](../../docs/guide/recovery.md) verifies an owned database
+The [recovery helper](../../docs/guide/operations.md#backup-and-recovery) verifies an owned database
 backup in a separate empty restricted-owner database. It compares native
 PostgreSQL rows and sequences, preserving exact numeric values. CI runs this
 against the owned fixture. Private dumps are never uploaded as artifacts.
