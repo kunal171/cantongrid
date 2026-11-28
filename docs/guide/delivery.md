@@ -1,97 +1,128 @@
-# Durable lifecycle delivery
+# Durable delivery and bootstrap
 
-Available in 0.4.0. Run the ingestion worker
-and API against the same reviewed runtime. Migration 011 adds private subscription
-and receipt tables; [back up before migrating](recovery.md).
+Since 0.4.0, a REST long-poll feed delivers canonical creates and archives, at
+least once.
+- **What it doesn't include:** exercise receipts, model-row changes, SSE and
+  GraphQL subscriptions.
+- **Access:** the caller's current permissions and the current source authority
+  apply to every operation. A subscription grants nothing.
+- **Migrations:** 011 (subscriptions) and 012 (bootstrap). Back up before
+  migrating ([operations](operations.md#backup-and-recovery)).
 
-This REST long-poll feed delivers canonical creates and archives. It does not emit
-exercise receipts, model-row changes, SSE or GraphQL subscriptions. Current caller
-permissions and current source authority apply to every operation and again before
-response encoding. A subscription does not grant access to a party.
+## Subscriptions
 
-## Register, process, acknowledge
+All requests use the organization bearer from the [API](api.md), not the source
+credential.
 
-Use an organization API bearer from [authentication](api.md), distinct from the
-Ledger source credential. Requests below target the loopback API. Avoid putting
-bearer values in shell history or publishing response files.
-
-| Request | Body / query | Result |
+| Request | Body / query | Returns |
 | --- | --- | --- |
-| `POST /v1/subscriptions` | `{"name":"my-worker","start":"retained"}` | Private `id`, signed `cursor`, expiry |
+| `POST /v1/subscriptions` | `{"name":"my-worker","start":"retained"\|"now"}` | `id`, signed `cursor`, expiry |
 | `GET /v1/subscriptions/{id}/events` | `limit=20&waitSeconds=10`, optional `cursor` | `events`, `nextCursor`, `more` |
-| `POST /v1/subscriptions/{id}/acknowledge` | `{"cursor":"issued-cursor"}` | `{"ok":true}` |
+| `POST /v1/subscriptions/{id}/acknowledge` | `{"cursor": "..."}` | `{"ok":true}` |
 | `POST /v1/subscriptions/{id}/cancel` | `{}` | `{"ok":true}` |
 
-`start` is `retained` or `now`. Retained means currently retained outbox records,
-not complete ledger history. Now starts after the current destination head.
-Retrying the same name under the same caller/grant binding reuses the subscription
-without resetting progress. Changing its start mode is rejected.
+- **Start modes:**
+  - **`retained`:** starts from the outbox records still retained, not from full
+    ledger history.
+  - **`now`:** starts after the current head.
+- **Retries:** retrying the same name reuses the subscription and its progress.
+- **Order of work:** process a page in order, commit your effects, then
+  acknowledge its `nextCursor`. Deduplicate on `(source generation, eventId)`,
+  because retried pages repeat events.
+- **Cursors:**
+  - **Without a cursor:** reading resumes from the durable acknowledgement.
+  - **ACKs:** they're monotonic.
+  - **Binding:** each cursor is bound to the caller, grants, source plan and
+    subscription.
+  - **Lifetime:** cursors expire within 60 s.
+  - **Handling:** never log or edit them.
 
-Process one page in order, commit the application's effects durably, then ACK its
-`nextCursor`. Use `(source generation, eventId)` as an application deduplication
-key. Retried pages can repeat events, including after a server restart: delivery
-is **at least once**. Exactly-once effects need an application-side transaction
-covering deduplication and effects. Never ACK an event whose earlier page failed.
+**Events** carry `formatVersion: 1`, `delivery: "at_least_once"` and coverage
+`retained_authorized_outbox`. Each event has these fields:
+- **Identity:** `eventId`, `contractId` and `kind` (create or archive).
+- **Content:** the exact `template` and a typed `payload`, using `raw_json` with
+  the exact text.
+- **Timing:** `observedAtMicros`, `ledgerAtMicros` and `sourceOffset`.
+- **Origin:** `snapshotObservation` and `visibilityEvidence`.
 
-An omitted cursor resumes the server's durable ACK. Passing an issued cursor can
-read ahead without ACKing; reconnecting without it replays unacknowledged work.
-ACKs are monotonic, so a delayed older ACK cannot rewind progress. Public cursors
-contain random receipt IDs rather than global outbox ordinals. They bind to the
-caller, current grant policy, source plan and subscription, and expire within
-60 seconds. After cursor expiry, resume without it; already ACKed work remains
-ACKed. Do not edit or log cursors.
-
-## Event shape and coverage
-
-Responses have `formatVersion: 1`, `delivery: "at_least_once"` and coverage
-`retained_authorized_outbox`. Each event contains `eventId`, `contractId`,
-`kind` (`create` or `archive`), exact `template`, nullable typed `payload`,
-`observedAtMicros`, `ledgerAtMicros`, `sourceOffset`, `snapshotObservation` and
-`visibilityEvidence`. Integer/time/offset values are decimal strings. Raw payloads
-use `{"type":"raw_json","value":"exact JSON text"}`; do not parse financial
-strings into floating point. An archive has no replacement payload.
-
-Snapshot observations are not newly submitted creations. Evidence describes a
-source-witness policy or a prior-create policy without exposing parties, witness
-lists, source PKs, arguments or internal batch records. Permission filtering
-happens before pagination. An empty heartbeat reveals no hidden event count.
-
-## Limits and recovery
+Numbers are decimal strings, and no parties or witnesses are exposed.
 
 | Limit | Value |
 | --- | --- |
-| Events per page | 1–25, default 20 |
-| Long poll | 0–10 seconds; authority rechecked every second |
-| Concurrent long polls | 4 globally, 2 per caller binding |
-| Subscription lifetime | 24 hours; registration retries do not extend it |
+| Page | 1–25 events (default 20) |
+| Long poll | 0–10 s, with authority rechecked every second |
+| Concurrent polls | 4 globally, 2 per caller |
+| Lifetime | 24 h (retries don't extend it) |
 | Subscriptions | 256 per stream, 16 per principal |
-| Outstanding receipts | 64 per subscription, retained for 5 minutes |
-| Recent ACK receipts | 64 |
-| Worker freshness | Last ingestion observation within 30 seconds |
+| Outstanding receipts | 64 per subscription, kept for 5 min |
+| Worker freshness | Last observation within 30 s |
 
-429 means admission/receipt backpressure; ACK committed pages, reduce concurrency
-and retry with backoff. 503 means source, destination, upgrade or live-worker
-readiness is unavailable; do not silently advance. Unknown or differently owned
-subscriptions return 404. Changed grants or a changed source plan invalidate old
-bindings: review access and register again explicitly.
+**Errors.**
+- **429:** backpressure. Acknowledge what you've done and back off.
+- **503:** the source, destination or worker isn't ready. Don't advance.
+- **404:** unknown or someone else's subscription.
+- **Changed grants or source plan:** these invalidate the subscription, so
+  register again.
 
-Workers retain a target of 100,000 outbox events, deleting at most 256 per cycle.
-Operators can request bounded pruning:
+**Retention.**
+- **Target:** workers keep 100,000 outbox events and delete up to 256 per cycle.
+- **Manual pruning:**
+  `cantongrid ops prune-deliveries runtime.json --retain 100000 --limit 256`.
+- **Canonical history:** never deleted.
+- **Gaps:** pruning an unacknowledged visible event makes reads return
+  **409 `coverage: "gap"`**. Recover with a verified baseline and a new
+  subscription. Pruning only hidden events never causes a gap.
 
-```bash
-cantongrid ops prune-deliveries runtime.json --retain 100000 --limit 256
+## Bootstrap
+
+**Why a bootstrap:** taking a snapshot and then subscribing with `start: now` can
+miss updates in between. A bootstrap captures a full baseline and the feed's
+anchor in one transaction under the writer lock.
+
+```http
+POST /v1/subscriptions/bootstrap
+{"name": "baseline-<unique id>"}
 ```
 
-This never deletes canonical history. Removing an unacknowledged event visible to
-this subscription makes reads fail with **409 and `coverage: "gap"`**. Hidden-only
-pruning does not manufacture a gap. Retention is bounded work, not a disk quota;
-monitor queue growth and consumer lag through [operations](operations.md).
+- **Response:** `id`, `snapshotUrl`, a signed feed `cursor`, `expiresAtSeconds`,
+  `atomicHandoff: true` and coverage `observed_retained`.
+- **Private values:** the source offset and outbox position stay private.
+- **Snapshot paging:** page through `GET /v1/subscriptions/{id}/snapshot?limit=25`
+  until `nextCursor` is null.
+- **Cursor types:** snapshot cursors and feed cursors aren't interchangeable.
 
-A gap requires an independently verified application baseline and a new
-subscription. Published alpha.6 has no atomic snapshot/feed handoff. The
-[0.4.0 bootstrap API](bootstrap.md) pairs its baseline and feed
-transactionally; it still reports explicit loss when retention invalidates a handoff. Reading a
-snapshot then starting `now` during concurrent writes can lose changes. The
-[LocalNet helper](../../examples/operations/README.md) demonstrates resynchronization
-only on a controlled quiescent fixture. Do not use that sequence as a trading
-consistency guarantee.
+**Client sequence:**
+1. **Register:** persist the registration ID.
+2. **Stage the baseline:** stage every snapshot page privately. Concurrent changes
+   wait in the feed.
+3. **Publish:** publish the baseline and the subscription ID in one application
+   transaction.
+4. **Consume:** read the feed in order, deduplicate, apply, then acknowledge.
+5. **After a restart:** resume the stored subscription instead of taking a new
+   baseline.
+
+An incomplete baseline must never replace the live view. See
+`examples/bootstrap` (TypeScript).
+
+**Retries and expiry.**
+- **Same name:** retrying it returns the same pairing while it's live. It doesn't
+  capture a newer baseline.
+- **After the first ACK:** once post-baseline work is acknowledged, retries and
+  snapshot reads return 409. Use a new name for a new baseline.
+- **Expired pairings:** they return 404. Never reuse an expired or cancelled name
+  in an automatic retry.
+
+| Result | Meaning |
+| --- | --- |
+| 409 `coverage: gap` | Visible post-baseline events were pruned; discard staging and resync |
+| 409 `coverage: unavailable` | Baseline history missing, outside retention or over budget |
+| Other 409 | Name or mode conflict, or the baseline already has ACKs |
+| 400 / 422 | Bad cursor or filter / bad body |
+| 429 / 503 / 401 | Budget / source or worker unavailable / bad caller |
+
+**Limits.**
+- **Budget:** the bootstrap uses the [historical state](composition.md#historical-state)
+  budget: 4,096 pages, 8,192 events and 64 baselines.
+- **Content:** it includes contract payloads, not model rows.
+- **Testing:** tests cover interleaved writes and HTTP restarts against owned
+  PostgreSQL and a mock source. It hasn't been accepted on a remote network.
